@@ -4,7 +4,6 @@ NexClinic/
 ├── frontend/
 ├── backend/
 ├── docs/
-├── docker-compose.yml
 └── README.md
 ```
 
