@@ -1,3 +1,4 @@
+```
 NexClinic/
 │
 ├── frontend/
@@ -5,9 +6,10 @@ NexClinic/
 ├── docs/
 ├── docker-compose.yml
 └── README.md
+```
 
 ---
-
+```
 frontend/
 │
 ├── public/
@@ -47,9 +49,9 @@ frontend/
 │ └── main.jsx
 │
 └── package.json
-
+```
 ---
-
+```
 backend/
 │
 ├── config/
@@ -98,3 +100,4 @@ backend/
 │
 ├── manage.py
 └── requirements.txt
+```
