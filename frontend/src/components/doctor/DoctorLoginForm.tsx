@@ -24,7 +24,7 @@ function DoctorLoginForm() {
             <BlackButton className="w-full py-2 px-4 rounded-lg hover:bg-gray-800 focus:outline-none focus:shadow-outline">
                 <span className="text-white font-bold">Login</span>
             </BlackButton>
-            <div title="login-card-footer" className="mt-4 text-sm">
+            <div title="login-card-footer" className="mt-4 text-sm dark:text-gray-900">
                 <p>Don't have an account? <a href="/doctor/register" className="text-green-500 hover:underline">Sign up here</a></p>
             </div>
         </div>

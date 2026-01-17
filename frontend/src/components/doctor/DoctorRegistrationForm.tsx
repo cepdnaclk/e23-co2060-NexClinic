@@ -4,10 +4,10 @@ function DoctorRegistrationForm() {
 
     return (
         <div className="flex flex-col w-[300px] gap-4 p-6 bg-white items-center justify-center rounded-xl shadow-md">
-            <div title="login-card-header" className="mb-4 items-center dark:text-gray-900 text-2xl font-bold">
-                <p>Welcome</p>
+            <div title="registration-card-header" className="mb-4 items-center dark:text-gray-900 text-2xl font-bold">
+                <p>Welcome!</p>
             </div>
-            <form title="login-card-form" className="flex flex-col gap-4 mb-4 rounded-lg w-full">
+            <form title="registration-card-form" className="flex flex-col gap-4 mb-4 rounded-lg w-full">
 
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -27,13 +27,13 @@ function DoctorRegistrationForm() {
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="SLMC ID"
                     type="text"
-                    placeholder="Sri LAnka Medical Council ID"
+                    placeholder="Sri Lanka Medical Council ID"
                 />
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="Email"
                     type="text"
-                    placeholder="Enter your email"
+                    placeholder="E-mail"
                 />
                 <input
                     className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -43,15 +43,17 @@ function DoctorRegistrationForm() {
                 />
                 <input
                     className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="comfirm password"
+                    id="confirm password"
                     type="password"
-                    placeholder=" Comfirm Password"
+                    placeholder="Confirm Password"
                 />
             </form>
             <BlackButton className="w-full py-2 px-4 rounded-lg hover:bg-gray-800 focus:outline-none focus:shadow-outline">
-                <span className="text-white font-bold">Create the Account</span>
+                <span className="text-white font-bold">Create Account</span>
             </BlackButton>
-            
+            <div title="registration-card-footer" className="mt-4 text-sm  dark:text-gray-900">
+                <p>Already have an account? <a href="/doctor/login" className="text-green-500 hover:underline">Login here</a></p>
+            </div>
         </div>
     );
 }
