@@ -2,10 +2,14 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
 from patient.models import PatientProfile
 from doctor.models import DoctorProfile
 
 User = get_user_model()
+
+from .models import UserOTP
+from .utils import generate_otp, send_otp_email
 
 class PatientRegistrationSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -51,9 +55,17 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             role='PATIENT'
         )
+        user.is_active = False # Deactivate until OTP verification
+        user.save()
         
         # Create Profile
         PatientProfile.objects.create(user=user, **profile_data)
+
+        # Generate and Send OTP
+        otp_code = generate_otp()
+        UserOTP.objects.create(user=user, otp_code=otp_code, expires_at=timezone.now() + timezone.timedelta(minutes=10))
+        send_otp_email(user.email, otp_code)
+
         return user
 
 class DoctorRegistrationSerializer(serializers.ModelSerializer):
@@ -94,6 +106,14 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             role='DOCTOR'
         )
+        user.is_active = False
+        user.save()
         
         DoctorProfile.objects.create(user=user, **profile_data)
+
+        # Generate and Send OTP
+        otp_code = generate_otp()
+        UserOTP.objects.create(user=user, otp_code=otp_code, expires_at=timezone.now() + timezone.timedelta(minutes=10))
+        send_otp_email(user.email, otp_code)
+
         return user
