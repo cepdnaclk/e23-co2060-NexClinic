@@ -8,6 +8,29 @@ def generate_otp():
 def send_otp_email(email, otp):
     subject = 'Verify your email'
     message = f'Your OTP code is {otp}. It expires in 10 minutes.'
-    email_from = settings.EMAIL_HOST_USER
-    recipient_list = [email]
-    send_mail(subject, message, email_from, recipient_list)
+    send_mail(
+        subject,
+        message,
+        settings.EMAIL_HOST_USER,
+        [email],
+        fail_silently=False,
+    )
+
+def send_admin_notification_email(doctor_email, doctor_name):
+    subject = 'Action Required: New Doctor Registration'
+    message = f"""
+    New Doctor Registered!
+    
+    Name: {doctor_name}
+    Email: {doctor_email}
+    
+    Please log in to the admin dashboard to verify their details and approve their account.
+    """
+    
+    send_mail(
+        subject,
+        message,
+        settings.EMAIL_HOST_USER,
+        ['nexclinicbynexaura@gmail.com'],
+        fail_silently=False,
+    )

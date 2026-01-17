@@ -16,7 +16,9 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from .models import PendingUser
-from .utils import generate_otp, send_otp_email
+from .utils import generate_otp, send_otp_email, send_admin_notification_email
+
+
 from django.utils import timezone
 from django.db import transaction
 from patient.models import PatientProfile
@@ -65,6 +67,8 @@ class VerifyOTPView(APIView):
                 PatientProfile.objects.create(user=user, **pending_user.profile_data)
             elif pending_user.role == 'DOCTOR':
                 DoctorProfile.objects.create(user=user, **pending_user.profile_data)
+                doctor_name = pending_user.profile_data.get('preferred_name', 'Doctor')
+                send_admin_notification_email(user.email, doctor_name)
             
             pending_user.delete()
 
