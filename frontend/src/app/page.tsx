@@ -2,6 +2,7 @@ import GreenButton from "@/components/buttons/GreenButton";
 import MainNavbar from "@/components/HomePage/MainNavbar";
 import Link from "next/link";
 import NewsCard from "@/components/HomePage/NewsCard";
+import DoctorLoginForm from "@/components/doctor/DoctorLoginForm";
 
 
 export default function Home() {
