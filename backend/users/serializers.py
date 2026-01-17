@@ -71,7 +71,7 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
         
         send_otp_email(email, otp_code)
 
-        return validated_data # Return data instead of user object since user isn't created yet
+        return {'email': email} # Return data containing email for response serialization
 
 class DoctorRegistrationSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -127,4 +127,4 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
         
         send_otp_email(email, otp_code)
 
-        return validated_data
+        return {'email': email}
