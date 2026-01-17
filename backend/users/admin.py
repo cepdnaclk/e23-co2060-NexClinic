@@ -22,3 +22,11 @@ class CustomUserAdmin(UserAdmin):
     ordering = ('email',)
 
 admin.site.register(CustomUser, CustomUserAdmin)
+
+from .models import PendingUser
+
+@admin.register(PendingUser)
+class PendingUserAdmin(admin.ModelAdmin):
+    list_display = ('email', 'role', 'otp_code', 'created_at', 'expires_at')
+    list_filter = ('role', 'created_at')
+    search_fields = ('email',)
