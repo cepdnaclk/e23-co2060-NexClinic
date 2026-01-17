@@ -3,4 +3,10 @@ from .models import DoctorProfile
 
 @admin.register(DoctorProfile)
 class DoctorProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'specialization', 'license_number')
+    list_display = ('user', 'specialization', 'license_number', 'is_verified')
+    list_filter = ('is_verified', 'specialization')
+    actions = ['verify_doctors']
+
+    @admin.action(description='Verify selected doctors')
+    def verify_doctors(self, request, queryset):
+        queryset.update(is_verified=True)
