@@ -41,11 +41,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
-class UserOTP(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+class PendingUser(models.Model):
+    email = models.EmailField(unique=True)
     otp_code = models.CharField(max_length=6)
+    password = models.CharField(max_length=128) # Store hashed password
+    role = models.CharField(max_length=50)
+    profile_data = models.JSONField() # Store profile-specific fields
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
 
     def __str__(self):
-        return f"OTP for {self.user.email}"
+        return f"Pending registration for {self.email}"

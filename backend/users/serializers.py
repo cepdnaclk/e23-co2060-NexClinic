@@ -8,8 +8,9 @@ from doctor.models import DoctorProfile
 
 User = get_user_model()
 
-from .models import UserOTP
+from .models import PendingUser
 from .utils import generate_otp, send_otp_email
+from django.contrib.auth.hashers import make_password
 
 class PatientRegistrationSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -40,33 +41,37 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password2')
+        email = validated_data.pop('email')
+        password = validated_data.pop('password')
+        
+        # Check if PendingUser already exists for this email
+        PendingUser.objects.filter(email=email).delete()
+
         # Extract profile data
         profile_data = {
             'full_name': validated_data.pop('full_name'),
             'phone': validated_data.pop('phone'),
-            'date_of_birth': validated_data.pop('date_of_birth'),
+            'date_of_birth': str(validated_data.pop('date_of_birth')), # Convert to string for JSON serialization
             'gender': validated_data.pop('gender'),
             'address': validated_data.pop('address'),
         }
         
-        # Create User
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            password=validated_data['password'],
-            role='PATIENT'
-        )
-        user.is_active = False # Deactivate until OTP verification
-        user.save()
-        
-        # Create Profile
-        PatientProfile.objects.create(user=user, **profile_data)
-
         # Generate and Send OTP
         otp_code = generate_otp()
-        UserOTP.objects.create(user=user, otp_code=otp_code, expires_at=timezone.now() + timezone.timedelta(minutes=10))
-        send_otp_email(user.email, otp_code)
+        
+        # Create PendingUser
+        PendingUser.objects.create(
+            email=email,
+            password=make_password(password),
+            role='PATIENT',
+            profile_data=profile_data,
+            otp_code=otp_code,
+            expires_at=timezone.now() + timezone.timedelta(minutes=10)
+        )
+        
+        send_otp_email(email, otp_code)
 
-        return user
+        return validated_data # Return data instead of user object since user isn't created yet
 
 class DoctorRegistrationSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -95,25 +100,31 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password2')
+        email = validated_data.pop('email')
+        password = validated_data.pop('password')
+
+        # Check if PendingUser already exists for this email
+        PendingUser.objects.filter(email=email).delete()
+
         profile_data = {
             'specialization': validated_data.pop('specialization'),
             'license_number': validated_data.pop('license_number'),
             'phone': validated_data.pop('phone'),
         }
         
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            password=validated_data['password'],
-            role='DOCTOR'
-        )
-        user.is_active = False
-        user.save()
-        
-        DoctorProfile.objects.create(user=user, **profile_data)
-
         # Generate and Send OTP
         otp_code = generate_otp()
-        UserOTP.objects.create(user=user, otp_code=otp_code, expires_at=timezone.now() + timezone.timedelta(minutes=10))
-        send_otp_email(user.email, otp_code)
+        
+        # Create PendingUser
+        PendingUser.objects.create(
+            email=email,
+            password=make_password(password),
+            role='DOCTOR',
+            profile_data=profile_data,
+            otp_code=otp_code,
+            expires_at=timezone.now() + timezone.timedelta(minutes=10)
+        )
+        
+        send_otp_email(email, otp_code)
 
-        return user
+        return validated_data
