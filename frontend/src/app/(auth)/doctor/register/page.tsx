@@ -24,7 +24,7 @@ function DoctorRegistration() {
                     src="/images/doctor-registration-bg.jpg"
                     alt="background"
                 />
-                <div className="absolute w-full mt-[70px] flex flex-col items-center justify-center gap-6">
+                <div className="absolute w-full mt-[100px] flex flex-col items-center justify-center gap-6">
                     <h1 className="mb-[10px] text-3xl font-extrabold text-white dark:text-gray-700 text-shadow-2 text-center sm:text-center sm:text-5xl ">
                         Sign Up Here
                     </h1>
