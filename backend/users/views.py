@@ -40,7 +40,9 @@ class VerifyOTPView(APIView):
         try:
             pending_user = PendingUser.objects.get(email=email)
         except PendingUser.DoesNotExist:
-            return Response({'error': 'Invalid request or user already verified'}, status=status.HTTP_400_BAD_REQUEST)
+            if User.objects.filter(email=email).exists():
+                return Response({'error': 'User is already verified. Please log in.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Registration not found. Please register first.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if pending_user.otp_code != otp_code:
             return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
