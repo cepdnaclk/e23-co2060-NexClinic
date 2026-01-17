@@ -3,7 +3,7 @@ import Link from "next/link";
 import GreenButton from "../buttons/GreenButton";
 
 
-function UserLoginNavBar() {
+function DoctorRegistrationNavBar() {
     return (
         <div className="flex flex-wrap items-center justify-between w-full py-4 px-6 shadow-md bg-white dark:bg-gray-800">
             <div title="logo-brandname" className="flex items-center justify-between">
@@ -35,7 +35,7 @@ function UserLoginNavBar() {
                     className="flex flex-1 justify-end md:flex-none gap-3"
                 >
                     <GreenButton>
-                        <Link href="/doctor/login">I'm a Doctor</Link>
+                        <Link href="/doctor/register">I'm a Doctor</Link>
                     </GreenButton>
                 </div>
             </div>
@@ -43,4 +43,4 @@ function UserLoginNavBar() {
     );
 }
 
-export default UserLoginNavBar;
+export default DoctorRegistrationNavBar;
