@@ -1,8 +1,11 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
+from rest_framework import generics
 from rest_framework.permissions import AllowAny
-from .serializers import UserRegistrationSerializer
+from .serializers import PatientRegistrationSerializer, DoctorRegistrationSerializer
 
-class RegisterView(generics.CreateAPIView):
-    serializer_class = UserRegistrationSerializer
+class PatientRegisterView(generics.CreateAPIView):
+    serializer_class = PatientRegistrationSerializer
+    permission_classes = [AllowAny]
+
+class DoctorRegisterView(generics.CreateAPIView):
+    serializer_class = DoctorRegistrationSerializer
     permission_classes = [AllowAny]
