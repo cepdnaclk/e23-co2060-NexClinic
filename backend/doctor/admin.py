@@ -3,7 +3,7 @@ from .models import DoctorProfile
 
 @admin.register(DoctorProfile)
 class DoctorProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'specialization', 'license_number', 'is_verified')
+    list_display = ('user', 'preferred_name', 'full_name', 'specialization', 'license_number', 'is_verified')
     list_filter = ('is_verified', 'specialization')
     actions = ['verify_doctors']
 
