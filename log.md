@@ -54,6 +54,16 @@ Implemented a secure email authentication system using OTP (One-Time Password) f
 - **KeyError Fix**: Resolved an issue where the registration response was missing the `email` field.
 - **Data Validation**: Added checks in views to ensure `request.data` is a dictionary, preventing `attribute 'get' not found` errors.
 
+### 7. Recent Enhancements
+
+- **PendingUser Admin**: Registered `PendingUser` model to allow admins to view unverified registrations.
+- **Timezone**: Configured `Asia/Colombo` as the project timezone.
+- **Doctor Profile Updates**:
+  - Added `full_name`, `preferred_name`, and `nic_number` to `DoctorProfile`.
+  - Updated `DoctorRegistrationSerializer` to capture these fields.
+  - Enhanced `DoctorProfileAdmin` to display names in the dashboard list.
+- **Admin Notification**: Implemented an automated email to `nexclinicbynexaura@gmail.com` when a new doctor registers.
+
 ## API Documentation
 
 ### 1. Patient Registration
