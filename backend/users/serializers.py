@@ -88,10 +88,13 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
     specialization = serializers.CharField(write_only=True)
     license_number = serializers.CharField(write_only=True)
     phone = serializers.CharField(write_only=True)
+    full_name = serializers.CharField(write_only=True)
+    preferred_name = serializers.CharField(write_only=True)
+    nic_number = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'password2', 'specialization', 'license_number', 'phone')
+        fields = ('email', 'password', 'password2', 'specialization', 'license_number', 'phone', 'full_name', 'preferred_name', 'nic_number')
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -110,6 +113,9 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
             'specialization': validated_data.pop('specialization'),
             'license_number': validated_data.pop('license_number'),
             'phone': validated_data.pop('phone'),
+            'full_name': validated_data.pop('full_name'),
+            'preferred_name': validated_data.pop('preferred_name'),
+            'nic_number': validated_data.pop('nic_number'),
         }
         
         # Generate and Send OTP
