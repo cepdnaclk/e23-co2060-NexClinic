@@ -2,23 +2,21 @@ import GreenButton from "@/components/buttons/GreenButton";
 import MainNavbar from "@/components/HomePage/MainNavbar";
 import Link from "next/link";
 import NewsCard from "@/components/HomePage/NewsCard";
-import DoctorLoginForm from "@/components/doctor/DoctorLoginForm";
-
 
 export default function Home() {
   return (
-      <main className="flex flex-col mb-10 min-h-screen w-full  items-center justify-between sm:items-start dark:bg-black">
+      <main className="flex flex-col mb-10 min-h-screen w-full  items-center justify-between sm:items-start dark:bg-gray-900">
         <div title="home-nav-bar" className="fixed w-full top-0 left-0 z-10">
             <MainNavbar/>
         </div>
         <div title="home-row-1" className="relative flex flex-col bg-gray-200 h-[700px] gap-6 mt-[70px]">
             <img
-                className="relative opacity-80 h-[700px] w-screen object-cover" 
+                className="relative opacity-40 h-[700px] w-screen object-cover" 
                 src="/images/main-bg.jpg" 
                 alt="background" 
             />
-            <h1 className="absolute w-2/3 text-3xl font-bold text-white text-shadow-2 text-center sm:text-center sm:text-5xl top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 dark:text-gray-900">
-                Your Health, Connected. Find care & Book Online with NexClinic.
+            <h1 className="absolute w-2/3 text-5xl font-extrabold text-gray-900 text-shadow-2 text-center sm:text-center sm:text-5xl top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                Your Health, Connected. Find care & Book Online with NexClinic
             </h1>
         </div>
         <div title="home-row-2" className="mt-[40px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-center gap-6 px-4 md:px-16 lg:px-16">
@@ -38,7 +36,18 @@ export default function Home() {
                     <img
                         className="w-1/2 md:w-2/5 lg:w-2/5"
                         src="/images/stethoscope.png" 
-                        alt="image-1"
+                        alt="image-2"
+                    />
+                </div>
+                <h2 className="text-lg font-semibold text-black dark:text-white">Easy Online Booking</h2>
+                <h3 className="text-gray-500 dark:text-gray-300">Schedule Your Appointments with preferred specialists instantly, 24x7</h3>
+            </div>
+            <div className="h-full bg-white flex flex-col shadow-md p-4 rounded-lg dark:bg-gray-400">
+                <div className="flex justify-center items-center h-[200px]">
+                    <img
+                        className="w-1/2 md:w-2/5 lg:w-2/5"
+                        src="/images/shield.png" 
+                        alt="image-3"
                     />
                 </div>
                 <h2 className="text-lg font-semibold text-black dark:text-white">Easy Online Booking</h2>
@@ -49,18 +58,7 @@ export default function Home() {
                     <img
                         className="w-1/2 md:w-2/5 lg:w-2/5"
                         src="/images/calendar.png" 
-                        alt="image-1"
-                    />
-                </div>
-                <h2 className="text-lg font-semibold text-black dark:text-white">Easy Online Booking</h2>
-                <h3 className="text-gray-500 dark:text-gray-300">Schedule Your Appointments with preferred specialists instantly, 24x7</h3>
-            </div>
-            <div className="h-full bg-white flex flex-col shadow-md p-4 rounded-lg dark:bg-gray-400">
-                <div className="flex justify-center items-center h-[200px]">
-                    <img
-                        className="w-1/2 md:w-2/5 lg:w-2/5"
-                        src="/images/calendar.png" 
-                        alt="image-1"
+                        alt="image-4"
                     />
                 </div>
                 <h2 className="text-lg font-semibold text-black dark:text-white">Easy Online Booking</h2>
