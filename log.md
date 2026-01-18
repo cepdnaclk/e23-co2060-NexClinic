@@ -100,8 +100,11 @@ Implemented a secure email authentication system using OTP (One-Time Password) f
     "email": "doctor@example.com",
     "password": "securepassword",
     "password2": "securepassword",
+    "full_name": "Dr. John Smith",
+    "preferred_name": "Dr. Smith",
     "specialization": "Cardiology",
     "license_number": "LIC12345",
+    "nic_number": "199012345678",
     "phone": "0987654321"
   }
   ```
