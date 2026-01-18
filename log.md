@@ -1,4 +1,4 @@
-# Project Implementation Log - Email Authentication System
+# Project Implementation Log - Authentication System
 
 ## Overview
 
