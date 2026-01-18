@@ -63,6 +63,9 @@ Implemented a secure email authentication system using OTP (One-Time Password) f
   - Updated `DoctorRegistrationSerializer` to capture these fields.
   - Enhanced `DoctorProfileAdmin` to display names in the dashboard list.
 - **Admin Notification**: Implemented an automated email to `nexclinicbynexaura@gmail.com` when a new doctor registers.
+- **Patient Profile Updates**:
+  - Added `medical_history` field to `PatientProfile`.
+  - **Note**: This field is optional and can be `None`.
 
 ## API Documentation
 
@@ -80,7 +83,8 @@ Implemented a secure email authentication system using OTP (One-Time Password) f
     "phone": "1234567890",
     "date_of_birth": "1990-01-01",
     "gender": "Male",
-    "address": "123 Main St"
+    "address": "123 Main St",
+    "medical_history": "can be a none field"
   }
   ```
 - **Response (201 Created):**
