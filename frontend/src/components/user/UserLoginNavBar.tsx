@@ -6,12 +6,10 @@ import GreenButton from "../buttons/GreenButton";
 function UserLoginNavBar() {
     return (
         <div className="flex flex-wrap items-center justify-between w-full py-4 px-6 shadow-md bg-white dark:bg-gray-800">
-            <div title="logo-brandname" className="flex items-center justify-between">
+            <Link href="/" className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between">
                 <img src="/images/logo-main.png" alt="NexClinic Logo" className="h-8 w-8 mr-4" />
-                <Link href = "/" className="text-2xl font-bold text-gray-800 dark:text-white">
-                    NexClinic
-                </Link>
-            </div>
+                NexClinic
+            </Link>
             <div
                 title="links-buttons"
                 className="flex flex-wrap items-center gap-6 justify-between w-full md:w-auto mt-4 md:mt-0"

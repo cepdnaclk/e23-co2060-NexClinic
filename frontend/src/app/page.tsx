@@ -15,9 +15,12 @@ export default function Home() {
                 src="/images/main-bg.jpg" 
                 alt="background" 
             />
-            <h1 className="absolute w-2/3 text-5xl font-extrabold text-gray-900 text-shadow-2 text-center sm:text-center sm:text-5xl top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <h1 className="absolute w-2/3 text-5xl font-extrabold text-gray-800 text-shadow-2 text-center items-center justify-center top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-4 rounded-lg"> 
                 Your Health, Connected. Find care & Book Online with NexClinic
             </h1>
+            <GreenButton className="absolute top-[75%] left-1/2 transform -translate-x-1/2">
+                <Link href = "/doctors">Find Doctors Now</Link>
+            </GreenButton>
         </div>
         <div title="home-row-2" className="mt-[40px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 justify-center gap-6 px-4 md:px-16 lg:px-16">
             <div className="h-full bg-white flex flex-col shadow-md p-4 rounded-lg dark:bg-gray-400">
