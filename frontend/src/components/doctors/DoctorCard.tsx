@@ -1,30 +1,27 @@
-import Image from "next/image";
-import Link from "next/link";
+'use client';
 
-interface DoctorCardProps {
-  id?: string; 
+import Link from 'next/link';
+
+type Doctor = {
+  id: string;
   name: string;
   specialization: string;
-  imageUrl: string;
-}
+  hospital: string;
+};
 
-export default function DoctorCard({ id, name, specialization, imageUrl }: DoctorCardProps) {
+export default function DoctorCard({ doctor }: { doctor: Doctor }) {
   return (
-    <div className="border p-4 rounded-lg shadow-md w-64">
-      <Image
-        src={imageUrl}
-        alt={name}
-        width={200}
-        height={200}
-        className="rounded-full object-cover mb-4"
-      />
-      <h2 className="text-xl font-bold">{name}</h2>
-      <p className="text-gray-600">{specialization}</p>
-      {id && (
-        <Link href={`/doctors/${id}`} className="text-green-600 mt-2 block">
-          View Profile
-        </Link>
-      )}
+    <div className="border rounded-lg p-4 shadow-md hover:shadow-lg transition">
+      <h2 className="text-xl font-semibold">{doctor.name}</h2>
+      <p className="text-gray-600">{doctor.specialization}</p>
+      <p className="text-gray-500">{doctor.hospital}</p>
+
+      <Link
+        href={`/doctors/${doctor.id}`}
+        className="inline-block mt-3 text-blue-600 font-medium hover:underline"
+      >
+        View Profile →
+      </Link>
     </div>
   );
 }
