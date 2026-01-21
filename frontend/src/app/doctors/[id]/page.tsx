@@ -1,5 +1,6 @@
 import Image from "next/image";
 import ProfileItem from "@/components/doctors/ProfileItem";
+import DoctorsNavbar from "@/components/doctors/DoctorsNavbar";
 
 type Doctor = {
   id: string;
@@ -19,7 +20,7 @@ type Doctor = {
 const doctors: Doctor[] = [
   {
     id: "1",
-    fullName: "Dr. Amara Perera",
+    fullName: "Dr. Nimal Perera",
     slmcId: "SLMC/12345",
     photo: "/images/male-doctor-profile-pic.jpg",
     gender: "Male",
@@ -28,12 +29,12 @@ const doctors: Doctor[] = [
     qualifications: ["MBBS", "MD (Cardiology)"],
     contactNumber: "+94 77 123 4567",
     tel: "011-2345678",
-    email: "amara.perera@example.com",
+    email: "nimal.perera@example.com",
     reviews: 4.5,
   },
   {
     id: "2",
-    fullName: "Dr. Nimal Silva",
+    fullName: "Dr. Amara Silva",
     slmcId: "SLMC/67890",
     photo: "/images/female-doctor-profile-pic.jpg",
     gender: "Female",
@@ -42,7 +43,7 @@ const doctors: Doctor[] = [
     qualifications: ["MBBS", "Diploma in Dermatology"],
     contactNumber: "+94 71 987 6543",
     tel: "011-8765432",
-    email: "nimal.silva@example.com",
+    email: "amara.silva@example.com",
     reviews: 4.2,
   },
 ];
@@ -61,8 +62,10 @@ export default async function DoctorProfile({
   }
 
   return (
-    // Outer background
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 flex justify-center items-start py-10">
+    <>
+      <DoctorsNavbar />
+      {/* Outer background */}
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 flex justify-center items-start py-10">
       
       {/* Profile Card */}
       <div className="max-w-5xl w-full bg-white rounded-xl shadow-xl p-8">
@@ -95,8 +98,8 @@ export default async function DoctorProfile({
           <ProfileItem label="Email" value={doctor.email} />
           <ProfileItem label="Reviews" value={`${doctor.reviews} ⭐`} />
         </div>
-
+  </div>
       </div>
-    </div>
+    </>
   );
 }

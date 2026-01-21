@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-
+import DoctorsNavbar from "@/components/doctors/DoctorsNavbar";
 type Doctor = {
   id: string;
   fullName: string;
@@ -16,11 +16,11 @@ type Doctor = {
   reviews: number;
 };
 
-// Sample doctors array (reuse the same as in profile page)
+
 const doctors: Doctor[] = [
   {
     id: "1",
-    fullName: "Dr. Amara Perera",
+    fullName: "Dr. Nimal Perera",
     slmcId: "SLMC/12345",
     photo: "/images/male-doctor-profile-pic.jpg",
     gender: "Male",
@@ -29,12 +29,12 @@ const doctors: Doctor[] = [
     qualifications: ["MBBS", "MD (Cardiology)"],
     contactNumber: "+94 77 123 4567",
     tel: "011-2345678",
-    email: "amara.perera@example.com",
+    email: "nimal.perera@example.com",
     reviews: 4.5,
   },
   {
     id: "2",
-    fullName: "Dr. Nimal Silva",
+    fullName: "Dr. Amara Silva",
     slmcId: "SLMC/67890",
     photo: "/images/female-doctor-profile-pic.jpg",
     gender: "Female",
@@ -43,14 +43,16 @@ const doctors: Doctor[] = [
     qualifications: ["MBBS", "Diploma in Dermatology"],
     contactNumber: "+94 71 987 6543",
     tel: "011-8765432",
-    email: "nimal.silva@example.com",
+    email: "amara.silva@example.com",
     reviews: 4.2,
   },
 ];
 
 export default function DoctorsDirectory() {
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <>
+      <DoctorsNavbar />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 p-8">
       <h1 className="text-4xl font-bold text-center mb-10 text-blue-700">
         Doctors Directory
       </h1>
@@ -90,6 +92,7 @@ export default function DoctorsDirectory() {
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
