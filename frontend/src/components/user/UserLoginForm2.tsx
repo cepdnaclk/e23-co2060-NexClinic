@@ -1,25 +1,53 @@
 "use client";
 
-import React, { FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
 import BlackButton from "../buttons/BlackButton";
+import axios from "axios";
 
 function UserLoginForm() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setError("");
+        setLoading(true);
 
-        // TODO: Replace this with your real authentication logic
-        const isValid = password === "password123"; // example only
-
-        if (!isValid) {
-            setError("Incorrect email or password. Please try again.");
-        } else {
-            setError("");
-            // proceed with successful login flow here
-        }
+        try {
+            // Call the Next.js API route we created at /api/auth/login
+            const response = await axios.post("/api/auth/login", {
+                username,
+                password,
+            });
+            
+            const { token, user } = response.data;
+            localStorage.setItem("authToken", token);
+            
+            // You can also store user info if needed
+            // localStorage.setItem("userInfo", JSON.stringify(user));
+            localStorage.setItem("userInfo", JSON.stringify(user));
+        } catch (err: any) {
+            if (err.response && err.response.status === 401) {
+                setError("Incorrect email or password. Please try again.");
+            } else {
+                setError("An error occurred. Please try again later.");
+            }
+        } finally {
+            setLoading(false);
+        }   
+    // const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    //     event.preventDefault();
+    //         // TODO: Replace this with your real authentication logic
+    //     const isValid = password === "password123"; // example only
+        
+    //     if (!isValid) {
+    //         setError("Incorrect email or password. Please try again.");
+    //     } else {
+    //         setError("");
+    //         // proceed with successful login flow here
+    //     }
     };
 
     return (
