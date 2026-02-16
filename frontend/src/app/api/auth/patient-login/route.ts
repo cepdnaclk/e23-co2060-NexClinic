@@ -13,10 +13,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call Django backend login endpoint
+    // Call Django backend patient login endpoint
     // The CustomUser model uses email as USERNAME_FIELD
     const backendResponse = await fetch(
-      `${BACKEND_URL}/api/users/doctor/login/`,
+      `${BACKEND_URL}/api/users/patient/login/`,
       {
         method: "POST",
         headers: {
