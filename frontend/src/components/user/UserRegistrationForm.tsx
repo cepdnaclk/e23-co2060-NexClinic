@@ -85,29 +85,32 @@ function UserRegistrationForm() {
                     required
                 />
                 <input
-                    className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="w-full shadow appearance-none border rounded-lg py-2 px-3 bg-white text-gray-400 leading-tight focus:outline-none focus:shadow-outline"
                     id="date-of-birth"
-                    type="date"
+                    type={dateOfBirth ? "date" : "text"}
+                    placeholder="Date of Birth"
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
+                    onFocus={(e) => {
+                        e.target.type = "date";
+                    }}
                     disabled={loading}
                     required
                 />
                 <select
-                    className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="w-full shadow appearance-none border rounded-lg py-2 px-3 bg-white text-gray-400 leading-tight focus:outline-none focus:shadow-outline"
                     id="gender"
                     value={gender}
                     onChange={(e) => setGender(e.target.value)}
                     disabled={loading}
                     required
                 >
-                    <option value="">Select Gender</option>
+                    <option value="">Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
-                    <option value="Other">Other</option>
                 </select>
                 <input
-                    className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="w-full shadow appearance-none border rounded-lg py-2 px-3 bg-white text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="address"
                     type="text"
                     placeholder="Address"
@@ -117,7 +120,7 @@ function UserRegistrationForm() {
                     required
                 />
                 <input
-                    className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="w-full shadow appearance-none border rounded-lg py-2 px-3 bg-white text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="email"
                     type="email"
                     placeholder="E-mail"
@@ -127,7 +130,7 @@ function UserRegistrationForm() {
                     required
                 />
                 <input
-                    className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    className="w-full shadow appearance-none border rounded-lg py-2 px-3 bg-white text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="password"
                     type="password"
                     placeholder="Password"
