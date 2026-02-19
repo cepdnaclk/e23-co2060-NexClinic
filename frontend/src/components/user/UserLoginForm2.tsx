@@ -1,24 +1,49 @@
 "use client";
 
-import React, { FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import BlackButton from "../buttons/BlackButton";
+import axios from "axios";
 
 function UserLoginForm() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setError("");
+        setLoading(true);
 
-        // TODO: Replace this with your real authentication logic
-        const isValid = password === "password123"; // example only
-
-        if (!isValid) {
-            setError("Incorrect email or password. Please try again.");
-        } else {
-            setError("");
-            // proceed with successful login flow here
+        try {
+            // Call the Next.js API route at /api/auth/login which proxies to Django backend
+            const response = await axios.post("/api/auth/login", {
+                username,
+                password,
+            });
+            
+            const { token, refreshToken, user } = response.data;
+            
+            // Store tokens in localStorage
+            localStorage.setItem("authToken", token);
+            localStorage.setItem("refreshToken", refreshToken);
+            localStorage.setItem("userInfo", JSON.stringify(user));
+            
+            // Redirect to patient dashboard after successful login
+            router.push("/user/dashboard");
+        } catch (err: any) {
+            if (err.response?.status === 401) {
+                setError("Incorrect email or password. Please try again.");
+            } else if (err.response?.status === 400) {
+                setError("Invalid input. Please check your credentials.");
+            } else {
+                setError(err.response?.data?.error || "An error occurred. Please try again later.");
+            }
+            console.error("Login error:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -35,10 +60,12 @@ function UserLoginForm() {
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="username"
-                    type="text"
-                    placeholder="Username: Enter your email"
+                    type="email"
+                    placeholder="Enter your email"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
+                    disabled={loading}
+                    required
                 />
                 <input
                     className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -47,6 +74,8 @@ function UserLoginForm() {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    required
                 />
                 {error && (
                     <p className="text-sm text-red-500 mt-1">
@@ -55,9 +84,12 @@ function UserLoginForm() {
                 )}
                 <BlackButton
                     type="submit"
-                    className="w-full py-2 px-4 rounded-lg hover:bg-gray-800 focus:outline-none focus:shadow-outline"
+                    disabled={loading}
+                    className="w-full py-2 px-4 rounded-lg"
                 >
-                    <span className="text-white font-bold">Login</span>
+                    <span className="text-white font-bold">
+                        {loading ? "Logging in..." : "Login"}
+                    </span>
                 </BlackButton>
             </form>
             <div title="login-card-footer" className="mt-4 text-sm dark:text-gray-900">

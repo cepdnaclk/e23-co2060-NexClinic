@@ -1,0 +1,4 @@
+superuser
+username=nexaura   
+mail=admin@nexaura.com
+pass=2ypnexaura
