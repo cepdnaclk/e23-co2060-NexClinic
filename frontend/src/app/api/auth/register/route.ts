@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
+// Patient/User registration endpoint (default registration)
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.json();
 
     const backendResponse = await fetch(
-      `${BACKEND_URL}/api/users/patient/register/`,
+      `${BACKEND_URL}/api/users/register/`,
       {
         method: "POST",
         headers: {

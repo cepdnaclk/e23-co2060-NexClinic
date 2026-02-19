@@ -6,15 +6,18 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
-    path('patient/register/', PatientRegisterView.as_view(), name='patient_register'),
-    path('doctor/register/', DoctorRegisterView.as_view(), name='doctor_register'),
+    # Patient/User URLs (default routes)
+    path('register/', PatientRegisterView.as_view(), name='patient_register'),
+    path('login/', TokenObtainPairView.as_view(), name='patient_login'),
     
+    # Doctor URLs
+    path('doctor/register/', DoctorRegisterView.as_view(), name='doctor_register'),
+    path('doctor/login/', TokenObtainPairView.as_view(), name='doctor_login'),
+    
+    # OTP endpoints
     path('verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
     path('resend-otp/', ResendOTPView.as_view(), name='resend-otp'),
     
-    # Shared Login (JWT logic is same for both)
-    path('patient/login/', TokenObtainPairView.as_view(), name='patient_login'),
-    path('doctor/login/', TokenObtainPairView.as_view(), name='doctor_login'),
-    
+    # Token refresh
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

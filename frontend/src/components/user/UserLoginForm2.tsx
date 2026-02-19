@@ -18,8 +18,8 @@ function UserLoginForm() {
         setLoading(true);
 
         try {
-            // Call the Next.js API route at /api/auth/patient-login which proxies to Django backend
-            const response = await axios.post("/api/auth/patient-login", {
+            // Call the Next.js API route at /api/auth/login which proxies to Django backend
+            const response = await axios.post("/api/auth/login", {
                 username,
                 password,
             });
