@@ -19,6 +19,7 @@ function MainNavbar() {
                 </div>
                 <div title="log-sign-buttons" className="flex flex-1 gap-2 justify-end">
                     <GreenButton>
+                        {/* <Link href="../doctor/profile">Login</Link> */}
                         <Link href="/login">Login</Link>
                     </GreenButton>
                     <BlackButton>
