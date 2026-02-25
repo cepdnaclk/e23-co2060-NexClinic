@@ -1,13 +1,14 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import BlackButton from "../../../components/buttons/BlackButton"; //fix this line
 import axios from "axios";
 import VerifyOTPNavBar from "@/components/HomePage/VerifyOTPNavBar";
 
 export default function VerifyOtpPage() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const [email, setEmail] = useState("");
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
@@ -34,6 +35,10 @@ export default function VerifyOtpPage() {
                 otp,
             });
             setSuccess(response.data?.message || "Account verified successfully.");
+                // Redirect to login page after successful verification
+                setTimeout(() => {
+                    router.push("/login");
+                }, 2000);
         } catch (err: any) {
             setError(err.response?.data?.error || "Verification failed.");
         } finally {

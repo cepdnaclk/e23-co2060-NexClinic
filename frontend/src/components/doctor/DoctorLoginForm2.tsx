@@ -32,7 +32,9 @@ function DoctorLoginForm() {
             localStorage.setItem("userInfo", JSON.stringify(user));
             
             // Redirect to doctor dashboard after successful login
-            router.push("/doctor/dashboard");
+            // router.push("/doctor-self/dashboard");
+            router.push("/doctor-self/profile");
+
         } catch (err: any) {
             if (err.response?.status === 401) {
                 setError("Incorrect email or password. Please try again.");

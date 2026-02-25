@@ -13,6 +13,11 @@ from .utils import generate_otp, send_otp_email
 from django.contrib.auth.hashers import make_password
 
 class PatientRegistrationSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(write_only=True)
+    phone = serializers.CharField(write_only=True)
+    date_of_birth = serializers.DateField(write_only=True)
+    gender = serializers.CharField(write_only=True)
+    address = serializers.CharField(write_only=True)
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all())]
@@ -24,15 +29,10 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(
         write_only=True, required=True, style={'input_type': 'password'}
     )
-    full_name = serializers.CharField(write_only=True)
-    phone = serializers.CharField(write_only=True)
-    date_of_birth = serializers.DateField(write_only=True)
-    gender = serializers.CharField(write_only=True)
-    address = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'password2', 'full_name', 'phone', 'date_of_birth', 'gender', 'address')
+        fields = ('full_name', 'phone', 'date_of_birth', 'gender', 'address', 'email', 'password', 'password2')
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -74,6 +74,12 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
         return {'email': email} # Return data containing email for response serialization
 
 class DoctorRegistrationSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(write_only=True)
+    preferred_name = serializers.CharField(write_only=True)
+    nic_number = serializers.CharField(write_only=True)
+    license_number = serializers.CharField(write_only=True)
+    specialization = serializers.CharField(write_only=True)
+    phone = serializers.CharField(write_only=True)
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all())]
@@ -85,16 +91,10 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(
         write_only=True, required=True, style={'input_type': 'password'}
     )
-    specialization = serializers.CharField(write_only=True)
-    license_number = serializers.CharField(write_only=True)
-    phone = serializers.CharField(write_only=True)
-    full_name = serializers.CharField(write_only=True)
-    preferred_name = serializers.CharField(write_only=True)
-    nic_number = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'password2', 'specialization', 'license_number', 'phone', 'full_name', 'preferred_name', 'nic_number')
+        fields = ('full_name', 'preferred_name', 'nic_number', 'license_number', 'specialization',  'phone', 'email', 'password', 'password2')
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:

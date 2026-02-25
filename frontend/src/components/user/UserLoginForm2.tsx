@@ -32,7 +32,7 @@ function UserLoginForm() {
             localStorage.setItem("userInfo", JSON.stringify(user));
             
             // Redirect to patient dashboard after successful login
-            router.push("/user/dashboard");
+            router.push("/user-self/dashboard");
         } catch (err: any) {
             if (err.response?.status === 401) {
                 setError("Incorrect email or password. Please try again.");
