@@ -13,8 +13,14 @@ function DoctorLoginForm() {
     const router = useRouter();
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        
+        // Prevent refreshing the entire page
         event.preventDefault();
+
+        // Set errors to empty
         setError("");
+
+        // Set loading 
         setLoading(true);
 
         try {

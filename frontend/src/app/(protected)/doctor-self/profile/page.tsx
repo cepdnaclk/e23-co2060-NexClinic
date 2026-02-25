@@ -1,113 +1,64 @@
+"use client";
+
+import { useState } from "react";
+import GreenButton from "@/components/buttons/GreenButton";
+import DoctorNavBar from "@/components/doctor/DoctorNavBar";
+import ToggleSwitch from "@/components/buttons/ToggleSwitch";
+
 function DoctorProfilePage() {
+
+    const [isOn, setIsOn] = useState(false);
+
     return (
-        <div>
-        <nav title="navbar">
-        <div title="brand">
-            <i title="fas fa-heartbeat"></i> MedConnect AI
+        <div className="bg-gray-100 justify-center">
+            <DoctorNavBar />
+            <div title="profile-header-card" className="flex flex-wrap items-center justify-between gap-8 mx-4 mt-8 bg-white p-16 rounded-lg shadow-md">
+                <div title="left-column" className="flex flex-row gap-4 items-center pl-8 justify-center">
+                    <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-32 h-32 rounded-full object-cover" />
+                    <div title="name-spec-place" className="flex flex-col gap-2">
+                        <h1 className="text-4xl font-bold">Dr. John Doe</h1>
+                        <div title="specialization" className="flex items-center rounded-full bg-green-100 px-3 py-1 text-green-600 font-semibold text-md w-max mt-1">Cardiologist</div>
+                        <p title="location" className="text-gray-600 mt-1">
+                            <img src="/images/location.png" className="w-4 h-4 inline mr-2" alt="Location Icon" />
+                            New York, USA
+                        </p>
+                    </div>
+                </div>
+                <div title="right-column">
+                    <div title="toggle-btn" className="flex gap-6 pb-2 pr-16">
+                        <div title="text-column">
+                            <p className="text-black font-bold text-xl">Available for Online Advice</p>
+                            <p className="text-gray-400 text-sm font-bold">
+                                {isOn ? "Online advice is currently available" : "Online advice is currently unavailable"}
+                            </p>
+                        </div>
+                        <div title="toggle-switch" className="justify-center">
+                            <ToggleSwitch isOn={isOn} onToggle={setIsOn}/>
+                        </div>
+
+                    </div>
+                    <div className="flex justify-end mr-16 item-end">
+                        <GreenButton className="px-6 py-2 rounded-lg">
+                            Edit Profile
+                        </GreenButton>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div title="profile-content-section">
+
+                <div title="professional-details">
+
+                </div>
+
+                <div title="personal-info">
+
+                </div>
+
+            </div>
         </div>
-        <div title="nav-links">
-            <a href="#">Dashboard</a>
-            <a href="#">Appointments</a>
-            <a href="#">Advice Chats</a>
-            <a href="#" title="active">My Profile</a>
-            <a href="#"><i title="fas fa-sign-out-alt"></i> Logout</a>
-        </div>
-    </nav>
-
-    <div title="container">
-        
-        <div title="profile-header-card">
-            <div title="profile-img-container">
-                <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg?w=300" alt="Doctor Profile Photo">
-                </img>
-            </div>
-
-            <div title="profile-basic-info">
-                <h1>Dr. Aris Thorne</h1>
-                <span title="specialization-badge">Cardiologist</span>
-                <p><i title="fas fa-map-marker-alt" className="color: var(--text-muted);"></i> Colombo, Sri Lanka</p>
-            </div>
-
-            <div title="availability-section">
-                <div title="availability-text">
-                    <strong>Available for Online Advice</strong>
-                    <span id="availability-status-text">Visible to patients now</span>
-                </div>
-                <label title="switch">
-                    <input type="checkbox" checked id="availabilityToggle"></input>
-                    <span title="slider round"></span>
-                </label>
-            </div>
-
-             <div title="edit-btn-container">
-                <button title="btn-edit"><i title="fas fa-edit"></i> Edit Profile Details</button>
-            </div>
-        </div>
-
-
-        <div title="details-grid">
-            
-            <div title="info-card">
-                <h3><i title="fas fa-user-md"></i> Professional Details</h3>
-
-                <div title="info-group">
-                    <span title="info-label">SLMC Registration ID</span>
-                    <div title="info-value">
-                        #15243 
-                        <span title="verified-badge"><i title="fas fa-check-circle"></i> Verified</span>
-                    </div>
-                </div>
-
-                <div title="info-group">
-                    <span title="info-label">Qualifications</span>
-                    <div title="info-value">
-                        <ul title="info-list">
-                            <li>MBBS - University of Colombo (2010)</li>
-                            <li>MD in Cardiology (2015)</li>
-                            <li>MRCP (UK)</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div title="info-group">
-                    <span title="info-label">Current Working Hospitals</span>
-                    <div title="info-value">
-                        <ul title="info-list">
-                            <li>National Hospital of Sri Lanka (NHSL)</li>
-                            <li>Asiri Surgical Hospital</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-
-            <div title="info-card">
-                <h3><i title="far fa-address-card"></i> Contact & Personal Info</h3>
-
-                <div title="info-group">
-                    <span title="info-label">Email Address</span>
-                    <div title="info-value">
-                        <i title="far fa-envelope" className="color: var(--primary-color);"></i> dr.aris.thorne@medconnect.lk
-                    </div>
-                </div>
-
-                <div title="info-group">
-                    <span title="info-label">Contact Number</span>
-                    <div title="info-value">
-                        <i title="fas fa-phone-alt" className="color: var(--primary-color);"></i> +94 77 123 4567
-                    </div>
-                </div>
-
-                <div title="info-group">
-                    <span title="info-label">Gender</span>
-                    <div title="info-value">
-                        Male
-                    </div>
-                </div>
-            </div>
-
-        </div> </div>
-    </div>
     );
 }
 
