@@ -12,13 +12,14 @@ function MainNavbar() {
             </Link>
 
             <div title="links-buttons" className="flex items-center justify-between gap-6 w-full md:w-auto mt-4 md:mt-0">
-                <div title="navigation-links" className="flex text-[15px] gap-3">
-                    <Link href="/doctors" className="hover:underline underline-offset-2">Find Doctor</Link>
+                <div title="navigation-links" className="flex text-[16px] gap-3">
+                    {/* <Link href="/doctors" className="hover:underline underline-offset-2">Find Doctor</Link> */}
                     <Link href="/news-articles" className="hover:underline underline-offset-2">News & Articles</Link>
                     <Link href="/help" className="hover:underline underline-offset-2">Help</Link>
                 </div>
                 <div title="log-sign-buttons" className="flex flex-1 gap-2 justify-end">
                     <GreenButton>
+                        {/* <Link href="../doctor-self/profile">Login</Link> */}
                         <Link href="/login">Login</Link>
                     </GreenButton>
                     <BlackButton>
