@@ -1,3 +1,4 @@
+'use client';
 import Image from "next/image";
 import Link from "next/link";
 import DoctorsNavbar from "@/components/doctors/DoctorsNavbar";
@@ -86,7 +87,7 @@ export default function DoctorsDirectory() {
             <Link
               href={`/doctors/${doctor.id}`}
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors duration-300"
-            >
+              >
               See Profile
             </Link>
           </div>
@@ -95,8 +96,8 @@ export default function DoctorsDirectory() {
       </div>
     </>
   );
-
-// 'use client';
+  
+  }
 
 // import React, { useState } from 'react';
 
@@ -217,4 +218,3 @@ export default function DoctorsDirectory() {
 //         </div>
 //     );
 // 
-// }
