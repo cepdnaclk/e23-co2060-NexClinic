@@ -10,51 +10,107 @@ function DoctorProfilePage() {
     const [isOn, setIsOn] = useState(false);
 
     return (
-        <div className="bg-gray-100 justify-center">
+        <div className="bg-gray-100 dark:bg-gray-900 justify-center gap-4 min-h-screen">
             <DoctorNavBar />
-            <div title="profile-header-card" className="flex flex-wrap items-center justify-between gap-8 mx-4 mt-8 bg-white p-16 rounded-lg shadow-md">
-                <div title="left-column" className="flex flex-row gap-4 items-center pl-8 justify-center">
-                    <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-32 h-32 rounded-full object-cover" />
-                    <div title="name-spec-place" className="flex flex-col gap-2">
-                        <h1 className="text-4xl font-bold">Dr. John Doe</h1>
-                        <div title="specialization" className="flex items-center rounded-full bg-green-100 px-3 py-1 text-green-600 font-semibold text-md w-max mt-1">Cardiologist</div>
-                        <p title="location" className="text-gray-600 mt-1">
+
+            <div title="profile-header-card" className="flex flex-col lg:flex-row lg:flex-wrap items-center justify-between gap-4 lg:gap-8 mx-4 mt-4 sm:mt-8 bg-white dark:bg-gray-800 p-4 sm:p-8 lg:p-16 rounded-lg shadow-md">
+                <div title="left-column" className="flex flex-col sm:flex-row gap-4 items-center sm:pl-8 justify-center">
+                    <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover" />
+                    <div title="name-spec-place" className="flex flex-col gap-2 text-center sm:text-left">
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold dark:text-white">Dr. John Doe</h1>
+                        <div title="specialization" className="flex items-center rounded-full bg-green-100 dark:bg-green-900 px-3 py-1 text-green-600 dark:text-green-300 font-semibold text-sm sm:text-md w-max mt-1 mx-auto sm:mx-0">Cardiologist</div>
+                        <p title="location" className="text-gray-600 dark:text-gray-400 mt-1">
                             <img src="/images/location.png" className="w-4 h-4 inline mr-2" alt="Location Icon" />
                             New York, USA
                         </p>
                     </div>
                 </div>
-                <div title="right-column">
-                    <div title="toggle-btn" className="flex gap-6 pb-2 pr-16">
-                        <div title="text-column">
-                            <p className="text-black font-bold text-xl">Available for Online Advice</p>
-                            <p className="text-gray-400 text-sm font-bold">
-                                {isOn ? "Online advice is currently available" : "Online advice is currently unavailable"}
+                <div title="right-column" className="flex flex-col gap-4 justify-center w-full lg:w-auto sm:pr-8">
+                    <div title="toggle-btn" className="flex flex-col sm:flex-row gap-4 sm:gap-6 pb-2 items-center">
+                        <div title="text-column" className="text-center sm:text-left">
+                            <p className="text-black dark:text-white font-bold text-lg sm:text-xl">Availability for Online Advice</p>
+                            <p className="text-gray-400 dark:text-gray-500 text-sm font-bold">
+                                {isOn ? "Available" : "Unavailable"}
                             </p>
                         </div>
                         <div title="toggle-switch" className="justify-center">
-                            <ToggleSwitch isOn={isOn} onToggle={setIsOn}/>
+                            <ToggleSwitch isOn={isOn} onToggle={setIsOn} />
                         </div>
 
                     </div>
-                    <div className="flex justify-end mr-16 item-end">
-                        <GreenButton className="px-6 py-2 rounded-lg">
+                    <div className="flex justify-center sm:justify-end">
+                        <GreenButton className="px-6 py-2 rounded-lg w-full sm:w-auto">
                             Edit Profile
                         </GreenButton>
                     </div>
                 </div>
-
-
             </div>
 
-            <div title="profile-content-section">
+            <div title="profile-content-section" className="flex flex-col lg:flex-row mx-4 my-4 gap-4">
 
-                <div title="professional-details">
+                <div title="professional-details" className="w-full lg:w-1/2 bg-white dark:bg-gray-800 p-4 sm:p-8 rounded-lg shadow-md">
+                    <div title="Title">
+                        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Professional Details</h2>
+                    </div>
+
+                    <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+
+                    <div title="SLMC-reg-ID" className="flex flex-col sm:flex-row my-2 items-start sm:items-center justify-between gap-2 sm:gap-4">
+                        <div className="text-gray-600 dark:text-gray-400">
+                            <span className="font-bold text-gray-800 dark:text-gray-200">SLMC Registration ID:</span>
+                            123456
+                        </div>
+                        <div title="verification-status" className="flex items-center rounded-full bg-green-100 dark:bg-green-900 px-3 py-1 text-green-600 dark:text-green-300 font-semibold text-sm sm:text-md w-max mt-1">
+                            <img src="/images/verified.png" className="w-4 h-4 inline mr-2" alt="Verified Icon" />
+                            {/* <img src="/images/not-verified.png" className="w-4 h-4 inline mr-2" alt="Not Verified Icon" /> */}
+                            Verified
+                        </div>
+
+                    </div>
+
+                    <div title="Qualifications" className="flex flex-col my-2 text-gray-600 dark:text-gray-400">
+                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Qualifications:</p>
+                        <ul className="flex flex-col list-disc pl-6 gap-2">
+                            <li>MBBS</li>
+                            <li>MD (Cardiology)</li>
+                            <li>PhD in Medical Research</li>
+                        </ul>
+                    </div>
+
+
+                    <div title="Currently-Practicing-Hospitals" className="flex flex-col my-2 text-gray-600 dark:text-gray-400">
+                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Currently Practicing Hospitals:</p>
+                        <ul className="flex flex-col list-disc pl-6 gap-2">
+                            <li>General Hospital Peradeniya</li>
+                            <li>City Medical Center</li>
+                            <li>Asiri Hospital Kandy</li>
+                        </ul>
+                    </div>
 
                 </div>
 
-                <div title="personal-info">
+                <div title="personal-info" className="w-full lg:w-1/2 bg-white dark:bg-gray-800 p-4 sm:p-8 rounded-lg shadow-md lg:ml-4">
+                    <div title="Title">
+                        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Personal Information</h2>
+                    </div>
 
+                    <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+
+                    <div title="Email" className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
+                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Email Address:</p>
+                        <div className="flex items-center">
+                            <img src="/images/at.png" className="w-4 h-4 inline mr-2" alt="Email Icon" />
+                            <p>dr.john.doe@hospital.com</p>
+                        </div>
+                    </div>
+                    <div title="Contact" className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
+                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Contact Number:</p>
+                        <div className="flex items-center">
+                            <img src="/images/phone.png" className="w-4 h-4 inline mr-2" alt="Phone Icon" />
+                            <p>+94 77 123 4567</p>
+                        </div>
+                    </div>
+                    
                 </div>
 
             </div>
