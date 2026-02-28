@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import GreenButton from '@/components/buttons/GreenButton';
 import BlackButton from '@/components/buttons/BlackButton';
-import MainNavbar from '@/components/HomePage/MainNavbar';
+import RoleBasedNavbar from '@/components/common/RoleBasedNavbar';
 import WhiteButton from '@/components/buttons/WhiteButton';
 
 interface NewsArticle {
@@ -112,7 +112,7 @@ export default function NewsArticlesPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className='fixed w-full z-10'>
-                <MainNavbar/>
+                <RoleBasedNavbar />
             </div>
             {/* Header */}
             <div className="bg-white shadow-sm border-b pt-24">

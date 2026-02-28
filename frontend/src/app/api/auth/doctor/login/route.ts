@@ -40,16 +40,35 @@ export async function POST(request: NextRequest) {
     const tokenData = await backendResponse.json();
 
     // Return the token and user info to the frontend
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         token: tokenData.access,
         refreshToken: tokenData.refresh,
         user: {
           email: username,
+          role: "DOCTOR",
         },
       },
       { status: 200 }
     );
+
+    response.cookies.set("authToken", tokenData.access, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+    });
+
+    response.cookies.set("userRole", "DOCTOR", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+    });
+
+    return response;
   } catch (error) {
     console.error("Login API error", error);
     return NextResponse.json(

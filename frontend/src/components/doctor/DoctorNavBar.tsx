@@ -9,6 +9,22 @@ function DoctorNavBar() {
     const pathname = usePathname();
     
     const isActive = (href: string) => pathname === href;
+
+    const handleLogout = async () => {
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+        } catch (error) {
+            console.error("Logout API error:", error);
+        }
+
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("userInfo");
+
+        document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+        document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+    };
     
     return (
         <div className="flex flex-wrap items-center justify-between w-full py-4 px-6 shadow-md bg-white dark:bg-gray-800">
@@ -54,7 +70,7 @@ function DoctorNavBar() {
                     className="flex flex-1 justify-end md:flex-none gap-3"
                 >
                     <BlackButton>
-                        <Link href="/login">Logout</Link>
+                        <Link href="/login" onClick={handleLogout}>Logout</Link>
                     </BlackButton>
                 </div>
             </div>
