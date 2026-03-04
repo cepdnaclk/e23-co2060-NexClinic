@@ -1,23 +1,26 @@
 import React from 'react';
 
-interface BlackButtonProps {
+interface WhiteButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
   type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
 }
 
-export default function BlackButton({ 
+export default function WhiteButton({
   children, 
   onClick, 
   className = '',
-  type = 'button'
-}: BlackButtonProps) {
+  type = 'button',
+  disabled = false
+}: WhiteButtonProps) {
   return (
     <button
       type={type}
       onClick={onClick}
-      className={`px-6 py-2 bg-white hover:bg-gray-200 text-gray-900 font-semibold rounded-lg transition-colors ${className}`}
+      disabled={disabled}
+      className={`px-6 py-2 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 font-semibold rounded-lg transition-colors disabled:bg-gray-100 disabled:hover:bg-gray-100 disabled:cursor-not-allowed ${className}`}
     >
       {children}
     </button>

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 
-import DoctorLoginForm from '@/components/doctor/DoctorLoginForm';
+import DoctorLoginForm from '@/components/doctor/DoctorLoginForm2';
 import DoctorLoginNavBar from '@/components/doctor/DoctorLoginNavBar';
 
 function DoctorLogin() {

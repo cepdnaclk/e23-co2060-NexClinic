@@ -16,7 +16,7 @@ function UserLoginNavBar() {
             >
                 <div
                     title="navigation-links"
-                    className="flex flex-1 justify-center md:flex-none md:justify-start text-[15px] gap-5"
+                    className="flex flex-1 justify-center md:flex-none md:justify-start text-[16px] gap-5"
                 >
                     <Link href="/doctors" className="hover:underline underline-offset-2">
                         Find Doctor

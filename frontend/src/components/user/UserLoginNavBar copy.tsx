@@ -26,7 +26,7 @@ function MainNavbar() {
 
                 {/* Desktop links */}
                 <div className="hidden items-center gap-5 md:flex">
-                    <div title="navigation-links" className="flex gap-4 text-[15px]">
+                    <div title="navigation-links" className="flex gap-4 text-[16px]">
                         <Link href="/doctors" className="hover:underline underline-offset-2">
                             Find Doctor
                         </Link>
