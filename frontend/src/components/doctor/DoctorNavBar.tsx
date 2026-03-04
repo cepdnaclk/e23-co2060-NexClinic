@@ -28,7 +28,7 @@ function DoctorNavBar() {
     
     return (
         <div className="flex flex-wrap items-center justify-between w-full py-4 px-6 shadow-md bg-white dark:bg-gray-800">
-            <Link href="/" className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between">
+            <Link href="/doctor-self/dashboard" className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between">
                 <img src="/images/logo-main.png" alt="NexClinic Logo" className="h-8 w-8 mr-4" />
                 NexClinic
             </Link>
@@ -70,7 +70,7 @@ function DoctorNavBar() {
                     className="flex flex-1 justify-end md:flex-none gap-3"
                 >
                     <BlackButton>
-                        <Link href="/login" onClick={handleLogout}>Logout</Link>
+                        <Link href="doctor/login" onClick={handleLogout}>Logout</Link>
                     </BlackButton>
                 </div>
             </div>

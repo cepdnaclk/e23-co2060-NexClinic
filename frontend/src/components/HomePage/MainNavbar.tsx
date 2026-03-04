@@ -1,12 +1,29 @@
+"use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import GreenButton from "../buttons/GreenButton";
 import BlackButton from "../buttons/BlackButton";
 
 function MainNavbar() {
+    const [logoHref, setLogoHref] = useState("/");
+
+    useEffect(() => {
+        const role = localStorage.getItem("userRole");
+        if (role === "DOCTOR") {
+            setLogoHref("/doctor-self/dashboard");
+            return;
+        }
+        if (role === "PATIENT") {
+            setLogoHref("/user-self/dashboard");
+            return;
+        }
+        setLogoHref("/");
+    }, []);
+
     return (
         <div className="flex flex-wrap items-center justify-between w-full py-4 px-4 shadow-md bg-white dark:bg-gray-800">
-            <Link href="/" className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between">
+            <Link href={logoHref} className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between">
                 <img src="/images/logo-main.png" alt="NexClinic Logo" className="h-8 w-8 mr-4" />
                 NexClinic
             </Link>

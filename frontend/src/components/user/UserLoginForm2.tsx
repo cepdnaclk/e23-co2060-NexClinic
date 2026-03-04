@@ -31,6 +31,8 @@ function UserLoginForm() {
             localStorage.setItem("refreshToken", refreshToken);
             localStorage.setItem("userRole", "PATIENT");
             localStorage.setItem("userInfo", JSON.stringify({ ...user, role: "PATIENT" }));
+            localStorage.setItem("user", JSON.stringify({ ...user, role: "PATIENT" }));
+            localStorage.setItem("isAuthenticated", "true");
 
             const secureFlag = window.location.protocol === "https:" ? "; secure" : "";
             document.cookie = `authToken=${token}; path=/; max-age=86400; samesite=lax${secureFlag}`;

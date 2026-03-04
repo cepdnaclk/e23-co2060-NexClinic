@@ -19,17 +19,27 @@ export default function UserDashboardNavbar() {
     const [showNotifications, setShowNotifications] = useState(false);
 
     useEffect(() => {
-        const userData = localStorage.getItem("user");
+        const userData = localStorage.getItem("userInfo") || localStorage.getItem("user");
         if (userData) {
             setUser(JSON.parse(userData));
         }
     }, []);
 
     const handleLogout = () => {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("userInfo");
         localStorage.removeItem("user");
         localStorage.removeItem("isAuthenticated");
+
+        document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+        document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+
         router.push("/login");
     };
+
+    const displayName = user?.name || user?.email?.split("@")[0] || "User";
 
     const notifications = [
         { id: 1, message: "Appointment with Dr. Sarah Johnson tomorrow at 10:00 AM", time: "2 hours ago", unread: true },
@@ -126,18 +136,18 @@ export default function UserDashboardNavbar() {
                             {user?.profileImage ? (
                                 <Image
                                     src={user.profileImage}
-                                    alt={user.name}
+                                    alt={displayName}
                                     width={40}
                                     height={40}
                                     className="rounded-full object-cover"
                                 />
                             ) : (
                                 <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                                    {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                                    {displayName.split(' ').map(n => n[0]).join('').toUpperCase()}
                                 </div>
                             )}
                             <div className="hidden md:block text-left">
-                                <p className="text-sm font-medium text-gray-700">{user?.name || 'User'}</p>
+                                <p className="text-sm font-medium text-gray-700">{displayName}</p>
                                 <p className="text-xs text-gray-500">Not a Doctor</p>
                             </div>
                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,8 +159,8 @@ export default function UserDashboardNavbar() {
                         {showDropdown && (
                             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200">
                                 <div className="px-4 py-3 border-b border-gray-200">
-                                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                                    <p className="text-sm font-medium text-gray-900">{displayName}</p>
+                                    <p className="text-xs text-gray-500 truncate">{user?.email || ""}</p>
                                 </div>
                                 <div className="py-1">
                                     <button

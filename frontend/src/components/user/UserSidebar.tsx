@@ -18,11 +18,13 @@ export default function UserSidebar() {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
-        const userData = localStorage.getItem("user");
+        const userData = localStorage.getItem("userInfo") || localStorage.getItem("user");
         if (userData) {
             setUser(JSON.parse(userData));
         }
     }, []);
+
+    const displayName = user?.name || user?.email?.split("@")[0] || "User";
 
     const menuItems = [
         {
@@ -92,7 +94,7 @@ export default function UserSidebar() {
     ];
 
     return (
-        <aside className="w-64 bg-white shadow-lg">
+        <aside className="relative w-64 h-full bg-white shadow-lg">
             <div className="p-6">
                 <h1 className="text-2xl font-bold text-gray-800">Nexaura</h1>
                 <p className="text-sm text-gray-500 mt-1">Health Portal</p>
@@ -126,18 +128,18 @@ export default function UserSidebar() {
                     {user?.profileImage ? (
                         <Image
                             src={user.profileImage}
-                            alt={user.name}
+                            alt={displayName}
                             width={40}
                             height={40}
                             className="rounded-full object-cover"
                         />
                     ) : (
                         <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                            {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                            {displayName.split(' ').map(n => n[0]).join('').toUpperCase()}
                         </div>
                     )}
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-800">{user?.name || 'User'}</p>
+                        <p className="text-sm font-medium text-gray-800">{displayName}</p>
                         <p className="text-xs text-gray-500">Not a Doctor</p>
                     </div>
                 </div>
