@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,38 +82,47 @@ WSGI_APPLICATION = "main.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         # "ENGINE": "django.db.backends.sqlite3",
-#         # "NAME": BASE_DIR / "db.sqlite3",
-#         "ENGINE": "django.db.backends.postgresql_psycopg2",
-#         "NAME": "nexaura",
-#         "USER": "nexaura",
-#         "PASSWORD": "2ypnexaura",
-#         "HOST": "localhost",
-#         "PORT": 5432,
-#     }
-# }
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 
-DATABASES = {
-    "default": {
-        # "ENGINE": "django.db.backends.sqlite3",
-        # "NAME": BASE_DIR / "db.sqlite3",
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "nexclinic",
-        "USER": "nexaura",
-        "PASSWORD": "2ypnexaura",
-        "HOST": "localhost",
-        "PORT": 5432,
+if DATABASE_URL:
+    parsed_db_url = urlparse(DATABASE_URL)
+    db_name = parsed_db_url.path.lstrip("/")
+    db_port = parsed_db_url.port or 5432
+    ssl_mode = os.getenv("DB_SSLMODE", "require")
+
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": db_name,
+            "USER": parsed_db_url.username,
+            "PASSWORD": parsed_db_url.password,
+            "HOST": parsed_db_url.hostname,
+            "PORT": db_port,
+            "OPTIONS": {"sslmode": ssl_mode},
+        }
     }
-}
+else:
+    db_engine = os.getenv("DB_ENGINE", "django.db.backends.postgresql")
+    db_name = os.getenv("DB_NAME", "nexclinic")
+    db_user = os.getenv("DB_USER", "nexaura")
+    db_password = os.getenv("DB_PASSWORD", "2ypnexaura")
+    db_host = os.getenv("DB_HOST", "localhost")
+    db_port = os.getenv("DB_PORT", "5432")
+    db_sslmode = os.getenv("DB_SSLMODE", "")
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+    DATABASES = {
+        "default": {
+            "ENGINE": db_engine,
+            "NAME": db_name,
+            "USER": db_user,
+            "PASSWORD": db_password,
+            "HOST": db_host,
+            "PORT": db_port,
+        }
+    }
+
+    if db_sslmode:
+        DATABASES["default"]["OPTIONS"] = {"sslmode": db_sslmode}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
