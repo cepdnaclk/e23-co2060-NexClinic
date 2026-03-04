@@ -33,7 +33,7 @@ function UserLoginForm() {
                 localStorage.setItem("isAuthenticated", "true");
                 
                 // Redirect to dashboard
-                router.push("/user/dashboard");
+                router.push("/user-self/dashboard");
             } else {
                 setError(data.message || "Login failed");
             }
