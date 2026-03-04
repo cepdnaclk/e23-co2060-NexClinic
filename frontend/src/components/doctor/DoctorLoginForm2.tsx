@@ -35,11 +35,16 @@ function DoctorLoginForm() {
             // Store tokens in localStorage
             localStorage.setItem("authToken", token);
             localStorage.setItem("refreshToken", refreshToken);
-            localStorage.setItem("userInfo", JSON.stringify(user));
+            localStorage.setItem("userRole", "DOCTOR");
+            localStorage.setItem("userInfo", JSON.stringify({ ...user, role: "DOCTOR" }));
+
+            const secureFlag = window.location.protocol === "https:" ? "; secure" : "";
+            document.cookie = `authToken=${token}; path=/; max-age=86400; samesite=lax${secureFlag}`;
+            document.cookie = `userRole=DOCTOR; path=/; max-age=86400; samesite=lax${secureFlag}`;
             
             // Redirect to doctor dashboard after successful login
-            // router.push("/doctor-self/dashboard");
-            router.push("/doctor-self/profile");
+            router.push("/doctor-self/dashboard");
+            // router.push("/doctor-self/profile");
 
         } catch (err: any) {
             if (err.response?.status === 401) {

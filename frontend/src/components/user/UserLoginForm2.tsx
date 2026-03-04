@@ -29,7 +29,12 @@ function UserLoginForm() {
             // Store tokens in localStorage
             localStorage.setItem("authToken", token);
             localStorage.setItem("refreshToken", refreshToken);
-            localStorage.setItem("userInfo", JSON.stringify(user));
+            localStorage.setItem("userRole", "PATIENT");
+            localStorage.setItem("userInfo", JSON.stringify({ ...user, role: "PATIENT" }));
+
+            const secureFlag = window.location.protocol === "https:" ? "; secure" : "";
+            document.cookie = `authToken=${token}; path=/; max-age=86400; samesite=lax${secureFlag}`;
+            document.cookie = `userRole=PATIENT; path=/; max-age=86400; samesite=lax${secureFlag}`;
             
             // Redirect to patient dashboard after successful login
             router.push("/user-self/dashboard");

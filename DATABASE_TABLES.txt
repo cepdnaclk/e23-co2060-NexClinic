@@ -1,0 +1,151 @@
+NexAura - Database Tables (Current + Recommended)
+
+Note:
+- Types are shown in Django model style with SQL-equivalent hints in brackets.
+- "Current" = already represented in your codebase.
+- "Recommended" = needed to fully support appointments, advice chats, earnings, and dashboard metrics.
+
+==================================================
+CURRENT TABLES
+==================================================
+
+1) users_customuser  (Current)
+--------------------------------
+- id: BigAutoField [BIGINT PK]
+- email: EmailField(unique=True) [VARCHAR(254) UNIQUE]
+- username: CharField(max_length=150, null=True, blank=True) [VARCHAR(150)]
+- role: CharField(max_length=50, choices=ADMIN|PATIENT|DOCTOR) [VARCHAR(50)]
+- is_active: BooleanField(default=True) [BOOLEAN]
+- is_staff: BooleanField(default=False) [BOOLEAN]
+- is_superuser: BooleanField(default=False) [BOOLEAN]
+- date_joined: DateTimeField(default=timezone.now) [TIMESTAMP]
+- password: CharField (from AbstractBaseUser) [VARCHAR(128)]
+- last_login: DateTimeField(null=True) [TIMESTAMP]
+
+2) users_pendinguser  (Current)
+--------------------------------
+- id: BigAutoField [BIGINT PK]
+- email: EmailField(unique=True) [VARCHAR(254) UNIQUE]
+- otp_code: CharField(max_length=6) [VARCHAR(6)]
+- password: CharField(max_length=128) [VARCHAR(128)]
+- role: CharField(max_length=50) [VARCHAR(50)]
+- profile_data: JSONField [JSON/JSONB]
+- created_at: DateTimeField(auto_now_add=True) [TIMESTAMP]
+- expires_at: DateTimeField [TIMESTAMP]
+
+3) doctor_doctorprofile  (Current)
+-----------------------------------
+- id: BigAutoField [BIGINT PK]
+- user: OneToOneField(users_customuser, related_name='doctor_profile') [BIGINT UNIQUE FK]
+- specialization: CharField(max_length=100) [VARCHAR(100)]
+- license_number: CharField(max_length=50) [VARCHAR(50)]
+- phone: CharField(max_length=15) [VARCHAR(15)]
+- full_name: CharField(max_length=255, default='Doctor') [VARCHAR(255)]
+- preferred_name: CharField(max_length=100, default='Dr.') [VARCHAR(100)]
+- nic_number: CharField(max_length=20, default='') [VARCHAR(20)]
+- is_verified: BooleanField(default=False) [BOOLEAN]
+
+4) patient_patientprofile  (Current)
+------------------------------------
+- id: BigAutoField [BIGINT PK]
+- user: OneToOneField(users_customuser, related_name='patient_profile') [BIGINT UNIQUE FK]
+- full_name: CharField(max_length=255) [VARCHAR(255)]
+- date_of_birth: DateField [DATE]
+- gender: CharField(max_length=10) [VARCHAR(10)]
+- phone: CharField(max_length=15) [VARCHAR(15)]
+- address: CharField(max_length=100) [VARCHAR(100)]
+- medical_history: TextField(null=True, blank=True) [TEXT]
+
+==================================================
+RECOMMENDED TABLES (for your current frontend features)
+==================================================
+
+5) doctor_availability_slot  (Recommended)
+-------------------------------------------
+Purpose: Store doctor's online advice availability schedule.
+- id: BigAutoField [BIGINT PK]
+- doctor: ForeignKey(doctor_doctorprofile) [BIGINT FK]
+- weekday: CharField(max_length=12)  # MONDAY...SUNDAY [VARCHAR(12)]
+- start_time: TimeField [TIME]
+- end_time: TimeField [TIME]
+- is_active: BooleanField(default=True) [BOOLEAN]
+- created_at: DateTimeField(auto_now_add=True) [TIMESTAMP]
+- updated_at: DateTimeField(auto_now=True) [TIMESTAMP]
+
+6) appointment  (Recommended)
+-----------------------------
+Purpose: In-person appointment records.
+- id: BigAutoField [BIGINT PK]
+- appointment_code: CharField(max_length=20, unique=True) [VARCHAR(20) UNIQUE]
+- doctor: ForeignKey(doctor_doctorprofile) [BIGINT FK]
+- patient: ForeignKey(patient_patientprofile) [BIGINT FK]
+- appointment_type: CharField(max_length=20, default='IN_PERSON') [VARCHAR(20)]
+- status: CharField(max_length=20)  # PENDING, CONFIRMED, CANCELLED, COMPLETED [VARCHAR(20)]
+- scheduled_date: DateField [DATE]
+- scheduled_time: TimeField [TIME]
+- duration_minutes: PositiveIntegerField(default=30) [INTEGER]
+- fee_lkr: DecimalField(max_digits=10, decimal_places=2) [DECIMAL(10,2)]
+- notes: TextField(blank=True, default='') [TEXT]
+- created_at: DateTimeField(auto_now_add=True) [TIMESTAMP]
+- updated_at: DateTimeField(auto_now=True) [TIMESTAMP]
+
+7) advice_chat_thread  (Recommended)
+-------------------------------------
+Purpose: Online advice chat conversation header between one doctor and one patient.
+- id: BigAutoField [BIGINT PK]
+- thread_code: CharField(max_length=20, unique=True) [VARCHAR(20) UNIQUE]
+- doctor: ForeignKey(doctor_doctorprofile) [BIGINT FK]
+- patient: ForeignKey(patient_patientprofile) [BIGINT FK]
+- status: CharField(max_length=20)  # OPEN, CLOSED [VARCHAR(20)]
+- started_at: DateTimeField(auto_now_add=True) [TIMESTAMP]
+- last_message_at: DateTimeField(null=True, blank=True) [TIMESTAMP]
+
+8) advice_chat_message  (Recommended)
+--------------------------------------
+Purpose: Individual messages inside an advice chat thread.
+- id: BigAutoField [BIGINT PK]
+- thread: ForeignKey(advice_chat_thread, related_name='messages') [BIGINT FK]
+- sender_user: ForeignKey(users_customuser) [BIGINT FK]
+- sender_role: CharField(max_length=20)  # DOCTOR or PATIENT [VARCHAR(20)]
+- message_text: TextField [TEXT]
+- is_read: BooleanField(default=False) [BOOLEAN]
+- sent_at: DateTimeField(auto_now_add=True) [TIMESTAMP]
+
+9) payment_transaction  (Recommended)
+-------------------------------------
+Purpose: Record payments for appointments and advice chats to calculate earnings.
+- id: BigAutoField [BIGINT PK]
+- transaction_ref: CharField(max_length=50, unique=True) [VARCHAR(50) UNIQUE]
+- doctor: ForeignKey(doctor_doctorprofile) [BIGINT FK]
+- patient: ForeignKey(patient_patientprofile) [BIGINT FK]
+- appointment: ForeignKey(appointment, null=True, blank=True) [BIGINT FK]
+- chat_thread: ForeignKey(advice_chat_thread, null=True, blank=True) [BIGINT FK]
+- payment_for: CharField(max_length=20)  # IN_PERSON_APPOINTMENT, ADVICE_CHAT [VARCHAR(20)]
+- amount_lkr: DecimalField(max_digits=10, decimal_places=2) [DECIMAL(10,2)]
+- platform_fee_lkr: DecimalField(max_digits=10, decimal_places=2, default=0) [DECIMAL(10,2)]
+- doctor_earning_lkr: DecimalField(max_digits=10, decimal_places=2) [DECIMAL(10,2)]
+- status: CharField(max_length=20)  # PENDING, PAID, FAILED, REFUNDED [VARCHAR(20)]
+- paid_at: DateTimeField(null=True, blank=True) [TIMESTAMP]
+- created_at: DateTimeField(auto_now_add=True) [TIMESTAMP]
+
+10) doctor_fee_config  (Recommended)
+-------------------------------------
+Purpose: Store current fee settings shown on doctor profile/dashboard.
+- id: BigAutoField [BIGINT PK]
+- doctor: OneToOneField(doctor_doctorprofile) [BIGINT UNIQUE FK]
+- in_person_fee_lkr: DecimalField(max_digits=10, decimal_places=2, default=0) [DECIMAL(10,2)]
+- advice_chat_fee_lkr: DecimalField(max_digits=10, decimal_places=2, default=0) [DECIMAL(10,2)]
+- updated_at: DateTimeField(auto_now=True) [TIMESTAMP]
+
+==================================================
+OPTIONAL IMPROVEMENT: Extra columns in doctor_doctorprofile
+==================================================
+If you prefer fewer tables, you can add these directly to doctor_doctorprofile:
+- experience_years: PositiveIntegerField(default=0)
+- location: CharField(max_length=120, blank=True, default='')
+- qualifications: JSONField(default=list)
+- hospitals: JSONField(default=list)
+- languages: JSONField(default=list)
+- availability_for_online_advice: BooleanField(default=False)
+
+(Using separate tables is better for reporting and filtering at scale.)

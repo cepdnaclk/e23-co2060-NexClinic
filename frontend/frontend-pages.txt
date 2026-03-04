@@ -1,0 +1,28 @@
+Pages and their frontend routes for the NexAura frontend application:
+Common pages
+- Home                          "/"                             ✅
+- About Us                      "/about-us"            
+- Contact Us                    "/contact-us"
+- News & Articles               "/news-articles"
+- Login/Signup as a user        "/login"                        ✅
+- Login/Signup as a doctor      "/doctor/login"                 ✅
+- Find a Doctor                 "/doctors"                      ✅
+- Doctor profile                "/doctors/[doctorId]"           ✅  
+
+User pages
+- User Dashboard                "/[userId]/dashboard"
+- My Profile                    "/[userId]/profile"                        
+- My Appointments               "/[userId]/appointments"
+- My Prescriptions              "/[userId]/prescriptions"
+- My Medical Records            "/[userId]/medical-records"          
+- My Payments                   "/[userId]/payments"
+- My Notifications              "/[userId]/notifications"
+- My Chats                      "/[userId]/chats"
+
+
+Doctor pages
+- Doctor Dashboard              "/[doctorId]/dashboard"
+- My Profile                    "/[doctorId]/profile"           ✅
+- My Appointments               "/[doctorId]/appointments"
+- Advice chats                  "/[doctorId]/advice-chats"
+
