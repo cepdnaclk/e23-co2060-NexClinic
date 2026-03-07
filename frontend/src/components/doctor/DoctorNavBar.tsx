@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import BlackButton from "../buttons/BlackButton";
@@ -7,6 +8,11 @@ import BlackButton from "../buttons/BlackButton";
 
 function DoctorNavBar() {
     const pathname = usePathname();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname]);
     
     const isActive = (href: string) => pathname === href;
 
@@ -27,52 +33,93 @@ function DoctorNavBar() {
     };
     
     return (
-        <div className="flex flex-wrap items-center justify-between w-full py-4 px-6 shadow-md bg-white dark:bg-gray-800">
-            <Link href="/doctor-self/dashboard" className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between">
-                <img src="/images/logo-main.png" alt="NexClinic Logo" className="h-8 w-8 mr-4" />
-                NexClinic
-            </Link>
+        <div className="w-full py-4 px-4 sm:px-6 shadow-md bg-white dark:bg-gray-800">
+            <div className="flex items-center justify-between">
+                <Link href="/doctor-self/dashboard" className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between">
+                    <img src="/images/logo-main.png" alt="NexClinic Logo" className="h-8 w-8 mr-4" />
+                    NexClinic
+                </Link>
+
+                <button
+                    type="button"
+                    className="md:hidden inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-gray-800 dark:text-white"
+                    onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                    aria-label="Toggle navigation menu"
+                    aria-expanded={isMobileMenuOpen}
+                >
+                    <span className="text-lg">{isMobileMenuOpen ? "x" : "☰"}</span>
+                </button>
+
+                <div
+                    title="links-buttons-desktop"
+                    className="hidden md:flex items-center gap-6"
+                >
+                    <div
+                        title="navigation-links"
+                        className="flex text-[16px] gap-5"
+                    >
+                        <Link
+                            href="/doctor-self/dashboard"
+                            className={`${isActive('/doctor-self/dashboard') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
+                        >
+                            Dashboard
+                        </Link>
+                        <Link
+                            href="/doctor-self/appointments"
+                            className={`${isActive('/doctor-self/appointments') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
+                        >
+                            Appointments
+                        </Link>
+                        <Link
+                            href="/doctor-self/chats"
+                            className={`${isActive('/doctor-self/chats') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
+                        >
+                            Chats
+                        </Link>
+                        <Link
+                            href="/doctor-self/profile"
+                            className={`${isActive('/doctor-self/profile') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
+                        >
+                            My Profile
+                        </Link>
+                    </div>
+                    <div title="log-sign-buttons" className="flex gap-3">
+                        <BlackButton onClick={handleLogout}>Logout</BlackButton>
+                    </div>
+                </div>
+            </div>
+
             <div
-                title="links-buttons"
-                className="flex flex-wrap items-center gap-6 justify-between w-full md:w-auto mt-4 md:mt-0"
+                title="links-buttons-mobile"
+                className={`${isMobileMenuOpen ? "flex" : "hidden"} md:hidden flex-col gap-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4`}
             >
-                <div
-                    title="navigation-links"
-                    className="flex flex-1 justify-center md:flex-none md:justify-start text-[16px] gap-5"
+                <Link
+                    href="/doctor-self/dashboard"
+                    className={`${isActive('/doctor-self/dashboard') ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-800 dark:text-white'}`}
                 >
-                    <Link 
-                        href="/doctor-self/dashboard" 
-                        className={`${isActive('/doctor-self/dashboard') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
-                    >
-                        Dashboard
-                    </Link>
-                    <Link 
-                        href="/doctor-self/appointments" 
-                        className={`${isActive('/doctor-self/appointments') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
-                    >
-                        Appointments
-                    </Link>
-                    <Link 
-                        href="/doctor-self/chats" 
-                        className={`${isActive('/doctor-self/chats') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
-                    >
-                        Chats
-                    </Link>
-                    <Link 
-                        href="/doctor-self/profile" 
-                        className={`${isActive('/doctor-self/profile') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
-                    >
-                        My Profile
-                    </Link>
-                </div>
-                <div
-                    title="log-sign-buttons"
-                    className="flex flex-1 justify-end md:flex-none gap-3"
+                    Dashboard
+                </Link>
+                <Link
+                    href="/doctor-self/appointments"
+                    className={`${isActive('/doctor-self/appointments') ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-800 dark:text-white'}`}
                 >
-                    <BlackButton>
-                        <Link href="doctor/login" onClick={handleLogout}>Logout</Link>
-                    </BlackButton>
-                </div>
+                    Appointments
+                </Link>
+                <Link
+                    href="/doctor-self/chats"
+                    className={`${isActive('/doctor-self/chats') ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-800 dark:text-white'}`}
+                >
+                    Chats
+                </Link>
+                <Link
+                    href="/doctor-self/profile"
+                    className={`${isActive('/doctor-self/profile') ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-800 dark:text-white'}`}
+                >
+                    My Profile
+                </Link>
+                <BlackButton onClick={handleLogout} className="w-full">
+                    Logout
+                </BlackButton>
             </div>
         </div>
     );
