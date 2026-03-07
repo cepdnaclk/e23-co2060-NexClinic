@@ -137,6 +137,29 @@ Purpose: Store current fee settings shown on doctor profile/dashboard.
 - advice_chat_fee_lkr: DecimalField(max_digits=10, decimal_places=2, default=0) [DECIMAL(10,2)]
 - updated_at: DateTimeField(auto_now=True) [TIMESTAMP]
 
+11) user_activity_log  (Recommended)
+-------------------------------------
+Purpose: Store audit trail of every action performed by every user.
+- id: BigAutoField [BIGINT PK]
+- actor_user: ForeignKey(users_customuser, null=True, blank=True) [BIGINT FK]
+- actor_email: EmailField(blank=True, default='') [VARCHAR(254)]
+- actor_role: CharField(max_length=50, blank=True, default='') [VARCHAR(50)]
+- action_type: CharField(max_length=30)  # CREATE, UPDATE, DELETE, LOGIN, LOGOUT, VIEW, EXPORT [VARCHAR(30)]
+- entity_type: CharField(max_length=80)  # table/model name, e.g., appointmentavailableslot [VARCHAR(80)]
+- entity_id: CharField(max_length=64, blank=True, default='')  # supports int/uuid ids [VARCHAR(64)]
+- endpoint: CharField(max_length=255, blank=True, default='') [VARCHAR(255)]
+- request_method: CharField(max_length=10, blank=True, default='') [VARCHAR(10)]
+- request_id: CharField(max_length=64, blank=True, default='') [VARCHAR(64)]
+- ip_address: GenericIPAddressField(null=True, blank=True) [INET/VARCHAR(45)]
+- user_agent: TextField(blank=True, default='') [TEXT]
+- status_code: PositiveSmallIntegerField(null=True, blank=True) [SMALLINT]
+- success: BooleanField(default=True) [BOOLEAN]
+- change_summary: TextField(blank=True, default='') [TEXT]
+- old_values: JSONField(null=True, blank=True) [JSON/JSONB]
+- new_values: JSONField(null=True, blank=True) [JSON/JSONB]
+- metadata: JSONField(null=True, blank=True) [JSON/JSONB]
+- created_at: DateTimeField(auto_now_add=True) [TIMESTAMP]
+
 ==================================================
 OPTIONAL IMPROVEMENT: Extra columns in doctor_doctorprofile
 ==================================================

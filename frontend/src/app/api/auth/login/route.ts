@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     const tokenData = await backendResponse.json();
+    const role = tokenData.role || "PATIENT";
 
     // Return the token and user info to the frontend
     const response = NextResponse.json(
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
         refreshToken: tokenData.refresh,
         user: {
           email: username,
-          role: "PATIENT",
+          role,
         },
       },
       { status: 200 }
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24,
     });
 
-    response.cookies.set("userRole", "PATIENT", {
+    response.cookies.set("userRole", role, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

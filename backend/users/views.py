@@ -1,6 +1,13 @@
 from rest_framework import generics
-from rest_framework.permissions import AllowAny
-from .serializers import PatientRegistrationSerializer, DoctorRegistrationSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from .serializers import (
+    PatientRegistrationSerializer,
+    DoctorRegistrationSerializer,
+    PatientTokenObtainPairSerializer,
+    DoctorTokenObtainPairSerializer,
+)
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 class PatientRegisterView(generics.CreateAPIView):
     serializer_class = PatientRegistrationSerializer
@@ -9,6 +16,14 @@ class PatientRegisterView(generics.CreateAPIView):
 class DoctorRegisterView(generics.CreateAPIView):
     serializer_class = DoctorRegistrationSerializer
     permission_classes = [AllowAny]
+
+
+class PatientLoginView(TokenObtainPairView):
+    serializer_class = PatientTokenObtainPairSerializer
+
+
+class DoctorLoginView(TokenObtainPairView):
+    serializer_class = DoctorTokenObtainPairSerializer
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -104,3 +119,20 @@ class ResendOTPView(APIView):
         send_otp_email(pending_user.email, otp_code)
 
         return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh') if isinstance(request.data, dict) else None
+
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                # Token blacklist app may be disabled; logout still succeeds client-side.
+                pass
+
+        return Response({'message': 'Logged out successfully.'}, status=status.HTTP_200_OK)

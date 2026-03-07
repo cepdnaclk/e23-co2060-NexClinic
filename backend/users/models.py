@@ -52,3 +52,56 @@ class PendingUser(models.Model):
 
     def __str__(self):
         return f"Pending registration for {self.email}"
+
+
+class UserActivityLog(models.Model):
+    class ActionType(models.TextChoices):
+        CREATE = "CREATE", "Create"
+        UPDATE = "UPDATE", "Update"
+        DELETE = "DELETE", "Delete"
+        LOGIN = "LOGIN", "Login"
+        LOGOUT = "LOGOUT", "Logout"
+        VIEW = "VIEW", "View"
+        EXPORT = "EXPORT", "Export"
+        OTHER = "OTHER", "Other"
+
+    actor_user = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='activity_logs',
+    )
+    actor_email = models.EmailField(blank=True, default="")
+    actor_role = models.CharField(max_length=50, blank=True, default="")
+    action_type = models.CharField(max_length=30, choices=ActionType.choices, default=ActionType.OTHER)
+
+    entity_type = models.CharField(max_length=80, blank=True, default="")
+    entity_id = models.CharField(max_length=64, blank=True, default="")
+
+    endpoint = models.CharField(max_length=255, blank=True, default="")
+    request_method = models.CharField(max_length=10, blank=True, default="")
+    request_id = models.CharField(max_length=64, blank=True, default="")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True, default="")
+
+    status_code = models.PositiveSmallIntegerField(null=True, blank=True)
+    success = models.BooleanField(default=True)
+    change_summary = models.TextField(blank=True, default="")
+    old_values = models.JSONField(null=True, blank=True)
+    new_values = models.JSONField(null=True, blank=True)
+    metadata = models.JSONField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['created_at']),
+            models.Index(fields=['action_type', 'created_at']),
+            models.Index(fields=['actor_user', 'created_at']),
+            models.Index(fields=['entity_type', 'entity_id']),
+        ]
+
+    def __str__(self):
+        actor = self.actor_email or "anonymous"
+        return f"{actor} {self.action_type} {self.entity_type}:{self.entity_id}"

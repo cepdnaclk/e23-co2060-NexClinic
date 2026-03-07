@@ -1,7 +1,9 @@
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import get_user_model
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.utils import timezone
 from patient.models import PatientProfile
 from doctor.models import DoctorProfile
@@ -134,3 +136,27 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
         send_otp_email(email, otp_code)
 
         return {'email': email}
+
+
+class DoctorTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if getattr(self.user, 'role', None) != 'DOCTOR':
+            raise AuthenticationFailed('No doctor account found for this email.')
+
+        data['role'] = getattr(self.user, 'role', '')
+        data['email'] = getattr(self.user, 'email', '')
+        return data
+
+
+class PatientTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if getattr(self.user, 'role', None) != 'PATIENT':
+            raise AuthenticationFailed('No patient account found for this email.')
+
+        data['role'] = getattr(self.user, 'role', '')
+        data['email'] = getattr(self.user, 'email', '')
+        return data

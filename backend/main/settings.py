@@ -57,6 +57,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "users.middleware.UserActivityLoggingMiddleware",
 ]
 
 ROOT_URLCONF = "main.urls"
@@ -101,28 +102,28 @@ if DATABASE_URL:
             "OPTIONS": {"sslmode": ssl_mode},
         }
     }
-else:
-    db_engine = os.getenv("DB_ENGINE", "django.db.backends.postgresql")
-    db_name = os.getenv("DB_NAME", "nexclinic")
-    db_user = os.getenv("DB_USER", "nexaura")
-    db_password = os.getenv("DB_PASSWORD", "2ypnexaura")
-    db_host = os.getenv("DB_HOST", "localhost")
-    db_port = os.getenv("DB_PORT", "5432")
-    db_sslmode = os.getenv("DB_SSLMODE", "")
+# else:
+#     db_engine = os.getenv("DB_ENGINE", "django.db.backends.postgresql")
+#     db_name = os.getenv("DB_NAME", "nexclinic")
+#     db_user = os.getenv("DB_USER", "nexaura")
+#     db_password = os.getenv("DB_PASSWORD", "2ypnexaura")
+#     db_host = os.getenv("DB_HOST", "localhost")
+#     db_port = os.getenv("DB_PORT", "5432")
+#     db_sslmode = os.getenv("DB_SSLMODE", "")
 
-    DATABASES = {
-        "default": {
-            "ENGINE": db_engine,
-            "NAME": db_name,
-            "USER": db_user,
-            "PASSWORD": db_password,
-            "HOST": db_host,
-            "PORT": db_port,
-        }
-    }
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": db_engine,
+#             "NAME": db_name,
+#             "USER": db_user,
+#             "PASSWORD": db_password,
+#             "HOST": db_host,
+#             "PORT": db_port,
+#         }
+#     }
 
-    if db_sslmode:
-        DATABASES["default"]["OPTIONS"] = {"sslmode": db_sslmode}
+#     if db_sslmode:
+#         DATABASES["default"]["OPTIONS"] = {"sslmode": db_sslmode}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -172,7 +173,7 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': False,
+    'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'VERIFYING_KEY': None,

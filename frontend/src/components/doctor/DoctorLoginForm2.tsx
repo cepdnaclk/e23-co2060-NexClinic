@@ -31,28 +31,33 @@ function DoctorLoginForm() {
             });
             
             const { token, refreshToken, user } = response.data;
+            const role = user?.role || "DOCTOR";
             
             // Store tokens in localStorage
             localStorage.setItem("authToken", token);
             localStorage.setItem("refreshToken", refreshToken);
-            localStorage.setItem("userRole", "DOCTOR");
-            localStorage.setItem("userInfo", JSON.stringify({ ...user, role: "DOCTOR" }));
+            localStorage.setItem("userRole", role);
+            localStorage.setItem("userInfo", JSON.stringify({ ...user, role }));
 
             const secureFlag = window.location.protocol === "https:" ? "; secure" : "";
             document.cookie = `authToken=${token}; path=/; max-age=86400; samesite=lax${secureFlag}`;
-            document.cookie = `userRole=DOCTOR; path=/; max-age=86400; samesite=lax${secureFlag}`;
+            document.cookie = `userRole=${role}; path=/; max-age=86400; samesite=lax${secureFlag}`;
             
             // Redirect to doctor dashboard after successful login
             router.push("/doctor-self/dashboard");
             // router.push("/doctor-self/profile");
 
         } catch (err: any) {
-            if (err.response?.status === 401) {
+            const backendError = err.response?.data?.error || err.response?.data?.detail;
+
+            if (backendError) {
+                setError(backendError);
+            } else if (err.response?.status === 401) {
                 setError("Incorrect email or password. Please try again.");
             } else if (err.response?.status === 400) {
                 setError("Invalid input. Please check your credentials.");
             } else {
-                setError(err.response?.data?.error || "An error occurred. Please try again later.");
+                setError("An error occurred. Please try again later.");
             }
             console.error("Login error:", err);
         } finally {
