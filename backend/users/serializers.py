@@ -7,12 +7,17 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.utils import timezone
 from patient.models import PatientProfile
 from doctor.models import DoctorProfile
+from doctor.constants import DOCTOR_SPECIALIZATIONS
 
 User = get_user_model()
 
 from .models import PendingUser
 from .utils import generate_otp, send_otp_email
 from django.contrib.auth.hashers import make_password
+
+DOCTOR_SPECIALIZATION_LOOKUP = {
+    specialization.lower(): specialization for specialization in DOCTOR_SPECIALIZATIONS
+}
 
 class PatientRegistrationSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(write_only=True)
@@ -97,6 +102,12 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('full_name', 'preferred_name', 'nic_number', 'license_number', 'specialization',  'phone', 'email', 'password', 'password2')
+
+    def validate_specialization(self, value):
+        canonical = DOCTOR_SPECIALIZATION_LOOKUP.get(value.strip().lower())
+        if not canonical:
+            raise serializers.ValidationError('Please choose a valid specialization.')
+        return canonical
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:

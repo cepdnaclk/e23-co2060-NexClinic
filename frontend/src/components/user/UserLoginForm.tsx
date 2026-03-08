@@ -1,44 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import BlackButton from "../buttons/BlackButton";
+import axios from "axios";
 
 function UserLoginForm() {
-    const router = useRouter();
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
         setError("");
         setLoading(true);
 
         try {
-            const response = await fetch("/api/auth", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email, password }),
+            // Call the Next.js API route at /api/auth/login which proxies to Django backend
+            const response = await axios.post("/api/auth/login", {
+                username,
+                password,
             });
+            
+            const { token, refreshToken, user } = response.data;
+            const role = user?.role || "PATIENT";
+            
+            // Store tokens in localStorage
+            localStorage.setItem("authToken", token);
+            localStorage.setItem("refreshToken", refreshToken);
+            localStorage.setItem("userRole", role);
+            localStorage.setItem("userInfo", JSON.stringify({ ...user, role }));
+            localStorage.setItem("user", JSON.stringify({ ...user, role }));
+            localStorage.setItem("isAuthenticated", "true");
 
-            const data = await response.json();
+            const secureFlag = window.location.protocol === "https:" ? "; secure" : "";
+            document.cookie = `authToken=${token}; path=/; max-age=86400; samesite=lax${secureFlag}`;
+            document.cookie = `userRole=${role}; path=/; max-age=86400; samesite=lax${secureFlag}`;
+            
+            // Redirect to patient dashboard after successful login
+            router.push("/user-self/dashboard");
+        } catch (err: any) {
+            const backendError = err.response?.data?.error || err.response?.data?.detail;
 
-            if (response.ok) {
-                // Store user data in localStorage
-                localStorage.setItem("user", JSON.stringify(data.user));
-                localStorage.setItem("isAuthenticated", "true");
-                
-                // Redirect to dashboard
-                router.push("/user-self/dashboard");
+            if (backendError) {
+                setError(backendError);
+            } else if (err.response?.status === 401) {
+                setError("Incorrect email or password. Please try again.");
+            } else if (err.response?.status === 400) {
+                setError("Invalid input. Please check your credentials.");
             } else {
-                setError(data.message || "Login failed");
+                setError("An error occurred. Please try again later.");
             }
-        } catch (err) {
-            setError("An error occurred. Please try again.");
+            console.error("Login error:", err);
         } finally {
             setLoading(false);
         }
@@ -49,14 +64,19 @@ function UserLoginForm() {
             <div title="login-card-header" className="mb-4 items-center dark:text-gray-900 text-2xl font-bold">
                 <p>Welcome Back!</p>
             </div>
-            <form title="login-card-form" className="flex flex-col gap-4 mb-4 rounded-lg w-full" onSubmit={handleSubmit}>
+            <form
+                title="login-card-form"
+                className="flex flex-col gap-4 mb-4 rounded-lg w-full"
+                onSubmit={handleSubmit}
+            >
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="username"
                     type="email"
-                    placeholder="Username: Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    disabled={loading}
                     required
                 />
                 <input
@@ -66,6 +86,7 @@ function UserLoginForm() {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
                     required
                 />
                 {error && (
@@ -73,12 +94,14 @@ function UserLoginForm() {
                         {error}
                     </p>
                 )}
-                <BlackButton 
-                    type="submit" 
-                    className="w-full py-2 px-4 rounded-lg hover:bg-gray-800 focus:outline-none focus:shadow-outline"
+                <BlackButton
+                    type="submit"
                     disabled={loading}
+                    className="w-full py-2 px-4 rounded-lg"
                 >
-                    <span className="text-white font-bold">{loading ? "Loading..." : "Login"}</span>
+                    <span className="text-white font-bold">
+                        {loading ? "Logging in..." : "Login"}
+                    </span>
                 </BlackButton>
             </form>
             <div title="login-card-footer" className="mt-4 text-sm dark:text-gray-900">
@@ -87,6 +110,5 @@ function UserLoginForm() {
         </div>
     );
 }
-
 
 export default UserLoginForm;

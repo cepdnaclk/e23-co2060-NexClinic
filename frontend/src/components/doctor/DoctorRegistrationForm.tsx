@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BlackButton from "../buttons/BlackButton";
 import axios from "axios";
@@ -10,6 +10,9 @@ function DoctorRegistrationForm() {
     const [preferredName, setPreferredName] = useState("");
     const [nicNumber, setNicNumber] = useState("");
     const [specialization, setSpecialization] = useState("");
+    const [specializationOptions, setSpecializationOptions] = useState<string[]>([]);
+    const [specializationLoading, setSpecializationLoading] = useState(true);
+    const [specializationFetchError, setSpecializationFetchError] = useState(false);
     const [licenseNumber, setLicenseNumber] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
@@ -20,10 +23,58 @@ function DoctorRegistrationForm() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchSpecializations = async () => {
+            try {
+                const response = await axios.get("/api/doctor/specializations");
+                const options = Array.isArray(response.data?.specializations)
+                    ? response.data.specializations
+                    : [];
+
+                if (isMounted) {
+                    setSpecializationOptions(options);
+                    setSpecializationFetchError(options.length === 0);
+                }
+            } catch (fetchError) {
+                console.error("Failed to fetch doctor specializations", fetchError);
+                if (isMounted) {
+                    setSpecializationOptions([]);
+                    setSpecializationFetchError(true);
+                }
+            } finally {
+                if (isMounted) {
+                    setSpecializationLoading(false);
+                }
+            }
+        };
+
+        fetchSpecializations();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError("");
         setSuccess("");
+
+        if (specializationFetchError || specializationOptions.length === 0) {
+            setError("Unable to load doctor specializations. Please refresh and try again.");
+            return;
+        }
+
+        const matchedSpecialization = specializationOptions.find(
+            (option) => option.toLowerCase() === specialization.trim().toLowerCase()
+        );
+
+        if (!matchedSpecialization) {
+            setError("Please choose a valid specialization from the list.");
+            return;
+        }
 
         if (password !== password2) {
             setError("Passwords do not match.");
@@ -37,7 +88,7 @@ function DoctorRegistrationForm() {
                 email,
                 password,
                 password2,
-                specialization,
+                specialization: matchedSpecialization,
                 license_number: licenseNumber,
                 phone,
                 full_name: fullName,
@@ -48,8 +99,10 @@ function DoctorRegistrationForm() {
             const responseEmail = response.data?.email || email;
             setSuccess("Registration submitted. Check your email for the OTP.");
             router.push(`/verify-otp?email=${encodeURIComponent(responseEmail)}`);
-        } catch (err: any) {
-            const message = err.response?.data?.error || err.response?.data || "Registration failed.";
+        } catch (err: unknown) {
+            const message = axios.isAxiosError(err)
+                ? err.response?.data?.error || err.response?.data || "Registration failed."
+                : "Registration failed.";
             setError(typeof message === "string" ? message : "Registration failed.");
         } finally {
             setLoading(false);
@@ -75,6 +128,8 @@ function DoctorRegistrationForm() {
                     onChange={(e) => setFullName(e.target.value)}
                     disabled={loading}
                     required
+                    maxLength={100}
+                    minLength={2}
                 />
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -85,6 +140,8 @@ function DoctorRegistrationForm() {
                     onChange={(e) => setPreferredName(e.target.value)}
                     disabled={loading}
                     required
+                    maxLength={100}
+                    minLength={2}
                 />
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -95,6 +152,8 @@ function DoctorRegistrationForm() {
                     onChange={(e) => setNicNumber(e.target.value)}
                     disabled={loading}
                     required
+                    minLength={10}
+                    maxLength={12}
                 />
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -105,17 +164,30 @@ function DoctorRegistrationForm() {
                     onChange={(e) => setLicenseNumber(e.target.value)}
                     disabled={loading}
                     required
+                    minLength={5}
+                    maxLength={20}
                 />
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="specialization"
                     type="text"
-                    placeholder="Specialization"
+                    list="specialization-options"
+                    placeholder={specializationLoading ? "Loading specializations..." : "Search and select specialization"}
                     value={specialization}
                     onChange={(e) => setSpecialization(e.target.value)}
-                    disabled={loading}
+                    disabled={loading || specializationLoading}
                     required
                 />
+                <datalist id="specialization-options">
+                    {specializationOptions.map((option) => (
+                        <option key={option} value={option} />
+                    ))}
+                </datalist>
+                <p className="text-xs text-gray-400">
+                    {specializationFetchError
+                        ? "Specializations failed to load. Refresh the page."
+                        : "Start typing to filter and choose a specialization."}
+                </p>
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="phone"
@@ -125,6 +197,8 @@ function DoctorRegistrationForm() {
                     onChange={(e) => setPhone(e.target.value)}
                     disabled={loading}
                     required
+                    pattern="^\+94?[0-9\s\-]{10}$"
+                    title="Please enter a valid Sri Lankan phone number"
                 />
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -135,6 +209,8 @@ function DoctorRegistrationForm() {
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
                     required
+                    pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+                    title="Please enter a valid email address"
                 />
                 <input
                     className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -145,6 +221,8 @@ function DoctorRegistrationForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
                     required
+                    pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$"
+                    title="Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"
                 />
                 <input
                     className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -155,12 +233,14 @@ function DoctorRegistrationForm() {
                     onChange={(e) => setPassword2(e.target.value)}
                     disabled={loading}
                     required
+                    pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$"
+                    title="Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"
                 />
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 {success && <p className="text-sm text-green-600">{success}</p>}
                 <BlackButton
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || specializationLoading || specializationOptions.length === 0}
                     className="w-full py-2 px-4 rounded-lg"
                 >
                     <span className="text-white font-bold">

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import UserLoginForm from '@/components/user/UserLoginForm2';
+import UserLoginForm from '@/components/user/UserLoginForm';
 import UserLoginNavBar from '@/components/user/UserLoginNavBar';
 
 function UserLogin() {

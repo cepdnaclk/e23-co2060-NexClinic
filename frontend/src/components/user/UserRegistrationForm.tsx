@@ -73,16 +73,20 @@ function UserRegistrationForm() {
                     onChange={(e) => setFullName(e.target.value)}
                     disabled={loading}
                     required
+                    maxLength={100}
+                    minLength={2}
                 />
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="phone"
                     type="tel"
-                    placeholder="Phone"
+                    placeholder="Phone: +94712345678"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     disabled={loading}
                     required
+                    pattern="^\+94?[0-9\s\-]{10}$"
+                    title="Please enter a valid Sri Lankan phone number"
                 />
                 <input
                     className="w-full shadow appearance-none border rounded-lg py-2 px-3 bg-white text-gray-400 leading-tight focus:outline-none focus:shadow-outline"
@@ -128,6 +132,8 @@ function UserRegistrationForm() {
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
                     required
+                    pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+                    title="Please enter a valid email address"
                 />
                 <input
                     className="w-full shadow appearance-none border rounded-lg py-2 px-3 bg-white text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -138,6 +144,8 @@ function UserRegistrationForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
                     required
+                    pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$"
+                    title="Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"
                 />
                 <input
                     className="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -148,6 +156,8 @@ function UserRegistrationForm() {
                     onChange={(e) => setPassword2(e.target.value)}
                     disabled={loading}
                     required
+                    pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$"
+                    title="Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"
                 />
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 {success && <p className="text-sm text-green-600">{success}</p>}
