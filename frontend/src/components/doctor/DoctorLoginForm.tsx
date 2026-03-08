@@ -101,18 +101,20 @@ function DoctorLoginForm() {
                     </p>
                 )}
             </form>
-                <div title="forgot-password" className="mt-4 text-sm dark:text-gray-900">
-                    <p>Forgot password? <a href="/doctor/forgot-password" className="text-green-500 hover:underline">Reset here</a></p>
-                </div>
-                <BlackButton
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-2 px-4 rounded-lg"
-                >
-                    <span className="text-white font-bold">
-                        {loading ? "Logging in..." : "Login"}
-                    </span>
-                </BlackButton>
+
+            <div title="forgot-password" className="mt-4 text-sm dark:text-gray-900">
+                <p>Forgot password? <a href="/doctor/forgot-password" className="text-green-500 hover:underline">Reset here</a></p>
+            </div>
+            
+            <BlackButton
+                type="submit"
+                disabled={loading}
+                className="w-full py-2 px-4 rounded-lg"
+            >
+                <span className="text-white font-bold">
+                    {loading ? "Logging in..." : "Login"}
+                </span>
+            </BlackButton>
             <div title="login-card-footer" className="mt-2 text-sm dark:text-gray-900">
                 <p>Don't have an account? <a href="/doctor/register" className="text-green-500 hover:underline">Sign up here</a></p>
             </div>
