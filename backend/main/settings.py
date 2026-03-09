@@ -14,8 +14,14 @@ from pathlib import Path
 import os
 from urllib.parse import urlparse
 
+# Load environment variables from .env if present
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -102,28 +108,8 @@ if DATABASE_URL:
             "OPTIONS": {"sslmode": ssl_mode},
         }
     }
-# else:
-#     db_engine = os.getenv("DB_ENGINE", "django.db.backends.postgresql")
-#     db_name = os.getenv("DB_NAME", "nexclinic")
-#     db_user = os.getenv("DB_USER", "nexaura")
-#     db_password = os.getenv("DB_PASSWORD", "2ypnexaura")
-#     db_host = os.getenv("DB_HOST", "localhost")
-#     db_port = os.getenv("DB_PORT", "5432")
-#     db_sslmode = os.getenv("DB_SSLMODE", "")
-
-#     DATABASES = {
-#         "default": {
-#             "ENGINE": db_engine,
-#             "NAME": db_name,
-#             "USER": db_user,
-#             "PASSWORD": db_password,
-#             "HOST": db_host,
-#             "PORT": db_port,
-#         }
-#     }
-
-#     if db_sslmode:
-#         DATABASES["default"]["OPTIONS"] = {"sslmode": db_sslmode}
+else:
+    raise Exception("DATABASE_URL environment variable not set. Please add it to your .env file.")
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
