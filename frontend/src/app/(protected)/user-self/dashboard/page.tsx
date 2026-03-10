@@ -79,7 +79,11 @@ export default function UserDashboard() {
                     <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Quick Actions</h2>
                     <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
                     <div className="space-y-3">
-                        <button className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg transition">New Appointment</button>
+                        <Link href="/user-self/book-appointment">
+                            <button className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg transition">
+                                New Appointment
+                            </button>
+                        </Link>
                         <button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition">Message Doctor</button>
                         <button className="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg transition">View Records</button>
                     </div>
