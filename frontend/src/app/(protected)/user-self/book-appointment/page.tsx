@@ -1,24 +1,30 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 // Mock data for doctors, hospitals, and slots
 const doctors = [
-  { id: 1, name: "Dr. John Doe" },
-  { id: 2, name: "Dr. Jane Smith" },
-  { id: 3, name: "Dr. Alice Brown" },
+  { id: 1, name: "Dr. Nimal Perera" },
+  { id: 2, name: "Dr. Amara Silva" },
+  { id: 3, name: "Dr. Kamal Fernando" },
+  { id: 4, name: "Dr. Rashmi Wijesinghe" },
 ];
 const hospitals = [
-  { id: 1, name: "City Hospital" },
-  { id: 2, name: "Green Valley Clinic" },
-  { id: 3, name: "Sunrise Medical Center" },
+  { id: 1, name: "Asiri Hospital" },
+  { id: 2, name: "National Hospital Colombo" },
+  { id: 3, name: "Lanka Hospitals" },
+  { id: 4, name: "Nawaloka Hospital" },
+
 ];
 const slots = [
   "09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"
 ];
 
 const BookAppointmentPage = () => {
-  const [doctorId, setDoctorId] = useState("");
+  const searchParams = useSearchParams();
+  const doctorParam = searchParams.get("doctor");
+  const [doctorId, setDoctorId] = useState(doctorParam || "");
   const [hospitalId, setHospitalId] = useState("");
   const [date, setDate] = useState("");
   const [slot, setSlot] = useState("");
