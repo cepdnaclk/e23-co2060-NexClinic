@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "https://e23-co2060-nexclinic.onrender.com";
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export async function POST(request: NextRequest) {
     try {
