@@ -1,63 +1,74 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Demo user credentials (in production, use a real database)
-const DEMO_USERS = [
-    {
-        id: "1",
-        email: "user@example.com",
-        password: "password123",
-        name: "John Doe",
-        role: "member",
-        profileImage: "https://i.pravatar.cc/150?img=12"
-    },
-    {
-        id: "2",
-        email: "patient@nexaura.com",
-        password: "patient123",
-        name: "Jane Smith",
-        role: "member",
-        profileImage: "https://i.pravatar.cc/150?img=5"
-    }
-];
+const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const { email, password } = body;
+        const { email, password } = await request.json();
 
-        // Validate input
         if (!email || !password) {
             return NextResponse.json(
-                { message: "Email and password are required" },
+                { error: "Email and password are required" },
                 { status: 400 }
             );
         }
 
-        // Find user
-        const user = DEMO_USERS.find(
-            (u) => u.email === email && u.password === password
+        const backendResponse = await fetch(
+            `${BACKEND_URL}/api/users/login/`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email, password }),
+            }
         );
 
-        if (!user) {
+        if (!backendResponse.ok) {
+            const errorData = await backendResponse.json().catch(() => ({}));
             return NextResponse.json(
-                { message: "Invalid email or password" },
-                { status: 401 }
+                { error: errorData?.detail || "Login failed" },
+                { status: backendResponse.status }
             );
         }
 
-        // Return user data (excluding password)
-        const { password: _, ...userWithoutPassword } = user;
-        
-        return NextResponse.json(
+        const tokenData = await backendResponse.json();
+        const role = tokenData.role || "PATIENT";
+
+        const response = NextResponse.json(
             {
-                message: "Login successful",
-                user: userWithoutPassword
+                token: tokenData.access,
+                refreshToken: tokenData.refresh,
+                user: {
+                    email,
+                    role,
+                },
             },
             { status: 200 }
         );
+
+        response.cookies.set("authToken", tokenData.access, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 60 * 24,
+        });
+
+        response.cookies.set("userRole", role, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+            maxAge: 60 * 60 * 24,
+        });
+
+        return response;
     } catch (error) {
+        console.error("Auth API error", error);
         return NextResponse.json(
-            { message: "Internal server error" },
+            { error: "An error occurred during login" },
             { status: 500 }
         );
     }
