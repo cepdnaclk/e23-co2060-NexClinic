@@ -49,7 +49,7 @@ export default function UserDashboardNavbar() {
 
                 <button
                     type="button"
-                    className="md:hidden inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-gray-800 dark:text-white"
+                    className="lg:hidden inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-gray-800 dark:text-white"
                     onClick={() => setIsMobileMenuOpen((prev) => !prev)}
                     aria-label="Toggle navigation menu"
                     aria-expanded={isMobileMenuOpen}
@@ -119,7 +119,7 @@ export default function UserDashboardNavbar() {
 
             <div
                 title="links-buttons-mobile"
-                className={`${isMobileMenuOpen ? "flex" : "hidden"} md:hidden flex-col gap-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4`}
+                className={`${isMobileMenuOpen ? "flex" : "hidden"} lg:hidden flex-col gap-3 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4`}
             >
                 <Link
                     href="/user-self/dashboard"

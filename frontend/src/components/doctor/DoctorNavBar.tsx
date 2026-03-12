@@ -14,7 +14,7 @@ function DoctorNavBar() {
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [pathname]);
-    
+
     const isActive = (href: string) => pathname === href;
 
     const handleLogout = async () => {
@@ -34,7 +34,7 @@ function DoctorNavBar() {
 
         router.push("/doctor/login");
     };
-    
+
     return (
         <div className="w-full py-4 px-4 sm:px-6 shadow-md bg-white dark:bg-gray-800">
             <div className="flex items-center justify-between">
@@ -84,6 +84,12 @@ function DoctorNavBar() {
                             className={`${isActive('/doctor-self/profile') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
                         >
                             My Profile
+                        </Link>
+                        <Link
+                            href="/news-articles"
+                            className={`${isActive('/news-articles') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
+                        >
+                            News & Articles
                         </Link>
                     </div>
                     <div title="log-sign-buttons" className="flex gap-3">
