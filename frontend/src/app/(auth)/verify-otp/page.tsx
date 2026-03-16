@@ -1,12 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import BlackButton from "../../../components/buttons/BlackButton"; //fix this line
 import axios from "axios";
 import VerifyOTPNavBar from "@/components/HomePage/VerifyOTPNavBar";
 
-export default function VerifyOtpPage() {
+function VerifyOtpPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [email, setEmail] = useState("");
@@ -116,5 +116,38 @@ export default function VerifyOtpPage() {
                 </button>
             </div>
         </div>
+    );
+}
+
+function VerifyOtpFallback() {
+    return (
+        <div className="flex flex-col min-h-screen items-center justify-center px-4">
+            <div title="home-nav-bar" className="fixed w-full top-0 left-0 z-10">
+                <VerifyOTPNavBar />
+            </div>
+
+            <div className="absolute w-screen h-screen -z-10">
+                <img
+                    className="w-full h-full object-cover opacity-40"
+                    src="/images/verify-otp-bg.jpg"
+                    alt="Nexaura Logo"
+                />
+            </div>
+
+            <div className="flex w-[320px] flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
+                <div className="text-center text-2xl font-bold text-gray-900">
+                    <p>Verify Your Email</p>
+                </div>
+                <p className="text-sm text-gray-500 text-center">Loading...</p>
+            </div>
+        </div>
+    );
+}
+
+export default function VerifyOtpPage() {
+    return (
+        <Suspense fallback={<VerifyOtpFallback />}>
+            <VerifyOtpPageContent />
+        </Suspense>
     );
 }
