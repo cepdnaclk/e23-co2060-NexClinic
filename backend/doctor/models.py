@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 class DoctorProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='doctor_profile')
@@ -86,3 +87,42 @@ class DoctorOnlineAdviceAvailability(models.Model):
     
     def __str__(self):
         return f"{self.doctor.preferred_name} - {self.day_of_week} {self.start_time} to {self.end_time}"
+
+
+class Appointment(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        ACCEPTED = "ACCEPTED", "Accepted"
+        REJECTED = "REJECTED", "Rejected"
+        COMPLETED = "COMPLETED", "Completed"
+        CANCELLED = "CANCELLED", "Cancelled"
+
+    slot = models.OneToOneField(AppointmentAvailableSlot, on_delete=models.PROTECT, related_name="appointment")
+        
+    doctor = models.ForeignKey(DoctorProfile, on_delete=models.PROTECT, related_name="appointments")
+
+    patient = models.ForeignKey("patient.PatientProfile", on_delete=models.PROTECT, related_name="appointments")
+
+    reason = models.TextField(blank=True, default="")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING )
+
+    requested_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['doctor', 'slot']),
+            models.Index(fields=['patient', 'slot']),
+            models.Index(fields=['requested_at'])
+        ]
+
+    def clean(self):
+        if self.slot.doctor != self.doctor:
+            raise ValidationError("The doctor for the appointment must match the doctor of the slot.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # This will call the clean() method to validate the model
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Appointment for {self.patient.full_name} with {self.doctor.preferred_name} on {self.slot.date} from {self.slot.start_time} to {self.slot.end_time} - Status: {self.status}"    

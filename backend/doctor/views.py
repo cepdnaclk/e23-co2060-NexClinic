@@ -5,12 +5,15 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 
-from .models import AppointmentAvailableSlot, DoctorOnlineAdviceAvailability
+from .models import AppointmentAvailableSlot, DoctorOnlineAdviceAvailability, Appointment
 from .constants import DOCTOR_SPECIALIZATIONS
 from .serializers import (
     AppointmentAvailableSlotSerializer,
     BulkAppointmentSlotCreateSerializer,
     AppointmentSlotUpdateSerializer,
+    DoctorAppointmentSerializer,
+    DoctorAppointmentActionSerializer,
+    DoctorAppointmentRescheduleSerializer,
     OnlineAdviceAvailabilitySerializer,
     BulkOnlineAdviceSlotCreateSerializer,
     OnlineAdviceSlotUpdateSerializer,
@@ -181,6 +184,176 @@ class DoctorProfileView(APIView):
         }
 
         return Response(data)
+
+
+class DoctorAppointmentsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def _is_doctor(user):
+        return getattr(user, 'role', None) == 'DOCTOR'
+
+    def get(self, request):
+        user = request.user
+
+        if not self._is_doctor(user):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        doctor_profile = getattr(user, 'doctor_profile', None)
+        if not doctor_profile:
+            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        queryset = Appointment.objects.filter(doctor=doctor_profile).select_related(
+            'slot', 'patient', 'patient__user', 'doctor'
+        ).order_by('-requested_at')
+
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            normalized = status_filter.strip().upper()
+            valid_statuses = {choice[0] for choice in Appointment.Status.choices}
+            if normalized not in valid_statuses:
+                return Response({'detail': 'Invalid status filter.'}, status=status.HTTP_400_BAD_REQUEST)
+            queryset = queryset.filter(status=normalized)
+
+        data = DoctorAppointmentSerializer(queryset, many=True).data
+        return Response({'appointments': data}, status=status.HTTP_200_OK)
+
+
+class DoctorAppointmentActionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def _is_doctor(user):
+        return getattr(user, 'role', None) == 'DOCTOR'
+
+    def patch(self, request, appointment_id):
+        user = request.user
+
+        if not self._is_doctor(user):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        doctor_profile = getattr(user, 'doctor_profile', None)
+        if not doctor_profile:
+            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        appointment = Appointment.objects.filter(
+            id=appointment_id,
+            doctor=doctor_profile,
+        ).select_related('slot', 'patient', 'patient__user', 'doctor').first()
+
+        if not appointment:
+            return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = DoctorAppointmentActionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        action = serializer.validated_data['action']
+
+        transition_rules = {
+            'accept': {
+                'allowed': {Appointment.Status.PENDING},
+                'target': Appointment.Status.ACCEPTED,
+                'message': 'Appointment accepted successfully.',
+            },
+            'reject': {
+                'allowed': {Appointment.Status.PENDING},
+                'target': Appointment.Status.REJECTED,
+                'message': 'Appointment rejected successfully.',
+            },
+            'complete': {
+                'allowed': {Appointment.Status.ACCEPTED},
+                'target': Appointment.Status.COMPLETED,
+                'message': 'Appointment marked as completed.',
+            },
+            'cancel': {
+                'allowed': {Appointment.Status.PENDING, Appointment.Status.ACCEPTED},
+                'target': Appointment.Status.CANCELLED,
+                'message': 'Appointment cancelled successfully.',
+            },
+        }
+
+        rule = transition_rules[action]
+        if appointment.status not in rule['allowed']:
+            return Response(
+                {'detail': f"Cannot '{action}' an appointment in {appointment.status} state."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        appointment.status = rule['target']
+        appointment.save(update_fields=['status', 'updated_at'])
+
+        payload = DoctorAppointmentSerializer(appointment).data
+        return Response({'message': rule['message'], 'appointment': payload}, status=status.HTTP_200_OK)
+
+
+class DoctorAppointmentRescheduleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def _is_doctor(user):
+        return getattr(user, 'role', None) == 'DOCTOR'
+
+    def patch(self, request, appointment_id):
+        user = request.user
+
+        if not self._is_doctor(user):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        doctor_profile = getattr(user, 'doctor_profile', None)
+        if not doctor_profile:
+            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        appointment = Appointment.objects.filter(
+            id=appointment_id,
+            doctor=doctor_profile,
+        ).select_related('slot', 'patient', 'patient__user', 'doctor').first()
+
+        if not appointment:
+            return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if appointment.status in {Appointment.Status.REJECTED, Appointment.Status.COMPLETED, Appointment.Status.CANCELLED}:
+            return Response(
+                {'detail': f"Cannot reschedule an appointment in {appointment.status} state."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = DoctorAppointmentRescheduleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        date_value = serializer.validated_data['date']
+        start_time = serializer.validated_data['start_time']
+
+        target_slot = AppointmentAvailableSlot.objects.filter(
+            doctor=doctor_profile,
+            date=date_value,
+            start_time=start_time,
+        ).order_by('end_time').first()
+
+        if not target_slot:
+            return Response(
+                {'detail': 'No available slot found for the selected date and time.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if target_slot.id == appointment.slot_id:
+            payload = DoctorAppointmentSerializer(appointment).data
+            return Response(
+                {'message': 'Appointment already uses the selected slot.', 'appointment': payload},
+                status=status.HTTP_200_OK,
+            )
+
+        is_slot_booked = Appointment.objects.filter(slot=target_slot).exclude(id=appointment.id).exists()
+        if is_slot_booked:
+            return Response(
+                {'detail': 'Selected slot is already booked.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        appointment.slot = target_slot
+        appointment.save(update_fields=['slot', 'updated_at'])
+
+        payload = DoctorAppointmentSerializer(appointment).data
+        return Response({'message': 'Appointment rescheduled successfully.', 'appointment': payload}, status=status.HTTP_200_OK)
 
 
 class DoctorAppointmentSlotsView(APIView):

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DoctorNavBar from "@/components/doctor/DoctorNavBar";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
@@ -25,6 +25,11 @@ type AppointmentItem = {
   category: AppointmentCategory;
 };
 
+type ApiAppointment = Omit<AppointmentItem, "id" | "patientId"> & {
+  id: string | number;
+  patientId: string | number;
+};
+
 type PatientProfile = {
   patientId: string;
   fullName: string;
@@ -40,6 +45,8 @@ type PatientProfile = {
 };
 
 const statusFilters: AppointmentStatusFilter[] = ["All", "Pending", "Accepted", "Rejected", "Completed", "Cancelled"];
+const appointmentStatuses: AppointmentStatus[] = ["Pending", "Accepted", "Rejected", "Completed", "Cancelled"];
+const appointmentCategories: AppointmentCategory[] = ["request", "upcoming", "previous"];
 
 const parseAppointmentDateTime = (date: string, time: string): Date | null => {
   const trimmedTime = time.trim().toUpperCase();
@@ -88,6 +95,19 @@ const formatTimeForDisplay = (time: string): string => {
   }
 
   return `${hour}:${minute} ${suffix}`;
+};
+
+const normalizeAppointment = (item: ApiAppointment): AppointmentItem => {
+  const safeStatus = appointmentStatuses.includes(item.status) ? item.status : "Pending";
+  const safeCategory = appointmentCategories.includes(item.category) ? item.category : "request";
+
+  return {
+    ...item,
+    id: String(item.id),
+    patientId: String(item.patientId),
+    status: safeStatus,
+    category: safeCategory,
+  };
 };
 
 const initialAppointments: AppointmentItem[] = [
@@ -246,9 +266,12 @@ const patientProfiles: Record<string, PatientProfile> = {
 };
 
 function DoctorAppointmentsPage() {
-  const [appointments, setAppointments] = useState<AppointmentItem[]>(initialAppointments);
+  const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<PatientProfile | null>(null);
   const [toastMessage, setToastMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoadingAppointments, setIsLoadingAppointments] = useState(true);
+  const [updatingAppointmentIds, setUpdatingAppointmentIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>("All");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
@@ -257,6 +280,40 @@ function DoctorAppointmentsPage() {
   const [rescheduleTarget, setRescheduleTarget] = useState<AppointmentItem | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleTime, setRescheduleTime] = useState("");
+  const [isRescheduling, setIsRescheduling] = useState(false);
+
+  useEffect(() => {
+    const loadAppointments = async () => {
+      setIsLoadingAppointments(true);
+      setErrorMessage("");
+
+      try {
+        const response = await fetch("/api/doctor/appointments", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Failed to load appointments");
+        }
+
+        const normalized = Array.isArray(payload?.appointments)
+          ? payload.appointments.map((appointment: ApiAppointment) => normalizeAppointment(appointment))
+          : [];
+
+        setAppointments(normalized);
+      } catch (error) {
+        setAppointments([]);
+        setErrorMessage(error instanceof Error ? error.message : "Failed to load appointments");
+      } finally {
+        setIsLoadingAppointments(false);
+      }
+    };
+
+    void loadAppointments();
+  }, []);
 
   const filteredAppointments = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -314,36 +371,83 @@ function DoctorAppointmentsPage() {
     (item) => item.status === "Accepted" && isReminderSuggested(item) && !reminderSentIds.includes(item.id)
   ).length;
 
-  const setStatus = (appointmentId: string, action: "accept" | "reject") => {
-    setAppointments((prev) =>
-      prev.map((item) => {
-        if (item.id !== appointmentId) {
-          return item;
-        }
+  const setStatus = async (appointmentId: string, action: "accept" | "reject" | "complete" | "cancel") => {
+    setUpdatingAppointmentIds((prev) => (prev.includes(appointmentId) ? prev : [...prev, appointmentId]));
 
-        if (action === "accept") {
-          return {
-            ...item,
-            status: "Accepted",
-            category: item.category === "request" ? "upcoming" : item.category,
-          };
-        }
+    try {
+      const response = await fetch(`/api/doctor/appointments/${appointmentId}/action`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action }),
+      });
 
-        return {
-          ...item,
-          status: item.category === "upcoming" ? "Cancelled" : "Rejected",
-          category: "previous",
-        };
-      })
-    );
+      const payload = await response.json().catch(() => ({}));
 
-    setToastMessage(action === "accept" ? "Appointment accepted successfully." : "Appointment rejected successfully.");
-    window.setTimeout(() => setToastMessage(""), 2200);
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.detail || "Failed to update appointment status");
+      }
+
+      const updatedAppointment = payload?.appointment ? normalizeAppointment(payload.appointment as ApiAppointment) : null;
+
+      if (updatedAppointment) {
+        setAppointments((prev) =>
+          prev.map((item) => (item.id === appointmentId ? updatedAppointment : item))
+        );
+      }
+
+      setToastMessage(payload?.message || "Appointment updated successfully.");
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : "Failed to update appointment status.");
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } finally {
+      setUpdatingAppointmentIds((prev) => prev.filter((id) => id !== appointmentId));
+    }
   };
 
   const openPatientProfile = (patientId: string) => {
-    const profile = patientProfiles[patientId] || null;
-    setSelectedPatient(profile);
+    const profile = patientProfiles[patientId];
+    if (profile) {
+      setSelectedPatient(profile);
+      return;
+    }
+
+    const relatedAppointment = appointments.find((appointment) => appointment.patientId === patientId);
+
+    if (!relatedAppointment) {
+      setSelectedPatient(null);
+      return;
+    }
+
+    const fallbackProfile: PatientProfile = {
+      patientId,
+      fullName: relatedAppointment.patientName,
+      age: relatedAppointment.patientAge,
+      gender: relatedAppointment.patientGender,
+      bloodGroup: "Not available",
+      phone: "Not available",
+      emergencyContact: "Not available",
+      allergies: ["Not available"],
+      conditions: ["Not available"],
+      currentMedications: ["Not available"],
+      lastVisit: "Not available",
+    };
+
+    setSelectedPatient(fallbackProfile);
+  };
+
+  const isUpdatingAppointment = (appointmentId: string) => updatingAppointmentIds.includes(appointmentId);
+
+  const showSectionLoading = isLoadingAppointments && appointments.length === 0;
+
+  const renderNoDataMessage = (emptyMessage: string) => {
+    if (showSectionLoading) {
+      return <p className="text-gray-600 dark:text-gray-400">Loading appointments...</p>;
+    }
+
+    return <p className="text-gray-600 dark:text-gray-400">{emptyMessage}</p>;
   };
 
   const openRescheduleModal = (appointment: AppointmentItem) => {
@@ -352,7 +456,7 @@ function DoctorAppointmentsPage() {
     setRescheduleTime("");
   };
 
-  const confirmReschedule = () => {
+  const confirmReschedule = async () => {
     if (!rescheduleTarget) {
       return;
     }
@@ -363,27 +467,45 @@ function DoctorAppointmentsPage() {
       return;
     }
 
-    setAppointments((prev) =>
-      prev.map((item) => {
-        if (item.id !== rescheduleTarget.id) {
-          return item;
-        }
+    setIsRescheduling(true);
 
-        return {
-          ...item,
+    try {
+      const response = await fetch(`/api/doctor/appointments/${rescheduleTarget.id}/reschedule`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           date: rescheduleDate,
-          time: formatTimeForDisplay(rescheduleTime),
-          status: item.status === "Cancelled" ? "Pending" : item.status,
-          category: item.category === "previous" ? "upcoming" : item.category,
-        };
-      })
-    );
+          start_time: rescheduleTime,
+        }),
+      });
 
-    setToastMessage(`Appointment ${rescheduleTarget.id} was rescheduled.`);
-    setRescheduleTarget(null);
-    setRescheduleDate("");
-    setRescheduleTime("");
-    window.setTimeout(() => setToastMessage(""), 2200);
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.detail || "Failed to reschedule appointment");
+      }
+
+      const updatedAppointment = payload?.appointment ? normalizeAppointment(payload.appointment as ApiAppointment) : null;
+
+      if (updatedAppointment) {
+        setAppointments((prev) =>
+          prev.map((item) => (item.id === rescheduleTarget.id ? updatedAppointment : item))
+        );
+      }
+
+      setToastMessage(payload?.message || `Appointment ${rescheduleTarget.id} was rescheduled.`);
+      setRescheduleTarget(null);
+      setRescheduleDate("");
+      setRescheduleTime("");
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : "Failed to reschedule appointment.");
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } finally {
+      setIsRescheduling(false);
+    }
   };
 
   const sendReminder = (appointmentId: string) => {
@@ -405,6 +527,9 @@ function DoctorAppointmentsPage() {
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Advice chats are managed separately from this page in the Chats section.
           </p>
+          {errorMessage && (
+            <p className="mt-2 text-sm text-red-500">{errorMessage}</p>
+          )}
           {toastMessage && (
             <p className="mt-3 text-sm text-green-600 dark:text-green-400 font-semibold">{toastMessage}</p>
           )}
@@ -483,15 +608,15 @@ function DoctorAppointmentsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
             <p className="text-sm text-gray-500 dark:text-gray-400">Appointment Requests</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{requests.length}</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{isLoadingAppointments ? "..." : requests.length}</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
             <p className="text-sm text-gray-500 dark:text-gray-400">Upcoming Appointments</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{upcoming.length}</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{isLoadingAppointments ? "..." : upcoming.length}</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
             <p className="text-sm text-gray-500 dark:text-gray-400">Previous Appointments</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{previous.length}</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{isLoadingAppointments ? "..." : previous.length}</p>
           </div>
         </div>
 
@@ -503,7 +628,7 @@ function DoctorAppointmentsPage() {
           <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
           {requests.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400">No pending requests right now.</p>
+            renderNoDataMessage("No pending requests right now.")
           ) : (
             <div className="space-y-3">
               {requests.map((appointment) => (
@@ -521,7 +646,7 @@ function DoctorAppointmentsPage() {
                   </div>
 
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    {appointment.date} • {appointment.time}
+                    {appointment.date} • {formatTimeForDisplay(appointment.time)}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{appointment.location}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -529,8 +654,8 @@ function DoctorAppointmentsPage() {
                   </p>
 
                   <div className="flex flex-wrap gap-2 mt-4">
-                    <GreenButton className="px-4 py-2" onClick={() => setStatus(appointment.id, "accept")}>Accept</GreenButton>
-                    <WhiteButton className="px-4 py-2" onClick={() => setStatus(appointment.id, "reject")}>Reject</WhiteButton>
+                    <GreenButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "accept")}>Accept</GreenButton>
+                    <WhiteButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "reject")}>Reject</WhiteButton>
                     <WhiteButton className="px-4 py-2" onClick={() => openPatientProfile(appointment.patientId)}>
                       View Patient Profile
                     </WhiteButton>
@@ -551,7 +676,7 @@ function DoctorAppointmentsPage() {
           <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
           {upcoming.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400">No upcoming appointments scheduled.</p>
+            renderNoDataMessage("No upcoming appointments scheduled.")
           ) : (
             <div className="space-y-3">
               {upcoming.map((appointment) => (
@@ -586,8 +711,14 @@ function DoctorAppointmentsPage() {
                   <div className="flex flex-wrap gap-2 mt-4">
                     {appointment.status === "Pending" && (
                       <>
-                        <GreenButton className="px-4 py-2" onClick={() => setStatus(appointment.id, "accept")}>Accept</GreenButton>
-                        <WhiteButton className="px-4 py-2" onClick={() => setStatus(appointment.id, "reject")}>Reject</WhiteButton>
+                        <GreenButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "accept")}>Accept</GreenButton>
+                        <WhiteButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "reject")}>Reject</WhiteButton>
+                      </>
+                    )}
+                    {appointment.status === "Accepted" && (
+                      <>
+                        <GreenButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "complete")}>Mark Completed</GreenButton>
+                        <WhiteButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "cancel")}>Cancel Appointment</WhiteButton>
                       </>
                     )}
                     <WhiteButton className="px-4 py-2" onClick={() => openRescheduleModal(appointment)}>
@@ -620,7 +751,7 @@ function DoctorAppointmentsPage() {
           <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
           {previous.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400">No appointment history yet.</p>
+            renderNoDataMessage("No appointment history yet.")
           ) : (
             <div className="space-y-3">
               {previous.map((appointment) => (
@@ -753,6 +884,7 @@ function DoctorAppointmentsPage() {
 
             <div className="flex flex-wrap gap-2 mt-5 justify-end">
               <WhiteButton
+                disabled={isRescheduling}
                 onClick={() => {
                   setRescheduleTarget(null);
                   setRescheduleDate("");
@@ -761,7 +893,7 @@ function DoctorAppointmentsPage() {
               >
                 Cancel
               </WhiteButton>
-              <GreenButton onClick={confirmReschedule}>Confirm Reschedule</GreenButton>
+              <GreenButton disabled={isRescheduling} onClick={() => void confirmReschedule()}>{isRescheduling ? "Saving..." : "Confirm Reschedule"}</GreenButton>
             </div>
           </div>
         </div>
