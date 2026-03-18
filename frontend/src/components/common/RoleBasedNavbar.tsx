@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import MainNavbar from "@/components/HomePage/MainNavbar";
 import DoctorNavBar from "@/components/doctor/DoctorNavBar";
+import UserDashboardNavbar from "@/components/user/UserDashboardNavbar";
 
 type AppRole = "DOCTOR" | "PATIENT" | "GUEST";
 
@@ -11,8 +12,27 @@ type StoredUserInfo = {
   email?: string;
 };
 
+function clearStaleClientAuthState() {
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("userRole");
+  localStorage.removeItem("userInfo");
+  localStorage.removeItem("user");
+  localStorage.removeItem("isAuthenticated");
+
+  document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+  document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+  document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+}
+
 function resolveRoleFromStorage(): AppRole {
+  const authToken = localStorage.getItem("authToken");
   const storedRole = localStorage.getItem("userRole");
+
+  if (!authToken && !storedRole) {
+    return "GUEST";
+  }
+
   if (storedRole === "DOCTOR") {
     return "DOCTOR";
   }
@@ -39,15 +59,71 @@ function resolveRoleFromStorage(): AppRole {
   }
 }
 
+async function verifyStoredRole(role: AppRole): Promise<AppRole> {
+  if (role === "GUEST") {
+    return "GUEST";
+  }
+
+  const endpoint = role === "DOCTOR" ? "/api/doctor/profile" : "/api/patient/profile";
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    if (response.ok) {
+      return role;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      clearStaleClientAuthState();
+      return "GUEST";
+    }
+
+    return role;
+  } catch {
+    // Keep current role on transient network failures.
+    return role;
+  }
+}
+
 export default function RoleBasedNavbar() {
   const [role, setRole] = useState<AppRole>("GUEST");
+  const [isResolvingRole, setIsResolvingRole] = useState(true);
 
   useEffect(() => {
-    setRole(resolveRoleFromStorage());
+    let isActive = true;
+
+    const resolveRole = async () => {
+      const storedRole = resolveRoleFromStorage();
+      const verifiedRole = await verifyStoredRole(storedRole);
+
+      if (!isActive) {
+        return;
+      }
+
+      setRole(verifiedRole);
+      setIsResolvingRole(false);
+    };
+
+    void resolveRole();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
+
+  if (isResolvingRole) {
+    return <MainNavbar />;
+  }
 
   if (role === "DOCTOR") {
     return <DoctorNavBar />;
+  }
+
+  if (role === "PATIENT") {
+    return <UserDashboardNavbar />;
   }
 
   return <MainNavbar />;

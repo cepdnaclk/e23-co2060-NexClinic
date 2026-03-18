@@ -1,5 +1,5 @@
 import GreenButton from "@/components/buttons/GreenButton";
-import MainNavbar from "@/components/HomePage/MainNavbar";
+import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
 import Link from "next/link";
 import NewsCard from "@/components/HomePage/NewsCard";
 
@@ -7,7 +7,7 @@ export default function Home() {
   return (
       <main className="flex flex-col mb-10 min-h-screen w-full  items-center justify-between sm:items-start dark:bg-gray-900">
         <div title="home-nav-bar" className="fixed w-full top-0 left-0 z-10">
-            <MainNavbar/>
+                        <RoleBasedNavbar/>
         </div>
         <div title="home-row-1" className="relative flex flex-col bg-gray-200 h-[700px] gap-6 mt-[70px]">
             <img

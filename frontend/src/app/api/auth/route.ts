@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { applyAuthCookies } from "@/lib/serverAuthProxy";
 
 const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -48,20 +49,10 @@ export async function POST(request: NextRequest) {
             { status: 200 }
         );
 
-        response.cookies.set("authToken", tokenData.access, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24,
-        });
-
-        response.cookies.set("userRole", role, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24,
+        applyAuthCookies(response, {
+            accessToken: tokenData.access,
+            role,
+            refreshToken: tokenData.refresh,
         });
 
         return response;

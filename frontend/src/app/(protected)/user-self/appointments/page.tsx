@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { handlePatientSessionExpired } from "@/lib/patientSession";
 
 interface Appointment {
     id: string;
@@ -75,6 +77,7 @@ const statusPillClass = (status: string) => {
 };
 
 const PatientAppointmentPage = () => {
+    const router = useRouter();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [sortBy, setSortBy] = useState<SortBy>("date");
     const [loading, setLoading] = useState(true);
@@ -92,6 +95,11 @@ const PatientAppointmentPage = () => {
                     method: "GET",
                     cache: "no-store",
                 });
+
+                if (response.status === 401) {
+                    handlePatientSessionExpired(router);
+                    return;
+                }
 
                 const payload = await response.json().catch(() => ({}));
 
@@ -113,7 +121,7 @@ const PatientAppointmentPage = () => {
         };
 
         void loadAppointments();
-    }, []);
+    }, [router]);
 
     const cancelAppointment = async (appointmentId: string) => {
         setCancellingIds((prev) => (prev.includes(appointmentId) ? prev : [...prev, appointmentId]));
@@ -122,6 +130,11 @@ const PatientAppointmentPage = () => {
             const response = await fetch(`/api/patient/appointments/${appointmentId}/cancel`, {
                 method: "PATCH",
             });
+
+            if (response.status === 401) {
+                handlePatientSessionExpired(router);
+                return;
+            }
 
             const payload = await response.json().catch(() => ({}));
 

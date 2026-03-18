@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import DoctorNavBar from "@/components/doctor/DoctorNavBar";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
+import { handleDoctorSessionExpired } from "@/lib/doctorSession";
 
 type AppointmentStatus = "Pending" | "Accepted" | "Rejected" | "Completed" | "Cancelled";
 type AppointmentCategory = "request" | "upcoming" | "previous";
@@ -266,6 +268,7 @@ const patientProfiles: Record<string, PatientProfile> = {
 };
 
 function DoctorAppointmentsPage() {
+  const router = useRouter();
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<PatientProfile | null>(null);
   const [toastMessage, setToastMessage] = useState("");
@@ -293,6 +296,11 @@ function DoctorAppointmentsPage() {
           cache: "no-store",
         });
 
+        if (response.status === 401) {
+          handleDoctorSessionExpired(router);
+          return;
+        }
+
         const payload = await response.json().catch(() => ({}));
 
         if (!response.ok) {
@@ -313,7 +321,7 @@ function DoctorAppointmentsPage() {
     };
 
     void loadAppointments();
-  }, []);
+  }, [router]);
 
   const filteredAppointments = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -382,6 +390,11 @@ function DoctorAppointmentsPage() {
         },
         body: JSON.stringify({ action }),
       });
+
+      if (response.status === 401) {
+        handleDoctorSessionExpired(router);
+        return;
+      }
 
       const payload = await response.json().catch(() => ({}));
 
@@ -480,6 +493,11 @@ function DoctorAppointmentsPage() {
           start_time: rescheduleTime,
         }),
       });
+
+      if (response.status === 401) {
+        handleDoctorSessionExpired(router);
+        return;
+      }
 
       const payload = await response.json().catch(() => ({}));
 

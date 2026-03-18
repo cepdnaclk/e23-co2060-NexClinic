@@ -1,5 +1,5 @@
 import Image from "next/image";
-import DoctorsNavbar from "@/components/doctors/DoctorsNavbar";
+import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
 
 type Doctor = {
 	id: string;
@@ -105,9 +105,11 @@ export default async function DoctorProfile({
 
 	return (
 		<>
-			<DoctorsNavbar />
+			<div className="fixed w-full top-0 left-0 z-10">
+				<RoleBasedNavbar />
+			</div>
 			{/* Outer background */}
-			<div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-8 px-4">
+			<div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-8 px-4 pt-24">
 
 				{/* Profile Header Card */}
 				<div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md mb-4">

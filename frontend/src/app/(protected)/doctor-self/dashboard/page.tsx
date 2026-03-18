@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import DoctorNavBar from "@/components/doctor/DoctorNavBar";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
+import { handleDoctorSessionExpired } from "@/lib/doctorSession";
 
 type AppointmentPreview = {
     id: string;
@@ -91,6 +93,7 @@ type DashboardData = {
 };
 
 function DoctorDashboard() {
+    const router = useRouter();
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -105,6 +108,11 @@ function DoctorDashboard() {
                     method: "GET",
                     cache: "no-store",
                 });
+
+                if (response.status === 401) {
+                    handleDoctorSessionExpired(router);
+                    return;
+                }
 
                 if (!response.ok) {
                     const errorPayload = await response.json().catch(() => ({}));
@@ -121,7 +129,7 @@ function DoctorDashboard() {
         };
 
         loadDashboardData();
-    }, []);
+    }, [router]);
 
     const stats = dashboardData?.stats;
     const appointments = dashboardData?.upcomingAppointments ?? upcomingAppointments;

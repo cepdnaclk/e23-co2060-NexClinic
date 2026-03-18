@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import GreenButton from '@/components/buttons/GreenButton';
+import { handlePatientSessionExpired } from '@/lib/patientSession';
 
 type PatientProfileResponse = {
     patient: {
@@ -32,6 +34,7 @@ type PatientProfileResponse = {
 };
 
 export default function UserProfile() {
+    const router = useRouter();
         const [profileData, setProfileData] = useState<PatientProfileResponse | null>(null);
         const [loading, setLoading] = useState(true);
         const [error, setError] = useState('');
@@ -46,6 +49,11 @@ export default function UserProfile() {
                                         method: 'GET',
                                         cache: 'no-store',
                                 });
+
+                                if (response.status === 401) {
+                                    handlePatientSessionExpired(router);
+                                    return;
+                                }
 
                                 if (!response.ok) {
                                         const errorPayload = await response.json().catch(() => ({}));
@@ -62,7 +70,7 @@ export default function UserProfile() {
                 };
 
                 loadProfile();
-        }, []);
+        }, [router]);
 
         const patientName = profileData?.patient.fullName || 'Patient';
         const patientEmail = profileData?.patient.email || 'Not available';

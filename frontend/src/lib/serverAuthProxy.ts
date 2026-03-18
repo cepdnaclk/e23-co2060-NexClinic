@@ -1,0 +1,167 @@
+import { NextRequest, NextResponse } from "next/server";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24;
+
+const baseCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+};
+
+type ProxyWithRefreshOptions = {
+  request: NextRequest;
+  endpoint: string;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  body?: unknown;
+  failureMessage: string;
+  successStatus?: number;
+};
+
+type RefreshedTokens = {
+  accessToken: string;
+  refreshToken?: string;
+};
+
+async function readJsonSafe(response: Response): Promise<any> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+async function refreshAccessToken(request: NextRequest): Promise<RefreshedTokens | null> {
+  const refreshToken = request.cookies.get("refreshToken")?.value;
+
+  if (!refreshToken) {
+    return null;
+  }
+
+  const refreshResponse = await fetch(`${BACKEND_URL}/api/users/token/refresh/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refresh: refreshToken }),
+    cache: "no-store",
+  });
+
+  if (!refreshResponse.ok) {
+    return null;
+  }
+
+  const refreshPayload = await readJsonSafe(refreshResponse);
+  const accessToken = refreshPayload?.access;
+
+  if (!accessToken) {
+    return null;
+  }
+
+  return {
+    accessToken,
+    refreshToken: refreshPayload?.refresh,
+  };
+}
+
+export function applyAuthCookies(
+  response: NextResponse,
+  options: {
+    accessToken: string;
+    role?: string;
+    refreshToken?: string;
+  }
+) {
+  response.cookies.set("authToken", options.accessToken, {
+    ...baseCookieOptions,
+    maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+  });
+
+  if (options.role) {
+    response.cookies.set("userRole", options.role, {
+      ...baseCookieOptions,
+      maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+    });
+  }
+
+  if (options.refreshToken) {
+    response.cookies.set("refreshToken", options.refreshToken, {
+      ...baseCookieOptions,
+      maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+    });
+  }
+}
+
+export function clearAuthCookies(response: NextResponse) {
+  response.cookies.set("authToken", "", {
+    ...baseCookieOptions,
+    expires: new Date(0),
+  });
+
+  response.cookies.set("userRole", "", {
+    ...baseCookieOptions,
+    expires: new Date(0),
+  });
+
+  response.cookies.set("refreshToken", "", {
+    ...baseCookieOptions,
+    expires: new Date(0),
+  });
+}
+
+export async function proxyBackendWithRefresh({
+  request,
+  endpoint,
+  method,
+  body,
+  failureMessage,
+  successStatus,
+}: ProxyWithRefreshOptions): Promise<NextResponse> {
+  const authToken = request.cookies.get("authToken")?.value;
+
+  if (!authToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const callBackend = (token: string) =>
+    fetch(endpoint, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+    });
+
+  let backendResponse = await callBackend(authToken);
+  let refreshedTokens: RefreshedTokens | null = null;
+
+  if (backendResponse.status === 401) {
+    refreshedTokens = await refreshAccessToken(request);
+
+    if (refreshedTokens?.accessToken) {
+      backendResponse = await callBackend(refreshedTokens.accessToken);
+    }
+  }
+
+  const payload = await readJsonSafe(backendResponse);
+  const response = backendResponse.ok
+    ? NextResponse.json(payload, {
+        status: successStatus ?? backendResponse.status,
+      })
+    : NextResponse.json(
+        { error: payload?.detail || payload?.error || failureMessage },
+        { status: backendResponse.status }
+      );
+
+  if (refreshedTokens?.accessToken) {
+    applyAuthCookies(response, {
+      accessToken: refreshedTokens.accessToken,
+      refreshToken: refreshedTokens.refreshToken,
+    });
+  }
+
+  return response;
+}

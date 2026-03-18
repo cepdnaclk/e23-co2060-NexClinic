@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { handlePatientSessionExpired } from "@/lib/patientSession";
 
 type AvailableSlot = {
   id: number;
@@ -31,6 +33,7 @@ const formatTimeForDisplay = (time: string): string => {
 };
 
 const BookAppointmentPage = () => {
+  const router = useRouter();
   const [doctorId, setDoctorId] = useState("");
   const [hospitalId, setHospitalId] = useState("");
   const [date, setDate] = useState("");
@@ -60,6 +63,11 @@ const BookAppointmentPage = () => {
           cache: "no-store",
         });
 
+        if (response.status === 401) {
+          handlePatientSessionExpired(router);
+          return;
+        }
+
         const payload = await response.json().catch(() => ({}));
 
         if (!response.ok) {
@@ -76,7 +84,7 @@ const BookAppointmentPage = () => {
     };
 
     void loadAvailableSlots();
-  }, []);
+  }, [router]);
 
   const doctors = useMemo(() => {
     const map = new Map<string, { id: string; name: string }>();
@@ -132,6 +140,11 @@ const BookAppointmentPage = () => {
           reason,
         }),
       });
+
+      if (response.status === 401) {
+        handlePatientSessionExpired(router);
+        return;
+      }
 
       const payload = await response.json().catch(() => ({}));
 

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import GreenButton from "@/components/buttons/GreenButton";
 import DoctorNavBar from "@/components/doctor/DoctorNavBar";
 import ToggleSwitch from "@/components/buttons/ToggleSwitch";
+import { handleDoctorSessionExpired } from "@/lib/doctorSession";
 
 type DoctorProfileData = {
     doctor: {
@@ -29,6 +31,7 @@ type DoctorProfileData = {
 };
 
 function DoctorProfilePage() {
+    const router = useRouter();
 
     const [isOn, setIsOn] = useState(false);
     const [profileData, setProfileData] = useState<DoctorProfileData | null>(null);
@@ -46,6 +49,11 @@ function DoctorProfilePage() {
                     cache: "no-store",
                 });
 
+                if (response.status === 401) {
+                    handleDoctorSessionExpired(router);
+                    return;
+                }
+
                 if (!response.ok) {
                     const errorPayload = await response.json().catch(() => ({}));
                     throw new Error(errorPayload?.error || "Failed to load profile details");
@@ -62,7 +70,7 @@ function DoctorProfilePage() {
         };
 
         loadProfile();
-    }, []);
+    }, [router]);
 
     const doctorName = profileData?.doctor.fullName || "Doctor";
     const specialization = profileData?.doctor.specialization || "General";

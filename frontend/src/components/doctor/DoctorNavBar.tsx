@@ -1,21 +1,124 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import BlackButton from "../buttons/BlackButton";
+import { clearDoctorClientSession, handleDoctorSessionExpired } from "@/lib/doctorSession";
 
 
 function DoctorNavBar() {
     const pathname = usePathname();
     const router = useRouter();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isCheckingSession, setIsCheckingSession] = useState(false);
+    const isSessionCheckInFlight = useRef(false);
 
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [pathname]);
 
     const isActive = (href: string) => pathname === href;
+
+    const verifyDoctorSession = async (): Promise<boolean> => {
+        if (isSessionCheckInFlight.current) {
+            return false;
+        }
+
+        isSessionCheckInFlight.current = true;
+
+        try {
+            const response = await fetch("/api/doctor/profile", {
+                method: "GET",
+                cache: "no-store",
+            });
+
+            if (response.status === 401) {
+                handleDoctorSessionExpired(router);
+                return false;
+            }
+
+            return true;
+        } catch {
+            // Ignore transient network issues for navigation checks.
+            return true;
+        } finally {
+            isSessionCheckInFlight.current = false;
+        }
+    };
+
+    useEffect(() => {
+        const onDocumentClick = (event: MouseEvent) => {
+            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                return;
+            }
+
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            const anchor = target.closest("a[href]") as HTMLAnchorElement | null;
+            if (!anchor) {
+                return;
+            }
+
+            const href = anchor.getAttribute("href");
+            if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) {
+                return;
+            }
+
+            const destination = new URL(href, window.location.origin);
+            if (destination.origin !== window.location.origin) {
+                return;
+            }
+
+            if (!destination.pathname.startsWith("/doctor-self")) {
+                return;
+            }
+
+            const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+            const destinationPath = `${destination.pathname}${destination.search}${destination.hash}`;
+            if (currentPath === destinationPath) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            void (async () => {
+                setIsCheckingSession(true);
+                try {
+                    const isSessionValid = await verifyDoctorSession();
+                    if (isSessionValid) {
+                        router.push(destinationPath);
+                    }
+                } finally {
+                    setIsCheckingSession(false);
+                }
+            })();
+        };
+
+        const onPopState = () => {
+            void verifyDoctorSession();
+        };
+
+        const onPageShow = (event: PageTransitionEvent) => {
+            if (event.persisted) {
+                void verifyDoctorSession();
+            }
+        };
+
+        document.addEventListener("click", onDocumentClick, true);
+        window.addEventListener("popstate", onPopState);
+        window.addEventListener("pageshow", onPageShow);
+
+        return () => {
+            document.removeEventListener("click", onDocumentClick, true);
+            window.removeEventListener("popstate", onPopState);
+            window.removeEventListener("pageshow", onPageShow);
+        };
+    }, [pathname]);
 
     const handleLogout = async () => {
         try {
@@ -24,19 +127,20 @@ function DoctorNavBar() {
             console.error("Logout API error:", error);
         }
 
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userRole");
-        localStorage.removeItem("userInfo");
-
-        document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-        document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+        clearDoctorClientSession();
 
         router.push("/doctor/login");
     };
 
     return (
         <div className="w-full py-4 px-4 sm:px-6 shadow-md bg-white dark:bg-gray-800">
+            {isCheckingSession && (
+                <div className="fixed inset-0 z-50 bg-black/25 flex items-center justify-center">
+                    <div className="rounded-lg bg-white dark:bg-gray-800 shadow-lg px-5 py-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        Loading...
+                    </div>
+                </div>
+            )}
             <div className="flex items-center justify-between">
                 <Link href="/doctor-self/dashboard" className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between">
                     <img src="/images/logo-main.png" alt="NexClinic Logo" className="h-8 w-8 mr-4" />
@@ -125,6 +229,12 @@ function DoctorNavBar() {
                     className={`${isActive('/doctor-self/profile') ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-800 dark:text-white'}`}
                 >
                     My Profile
+                </Link>
+                <Link
+                    href="/news-articles"
+                    className={`${isActive('/news-articles') ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-800 dark:text-white'}`}
+                >
+                    News & Articles
                 </Link>
                 <BlackButton onClick={handleLogout} className="w-full">
                     Logout

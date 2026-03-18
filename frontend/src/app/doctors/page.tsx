@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Image from "next/image";
 import Link from "next/link";
-import DoctorsNavbar from "@/components/doctors/DoctorsNavbar";
+import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
 import BlackButton from "@/components/buttons/BlackButton";
@@ -118,8 +118,10 @@ export default function DoctorsDirectory() {
 
   return (
     <>
-      <DoctorsNavbar />
-      <div className="min-h-screen bg-gray-200 p-8">
+      <div className="fixed w-full top-0 left-0 z-10">
+        <RoleBasedNavbar />
+      </div>
+      <div className="min-h-screen bg-gray-200 p-8 pt-24">
         <h1 className="text-4xl font-bold text-center mb-6 text-gray-800">
           Find your Doctor
         </h1>
