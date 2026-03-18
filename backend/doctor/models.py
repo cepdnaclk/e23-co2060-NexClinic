@@ -111,8 +111,8 @@ class Appointment(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['doctor', 'slot']),
-            models.Index(fields=['patient', 'slot']),
+            models.Index(fields=['doctor', 'status']),
+            models.Index(fields=['patient', 'status']),
             models.Index(fields=['requested_at'])
         ]
 
