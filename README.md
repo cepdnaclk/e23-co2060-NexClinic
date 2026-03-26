@@ -307,6 +307,89 @@ Frontend URL:
 5. Doctor login: /doctor/login
 6. Open protected dashboards and verify role-based redirects
 
+## 6.6 Full Local Setup Commands (Copy-Paste)
+
+Windows PowerShell (from repository root):
+
+```bash
+# Backend setup
+Set-Location backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+Copy-Item .env.example .env
+python manage.py migrate
+python manage.py runserver
+```
+
+Open a second terminal for frontend:
+
+```bash
+Set-Location frontend
+npm install
+Copy-Item .env.example .env.local
+npm run dev
+```
+
+## 6.7 First-Time Verify Commands
+
+Use these commands after setup to quickly confirm both services are healthy.
+
+Windows PowerShell:
+
+```bash
+# Backend health check
+Invoke-WebRequest http://localhost:8000/admin/ -UseBasicParsing | Select-Object StatusCode
+
+# Frontend production build check
+Set-Location frontend
+npm run build
+
+# Quick API check (example: doctor specializations via frontend proxy)
+Invoke-WebRequest http://localhost:3000/api/doctor/specializations -UseBasicParsing | Select-Object StatusCode
+```
+
+macOS/Linux:
+
+```bash
+# Backend health check
+curl -I http://localhost:8000/admin/
+
+# Frontend production build check
+cd frontend
+npm run build
+
+# Quick API check (example: doctor specializations via frontend proxy)
+curl -i http://localhost:3000/api/doctor/specializations
+```
+
+Expected results:
+- Backend health check returns HTTP 200 or HTTP 302.
+- Frontend build completes without errors.
+- API check returns HTTP 200 (or HTTP 401 for endpoints that require auth).
+
+macOS/Linux (from repository root):
+
+```bash
+# Backend setup
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py runserver
+```
+
+Open a second terminal for frontend:
+
+```bash
+cd frontend
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
 ## 7. Supabase Setup Guide
 
 1. Create a Supabase project.
@@ -384,6 +467,27 @@ Deploy.
 After deploy:
 - Test login and registration flow.
 - Verify browser network calls go to Vercel API routes and proxy to Render backend.
+
+## 9.1 Vercel CLI Commands
+
+If you prefer terminal-based deployment:
+
+```bash
+npm install -g vercel
+cd frontend
+vercel login
+vercel link
+vercel env add NEXT_PUBLIC_BACKEND_URL production
+vercel env add NEXT_PUBLIC_BACKEND_URL preview
+vercel
+vercel --prod
+```
+
+Recommended value for both preview and production env:
+
+```env
+NEXT_PUBLIC_BACKEND_URL=https://your-backend-service.onrender.com
+```
 
 ## 10. Production Integration Checklist
 
