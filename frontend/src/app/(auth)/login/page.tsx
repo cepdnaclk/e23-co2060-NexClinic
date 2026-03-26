@@ -1,18 +1,10 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
 import UserLoginForm from '@/components/user/UserLoginForm';
-import UserLoginNavBar from '@/components/user/UserLoginNavBar';
 
 function UserLogin() {
     return (
         <div className="relative flex flex-col w-screen h-screen items-center">
-            <div title="user-login-navbar" className="fixed w-full top-0 z-50">
-                <UserLoginNavBar />
-            </div>
             <div title="row-1" className="relative gap-6 mt-8 h-full w-screen">
                 <img
                     className="absolute opacity-80 object-cover h-full w-full"

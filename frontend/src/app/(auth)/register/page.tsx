@@ -1,20 +1,10 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
-
 import UserRegistrationForm from '@/components/user/UserRegistrationForm';
-import UserRegistrationNavBar from '@/components/user/UserRegistrationNavBar';
-
 
 function UserRegistration() {
     return (
         <div className="relative flex flex-col w-screen h-screen">
-            <div title="doctor-login-navbar" className="fixed w-full top-0 z-50">
-                <UserRegistrationNavBar />
-            </div>
             <div title="row-1" className="relative gap-6 mt-8 h-full w-screen">
                 <img
                     className="absolute opacity-80 object-cover h-full w-full"

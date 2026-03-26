@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import DoctorNavBar from "@/components/doctor/DoctorNavBar";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
@@ -137,8 +136,6 @@ function DoctorDashboard() {
 
     return (
         <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
-            <DoctorNavBar />
-
             <div className="mx-4 mt-6 mb-8 space-y-4">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sm:p-8">
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Doctor Dashboard</h1>

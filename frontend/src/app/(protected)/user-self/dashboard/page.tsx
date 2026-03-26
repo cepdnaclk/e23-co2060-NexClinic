@@ -31,26 +31,56 @@ export default function UserDashboard() {
         // Main page container for dashboard content.
         <div className="mx-3 sm:mx-4 mt-4 sm:mt-6 mb-6 sm:mb-8 space-y-4">
             {/* Welcome header card */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 lg:p-8">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                    {user?.profileImage ? (
-                        <Image
-                            src={user.profileImage}
-                            alt={displayName}
-                            width={64}
-                            height={64}
-                            className="rounded-full object-cover border-4 border-blue-500 mx-auto sm:mx-0"
-                        />
-                    ) : (
-                        <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white mx-auto sm:mx-0">
-                            {displayName.split(" ").map(n => n[0]).join("").toUpperCase()}
+            <div className="flex flex-col lg:flex-row items-stretch gap-4 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 lg:p-8">
+                <div className="flex flex-col lg:w-1/2 w-full gap-4 rounded-lg p-2 h-full">
+                    {/* Name and Photo */}
+                    <div className="shadow-md rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                        {user?.profileImage ? (
+                            <Image
+                                src={user.profileImage}
+                                alt={displayName}
+                                width={64}
+                                height={64}
+                                className="rounded-full object-cover border-4 border-blue-500 mx-auto sm:mx-0"
+                            />
+                        ) : (
+                            <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white mx-auto sm:mx-0">
+                                {displayName.split(" ").map(n => n[0]).join("").toUpperCase()}
+                            </div>
+                        )}
+                        <div className="text-center sm:text-left min-w-0">
+                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white break-words">Welcome back, {displayName}!</h1>
+                            <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">Here is your health dashboard overview.</p>
                         </div>
-                    )}
-                    <div className="text-center sm:text-left min-w-0">
-                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white break-words">Welcome back, {displayName}!</h1>
-                        <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">Here is your health dashboard overview.</p>
+                    </div>
+                    {/* Action shortcuts */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+                        {/* <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Quick Actions</h2> */}
+                        {/* <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div> */}
+                        <div className="flex justify-between flex-col sm:flex-row gap-4">
+                            <Link href="/user-self/book-appointment">
+                                <button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold p-4 px-10 rounded-lg transition">
+                                    New Appointment
+                                </button>
+                            </Link>
+                            <Link href="/user-self/chats">
+                                <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold p-4 px-10 rounded-lg transition">Message Doctor</button>
+                            </Link>
+                            <Link href="/user-self/profile">
+                                <button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold p-4 px-10 rounded-lg transition">View Records</button>
+                            </Link>
+                        </div>
                     </div>
                 </div>
+                {/* Informational highlight */}
+                <div className=" bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 lg:w-1/2 w-full h-full">
+                    <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Health Tip of the Day</h2>
+                    <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Stay hydrated! Aim to drink at least 8 glasses of water daily to maintain optimal health and energy levels.
+                    </p>
+                </div>
+
             </div>
 
             {/* Top summary statistics */}
@@ -74,29 +104,9 @@ export default function UserDashboard() {
             </div>
 
             <div className="flex w-full gap-4 flex-col xl:flex-row">
-                {/* Action shortcuts */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-                    <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Quick Actions</h2>
-                    <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
-                    <div className="space-y-3">
-                        <Link href="/user-self/book-appointment">
-                            <button className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg transition">
-                                New Appointment
-                            </button>
-                        </Link>
-                        <button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition">Message Doctor</button>
-                        <button className="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg transition">View Records</button>
-                    </div>
-                </div>
 
-                {/* Informational highlight */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-                    <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Health Tip of the Day</h2>
-                    <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Stay hydrated! Aim to drink at least 8 glasses of water daily to maintain optimal health and energy levels.
-                    </p>
-                </div>
+
+
             </div>
             {/* Main two-column content area */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">

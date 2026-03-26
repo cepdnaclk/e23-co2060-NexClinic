@@ -136,7 +136,7 @@ export default function UserDashboardNavbar() {
             {isCheckingSession && (
                 <div className="fixed inset-0 z-50 bg-black/25 flex items-center justify-center">
                     <div className="rounded-lg bg-white dark:bg-gray-800 shadow-lg px-5 py-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        Checking session...
+                        Loading...
                     </div>
                 </div>
             )}
@@ -209,7 +209,7 @@ export default function UserDashboardNavbar() {
                             href="/news-articles"
                             className={`${isActive("/news-articles") ? "text-green-600 dark:text-green-400 font-bold underline underline-offset-2" : "text-gray-800 dark:text-white hover:underline underline-offset-2"}`}
                         >
-                            News
+                            News and Articles
                         </Link>
                     </div>
 

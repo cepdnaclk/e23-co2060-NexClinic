@@ -4,14 +4,14 @@ import { proxyBackendWithRefresh } from "@/lib/serverAuthProxy";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     appointmentId: string;
-  };
+  }>;
 };
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(request: NextRequest, context: RouteParams) {
   try {
-    const { appointmentId } = params;
+    const { appointmentId } = await context.params;
     const body = await request.json().catch(() => ({}));
 
     return await proxyBackendWithRefresh({

@@ -4,7 +4,6 @@ import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import BlackButton from "../../../components/buttons/BlackButton"; //fix this line
 import axios from "axios";
-import VerifyOTPNavBar from "@/components/HomePage/VerifyOTPNavBar";
 
 function VerifyOtpPageContent() {
     const searchParams = useSearchParams();
@@ -63,10 +62,6 @@ function VerifyOtpPageContent() {
 
     return (
         <div className="flex flex-col min-h-screen items-center justify-center px-4">
-            <div title="home-nav-bar" className="fixed w-full top-0 left-0 z-10">
-                <VerifyOTPNavBar/>
-            </div>
-
             <div className="absolute w-screen h-screen -z-10">
                 <img className="w-full h-full object-cover opacity-40"
                     src="/images/verify-otp-bg.jpg"
@@ -122,10 +117,6 @@ function VerifyOtpPageContent() {
 function VerifyOtpFallback() {
     return (
         <div className="flex flex-col min-h-screen items-center justify-center px-4">
-            <div title="home-nav-bar" className="fixed w-full top-0 left-0 z-10">
-                <VerifyOTPNavBar />
-            </div>
-
             <div className="absolute w-screen h-screen -z-10">
                 <img
                     className="w-full h-full object-cover opacity-40"

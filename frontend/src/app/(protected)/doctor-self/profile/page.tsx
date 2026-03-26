@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import GreenButton from "@/components/buttons/GreenButton";
-import DoctorNavBar from "@/components/doctor/DoctorNavBar";
 import ToggleSwitch from "@/components/buttons/ToggleSwitch";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
 
@@ -89,8 +88,6 @@ function DoctorProfilePage() {
 
     return (
         <div className="bg-gray-100 dark:bg-gray-900 justify-center gap-4 min-h-screen">
-            <DoctorNavBar />
-
             <div title="profile-header-card" className="flex flex-col lg:flex-row lg:flex-wrap items-center justify-between gap-4 lg:gap-8 mx-4 mt-4 sm:mt-8 bg-white dark:bg-gray-800 p-4 sm:p-8 lg:p-16 rounded-lg shadow-md">
                 <div title="left-column" className="flex flex-col sm:flex-row gap-4 items-center sm:pl-8 justify-center">
                     <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover" />

@@ -88,23 +88,39 @@ async function verifyStoredRole(role: AppRole): Promise<AppRole> {
   }
 }
 
+function getInitialRole(): AppRole {
+  if (typeof window === "undefined") {
+    return "GUEST";
+  }
+
+  return resolveRoleFromStorage();
+}
+
 export default function RoleBasedNavbar() {
-  const [role, setRole] = useState<AppRole>("GUEST");
-  const [isResolvingRole, setIsResolvingRole] = useState(true);
+  const [role, setRole] = useState<AppRole>(getInitialRole);
+  const [isResolvingRole, setIsResolvingRole] = useState<boolean>(typeof window === "undefined");
 
   useEffect(() => {
     let isActive = true;
 
     const resolveRole = async () => {
       const storedRole = resolveRoleFromStorage();
+
+      // Render using local auth state immediately to avoid navbar flicker.
+      if (isActive) {
+        setRole((prev) => (prev === storedRole ? prev : storedRole));
+        setIsResolvingRole(false);
+      }
+
       const verifiedRole = await verifyStoredRole(storedRole);
 
       if (!isActive) {
         return;
       }
 
-      setRole(verifiedRole);
-      setIsResolvingRole(false);
+      if (verifiedRole !== storedRole) {
+        setRole(verifiedRole);
+      }
     };
 
     void resolveRole();
