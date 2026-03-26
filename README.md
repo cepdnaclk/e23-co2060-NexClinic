@@ -1,21 +1,57 @@
-# NexAura Project 1 - Updated Developer Guide
+# NexAura Medical System
 
-This document reflects the current state of the repository and is intended for local development onboarding.
+Complete developer and deployment guide for the NexAura medical platform.
 
-## 1. Project Overview
+This project includes:
+- Backend: Django + DRF + JWT + OTP verification.
+- Frontend: Next.js App Router + TypeScript + Tailwind.
+- Database: Supabase PostgreSQL.
+- Hosting: Backend on Render, Frontend on Vercel.
 
-NexAura is a full-stack health platform with:
-- Backend: Django + Django REST Framework + JWT auth + OTP-based registration verification.
-- Frontend: Next.js (App Router) + TypeScript + Tailwind CSS.
-- Auth model: Role-based users (`PATIENT`, `DOCTOR`, `ADMIN`) with protected frontend routes.
+## 1. System Overview
 
-## 2. Current Repository Structure
+NexAura is a role-based medical system with three roles:
+- PATIENT
+- DOCTOR
+- ADMIN
+
+Implemented core modules:
+- OTP-based registration and account activation.
+- Role-based login with JWT.
+- Doctor and patient profile management.
+- Appointment and slot management (doctor and patient flows).
+- Protected frontend routes with middleware-like route guard logic.
+
+## 2. Tech Stack
+
+Backend:
+- Django 6
+- Django REST Framework
+- SimpleJWT
+- django-cors-headers
+- psycopg2-binary
+- python-dotenv
+- gunicorn
+- whitenoise
+
+Frontend:
+- Next.js 16 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS
+
+Database:
+- Supabase PostgreSQL
+
+## 3. Repository Structure
 
 ```text
-Nexaura-project1/
+e23-co2060-NexClinic/
 |- backend/
 |  |- manage.py
 |  |- requirements.txt
+|  |- build.sh
+|  |- .env
 |  |- main/
 |  |  |- settings.py
 |  |  |- urls.py
@@ -30,181 +66,171 @@ Nexaura-project1/
 |  |  |- urls.py
 |  |- patient/
 |  |  |- models.py
+|  |  |- views.py
+|  |  |- urls.py
 |  |- ai/
 |- frontend/
 |  |- package.json
-|  |- .env.example
+|  |- .env.local
 |  |- src/
 |  |  |- app/
 |  |  |  |- (auth)/
-|  |  |  |  |- login/page.tsx
-|  |  |  |  |- register/page.tsx
-|  |  |  |  |- doctor/login/
-|  |  |  |  |- doctor/register/
-|  |  |  |  |- verify-otp/page.tsx
 |  |  |  |- (protected)/
-|  |  |  |  |- user-self/
-|  |  |  |  |- doctor-self/
-|  |  |  |  |- admin/
 |  |  |  |- api/
 |  |  |  |  |- auth/
-|  |  |  |  |  |- route.ts
-|  |  |  |  |  |- login/route.ts
-|  |  |  |  |  |- register/route.ts
-|  |  |  |  |  |- doctor/login/route.ts
-|  |  |  |  |  |- doctor/register/route.ts
-|  |  |  |  |  |- verify-otp/route.ts
-|  |  |  |  |  |- resend-otp/route.ts
-|  |  |  |  |  |- logout/route.ts
 |  |  |  |  |- doctor/
+|  |  |  |  |- patient/
 |  |  |- components/
-|  |  |  |- user/
-|  |  |  |- doctor/
-|  |  |  |- buttons/
-|  |  |  |- HomePage/
 |  |  |- proxy.ts
 |- docs/
 |- DATABASE_TABLES.txt
+|- INTEGRATION_GUIDE.md
 |- README.md
-|- README_2.md
 ```
 
-## 3. Backend API Structure
+## 4. API Surface Summary
 
-Base backend URL (local): `http://localhost:8000`
+Backend base path prefixes:
+- /api/users/
+- /api/doctor/
+- /api/patient/
 
-Base API prefixes from `backend/main/urls.py`:
-- `/api/users/`
-- `/api/doctor/`
+Auth endpoints (users app):
+- POST /api/users/register/
+- POST /api/users/login/
+- POST /api/users/doctor/register/
+- POST /api/users/doctor/login/
+- POST /api/users/verify-otp/
+- POST /api/users/resend-otp/
+- POST /api/users/token/refresh/
 
-### 3.1 User/Auth Endpoints (`/api/users/`)
+Doctor endpoints (doctor app):
+- GET /api/doctor/specializations/
+- GET /api/doctor/dashboard/
+- GET/PUT /api/doctor/profile/
+- GET /api/doctor/appointments/
+- POST /api/doctor/appointments/{appointment_id}/action/
+- POST /api/doctor/appointments/{appointment_id}/reschedule/
+- GET/POST /api/doctor/appointment-slots/
+- GET/PUT/DELETE /api/doctor/appointment-slots/{slot_id}/
+- GET/POST /api/doctor/online-advice-slots/
+- GET/PUT/DELETE /api/doctor/online-advice-slots/{slot_id}/
 
-From `backend/users/urls.py`:
-- `POST /api/users/register/` -> Patient registration (creates pending account + OTP email)
-- `POST /api/users/login/` -> Patient login (JWT)
-- `POST /api/users/doctor/register/` -> Doctor registration (creates pending account + OTP email)
-- `POST /api/users/doctor/login/` -> Doctor login (JWT)
-- `POST /api/users/verify-otp/` -> Activates pending account
-- `POST /api/users/resend-otp/` -> Resends OTP
-- `POST /api/users/token/refresh/` -> JWT token refresh
+Patient endpoints (patient app):
+- GET/PUT /api/patient/profile/
+- GET /api/patient/appointments/
+- POST /api/patient/appointments/{appointment_id}/cancel/
+- GET /api/patient/appointment-slots/
 
-### 3.2 Doctor Endpoints (`/api/doctor/`)
+Frontend proxy API routes (Next.js route handlers):
+- /api/auth/*
+- /api/doctor/*
+- /api/patient/*
 
-From `backend/doctor/urls.py`:
-- `GET /api/doctor/dashboard/`
-- `GET/PUT /api/doctor/profile/`
+Protected route guard:
+- frontend/src/proxy.ts
+- /doctor-self/* -> requires DOCTOR
+- /user-self/* -> requires PATIENT
+- /admin/* -> requires ADMIN
 
-## 4. Frontend API Proxy Layer (Next.js Route Handlers)
+## 5. Environment Variables
 
-Base frontend URL (local): `http://localhost:3000`
+Quick setup from templates:
 
-Frontend route handlers under `frontend/src/app/api` proxy requests to Django using:
-- `NEXT_PUBLIC_BACKEND_URL` (defaults to `http://localhost:8000`)
+Windows PowerShell:
 
-Auth proxies:
-- `POST /api/auth/login` -> backend patient login
-- `POST /api/auth/register` -> backend patient register
-- `POST /api/auth/doctor/login` -> backend doctor login
-- `POST /api/auth/doctor/register` -> backend doctor register
-- `POST /api/auth/verify-otp` -> backend verify OTP
-- `POST /api/auth/resend-otp` -> backend resend OTP
+```bash
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env.local
+```
 
-Protected route enforcement:
-- File: `frontend/src/proxy.ts`
-- Guarded paths:
-  - `/user-self/*` requires `userRole=PATIENT`
-  - `/doctor-self/*` requires `userRole=DOCTOR`
-  - `/admin/*` requires `userRole=ADMIN`
+macOS/Linux:
 
-## 5. Database Structure (Current Implemented Models)
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+```
 
-Custom auth user model is enabled:
-- `AUTH_USER_MODEL = users.CustomUser`
+## 5.1 Backend .env (backend/.env)
 
-### 5.1 Core Tables
+Required variables:
 
-1. `users_customuser`
-- Purpose: Main login identity and role owner.
-- Important fields:
-  - `id` (PK)
-  - `email` (unique, used as username)
-  - `username` (optional)
-  - `role` (`ADMIN`, `PATIENT`, `DOCTOR`)
-  - `is_active`, `is_staff`, `is_superuser`
-  - `date_joined`, `last_login`, `password`
+```env
+DJANGO_SECRET_KEY=your-strong-secret-key
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/postgres
+```
 
-2. `users_pendinguser`
-- Purpose: Temporary registration storage before OTP verification.
-- Important fields:
-  - `id` (PK)
-  - `email` (unique)
-  - `otp_code`
-  - `password` (hashed)
-  - `role`
-  - `profile_data` (JSON)
-  - `created_at`, `expires_at`
+Recommended variables:
 
-3. `patient_patientprofile`
-- Purpose: Extended profile for patient users.
-- Important fields:
-  - `id` (PK)
-  - `user` (OneToOne -> `users_customuser`)
-  - `full_name`, `date_of_birth`, `gender`
-  - `phone`, `address`, `medical_history`
+```env
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+DB_SSLMODE=require
 
-4. `doctor_doctorprofile`
-- Purpose: Extended profile for doctor users.
-- Important fields:
-  - `id` (PK)
-  - `user` (OneToOne -> `users_customuser`)
-  - `specialization`, `license_number`, `phone`
-  - `full_name`, `preferred_name`, `nic_number`
-  - `is_verified`
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+CORS_ALLOW_CREDENTIALS=True
 
-### 5.2 Relationship Summary
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@example.com
+EMAIL_HOST_PASSWORD=your-app-password
+```
 
-- One `users_customuser` can have either:
-  - one `patient_patientprofile`, or
-  - one `doctor_doctorprofile`
-- `users_pendinguser` is temporary and deleted after OTP verification.
+Notes:
+- Current backend settings require both DJANGO_SECRET_KEY and DATABASE_URL.
+- DATABASE_URL is parsed in settings.py and used as the primary database source.
+- DB_SSLMODE defaults to require.
 
-### 5.3 Django Default Tables
+## 5.2 Frontend .env.local (frontend/.env.local)
 
-Django also creates default framework tables (migrations, sessions, admin logs, permissions, content types, etc.), such as:
-- `django_migrations`
-- `django_session`
-- `django_admin_log`
-- `auth_group`
-- `auth_permission`
-- `django_content_type`
+Required variable:
 
-## 6. Local Development Setup
+```env
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+```
+
+For production frontend deployment, set this to your Render backend URL, for example:
+
+```env
+NEXT_PUBLIC_BACKEND_URL=https://your-backend-service.onrender.com
+```
+
+## 6. Local Setup Guide
 
 ## 6.1 Prerequisites
 
 Install:
-- Python 3.12+ recommended
-- Node.js 18+ (Node 20 LTS recommended)
+- Python 3.12+
+- Node.js 20 LTS
 - npm
-- PostgreSQL (if using default backend DB settings)
+- Supabase project (or any PostgreSQL instance)
 
-## 6.2 Backend Setup (Django)
+## 6.2 Clone and Open
 
-From repo root:
+```bash
+git clone <your-repo-url>
+cd e23-co2060-NexClinic
+```
+
+## 6.3 Backend Local Setup
 
 ```bash
 cd backend
 python -m venv .venv
 ```
 
-Activate virtual environment:
+Activate venv:
 
-Windows (PowerShell):
+Windows PowerShell:
+
 ```bash
 .\.venv\Scripts\Activate.ps1
 ```
 
 macOS/Linux:
+
 ```bash
 source .venv/bin/activate
 ```
@@ -215,61 +241,51 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Apply migrations:
+Create backend .env file (or copy from backend/.env.example):
 
 ```bash
-python manage.py makemigrations
-python manage.py migrate
+# backend/.env
+DJANGO_SECRET_KEY=your-strong-secret-key
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/postgres
+DB_SSLMODE=require
+
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+CORS_ALLOW_CREDENTIALS=True
+
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@example.com
+EMAIL_HOST_PASSWORD=your-app-password
 ```
 
-Run backend server:
+Run migrations and server:
 
 ```bash
+python manage.py migrate
 python manage.py runserver
 ```
 
-Backend runs at `http://localhost:8000`.
+Backend URL:
+- http://localhost:8000
 
-## 6.3 Backend Environment Notes
+## 6.4 Frontend Local Setup
 
-Current `settings.py` supports two DB modes:
-
-1. `DATABASE_URL` provided:
-- Uses PostgreSQL parsed from URL (Supabase-compatible)
-
-2. `DATABASE_URL` not provided:
-- Uses fallback DB env values (`DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`)
-
-Example local DB environment values:
-
-```env
-DB_ENGINE=django.db.backends.postgresql
-DB_NAME=nexclinic
-DB_USER=nexaura
-DB_PASSWORD=your_password
-DB_HOST=localhost
-DB_PORT=5432
-```
-
-Optional for Supabase/Postgres SSL:
-
-```env
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/postgres
-DB_SSLMODE=require
-```
-
-## 6.4 Frontend Setup (Next.js)
-
-From repo root:
+From repository root:
 
 ```bash
 cd frontend
 npm install
 ```
 
-Create `frontend/.env.local` (or copy from `.env.example`):
+Create frontend .env.local (or copy from frontend/.env.example):
 
-```env
+```bash
+# frontend/.env.local
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
 
@@ -279,82 +295,143 @@ Run frontend:
 npm run dev
 ```
 
-Frontend runs at `http://localhost:3000`.
+Frontend URL:
+- http://localhost:3000
 
-## 6.5 Run Both Services
+## 6.5 Local Smoke Test
 
-Use two terminals:
+1. Register patient: /register
+2. Register doctor: /doctor/register
+3. Verify OTP: /verify-otp
+4. Patient login: /login
+5. Doctor login: /doctor/login
+6. Open protected dashboards and verify role-based redirects
 
-Terminal 1:
-- Run Django server (`backend`)
+## 7. Supabase Setup Guide
 
-Terminal 2:
-- Run Next.js server (`frontend`)
+1. Create a Supabase project.
+2. Go to Project Settings -> Database -> Connection string.
+3. Copy the URI connection string.
+4. Use that URI as DATABASE_URL in backend .env (local) and Render environment variables.
+5. Keep DB_SSLMODE=require.
+6. Run migrations from backend to create/update tables.
 
-## 7. End-to-End Auth Test Flow
+Example:
 
-1. General user (patient) registration:
-- Open `http://localhost:3000/register`
-- Submit form
-- You should be redirected to `/verify-otp?email=...`
+```env
+DATABASE_URL=postgresql://postgres.xxxxx:password@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+DB_SSLMODE=require
+```
 
-2. Doctor registration:
-- Open `http://localhost:3000/doctor/register`
-- Submit form
-- You should be redirected to OTP verify page
+## 8. Deploy Backend on Render
 
-3. OTP verification:
-- Open `http://localhost:3000/verify-otp`
-- Enter email + OTP
+Create a Web Service in Render:
+- Connect your repository.
+- Root directory: backend
+- Runtime: Python 3
 
-4. General user (Patient) login:
-- Open `http://localhost:3000/login`
-- On success -> `/user-self/dashboard`
+Build command:
 
-5. Doctor login:
-- Open `http://localhost:3000/doctor/login`
-- On success -> `/doctor-self/dashboard`
+```bash
+./build.sh
+```
 
-## 8. Admin User Creation
+Start command:
 
-Create a Django admin account:
+```bash
+gunicorn main.wsgi:application --bind 0.0.0.0:$PORT
+```
+
+Set Render environment variables:
+
+```env
+DJANGO_SECRET_KEY=your-production-secret
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=your-backend-service.onrender.com
+
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/postgres
+DB_SSLMODE=require
+
+CORS_ALLOWED_ORIGINS=https://your-frontend-project.vercel.app
+CORS_ALLOW_CREDENTIALS=True
+
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@example.com
+EMAIL_HOST_PASSWORD=your-app-password
+```
+
+After deploy:
+- Confirm API health by opening /admin/ or a known endpoint.
+- Confirm migrations ran successfully from build logs.
+
+## 9. Deploy Frontend on Vercel
+
+Create/import project in Vercel:
+- Framework: Next.js (auto-detected)
+- Root directory: frontend
+
+Set Vercel environment variable:
+
+```env
+NEXT_PUBLIC_BACKEND_URL=https://your-backend-service.onrender.com
+```
+
+Deploy.
+
+After deploy:
+- Test login and registration flow.
+- Verify browser network calls go to Vercel API routes and proxy to Render backend.
+
+## 10. Production Integration Checklist
+
+1. Backend deployed and reachable on Render.
+2. Supabase DATABASE_URL configured on Render.
+3. CORS_ALLOWED_ORIGINS includes Vercel domain.
+4. Frontend NEXT_PUBLIC_BACKEND_URL points to Render domain.
+5. OTP email credentials are valid in backend env.
+6. Role-based redirects work for PATIENT, DOCTOR, ADMIN.
+
+## 11. Admin Setup
+
+Create superuser:
 
 ```bash
 cd backend
 python manage.py createsuperuser
 ```
 
-Then login to Django admin:
-- `http://localhost:8000/admin/`
+Admin URL:
+- http://localhost:8000/admin/ (local)
+- https://your-backend-service.onrender.com/admin/ (production)
 
-If needed, assign role `ADMIN` to the same user in admin panel or shell.
+## 12. Troubleshooting
 
-## 9. Troubleshooting
+Frontend cannot reach backend:
+- Check NEXT_PUBLIC_BACKEND_URL value.
+- Confirm backend service is live.
 
-1. Frontend cannot reach backend:
-- Check `NEXT_PUBLIC_BACKEND_URL` in `frontend/.env.local`
-- Ensure backend is running on `:8000`
-- Ensure CORS allows `http://localhost:3000`
+CORS issues:
+- Ensure CORS_ALLOWED_ORIGINS contains frontend origin exactly.
+- Include protocol (https://).
 
-2. Login returns unauthorized:
-- Ensure account is OTP-verified first
-- Ensure password is correct
-- Check backend logs for JWT errors
+Database connection issues:
+- Verify DATABASE_URL and DB_SSLMODE.
+- Ensure Supabase network/credentials are valid.
 
-3. Redirect loop to login on protected page:
-- Ensure login route sets both cookies:
-  - `authToken`
-  - `userRole`
-- Ensure role matches protected path (`PATIENT` vs `DOCTOR`)
+Build/deploy issues on Render:
+- Confirm root directory is backend.
+- Confirm start command uses gunicorn main.wsgi:application.
 
-4. Migrations issues:
-- Confirm DB credentials and server status
-- Re-run `python manage.py migrate`
+Verify OTP/email failures:
+- Confirm EMAIL_HOST_USER and EMAIL_HOST_PASSWORD.
+- Use app passwords for Gmail SMTP.
 
-5. Email/OTP not sending:
-- Verify SMTP credentials in `backend/main/settings.py`
-- For production, move sensitive values to environment variables
+## 13. Security Notes
 
-## 10. Important Security Note
-
-Current backend settings file contains hardcoded sensitive values (for example email credentials and secret key). Move these into environment variables before deployment.
+- Never commit secrets in code or tracked files.
+- Keep DJANGO_SECRET_KEY only in environment variables.
+- Keep DATABASE_URL and SMTP credentials only in environment variables.
+- Use DJANGO_DEBUG=False in production.
