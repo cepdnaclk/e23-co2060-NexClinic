@@ -31,10 +31,11 @@ export default function UserDashboard() {
         // Main page container for dashboard content.
         <div className="mx-3 sm:mx-4 mt-4 sm:mt-6 mb-6 sm:mb-8 space-y-4">
             {/* Welcome header card */}
-            <div className="flex flex-col lg:flex-row items-stretch gap-4 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 lg:p-8">
-                <div className="flex flex-col lg:w-1/2 w-full gap-4 rounded-lg p-2 h-full">
+            <div className="flex flex-col items-stretch gap-4 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 lg:p-8">
+                {/* Profile and buttons row */}                
+                <div className="flex w-full justify-between gap-4 shadow-md rounded-lg p-2 h-full">
                     {/* Name and Photo */}
-                    <div className="shadow-md rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex p-4 flex-col sm:flex-row sm:items-center gap-4">
                         {user?.profileImage ? (
                             <Image
                                 src={user.profileImage}
@@ -54,7 +55,7 @@ export default function UserDashboard() {
                         </div>
                     </div>
                     {/* Action shortcuts */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+                    <div className="bg-white dark:bg-gray-800 p-4">
                         {/* <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Quick Actions</h2> */}
                         {/* <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div> */}
                         <div className="flex justify-between flex-col sm:flex-row gap-4">
@@ -64,27 +65,29 @@ export default function UserDashboard() {
                                 </button>
                             </Link>
                             <Link href="/user-self/chats">
-                                <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold p-4 px-10 rounded-lg transition">Message Doctor</button>
+                                <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold p-4 px-10 rounded-lg transition">
+                                    Ask Doctor
+                                </button>
                             </Link>
                             <Link href="/user-self/profile">
-                                <button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold p-4 px-10 rounded-lg transition">View Records</button>
+                                <button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold p-4 px-10 rounded-lg transition">
+                                    View Prescriptions</button>
                             </Link>
                         </div>
                     </div>
                 </div>
-                {/* Informational highlight */}
-                <div className=" bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 lg:w-1/2 w-full h-full">
+                {/* Informational highlight row */}
+                <div className=" bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 w-full h-full">
                     <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Health Tip of the Day</h2>
                     <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
                         Stay hydrated! Aim to drink at least 8 glasses of water daily to maintain optimal health and energy levels.
                     </p>
                 </div>
-
             </div>
 
             {/* Top summary statistics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Upcoming Appointments</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">3</p>
@@ -96,10 +99,6 @@ export default function UserDashboard() {
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Active Prescriptions</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">2</p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Health Score</p>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">95%</p>
                 </div>
             </div>
 
