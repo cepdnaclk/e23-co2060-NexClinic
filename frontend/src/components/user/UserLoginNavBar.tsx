@@ -18,9 +18,6 @@ function UserLoginNavBar() {
                     title="navigation-links"
                     className="flex flex-1 justify-center md:flex-none md:justify-start text-[16px] gap-5"
                 >
-                    <Link href="/doctors" className="hover:underline underline-offset-2">
-                        Find Doctor
-                    </Link>
                     <Link href="/news-articles" className="hover:underline underline-offset-2">
                         News & Articles
                     </Link>

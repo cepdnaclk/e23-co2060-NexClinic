@@ -14,7 +14,9 @@ function MainNavbar() {
     };
 
     return (
-        <div className="w-full py-4 px-4 sm:px-6 shadow-md bg-white dark:bg-gray-800">
+        // <div className="flex flex-wrap w-full py-4 px-4 sm:px-6 shadow-md bg-white dark:bg-gray-800">
+        <div className="flex flex-wrap items-center justify-between w-full py-4 px-6 shadow-md bg-white dark:bg-gray-800">
+        
             <div className="flex items-center justify-between">
                 <Link href={logoHref} onClick={closeMobileMenu} className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between">
                     <img src="/images/logo-main.png" alt="NexClinic Logo" className="h-8 w-8 mr-4" />
@@ -32,7 +34,7 @@ function MainNavbar() {
                 </button>
             </div>
 
-            <div title="links-buttons-desktop" className="hidden md:flex items-center justify-between mt-4">
+            <div title="links-buttons-desktop" className="hidden md:flex items-center justify-between mt-4 gap-6">
                 <div title="navigation-links" className="flex text-[16px] gap-3 text-gray-800 dark:text-white">
                     <Link href="/news-articles" onClick={closeMobileMenu} className="hover:underline underline-offset-2">News & Articles</Link>
                     <Link href="/help" onClick={closeMobileMenu} className="hover:underline underline-offset-2">Help</Link>
