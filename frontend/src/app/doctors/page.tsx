@@ -95,6 +95,57 @@ const doctors: Doctor[] = [
     nextAvailable: "Today, 2:00 PM",
     languages: ["English", "Sinhala", "Tamil"],
   },
+    {
+    id: "5",
+    fullName: "Dr. Rashmi Wijesinghe",
+    slmcId: "SLMC/45678",
+    photo: "/images/female-doctor-profile-pic.jpg",
+    specialization: "Gynecologist",
+    hospitals: ["Asiri Hospital"],
+    qualifications: ["MBBS", "MD (Obstetrics & Gynecology)"],
+    experience: "10 years",
+    contactNumber: "+94 75 345 6789",
+    email: "rashmi.wijesinghe@example.com",
+    chatFee: "Rs. 500",
+    appointmentFee: "Rs. 3,200",
+    availableForChat: true,
+    nextAvailable: "Today, 2:00 PM",
+    languages: ["English", "Sinhala", "Tamil"],
+  },
+    {
+    id: "6",
+    fullName: "Dr. Rashmi Wijesinghe",
+    slmcId: "SLMC/45678",
+    photo: "/images/female-doctor-profile-pic.jpg",
+    specialization: "Gynecologist",
+    hospitals: ["Asiri Hospital"],
+    qualifications: ["MBBS", "MD (Obstetrics & Gynecology)"],
+    experience: "10 years",
+    contactNumber: "+94 75 345 6789",
+    email: "rashmi.wijesinghe@example.com",
+    chatFee: "Rs. 500",
+    appointmentFee: "Rs. 3,200",
+    availableForChat: true,
+    nextAvailable: "Today, 2:00 PM",
+    languages: ["English", "Sinhala", "Tamil"],
+  },
+    {
+    id: "7",
+    fullName: "Dr. Rashmi Wijesinghe",
+    slmcId: "SLMC/45678",
+    photo: "/images/female-doctor-profile-pic.jpg",
+    specialization: "Gynecologist",
+    hospitals: ["Asiri Hospital"],
+    qualifications: ["MBBS", "MD (Obstetrics & Gynecology)"],
+    experience: "10 years",
+    contactNumber: "+94 75 345 6789",
+    email: "rashmi.wijesinghe@example.com",
+    chatFee: "Rs. 500",
+    appointmentFee: "Rs. 3,200",
+    availableForChat: true,
+    nextAvailable: "Today, 2:00 PM",
+    languages: ["English", "Sinhala", "Tamil"],
+  },
 ];
 
 export default function DoctorsDirectory() {
@@ -121,7 +172,7 @@ export default function DoctorsDirectory() {
       <div className="fixed w-full top-0 left-0 z-10">
         <RoleBasedNavbar />
       </div>
-      <div className="min-h-screen bg-gray-200 p-8 pt-24">
+      <div className="min-h-screen bg-gray-100 p-8 pt-24">
         <h1 className="text-4xl font-bold text-center mb-6 text-gray-800">
           Find your Doctor
         </h1>
@@ -140,24 +191,25 @@ export default function DoctorsDirectory() {
             />
           </div>
 
-          {/* Filter Buttons */}
+          {/* Filter Controls */}
           <div className="flex flex-wrap gap-4">
-            {/* Specialization Filter */}
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm font-semibold text-gray-700 self-center mr-2">Specialization:</span>
-              {specialties.map(specialty => (
-                <button
-                  key={specialty}
-                  onClick={() => setSelectedSpecialty(specialty)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedSpecialty === specialty
-                      ? 'bg-green-500 text-white shadow-md'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                  }`}
-                >
-                  {specialty}
-                </button>
-              ))}
+            {/* Specialization List */}
+            <div className="flex items-center gap-2">
+              <label htmlFor="specialization" className="text-sm font-semibold text-gray-700">
+                Specialization:
+              </label>
+              <select
+                id="specialization"
+                value={selectedSpecialty}
+                onChange={(e) => setSelectedSpecialty(e.target.value)}
+                className="min-w-52 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                {specialties.map((specialty) => (
+                  <option key={specialty} value={specialty}>
+                    {specialty}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Online Availability Toggle */}
@@ -176,18 +228,18 @@ export default function DoctorsDirectory() {
           </div>
 
           {/* Results Count */}
-          <p className="text-sm text-gray-600">
+          {/* <p className="text-sm text-gray-600">
             Showing {filteredDoctors.length} of {doctors.length} doctors
-          </p>
+          </p> */}
         </div>
 
         {/* Doctors Grid */}
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16">
           {filteredDoctors.length > 0 ? (
             filteredDoctors.map((doctor) => (
               <div
                 key={doctor.id}
-                className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col p-6 hover:shadow-xl transition-shadow"
+                className="flex flex-col w-full bg-white rounded-xl shadow-lg overflow-hidden p-8 hover:shadow-xl transition-shadow"
               >
                 {/* Doctor Image & Availability Badge */}
                 <div className="relative flex justify-center mb-4">
