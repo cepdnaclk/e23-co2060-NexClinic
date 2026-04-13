@@ -159,8 +159,6 @@ function DoctorProfilePage() {
                 </div>
             </div>
 
-
-
             <div title="profile-content-section" className="flex flex-col lg:flex-row mx-4 my-6 gap-4">
 
                 <div title="professional-details" className="w-full lg:w-1/2 bg-white dark:bg-gray-800 p-4 sm:p-8 rounded-lg shadow-md">

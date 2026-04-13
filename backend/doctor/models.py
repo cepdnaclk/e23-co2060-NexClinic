@@ -18,8 +18,8 @@ class DoctorProfile(models.Model):
     qualifications = models.TextField(default="")
     hospitals = models.CharField(max_length=255, default="")
     languages_spoken = models.CharField(max_length=255, default="")
-    chat_fee = models.DecimalField(max_digits=10, decimal_places=2, default=500.00)
-    appointment_fee = models.DecimalField(max_digits=10, decimal_places=2, default=3000.00)
+    chat_fee = models.DecimalField(max_digits=10, decimal_places=2, default=1000000.00)
+    appointment_fee = models.DecimalField(max_digits=10, decimal_places=2, default=2000000.00)
     availability = models.BooleanField(default=False)
     
     def __str__(self):
