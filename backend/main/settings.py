@@ -42,10 +42,13 @@ def _env_list(name, default):
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+# Support both DJANGO_SECRET_KEY and SECRET_KEY to avoid deployment mismatches.
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or os.getenv("SECRET_KEY")
 
 if not SECRET_KEY:
-    raise Exception("DJANGO_SECRET_KEY environment variable not set. Please add it to your .env file.")
+    raise Exception(
+        "Missing secret key. Set DJANGO_SECRET_KEY (preferred) or SECRET_KEY in environment variables."
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_bool("DJANGO_DEBUG", True)
