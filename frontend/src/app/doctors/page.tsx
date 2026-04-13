@@ -20,7 +20,7 @@ type Doctor = {
   chatFee: string;
   appointmentFee: string;
   availableForChat: boolean;
-  nextAvailable: string;
+  // nextAvailable: string;
   languages: string[];
 };
 
@@ -201,9 +201,9 @@ export default function DoctorsDirectory() {
                 </div>
 
                 {/* Next Available */}
-                <p className="text-xs text-gray-500 mb-4 text-center">
+                {/* <p className="text-xs text-gray-500 mb-4 text-center">
                   Next Available: {doctor.nextAvailable}
-                </p>
+                </p> */}
 
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2 mt-auto">

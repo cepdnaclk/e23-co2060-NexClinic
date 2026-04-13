@@ -126,14 +126,14 @@ function DoctorProfilePage() {
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md mb-4 mx-4 mt-4">
-                <h2 className="text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Consultation Fees</h2>
+            <div title="consultation-fees-section" className="mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md mb-4 mx-4 mt-4">
+                <h2 className="text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Consultation Fees and Active hours</h2>
                 <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
                 <div className="grid md:grid-cols-2 gap-6">
                     <div className="flex flex-col">
                         <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">
                             <img src="/images/chat.png" className="w-4 h-4 inline mr-2" alt="Chat Icon" />
-                            Online Advice Chat Session:
+                            Online Chat Session:
                         </p>
                         <p className="text-2xl font-bold text-green-600 dark:text-green-400">Rs. {chatFee.toLocaleString()}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Quick online advice for minor concerns</p>
