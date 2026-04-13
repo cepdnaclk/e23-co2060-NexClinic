@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="doctorprofile",
             name="appointment_fee",
-            field=models.DecimalField(decimal_places=2, default=3000.0, max_digits=10),
+            field=models.DecimalField(decimal_places=2, default=2000000.0, max_digits=10),
         ),
         migrations.AddField(
             model_name="doctorprofile",
             name="chat_fee",
-            field=models.DecimalField(decimal_places=2, default=500.0, max_digits=10),
+            field=models.DecimalField(decimal_places=2, default=1000000.0, max_digits=10),
         ),
     ]
