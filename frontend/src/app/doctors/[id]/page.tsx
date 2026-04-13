@@ -1,4 +1,3 @@
-import Image from "next/image";
 import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
 
 type Doctor = {
@@ -19,76 +18,28 @@ type Doctor = {
 	languages: string[];
 };
 
-const doctors: Doctor[] = [
-	{
-		id: "1",
-		fullName: "Dr. Nimal Perera",
-		slmcId: "SLMC/12345",
-		photo: "/images/male-doctor-profile-pic.jpg",
-		specialization: "Cardiologist",
-		hospitals: ["Asiri Hospital", "National Hospital Colombo"],
-		qualifications: ["MBBS", "MD (Cardiology)"],
-		experience: "12 years",
-		contactNumber: "+94 77 123 4567",
-		email: "nimal.perera@example.com",
-		chatFee: "Rs. 500",
-		appointmentFee: "Rs. 3,000",
-		availableForChat: true,
-		nextAvailable: "Today, 3:00 PM",
-		languages: ["English", "Sinhala", "Tamil"],
-	},
-	{
-		id: "2",
-		fullName: "Dr. Amara Silva",
-		slmcId: "SLMC/67890",
-		photo: "/images/female-doctor-profile-pic.jpg",
-		specialization: "Dermatologist",
-		hospitals: ["Lanka Hospitals"],
-		qualifications: ["MBBS", "Diploma in Dermatology"],
-		experience: "8 years",
-		contactNumber: "+94 71 987 6543",
-		email: "amara.silva@example.com",
-		chatFee: "Rs. 400",
-		appointmentFee: "Rs. 2,500",
-		availableForChat: false,
-		nextAvailable: "Tomorrow, 10:00 AM",
-		languages: ["English", "Sinhala"],
-	},
-	{
-		id: "3",
-		fullName: "Dr. Kamal Fernando",
-		slmcId: "SLMC/34567",
-		photo: "/images/male-doctor-profile-pic.jpg",
-		specialization: "Pediatrician",
-		hospitals: ["Nawaloka Hospital"],
-		qualifications: ["MBBS", "DCH", "MD (Pediatrics)"],
-		experience: "15 years",
-		contactNumber: "+94 76 234 5678",
-		email: "kamal.fernando@example.com",
-		chatFee: "Rs. 600",
-		appointmentFee: "Rs. 3,500",
-		availableForChat: true,
-		nextAvailable: "Today, 5:30 PM",
-		languages: ["English", "Sinhala"],
-	},
-	{
-		id: "4",
-		fullName: "Dr. Rashmi Wijesinghe",
-		slmcId: "SLMC/45678",
-		photo: "/images/female-doctor-profile-pic.jpg",
-		specialization: "Gynecologist",
-		hospitals: ["Asiri Hospital"],
-		qualifications: ["MBBS", "MD (Obstetrics & Gynecology)"],
-		experience: "10 years",
-		contactNumber: "+94 75 345 6789",
-		email: "rashmi.wijesinghe@example.com",
-		chatFee: "Rs. 500",
-		appointmentFee: "Rs. 3,200",
-		availableForChat: true,
-		nextAvailable: "Today, 2:00 PM",
-		languages: ["English", "Sinhala", "Tamil"],
-	},
-];
+async function fetchDoctor(id: string): Promise<Doctor | null> {
+	const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+	try {
+		const response = await fetch(`${BACKEND_URL}/api/doctor/directory/${id}/`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			cache: "no-store",
+		});
+
+		if (!response.ok) {
+			return null;
+		}
+
+		const payload = await response.json();
+		return (payload?.doctor as Doctor) || null;
+	} catch {
+		return null;
+	}
+}
 
 export default async function DoctorProfile({
 	params,
@@ -96,8 +47,7 @@ export default async function DoctorProfile({
 	params: Promise<{ id: string }>;
 }) {
 	const { id } = await params;
-
-	const doctor = doctors.find((d) => d.id === id);
+	const doctor = await fetchDoctor(id);
 
 	if (!doctor) {
 		return <p className="p-6">Doctor not found</p>;
@@ -114,12 +64,13 @@ export default async function DoctorProfile({
 				{/* Profile Header Card */}
 				<div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md mb-4">
 					<div className="flex flex-col sm:flex-row gap-6 items-center">
-						<Image
+						<img
 							src={doctor.photo}
 							alt={doctor.fullName}
-							width={140}
-							height={140}
-							className="rounded-full object-cover"
+							className="w-[140px] h-[140px] rounded-full object-cover"
+							onError={(event) => {
+								event.currentTarget.src = "/images/user.png";
+							}}
 						/>
 
 						<div className="flex-1 text-center sm:text-left">

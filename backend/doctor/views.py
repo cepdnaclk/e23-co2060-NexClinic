@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 
-from .models import AppointmentAvailableSlot, DoctorOnlineAdviceAvailability, Appointment
+from .models import AppointmentAvailableSlot, DoctorOnlineAdviceAvailability, Appointment, DoctorProfile
 from .constants import DOCTOR_SPECIALIZATIONS
 from .serializers import (
     AppointmentAvailableSlotSerializer,
@@ -17,6 +17,7 @@ from .serializers import (
     OnlineAdviceAvailabilitySerializer,
     BulkOnlineAdviceSlotCreateSerializer,
     OnlineAdviceSlotUpdateSerializer,
+    DoctorDirectorySerializer,
 )
 
 
@@ -25,6 +26,27 @@ class DoctorSpecializationsView(APIView):
 
     def get(self, request):
         return Response({"specializations": DOCTOR_SPECIALIZATIONS}, status=status.HTTP_200_OK)
+
+
+class DoctorDirectoryView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        queryset = DoctorProfile.objects.select_related('user').filter(user__role='DOCTOR', user__is_active=True).order_by('full_name', 'id')
+        serializer = DoctorDirectorySerializer(queryset, many=True, context={'request': request})
+        return Response({'doctors': serializer.data}, status=status.HTTP_200_OK)
+
+
+class DoctorDirectoryDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, doctor_id):
+        doctor = DoctorProfile.objects.select_related('user').filter(id=doctor_id, user__role='DOCTOR', user__is_active=True).first()
+        if not doctor:
+            return Response({'detail': 'Doctor not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = DoctorDirectorySerializer(doctor, context={'request': request})
+        return Response({'doctor': serializer.data}, status=status.HTTP_200_OK)
 
 
 class DoctorDashboardView(APIView):
