@@ -17,7 +17,8 @@ from .serializers import (
     OnlineAdviceAvailabilitySerializer,
     BulkOnlineAdviceSlotCreateSerializer,
     OnlineAdviceSlotUpdateSerializer,
-    DoctorDirectorySerializer,
+    DoctorDirectoryPublicSerializer,
+    DoctorDirectoryDetailSerializer
 )
 
 
@@ -29,23 +30,41 @@ class DoctorSpecializationsView(APIView):
 
 
 class DoctorDirectoryView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        queryset = DoctorProfile.objects.select_related('user').filter(user__role='DOCTOR', user__is_active=True).order_by('full_name', 'id')
-        serializer = DoctorDirectorySerializer(queryset, many=True, context={'request': request})
+        if getattr(request.user, 'role', None) not in {'DOCTOR', 'PATIENT', 'ADMIN'}:
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        queryset = DoctorProfile.objects.select_related('user').filter(
+            user__role='DOCTOR',
+            user__is_active=True,
+            is_verified=True,
+        ).order_by('full_name', 'id')
+        serializer = DoctorDirectoryPublicSerializer(queryset, many=True, context={'request': request})
         return Response({'doctors': serializer.data}, status=status.HTTP_200_OK)
 
 
 class DoctorDirectoryDetailView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, doctor_id):
-        doctor = DoctorProfile.objects.select_related('user').filter(id=doctor_id, user__role='DOCTOR', user__is_active=True).first()
+        role = getattr(request.user, 'role', None)
+        if role not in {'DOCTOR', 'PATIENT', 'ADMIN'}:
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        doctor = DoctorProfile.objects.select_related('user').filter(
+            id=doctor_id,
+            user__role='DOCTOR',
+            user__is_active=True,
+            is_verified=True,
+        ).first()
         if not doctor:
             return Response({'detail': 'Doctor not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = DoctorDirectorySerializer(doctor, context={'request': request})
+        can_view_private_contact = role in {'PATIENT', 'ADMIN'}
+        serializer_class = DoctorDirectoryDetailSerializer if can_view_private_contact else DoctorDirectoryPublicSerializer
+        serializer = serializer_class(doctor, context={'request': request})
         return Response({'doctor': serializer.data}, status=status.HTTP_200_OK)
 
 
@@ -161,6 +180,8 @@ class DoctorProfileView(APIView):
         qualifications = ""
         hospitals = ""
         languages_spoken = ""
+        chat_fee = 1000000.00
+        appointment_fee = 2000000.00
         availability = False
 
         if doctor_profile:
@@ -175,6 +196,8 @@ class DoctorProfileView(APIView):
             qualifications = doctor_profile.qualifications
             hospitals = doctor_profile.hospitals
             languages_spoken = doctor_profile.languages_spoken
+            chat_fee = float(doctor_profile.chat_fee)
+            appointment_fee = float(doctor_profile.appointment_fee)
             availability = doctor_profile.availability
 
         data = {
@@ -190,8 +213,8 @@ class DoctorProfileView(APIView):
             "profileDetails": {
                 "experience": f"{experience_years} years of experience",
                 "location": location,
-                "chatFee": 500,
-                "appointmentFee": 3000,
+                "chatFee": chat_fee,
+                "appointmentFee": appointment_fee,
                 "availabilityForOnlineAdvice": availability,
                 "onlineAdviceSchedule": [
                     "Monday, 2:00 PM - 5:00 PM",
@@ -206,6 +229,82 @@ class DoctorProfileView(APIView):
         }
 
         return Response(data)
+
+    def patch(self, request):
+        user = request.user
+
+        if getattr(user, "role", None) != "DOCTOR":
+            return Response({"detail": "Forbidden"}, status=403)
+
+        doctor_profile = getattr(user, "doctor_profile", None)
+        if not doctor_profile:
+            return Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        payload = request.data if isinstance(request.data, dict) else {}
+
+        field_map = {
+            "fullName": "full_name",
+            "preferredName": "preferred_name",
+            "specialization": "specialization",
+            "phone": "phone",
+            "licenseNumber": "license_number",
+            "location": "location",
+            "qualifications": "qualifications",
+            "hospitals": "hospitals",
+            "languages": "languages_spoken",
+        }
+
+        update_fields = []
+
+        for payload_key, model_field in field_map.items():
+            if payload_key in payload:
+                setattr(doctor_profile, model_field, payload.get(payload_key) or "")
+                update_fields.append(model_field)
+
+        if "experienceYears" in payload:
+            try:
+                experience_years = int(payload.get("experienceYears"))
+            except (TypeError, ValueError):
+                return Response({"detail": "experienceYears must be a valid integer."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if experience_years < 0:
+                return Response({"detail": "experienceYears cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
+
+            doctor_profile.experience_years = experience_years
+            update_fields.append("experience_years")
+
+        if "chatFee" in payload:
+            try:
+                chat_fee = float(payload.get("chatFee"))
+            except (TypeError, ValueError):
+                return Response({"detail": "chatFee must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if chat_fee < 0:
+                return Response({"detail": "chatFee cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
+
+            doctor_profile.chat_fee = chat_fee
+            update_fields.append("chat_fee")
+
+        if "appointmentFee" in payload:
+            try:
+                appointment_fee = float(payload.get("appointmentFee"))
+            except (TypeError, ValueError):
+                return Response({"detail": "appointmentFee must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if appointment_fee < 0:
+                return Response({"detail": "appointmentFee cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
+
+            doctor_profile.appointment_fee = appointment_fee
+            update_fields.append("appointment_fee")
+
+        if "availabilityForOnlineAdvice" in payload:
+            doctor_profile.availability = bool(payload.get("availabilityForOnlineAdvice"))
+            update_fields.append("availability")
+
+        if update_fields:
+            doctor_profile.save(update_fields=sorted(set(update_fields)))
+
+        return self.get(request)
 
 
 class DoctorAppointmentsView(APIView):

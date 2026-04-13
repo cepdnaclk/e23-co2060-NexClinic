@@ -195,37 +195,31 @@ class DoctorAppointmentRescheduleSerializer(serializers.Serializer):
 
         return attrs
 
-
-class DoctorDirectorySerializer(serializers.ModelSerializer):
+class DoctorDirectoryPublicSerializer(serializers.ModelSerializer):
     id = serializers.SerializerMethodField()
     fullName = serializers.SerializerMethodField()
-    slmcId = serializers.SerializerMethodField()
     photo = serializers.SerializerMethodField()
     specialization = serializers.SerializerMethodField()
     hospitals = serializers.SerializerMethodField()
     qualifications = serializers.SerializerMethodField()
     experience = serializers.SerializerMethodField()
-    contactNumber = serializers.SerializerMethodField()
-    email = serializers.SerializerMethodField()
     chatFee = serializers.SerializerMethodField()
     appointmentFee = serializers.SerializerMethodField()
     availableForChat = serializers.SerializerMethodField()
     nextAvailable = serializers.SerializerMethodField()
     languages = serializers.SerializerMethodField()
 
+
     class Meta:
         model = DoctorProfile
         fields = [
             'id',
             'fullName',
-            'slmcId',
             'photo',
             'specialization',
             'hospitals',
             'qualifications',
             'experience',
-            'contactNumber',
-            'email',
             'chatFee',
             'appointmentFee',
             'availableForChat',
@@ -233,21 +227,15 @@ class DoctorDirectorySerializer(serializers.ModelSerializer):
             'languages',
         ]
 
-    @staticmethod
-    def _split_csv(value):
-        if not value:
-            return []
-        return [item.strip() for item in value.split(',') if item.strip()]
-
     def get_id(self, obj):
         return str(obj.id)
 
     def get_fullName(self, obj):
         return obj.full_name or obj.preferred_name or (obj.user.email if obj.user else 'Doctor')
 
-    def get_slmcId(self, obj):
-        return obj.license_number or ''
-
+    def get_specialization(self, obj):
+        return obj.specialization or 'General'
+    
     def get_photo(self, obj):
         if not obj.profile_picture:
             return '/images/user.png'
@@ -257,41 +245,152 @@ class DoctorDirectorySerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.profile_picture.url)
 
         return obj.profile_picture.url
-
-    def get_specialization(self, obj):
-        return obj.specialization or 'General'
-
+    
     def get_hospitals(self, obj):
-        return self._split_csv(obj.hospitals)
-
+        if not obj.hospitals:
+            return []
+        return [hospital.strip() for hospital in obj.hospitals.split(',') if hospital.strip()]
+    
     def get_qualifications(self, obj):
-        return self._split_csv(obj.qualifications)
-
+        if not obj.qualifications:
+            return []
+        return [qualification.strip() for qualification in obj.qualifications.split(',') if qualification.strip()]
+    
     def get_experience(self, obj):
         years = obj.experience_years or 0
         return f'{years} years'
+    
+    def get_chatFee(self, obj):
+        return f'Rs. {obj.chat_fee:,.2f}'
+
+    def get_appointmentFee(self, obj):
+        return f'Rs. {obj.appointment_fee:,.2f}'
+    
+    def get_availableForChat(self, obj):
+        return bool(obj.availability)
+    
+    def get_nextAvailable(self, obj):
+        next_slot = obj.available_slots.filter(date__gte=timezone.localdate()).order_by('date', 'start_time').first()
+        if not next_slot:
+            return 'Not available'
+        return f"{next_slot.date.strftime('%Y-%m-%d')}, {next_slot.start_time.strftime('%I:%M %p')}"
+    
+    def get_languages(self, obj):
+        if not obj.languages_spoken:
+            return []
+        return [language.strip() for language in obj.languages_spoken.split(',') if language.strip()]
+    
+
+class DoctorDirectoryDetailSerializer(DoctorDirectoryPublicSerializer):
+    contactNumber = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+
+    class Meta(DoctorDirectoryPublicSerializer.Meta):
+        fields = DoctorDirectoryPublicSerializer.Meta.fields + ['contactNumber', 'email']
 
     def get_contactNumber(self, obj):
         return obj.phone or ''
 
     def get_email(self, obj):
         return obj.user.email if obj.user else ''
+    
 
-    def get_chatFee(self, obj):
-        return 'Rs. 500'
+# class DoctorDirectorySerializer(serializers.ModelSerializer):
+#     id = serializers.SerializerMethodField()
+#     fullName = serializers.SerializerMethodField()
+#     slmcId = serializers.SerializerMethodField()
+#     photo = serializers.SerializerMethodField()
+#     specialization = serializers.SerializerMethodField()
+#     hospitals = serializers.SerializerMethodField()
+#     qualifications = serializers.SerializerMethodField()
+#     experience = serializers.SerializerMethodField()
+#     contactNumber = serializers.SerializerMethodField()
+#     email = serializers.SerializerMethodField()
+#     chatFee = serializers.SerializerMethodField()
+#     appointmentFee = serializers.SerializerMethodField()
+#     availableForChat = serializers.SerializerMethodField()
+#     nextAvailable = serializers.SerializerMethodField()
+#     languages = serializers.SerializerMethodField()
 
-    def get_appointmentFee(self, obj):
-        return 'Rs. 3,000'
+#     class Meta:
+#         model = DoctorProfile
+#         fields = [
+#             'id',
+#             'fullName',
+#             'slmcId',
+#             'photo',
+#             'specialization',
+#             'hospitals',
+#             'qualifications',
+#             'experience',
+#             'contactNumber',
+#             'email',
+#             'chatFee',
+#             'appointmentFee',
+#             'availableForChat',
+#             'nextAvailable',
+#             'languages',
+#         ]
 
-    def get_availableForChat(self, obj):
-        return bool(obj.availability)
+#     @staticmethod
+#     def _split_csv(value):
+#         if not value:
+#             return []
+#         return [item.strip() for item in value.split(',') if item.strip()]
 
-    def get_nextAvailable(self, obj):
-        next_slot = obj.available_slots.filter(date__gte=timezone.localdate()).order_by('date', 'start_time').first()
-        if not next_slot:
-            return 'Not available'
+#     def get_id(self, obj):
+#         return str(obj.id)
 
-        return f"{next_slot.date.strftime('%Y-%m-%d')}, {next_slot.start_time.strftime('%I:%M %p')}"
+#     def get_fullName(self, obj):
+#         return obj.full_name or obj.preferred_name or (obj.user.email if obj.user else 'Doctor')
 
-    def get_languages(self, obj):
-        return self._split_csv(obj.languages_spoken)
+#     def get_slmcId(self, obj):
+#         return obj.license_number or ''
+
+#     def get_photo(self, obj):
+#         if not obj.profile_picture:
+#             return '/images/user.png'
+
+#         request = self.context.get('request')
+#         if request:
+#             return request.build_absolute_uri(obj.profile_picture.url)
+
+#         return obj.profile_picture.url
+
+#     def get_specialization(self, obj):
+#         return obj.specialization or 'General'
+
+#     def get_hospitals(self, obj):
+#         return self._split_csv(obj.hospitals)
+
+#     def get_qualifications(self, obj):
+#         return self._split_csv(obj.qualifications)
+
+#     def get_experience(self, obj):
+#         years = obj.experience_years or 0
+#         return f'{years} years'
+
+#     def get_contactNumber(self, obj):
+#         return obj.phone or ''
+
+#     def get_email(self, obj):
+#         return obj.user.email if obj.user else ''
+
+#     def get_chatFee(self, obj):
+#         return 'Rs. 500'
+
+#     def get_appointmentFee(self, obj):
+#         return 'Rs. 3,000'
+
+#     def get_availableForChat(self, obj):
+#         return bool(obj.availability)
+
+#     def get_nextAvailable(self, obj):
+#         next_slot = obj.available_slots.filter(date__gte=timezone.localdate()).order_by('date', 'start_time').first()
+#         if not next_slot:
+#             return 'Not available'
+
+#         return f"{next_slot.date.strftime('%Y-%m-%d')}, {next_slot.start_time.strftime('%I:%M %p')}"
+
+#     def get_languages(self, obj):
+#         return self._split_csv(obj.languages_spoken)

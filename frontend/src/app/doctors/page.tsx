@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
 import GreenButton from "@/components/buttons/GreenButton";
@@ -24,15 +25,55 @@ type Doctor = {
   languages: string[];
 };
 
+type AppRole = 'DOCTOR' | 'PATIENT' | 'ADMIN' | 'GUEST';
+
 export default function DoctorsDirectory() {
+  const router = useRouter();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  const [role, setRole] = useState<AppRole>('GUEST');
+  const [isRoleResolved, setIsRoleResolved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const authToken = localStorage.getItem('authToken');
+    const storedRole = localStorage.getItem('userRole');
+    if (authToken && storedRole === 'DOCTOR') {
+      setRole('DOCTOR');
+      setIsRoleResolved(true);
+      return;
+    }
+    if (authToken && storedRole === 'PATIENT') {
+      setRole('PATIENT');
+      setIsRoleResolved(true);
+      return;
+    }
+    if (authToken && storedRole === 'ADMIN') {
+      setRole('ADMIN');
+      setIsRoleResolved(true);
+      return;
+    }
+    setRole('GUEST');
+    setIsRoleResolved(true);
+    router.replace('/login');
+  }, [router]);
+
+  useEffect(() => {
+    if (!isRoleResolved || role === 'GUEST') {
+      setLoading(false);
+      setDoctors([]);
+      return;
+    }
+
+    if (!['DOCTOR', 'PATIENT', 'ADMIN'].includes(role)) {
+      setLoading(false);
+      setDoctors([]);
+      return;
+    }
+
     const loadDoctors = async () => {
       setLoading(true);
       setError('');
@@ -60,7 +101,7 @@ export default function DoctorsDirectory() {
     };
 
     void loadDoctors();
-  }, []);
+  }, [isRoleResolved, role]);
 
   // Get unique specializations
   const specialties = ['All', ...Array.from(new Set(doctors.map(d => d.specialization)))];
@@ -207,20 +248,28 @@ export default function DoctorsDirectory() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2 mt-auto">
-                  {/* Chat Now Button */}
-                  <GreenButton
-                    disabled={!doctor.availableForChat}
-                    className={`w-full text-sm ${!doctor.availableForChat ? 'bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed' : ''}`}
-                  >
-                    {doctor.availableForChat ? '💬 Chat Now' : '💬 Offline'}
-                  </GreenButton>
+                  {role === 'PATIENT' ? (
+                    <>
+                      {/* Chat Now Button */}
+                      <GreenButton
+                        disabled={!doctor.availableForChat}
+                        className={`w-full text-sm ${!doctor.availableForChat ? 'bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed' : ''}`}
+                      >
+                        {doctor.availableForChat ? '💬 Chat Now' : '💬 Offline'}
+                      </GreenButton>
 
-                  {/* Book Appointment Button */}
-                  <Link href={`/user-self/book-appointment?doctor=${doctor.id}`} className="w-full">
-                    <BlackButton className="w-full text-sm">
-                      📅 Book Appointment
-                    </BlackButton>
-                  </Link>
+                      {/* Book Appointment Button */}
+                      <Link href={`/user-self/book-appointment?doctor=${doctor.id}`} className="w-full">
+                        <BlackButton className="w-full text-sm">
+                          📅 Book Appointment
+                        </BlackButton>
+                      </Link>
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-500 text-center">
+                      Chat and booking are available for patients.
+                    </p>
+                  )}
 
                   {/* See Profile Link */}
                   <Link href={`/doctors/${doctor.id}`} className="w-full">

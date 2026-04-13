@@ -89,9 +89,13 @@ export function proxy(request: NextRequest) {
     return redirectToLogin(request, "/login");
   }
 
+  if (pathname.startsWith("/doctors") && !["DOCTOR", "PATIENT", "ADMIN"].includes(userRole || "")) {
+    return redirectToLogin(request, "/login");
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/doctor-self/:path*", "/user-self/:path*", "/admin/:path*"],
+  matcher: ["/doctor-self/:path*", "/user-self/:path*", "/admin/:path*", "/doctors/:path*"],
 };

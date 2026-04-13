@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { proxyBackendWithRefresh } from "@/lib/serverAuthProxy";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
@@ -8,28 +9,16 @@ type RouteParams = {
   }>;
 };
 
-export async function GET(_: Request, context: RouteParams) {
+export async function GET(request: NextRequest, context: RouteParams) {
   try {
     const { id } = await context.params;
 
-    const backendResponse = await fetch(`${BACKEND_URL}/api/doctor/directory/${id}/`, {
+    return await proxyBackendWithRefresh({
+      request,
+      endpoint: `${BACKEND_URL}/api/doctor/directory/${id}/`,
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
+      failureMessage: "Failed to fetch doctor",
     });
-
-    const payload = await backendResponse.json();
-
-    if (!backendResponse.ok) {
-      return NextResponse.json(
-        { error: payload?.detail || payload?.error || "Failed to fetch doctor" },
-        { status: backendResponse.status }
-      );
-    }
-
-    return NextResponse.json(payload, { status: 200 });
   } catch (error) {
     console.error("Doctor directory detail API error", error);
     return NextResponse.json(
