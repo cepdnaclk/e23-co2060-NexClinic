@@ -97,11 +97,13 @@ function getInitialRole(): AppRole {
 }
 
 export default function RoleBasedNavbar() {
-  const [role, setRole] = useState<AppRole>(getInitialRole);
-  const [isResolvingRole, setIsResolvingRole] = useState<boolean>(typeof window === "undefined");
+  const [role, setRole] = useState<AppRole>("GUEST");
+  const [isMounted, setIsMounted] = useState(false);
+  const [isResolvingRole, setIsResolvingRole] = useState<boolean>(true);
 
   useEffect(() => {
     let isActive = true;
+    setIsMounted(true);
 
     const resolveRole = async () => {
       const storedRole = resolveRoleFromStorage();
@@ -130,7 +132,8 @@ export default function RoleBasedNavbar() {
     };
   }, []);
 
-  if (isResolvingRole) {
+  // Keep server/client initial render deterministic to avoid hydration mismatch.
+  if (!isMounted || isResolvingRole) {
     return <MainNavbar />;
   }
 
