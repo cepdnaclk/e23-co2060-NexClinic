@@ -9,8 +9,8 @@ type Doctor = {
 	hospitals: string[];
 	qualifications: string[];
 	experience: string;
-	contactNumber: string;
-	email: string;
+	contactNumber?: string;
+	email?: string;
 	chatFee: string;
 	appointmentFee: string;
 	availableForChat: boolean;
@@ -48,6 +48,7 @@ export default async function DoctorProfile({
 }) {
 	const { id } = await params;
 	const doctor = await fetchDoctor(id);
+	const hasContactInfo = Boolean(doctor?.email || doctor?.contactNumber);
 
 	if (!doctor) {
 		return <p className="p-6">Doctor not found</p>;
@@ -165,21 +166,29 @@ export default async function DoctorProfile({
 						<h2 className="text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Contact Information</h2>
 						<div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
-						<div className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Email Address:</p>
-							<div className="flex items-center">
-								<img src="/images/at.png" className="w-4 h-4 inline mr-2" alt="Email Icon" />
-								<p>{doctor.email}</p>
-							</div>
-						</div>
+						{hasContactInfo ? (
+							<>
+								<div className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
+									<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Email Address:</p>
+									<div className="flex items-center">
+										<img src="/images/at.png" className="w-4 h-4 inline mr-2" alt="Email Icon" />
+										<p>{doctor.email}</p>
+									</div>
+								</div>
 
-						<div className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Mobile Number:</p>
-							<div className="flex items-center">
-								<img src="/images/phone.png" className="w-4 h-4 inline mr-2" alt="Phone Icon" />
-								<p>{doctor.contactNumber}</p>
-							</div>
-						</div>
+								<div className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
+									<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Mobile Number:</p>
+									<div className="flex items-center">
+										<img src="/images/phone.png" className="w-4 h-4 inline mr-2" alt="Phone Icon" />
+										<p>{doctor.contactNumber}</p>
+									</div>
+								</div>
+							</>
+						) : (
+							<p className="text-sm text-gray-500 dark:text-gray-400">
+								Contact details are available for authorized users only.
+							</p>
+						)}
 					</div>
 
 				</div>
