@@ -32,6 +32,17 @@ async function readJsonSafe(response: Response): Promise<any> {
   }
 }
 
+function isTokenError(payload: any): boolean {
+  const message = String(payload?.detail || payload?.error || "").toLowerCase();
+  return (
+    message.includes("token not valid") ||
+    message.includes("given token not valid") ||
+    message.includes("token is invalid") ||
+    message.includes("token is expired") ||
+    message.includes("token has expired")
+  );
+}
+
 async function refreshAccessToken(request: NextRequest): Promise<RefreshedTokens | null> {
   const refreshToken = request.cookies.get("refreshToken")?.value;
 
@@ -121,7 +132,12 @@ export async function proxyBackendWithRefresh({
   const authToken = request.cookies.get("authToken")?.value;
 
   if (!authToken) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const unauthorizedResponse = NextResponse.json(
+      { error: "Session expired. Please login again." },
+      { status: 401 }
+    );
+    clearAuthCookies(unauthorizedResponse);
+    return unauthorizedResponse;
   }
 
   const callBackend = (token: string) =>
@@ -144,17 +160,45 @@ export async function proxyBackendWithRefresh({
     if (refreshedTokens?.accessToken) {
       backendResponse = await callBackend(refreshedTokens.accessToken);
     }
+
+    if (backendResponse.status === 401) {
+      const unauthorizedResponse = NextResponse.json(
+        { error: "Session expired. Please login again." },
+        { status: 401 }
+      );
+      clearAuthCookies(unauthorizedResponse);
+      return unauthorizedResponse;
+    }
   }
 
   const payload = await readJsonSafe(backendResponse);
+
+  if (!backendResponse.ok && isTokenError(payload)) {
+    const unauthorizedResponse = NextResponse.json(
+      { error: "Session expired. Please login again." },
+      { status: 401 }
+    );
+    clearAuthCookies(unauthorizedResponse);
+    return unauthorizedResponse;
+  }
+
   const response = backendResponse.ok
     ? NextResponse.json(payload, {
         status: successStatus ?? backendResponse.status,
       })
     : NextResponse.json(
-        { error: payload?.detail || payload?.error || failureMessage },
+        {
+          error:
+            backendResponse.status === 401
+              ? "Session expired. Please login again."
+              : payload?.detail || payload?.error || failureMessage,
+        },
         { status: backendResponse.status }
       );
+
+  if (backendResponse.status === 401) {
+    clearAuthCookies(response);
+  }
 
   if (refreshedTokens?.accessToken) {
     applyAuthCookies(response, {

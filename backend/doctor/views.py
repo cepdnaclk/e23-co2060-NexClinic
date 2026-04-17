@@ -1,4 +1,7 @@
 from collections import defaultdict
+from datetime import datetime, timedelta
+
+from django.utils import timezone
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -86,58 +89,59 @@ class DoctorDashboardView(APIView):
             display_name = doctor_profile.full_name or doctor_profile.preferred_name or user.email
             specialization = doctor_profile.specialization or "General"
 
-        upcoming_appointments = [
-            {
-                "id": "A-201",
-                "patientName": "Kasun Madushanka",
-                "type": "In-Person Appointment",
-                "date": "Today",
-                "time": "2:30 PM",
-                "status": "Confirmed",
-            },
-            {
-                "id": "A-202",
-                "patientName": "Anjali Perera",
-                "type": "In-Person Appointment",
-                "date": "Today",
-                "time": "4:00 PM",
-                "status": "Confirmed",
-            },
-            {
-                "id": "A-203",
-                "patientName": "Nuwan Silva",
-                "type": "In-Person Appointment",
-                "date": "Tomorrow",
-                "time": "10:00 AM",
-                "status": "Pending",
-            },
-        ]
+        today = timezone.localdate()
+        current_year = today.year
+        current_month = today.month
 
-        recent_chats = [
-            {
-                "id": "C-101",
-                "patientName": "Sanduni Jayasekara",
-                "lastMessage": "Doctor, my headache is still there after medication.",
-                "time": "5 min ago",
-                "unreadCount": 2,
-            },
-            {
-                "id": "C-102",
-                "patientName": "Tharaka Fernando",
-                "lastMessage": "Thank you doctor, I will follow your advice.",
-                "time": "32 min ago",
-                "unreadCount": 0,
-            },
-            {
-                "id": "C-103",
-                "patientName": "Iresha Perera",
-                "lastMessage": "Can I get a quick follow-up appointment today?",
-                "time": "1 hour ago",
-                "unreadCount": 1,
-            },
-        ]
+        appointment_queryset = Appointment.objects.filter(doctor=doctor_profile).select_related(
+            "slot", "patient"
+        ) if doctor_profile else Appointment.objects.none()
 
-        unread_chats = sum(chat["unreadCount"] for chat in recent_chats)
+        today_appointments = appointment_queryset.filter(
+            slot__date=today,
+            status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
+        ).count()
+
+        month_completed_count = appointment_queryset.filter(
+            status=Appointment.Status.COMPLETED,
+            slot__date__year=current_year,
+            slot__date__month=current_month,
+        ).count()
+
+        appointment_fee = float(doctor_profile.appointment_fee) if doctor_profile else 0.0
+        month_earnings = int(month_completed_count * appointment_fee)
+
+        upcoming_queryset = appointment_queryset.filter(
+            slot__date__gte=today,
+            status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
+        ).order_by("slot__date", "slot__start_time")[:5]
+
+        upcoming_appointments = []
+        for appointment in upcoming_queryset:
+            slot_date = appointment.slot.date
+            if slot_date == today:
+                date_label = "Today"
+            elif slot_date == today + timedelta(days=1):
+                date_label = "Tomorrow"
+            else:
+                date_label = slot_date.strftime("%b %d, %Y")
+
+            status_label = "Confirmed" if appointment.status == Appointment.Status.ACCEPTED else "Pending"
+            start_time = datetime.combine(slot_date, appointment.slot.start_time).strftime("%I:%M %p").lstrip("0")
+
+            upcoming_appointments.append(
+                {
+                    "id": str(appointment.id),
+                    "patientName": appointment.patient.full_name,
+                    "type": "In-Person Appointment",
+                    "date": date_label,
+                    "time": start_time,
+                    "status": status_label,
+                }
+            )
+
+        # Chat model is not available yet, so return empty real-state data.
+        recent_chats = []
 
         data = {
             "doctor": {
@@ -146,10 +150,10 @@ class DoctorDashboardView(APIView):
                 "specialization": specialization,
             },
             "stats": {
-                "todayAppointments": len([a for a in upcoming_appointments if a["date"] == "Today"]),
-                "unreadChats": unread_chats,
-                "monthEarnings": 98500,
-                "onlineAdviceSessions": 26,
+                "todayAppointments": today_appointments,
+                "unreadChats": 0,
+                "monthEarnings": month_earnings,
+                "onlineAdviceSessions": DoctorOnlineAdviceAvailability.objects.filter(doctor=doctor_profile).count() if doctor_profile else 0,
             },
             "upcomingAppointments": upcoming_appointments,
             "recentChats": recent_chats,

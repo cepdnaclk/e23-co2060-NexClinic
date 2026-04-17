@@ -24,57 +24,6 @@ type ChatPreview = {
     unreadCount: number;
 };
 
-const upcomingAppointments: AppointmentPreview[] = [
-    {
-        id: "A-201",
-        patientName: "Kasun Madushanka",
-        type: "In-Person Appointment",
-        date: "Today",
-        time: "2:30 PM",
-        status: "Confirmed",
-    },
-    {
-        id: "A-202",
-        patientName: "Anjali Perera",
-        type: "In-Person Appointment",
-        date: "Today",
-        time: "4:00 PM",
-        status: "Confirmed",
-    },
-    {
-        id: "A-203",
-        patientName: "Nuwan Silva",
-        type: "In-Person Appointment",
-        date: "Tomorrow",
-        time: "10:00 AM",
-        status: "Pending",
-    },
-];
-
-const recentChats: ChatPreview[] = [
-    {
-        id: "C-101",
-        patientName: "Sanduni Jayasekara",
-        lastMessage: "Doctor, my headache is still there after medication.",
-        time: "5 min ago",
-        unreadCount: 2,
-    },
-    {
-        id: "C-102",
-        patientName: "Tharaka Fernando",
-        lastMessage: "Thank you doctor, I will follow your advice.",
-        time: "32 min ago",
-        unreadCount: 0,
-    },
-    {
-        id: "C-103",
-        patientName: "Iresha Perera",
-        lastMessage: "Can I get a quick follow-up appointment today?",
-        time: "1 hour ago",
-        unreadCount: 1,
-    },
-];
-
 type DashboardData = {
     doctor: {
         displayName: string;
@@ -131,8 +80,8 @@ function DoctorDashboard() {
     }, [router]);
 
     const stats = dashboardData?.stats;
-    const appointments = dashboardData?.upcomingAppointments ?? upcomingAppointments;
-    const chats = dashboardData?.recentChats ?? recentChats;
+    const appointments = dashboardData?.upcomingAppointments ?? [];
+    const chats = dashboardData?.recentChats ?? [];
 
     return (
         <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
@@ -180,29 +129,33 @@ function DoctorDashboard() {
                         <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
                         <div className="space-y-3">
-                            {appointments.map((appointment) => (
-                                <div
-                                    key={appointment.id}
-                                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4"
-                                >
-                                    <div className="flex items-center justify-between gap-3">
-                                        <p className="font-semibold text-gray-900 dark:text-white">{appointment.patientName}</p>
-                                        <span
-                                            className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                                                appointment.status === "Confirmed"
-                                                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                                                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
-                                            }`}
-                                        >
-                                            {appointment.status}
-                                        </span>
+                            {appointments.length === 0 ? (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">No upcoming in-person appointments.</p>
+                            ) : (
+                                appointments.map((appointment) => (
+                                    <div
+                                        key={appointment.id}
+                                        className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4"
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="font-semibold text-gray-900 dark:text-white">{appointment.patientName}</p>
+                                            <span
+                                                className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                                                    appointment.status === "Confirmed"
+                                                        ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                                                        : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                                                }`}
+                                            >
+                                                {appointment.status}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{appointment.type}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            {appointment.date} • {appointment.time}
+                                        </p>
                                     </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{appointment.type}</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                        {appointment.date} • {appointment.time}
-                                    </p>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
 
@@ -217,25 +170,29 @@ function DoctorDashboard() {
                         <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
                         <div className="space-y-3">
-                            {chats.map((chat) => (
-                                <div
-                                    key={chat.id}
-                                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4"
-                                >
-                                    <div className="flex items-center justify-between gap-3">
-                                        <p className="font-semibold text-gray-900 dark:text-white">{chat.patientName}</p>
-                                        <div className="flex items-center gap-2">
-                                            {chat.unreadCount > 0 && (
-                                                <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500 text-white">
-                                                    {chat.unreadCount}
-                                                </span>
-                                            )}
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">{chat.time}</span>
+                            {chats.length === 0 ? (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">No recent advice chats yet.</p>
+                            ) : (
+                                chats.map((chat) => (
+                                    <div
+                                        key={chat.id}
+                                        className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4"
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="font-semibold text-gray-900 dark:text-white">{chat.patientName}</p>
+                                            <div className="flex items-center gap-2">
+                                                {chat.unreadCount > 0 && (
+                                                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-500 text-white">
+                                                        {chat.unreadCount}
+                                                    </span>
+                                                )}
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">{chat.time}</span>
+                                            </div>
                                         </div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">{chat.lastMessage}</p>
                                     </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">{chat.lastMessage}</p>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
