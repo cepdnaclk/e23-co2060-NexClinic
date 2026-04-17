@@ -35,6 +35,7 @@ function DoctorProfilePage() {
     const [isOn, setIsOn] = useState(false);
     const [profileData, setProfileData] = useState<DoctorProfileData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isSavingAvailability, setIsSavingAvailability] = useState(false);
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -71,6 +72,56 @@ function DoctorProfilePage() {
         loadProfile();
     }, [router]);
 
+    const handleAvailabilityToggle = async (newState: boolean) => {
+        if (!profileData || loading || isSavingAvailability) {
+            return;
+        }
+
+        const previousState = isOn;
+        setIsOn(newState);
+        setIsSavingAvailability(true);
+        setError("");
+
+        try {
+            const response = await fetch("/api/doctor/profile", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    availabilityForOnlineAdvice: newState,
+                }),
+            });
+
+            if (response.status === 401) {
+                handleDoctorSessionExpired(router);
+                return;
+            }
+
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload?.error || "Failed to update availability");
+            }
+
+            setProfileData((current) =>
+                current
+                    ? {
+                        ...current,
+                        profileDetails: {
+                            ...current.profileDetails,
+                            availabilityForOnlineAdvice: newState,
+                        },
+                    }
+                    : current
+            );
+        } catch (err) {
+            setIsOn(previousState);
+            setError(err instanceof Error ? err.message : "Failed to update availability");
+        } finally {
+            setIsSavingAvailability(false);
+        }
+    };
+
     const doctorName = profileData?.doctor.fullName || "Doctor";
     const specialization = profileData?.doctor.specialization || "General";
     const experience = profileData?.profileDetails.experience || "Not specified";
@@ -88,14 +139,14 @@ function DoctorProfilePage() {
 
     return (
         <div className="bg-gray-100 dark:bg-gray-900 justify-center gap-4 min-h-screen">
-            <div title="profile-header-card" className="flex flex-col lg:flex-row lg:flex-wrap items-center justify-between gap-4 lg:gap-8 mx-4 mt-4 sm:mt-8 bg-white dark:bg-gray-800 p-4 sm:p-8 lg:p-16 rounded-lg shadow-md">
-                <div title="left-column" className="flex flex-col sm:flex-row gap-4 items-center sm:pl-8 justify-center">
+            <div title="profile-header-card" className="flex flex-col xl:flex-row items-center justify-between gap-6 xl:gap-8 mx-4 mt-4 sm:mt-8 bg-white dark:bg-gray-800 p-4 sm:p-8 xl:p-12 rounded-lg shadow-md">
+                <div title="left-column" className="flex flex-col sm:flex-row gap-4 items-center xl:pl-4 justify-center">
                     <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover" />
                     <div title="name-spec-place" className="flex flex-col gap-2 text-center sm:text-left">
                         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold dark:text-white">{doctorName}</h1>
-                        <div className="flex gap-2">
-                            <div title="specialization" className="flex items-center rounded-full bg-green-100 dark:bg-green-900 px-3 py-1 text-green-600 dark:text-green-300 font-semibold text-sm sm:text-md w-max mt-1 mx-auto sm:mx-0">{specialization}</div>
-                            <div title="experience" className="flex items-center rounded-full bg-green-100 dark:bg-green-900 px-3 py-1 text-green-600 dark:text-green-300 font-semibold text-sm sm:text-md w-max mt-1 mx-auto sm:mx-0">{experience}</div>
+                        <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                            <div title="specialization" className="flex items-center rounded-full bg-green-100 dark:bg-green-900 px-3 py-1 text-green-600 dark:text-green-300 font-semibold text-sm sm:text-base w-max mt-1 mx-auto sm:mx-0">{specialization}</div>
+                            <div title="experience" className="flex items-center rounded-full bg-green-100 dark:bg-green-900 px-3 py-1 text-green-600 dark:text-green-300 font-semibold text-sm sm:text-base w-max mt-1 mx-auto sm:mx-0">{experience}</div>
                         </div>
                         <p title="location" className="text-gray-600 dark:text-gray-400 mt-1">
                             <img src="/images/location.png" className="w-4 h-4 inline mr-2" alt="Location Icon" />
@@ -105,20 +156,22 @@ function DoctorProfilePage() {
                         {error && <p className="text-xs text-red-500">{error}</p>}
                     </div>
                 </div>
-                <div title="right-column" className="flex flex-col gap-4 justify-center w-full lg:w-auto sm:pr-8">
-                    <div title="toggle-btn" className="flex flex-col sm:flex-row gap-4 sm:gap-6 pb-2 items-center">
+                <div title="right-column" className="flex flex-col gap-4 justify-center w-full xl:w-auto xl:pr-4">
+                    <div title="toggle-btn" className="flex flex-col sm:flex-row gap-4 sm:gap-6 pb-2 items-center sm:justify-between w-full">
                         <div title="text-column" className="text-center sm:text-left">
                             <p className="text-black dark:text-white font-bold text-lg sm:text-xl">Availability for Online Advice</p>
                             <p className="text-gray-400 dark:text-gray-500 text-sm font-bold">
-                                {isOn ? "Available" : "Unavailable"}
+                                {isSavingAvailability ? "Saving..." : isOn ? "Available" : "Unavailable"}
                             </p>
                         </div>
-                        <div title="toggle-switch" className="justify-center">
-                            <ToggleSwitch isOn={isOn} onToggle={setIsOn} />
+                        <div title="toggle-switch" className={`justify-center ${isSavingAvailability || loading || !profileData ? "pointer-events-none opacity-60" : ""}`}>
+                            <ToggleSwitch isOn={isOn} onToggle={(newState) => {
+                                void handleAvailabilityToggle(newState);
+                            }} />
                         </div>
 
                     </div>
-                    <div className="flex justify-center sm:justify-end">
+                    <div className="flex w-full justify-center sm:justify-end">
                         <GreenButton className="px-6 py-2 rounded-lg w-full sm:w-auto">
                             Edit Profile
                         </GreenButton>
@@ -126,8 +179,8 @@ function DoctorProfilePage() {
                 </div>
             </div>
 
-            <div title="consultation-fees-section" className="mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md mb-4 mx-4 mt-4">
-                <h2 className="text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Consultation Fees and Active hours</h2>
+            <div title="consultation-fees-section" className="bg-white dark:bg-gray-800 p-4 sm:p-6 lg:p-8 rounded-lg shadow-md mb-4 mx-4 mt-4">
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Consultation Fees and Active hours</h2>
                 <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
                 <div className="grid md:grid-cols-2 gap-6">
                     <div className="flex flex-col">
@@ -135,7 +188,7 @@ function DoctorProfilePage() {
                             <img src="/images/chat.png" className="w-4 h-4 inline mr-2" alt="Chat Icon" />
                             Online Chat Session:
                         </p>
-                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">Rs. {chatFee.toLocaleString()}</p>
+                        <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">Rs. {chatFee.toLocaleString()}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Quick online advice for minor concerns</p>
                     </div>
                     <div className="flex flex-col">
@@ -143,7 +196,7 @@ function DoctorProfilePage() {
                             <img src="/images/appointment.png" className="w-4 h-4 inline mr-2" alt="Appointment Icon" />
                             In-Person Appointment:
                         </p>
-                        <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">Rs. {appointmentFee.toLocaleString()}</p>
+                        <p className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200">Rs. {appointmentFee.toLocaleString()}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Full consultation and examination</p>
                     </div>
                 </div>
@@ -210,7 +263,7 @@ function DoctorProfilePage() {
 
                 </div>
 
-                <div title="personal-info" className="w-full lg:w-1/2 bg-white dark:bg-gray-800 p-4 sm:p-8 rounded-lg shadow-md lg:ml-4">
+                <div title="personal-info" className="w-full lg:w-1/2 bg-white dark:bg-gray-800 p-4 sm:p-8 rounded-lg shadow-md">
                     <div title="Title">
                         <h2 className="text-xl sm:text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Personal Information</h2>
                     </div>
@@ -219,16 +272,16 @@ function DoctorProfilePage() {
 
                     <div title="Email" className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
                         <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Email Address:</p>
-                        <div className="flex items-center">
-                            <img src="/images/at.png" className="w-4 h-4 inline mr-2" alt="Email Icon" />
-                            <p>{email}</p>
+                        <div className="flex items-start min-w-0">
+                            <img src="/images/at.png" className="w-4 h-4 inline mr-2 mt-1 shrink-0" alt="Email Icon" />
+                            <p className="break-all sm:break-words">{email}</p>
                         </div>
                     </div>
                     <div title="Contact" className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
                         <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Contact Number:</p>
-                        <div className="flex items-center">
-                            <img src="/images/phone.png" className="w-4 h-4 inline mr-2" alt="Phone Icon" />
-                            <p>{phone}</p>
+                        <div className="flex items-start min-w-0">
+                            <img src="/images/phone.png" className="w-4 h-4 inline mr-2 mt-1 shrink-0" alt="Phone Icon" />
+                            <p className="break-all sm:break-words">{phone}</p>
                         </div>
                     </div>
 
