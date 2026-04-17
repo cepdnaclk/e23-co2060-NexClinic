@@ -5,6 +5,7 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.utils import timezone
+from smtplib import SMTPException
 from patient.models import PatientProfile
 from doctor.models import DoctorProfile
 from doctor.constants import DOCTOR_SPECIALIZATIONS
@@ -75,8 +76,14 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
             otp_code=otp_code,
             expires_at=timezone.now() + timezone.timedelta(minutes=10)
         )
-        
-        send_otp_email(email, otp_code)
+
+        try:
+            send_otp_email(email, otp_code)
+        except (SMTPException, OSError, RuntimeError):
+            PendingUser.objects.filter(email=email).delete()
+            raise serializers.ValidationError({
+                'email': 'Unable to send OTP email at the moment. Please try again later.'
+            })
 
         return {'email': email} # Return data containing email for response serialization
 
@@ -143,8 +150,14 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
             otp_code=otp_code,
             expires_at=timezone.now() + timezone.timedelta(minutes=10)
         )
-        
-        send_otp_email(email, otp_code)
+
+        try:
+            send_otp_email(email, otp_code)
+        except (SMTPException, OSError, RuntimeError):
+            PendingUser.objects.filter(email=email).delete()
+            raise serializers.ValidationError({
+                'email': 'Unable to send OTP email at the moment. Please try again later.'
+            })
 
         return {'email': email}
 

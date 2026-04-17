@@ -11,7 +11,7 @@ def send_otp_email(email, otp):
     send_mail(
         subject,
         message,
-        settings.EMAIL_HOST_USER,
+        settings.DEFAULT_FROM_EMAIL,
         [email],
         fail_silently=False,
     )
@@ -30,7 +30,7 @@ def send_admin_notification_email(doctor_email, doctor_name):
     send_mail(
         subject,
         message,
-        settings.EMAIL_HOST_USER,
+        settings.DEFAULT_FROM_EMAIL,
         ['nexclinicbynexaura@gmail.com'],
         fail_silently=False,
     )

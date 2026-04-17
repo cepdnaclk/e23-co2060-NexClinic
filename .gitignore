@@ -1,10 +1,33 @@
-# ===========================
-# NexAura Project .gitignore
-# ===========================
+# NexClinic monorepo .gitignore
 
-# ============ FRONTEND (Next.js/React) ============
+# -----------------------------
+# Global OS / editor artifacts
+# -----------------------------
+.DS_Store
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+*.swn
+*~
+*.orig
 
-# dependencies
+# -----------------------------
+# Secrets and env files
+# -----------------------------
+.env
+.env.*
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# -----------------------------
+# Frontend (Next.js / Node)
+# -----------------------------
 frontend/node_modules/
 frontend/.pnp
 frontend/.pnp.*
@@ -13,275 +36,97 @@ frontend/.yarn/*
 !frontend/.yarn/plugins
 !frontend/.yarn/releases
 !frontend/.yarn/versions
-
-# testing
-frontend/coverage/
-
-# next.js
 frontend/.next/
 frontend/out/
-
-# production
 frontend/build/
+frontend/coverage/
+frontend/.vercel/
+frontend/*.tsbuildinfo
 
-# misc
-.DS_Store
-*.pem
-
-# debug
+# JS logs and caches
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
+.eslintcache
+.prettier-cache
+.nyc_output/
 
-# env files (can opt-in for committing if needed)
-.env*
-!.env.local
-frontend/.env*
-!frontend/.env.local
+# -----------------------------
+# Backend (Django / Python)
+# -----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
 
-# vercel
-frontend/.vercel
-
-# typescript
-frontend/*.tsbuildinfo
-frontend/next-env.d.ts
-
-# ============ BACKEND (Django/Python) ============
-
-# Python
 backend/__pycache__/
 backend/*.py[cod]
 backend/*$py.class
 backend/*.so
 backend/.Python
-__pycache__/
-*.py[cod]
-*$py.class
 
-# Django
+# Python environments (repo-wide)
+.venv/
+venv/
+env/
+ENV/
+backend/.venv/
+backend/venv/
+backend/env/
+backend/ENV/
+
+# Django runtime artifacts
 backend/db.sqlite3
 backend/db.sqlite3-journal
 backend/*.log
 backend/local_settings.py
-backend/staticfiles/
 backend/media/
+backend/staticfiles/
+backend/celerybeat-schedule
+backend/celerybeat.pid
 
-# Virtual environments
-.venv/
-backend/venv/
-backend/env/
-backend/ENV/
-backend/.venv/
-venv/
-env/
-ENV/
-
-# Distribution / packaging
-backend/build/
-backend/develop-eggs/
-backend/dist/
-backend/downloads/
-backend/eggs/
-backend/.eggs/
-backend/lib/
-backend/lib64/
-backend/parts/
-backend/sdist/
-backend/var/
-backend/wheels/
-backend/share/python-wheels/
-backend/*.egg-info/
-backend/.installed.cfg
-backend/*.egg
-backend/MANIFEST
-
-# PyInstaller
-backend/*.manifest
-backend/*.spec
-
-# Unit test / coverage reports
-backend/htmlcov/
+# Python tooling caches
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.dmypy.json
+backend/dmypy.json
+backend/.pyre/
+backend/.pytype/
+backend/.ruff_cache/
+backend/.hypothesis/
 backend/.tox/
 backend/.nox/
 backend/.coverage
 backend/.coverage.*
-backend/.cache
-backend/nosetests.xml
+backend/htmlcov/
 backend/coverage.xml
-backend/*.cover
-backend/*.py,cover
-backend/.hypothesis/
-backend/.pytest_cache/
-backend/cover/
 
-# Django migrations (optional - uncomment if you don't want to track them)
-# backend/*/migrations/*.py
-# backend/*/migrations/*.pyc
-# !backend/*/migrations/__init__.py
+# Python packaging artifacts
+backend/build/
+backend/dist/
+backend/*.egg-info/
+backend/.eggs/
+backend/*.egg
+backend/pip-wheel-metadata/
 
-# Celery
-backend/celerybeat-schedule
-backend/celerybeat.pid
-
-# Environments
-backend/.env
-backend/.env.*
-backend/.venv
-
-# mypy
-backend/.mypy_cache/
-backend/.dmypy.json
-backend/dmypy.json
-
-# Pyre
-backend/.pyre/
-
-# pytype
-backend/.pytype/
-
-# Cython
-backend/cython_debug/
-
-# ============ IDE & EDITORS ============
-
-# VS Code
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
-
-# PyCharm / IntelliJ
-.idea/
-*.swp
-*.swo
-*~
-*.iml
-*.ipr
-*.iws
-
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# Vim
-*.swp
-*.swo
-*.swn
-
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-
-# ============ OPERATING SYSTEMS ============
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-*.lnk
-
-# Linux
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
-
-# ============ LOGS & DATABASES ============
-
-# Log files
-*.log
+# -----------------------------
+# Docs, logs, temp files
+# -----------------------------
+docs/_build/
+docs/.doctrees/
 logs/
-log.txt
-
-# Database files
+*.log
 *.sqlite
 *.sqlite3
 *.db
-
-# ============ DOCUMENTATION & TEMP ============
-
-# Temporary files
-temp/
 tmp/
+temp/
 *.tmp
 *.bak
 *.cache
-temp-templates/
 
-# Documentation builds
-docs/_build/
-docs/.doctrees/
-
-# ============ MISC ============
-
-# Security
+# Security artifacts
 *.pem
 *.key
 *.crt
 *.cer
-
-# Compiled
-*.com
-*.class
-*.dll
-*.exe
-*.o
-*.so
-
-# Packages
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.zip
-
-# Lock files (optional - uncomment to ignore)
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
-
-# Test coverage
-coverage/
-*.lcov
-.nyc_output
-
-# Cache
-.cache/
-.prettier-cache
-.eslintcache
-
-# Git
-.git/
-*.orig
