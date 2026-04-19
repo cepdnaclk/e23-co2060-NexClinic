@@ -45,6 +45,69 @@ const BookAppointmentPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
 
+  const loadAvailableSlots = React.useCallback(async () => {
+    setLoadingSlots(true);
+    setError("");
+
+    try {
+      const params = new URLSearchParams();
+      if (doctorId) {
+        params.set("doctor_id", doctorId);
+      }
+      if (date) {
+        params.set("date", date);
+      }
+
+      const endpoint = params.toString()
+        ? `/api/patient/appointment-slots?${params.toString()}`
+        : "/api/patient/appointment-slots";
+
+      const response = await fetch(endpoint, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (response.status === 401) {
+        handlePatientSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to load available slots");
+      }
+
+      const rawSlots = Array.isArray(payload?.slots) ? payload.slots : [];
+      const slots: AvailableSlot[] = rawSlots
+        .filter((slot): slot is AvailableSlot => {
+          if (!slot || typeof slot !== "object") {
+            return false;
+          }
+
+          const candidate = slot as Record<string, unknown>;
+          return (
+            typeof candidate.id === "number" &&
+            typeof candidate.doctorId === "string" &&
+            typeof candidate.doctorName === "string" &&
+            typeof candidate.hospital === "string" &&
+            typeof candidate.date === "string" &&
+            typeof candidate.time === "string"
+          );
+        });
+      setAvailableSlots(slots);
+
+      setSlotId((currentSlotId) =>
+        slots.some((slot) => String(slot.id) === currentSlotId) ? currentSlotId : ""
+      );
+    } catch (err) {
+      setAvailableSlots([]);
+      setError(err instanceof Error ? err.message : "Failed to load available slots");
+    } finally {
+      setLoadingSlots(false);
+    }
+  }, [date, doctorId, router]);
+
   useEffect(() => {
     const initialDoctorFromQuery = new URLSearchParams(window.location.search).get("doctor");
     if (initialDoctorFromQuery) {
@@ -53,38 +116,8 @@ const BookAppointmentPage = () => {
   }, []);
 
   useEffect(() => {
-    const loadAvailableSlots = async () => {
-      setLoadingSlots(true);
-      setError("");
-
-      try {
-        const response = await fetch("/api/patient/appointment-slots", {
-          method: "GET",
-          cache: "no-store",
-        });
-
-        if (response.status === 401) {
-          handlePatientSessionExpired(router);
-          return;
-        }
-
-        const payload = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(payload?.error || "Failed to load available slots");
-        }
-
-        setAvailableSlots(Array.isArray(payload?.slots) ? payload.slots : []);
-      } catch (err) {
-        setAvailableSlots([]);
-        setError(err instanceof Error ? err.message : "Failed to load available slots");
-      } finally {
-        setLoadingSlots(false);
-      }
-    };
-
     void loadAvailableSlots();
-  }, [router]);
+  }, [loadAvailableSlots]);
 
   const doctors = useMemo(() => {
     const map = new Map<string, { id: string; name: string }>();
@@ -152,6 +185,7 @@ const BookAppointmentPage = () => {
         throw new Error(payload?.error || "Failed to book appointment");
       }
 
+      await loadAvailableSlots();
       setSuccess(true);
       setReason("");
       setSlotId("");
