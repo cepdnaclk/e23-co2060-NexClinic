@@ -1,4 +1,4 @@
-# NexAura Medical System
+# NexClinic by NexAura
 
 Complete developer and deployment guide for the NexAura medical platform.
 
