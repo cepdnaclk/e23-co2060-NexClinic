@@ -1,101 +1,138 @@
 # NexClinic by NexAura
 
-Complete developer and deployment guide for the NexAura medical platform.
+NexClinic is a full-stack healthcare platform with role-aware user journeys for patients, doctors, and administrators.
 
-This project includes:
-- Backend: Django + DRF + JWT + OTP verification.
-- Frontend: Next.js App Router + TypeScript + Tailwind.
-- Database: Supabase PostgreSQL.
-- Hosting: Backend on Render, Frontend on Vercel.
+This README is a system analysis and architecture reference.
+For setup, local development, and deployment procedures, use [DEV_GUIDE.md](DEV_GUIDE.md).
 
-## 1. System Overview
+## 1. System Scope
 
-NexAura is a role-based medical system with three roles:
-- PATIENT
-- DOCTOR
-- ADMIN
+NexClinic addresses core outpatient workflow needs:
 
-Implemented core modules:
-- OTP-based registration and account activation.
-- Role-based login with JWT.
-- Doctor and patient profile management.
-- Appointment and slot management (doctor and patient flows).
-- Protected frontend routes with middleware-like route guard logic.
+- Role-specific authentication and authorization for PATIENT, DOCTOR, and ADMIN users.
+- OTP-gated account activation to ensure verified email ownership before account use.
+- Doctor profile and availability management.
+- Patient-side doctor discovery and appointment booking.
+- Appointment lifecycle actions (accept, reject, complete, cancel, reschedule).
+- Frontend route guarding and API proxying with token refresh.
 
-## 2. Tech Stack
+## 2. Architectural Overview
 
-Backend:
-- Django 6
-- Django REST Framework
-- SimpleJWT
-- django-cors-headers
-- psycopg2-binary
-- python-dotenv
-- gunicorn
-- whitenoise
+### 2.1 High-Level Components
 
-Frontend:
-- Next.js 16 (App Router)
-- React 19
-- TypeScript
-- Tailwind CSS
+- Backend API: Django + DRF + SimpleJWT.
+- Frontend web app: Next.js App Router + TypeScript + Tailwind.
+- Data layer: PostgreSQL (configured via DATABASE_URL; typically Supabase in deployment).
+- Hosting model: backend on Render, frontend on Vercel.
 
-Database:
-- Supabase PostgreSQL
-
-## 3. Repository Structure
+### 2.2 Monorepo Layout
 
 ```text
 e23-co2060-NexClinic/
 |- backend/
-|  |- manage.py
-|  |- requirements.txt
-|  |- build.sh
-|  |- .env
-|  |- main/
-|  |  |- settings.py
-|  |  |- urls.py
-|  |- users/
-|  |  |- models.py
-|  |  |- serializers.py
-|  |  |- views.py
-|  |  |- urls.py
-|  |- doctor/
-|  |  |- models.py
-|  |  |- views.py
-|  |  |- urls.py
-|  |- patient/
-|  |  |- models.py
-|  |  |- views.py
-|  |  |- urls.py
-|  |- ai/
+|  |- main/            # Django project settings and root URL config
+|  |- users/           # auth, OTP, user model, activity logging
+|  |- doctor/          # doctor profile, slots, appointments, directory
+|  |- patient/         # patient profile, booking and cancellation flows
 |- frontend/
-|  |- package.json
-|  |- .env.local
-|  |- src/
-|  |  |- app/
-|  |  |  |- (auth)/
-|  |  |  |- (protected)/
-|  |  |  |- api/
-|  |  |  |  |- auth/
-|  |  |  |  |- doctor/
-|  |  |  |  |- patient/
-|  |  |- components/
-|  |  |- proxy.ts
+|  |- src/app/         # App Router pages and API route handlers
+|  |- src/lib/         # shared server-side proxy/auth utilities
+|  |- src/proxy.ts     # route protection logic (cookie + role checks)
 |- docs/
-|- DATABASE_TABLES.txt
-|- INTEGRATION_GUIDE.md
 |- README.md
+|- DEV_GUIDE.md
 ```
 
-## 4. API Surface Summary
+## 3. Backend Analysis
 
-Backend base path prefixes:
+### 3.1 Identity and Access Model
+
+The backend uses a custom user model (email as username field) with role values:
+
+- ADMIN
+- PATIENT
+- DOCTOR
+
+Authentication is JWT-based:
+
+- Access token lifetime: 5 minutes.
+- Refresh token lifetime: 20 minutes.
+- Refresh token rotation enabled.
+- Blacklist after rotation enabled.
+
+### 3.2 Registration and OTP Verification Design
+
+NexClinic uses a two-stage registration flow:
+
+1. Registration writes to a pending registration store (PendingUser) with hashed password and profile payload.
+2. OTP verification promotes the pending record into the real user + profile tables in a single transaction.
+
+Strengths of this approach:
+
+- Unverified accounts do not become active users.
+- Profile creation is atomic with user activation.
+- OTP resend lifecycle is cleanly supported.
+
+### 3.3 Core Domain Entities
+
+- CustomUser: primary identity, role, and auth flags.
+- PendingUser: temporary pre-verification registration record.
+- PatientProfile: demographic and contact information for patients.
+- DoctorProfile: professional identity, specialization, pricing, and visibility metadata.
+- AppointmentAvailableSlot: concrete date/time slots for in-person bookings.
+- DoctorOnlineAdviceAvailability: day/time windows for online advisory availability.
+- Appointment: patient booking linked one-to-one with an appointment slot.
+
+Important integrity constraints:
+
+- One appointment per appointment slot (OneToOne relationship).
+- Unique doctor slot windows per date/time combination.
+- Validation that appointment.doctor matches slot.doctor.
+
+### 3.4 Appointment Lifecycle Rules
+
+Appointment status model:
+
+- PENDING
+- ACCEPTED
+- REJECTED
+- COMPLETED
+- CANCELLED
+
+Allowed transitions (doctor actions):
+
+- accept: PENDING -> ACCEPTED
+- reject: PENDING -> REJECTED
+- complete: ACCEPTED -> COMPLETED
+- cancel: PENDING or ACCEPTED -> CANCELLED
+
+Patient cancellation:
+
+- Allowed only when appointment is PENDING or ACCEPTED.
+
+Rescheduling constraints:
+
+- Disallowed for REJECTED, COMPLETED, and CANCELLED appointments.
+- Target slot must exist, belong to the same doctor, and be unbooked.
+
+### 3.5 Slot Management Logic
+
+Doctor slot creation and updates enforce non-overlap rules:
+
+- Bulk create is rejected if any submitted interval conflicts with existing intervals.
+- Update operations validate time ordering and overlap prevention.
+- Online advice slots use the same overlap strategy on weekday windows.
+
+### 3.6 Backend API Surface
+
+Base prefixes:
+
 - /api/users/
 - /api/doctor/
 - /api/patient/
 
-Auth endpoints (users app):
+Users/auth endpoints:
+
 - POST /api/users/register/
 - POST /api/users/login/
 - POST /api/users/doctor/register/
@@ -103,439 +140,122 @@ Auth endpoints (users app):
 - POST /api/users/verify-otp/
 - POST /api/users/resend-otp/
 - POST /api/users/token/refresh/
+- POST /api/users/logout/
 
-Doctor endpoints (doctor app):
+Doctor endpoints:
+
 - GET /api/doctor/specializations/
+- GET /api/doctor/directory/
+- GET /api/doctor/directory/{doctor_id}/
 - GET /api/doctor/dashboard/
-- GET/PUT /api/doctor/profile/
+- GET/PATCH /api/doctor/profile/
 - GET /api/doctor/appointments/
-- POST /api/doctor/appointments/{appointment_id}/action/
-- POST /api/doctor/appointments/{appointment_id}/reschedule/
+- PATCH /api/doctor/appointments/{appointment_id}/action/
+- PATCH /api/doctor/appointments/{appointment_id}/reschedule/
 - GET/POST /api/doctor/appointment-slots/
-- GET/PUT/DELETE /api/doctor/appointment-slots/{slot_id}/
+- PATCH/DELETE /api/doctor/appointment-slots/{slot_id}/
 - GET/POST /api/doctor/online-advice-slots/
-- GET/PUT/DELETE /api/doctor/online-advice-slots/{slot_id}/
+- PATCH/DELETE /api/doctor/online-advice-slots/{slot_id}/
 
-Patient endpoints (patient app):
-- GET/PUT /api/patient/profile/
-- GET /api/patient/appointments/
-- POST /api/patient/appointments/{appointment_id}/cancel/
+Patient endpoints:
+
+- GET /api/patient/profile/
+- GET/POST /api/patient/appointments/
+- PATCH /api/patient/appointments/{appointment_id}/cancel/
 - GET /api/patient/appointment-slots/
 
-Frontend proxy API routes (Next.js route handlers):
+## 4. Frontend Analysis
+
+### 4.1 Application Pattern
+
+The frontend is structured as a Next.js App Router application with server route handlers under /api that proxy to Django.
+
+This gives the project:
+
+- A single frontend-origin API surface for browser clients.
+- HTTP-only auth cookies managed on the server layer.
+- Centralized token refresh handling through shared proxy logic.
+
+### 4.2 Auth and Cookie Strategy
+
+The frontend stores these auth cookies:
+
+- authToken
+- refreshToken
+- userRole
+
+Cookie behavior:
+
+- httpOnly enabled.
+- sameSite=lax.
+- secure in production mode.
+
+If a backend call returns 401, the proxy utility attempts refresh via /api/users/token/refresh/ and retries the original call.
+If refresh fails, auth cookies are cleared and 401 is returned.
+
+### 4.3 Route Protection
+
+Route protection is implemented in [frontend/src/proxy.ts](frontend/src/proxy.ts):
+
+- /doctor-self/* requires DOCTOR.
+- /user-self/* requires PATIENT.
+- /admin/* requires ADMIN.
+- /doctors/* requires authenticated role in {DOCTOR, PATIENT, ADMIN}.
+
+Protection includes token expiry checks by decoding JWT expiry values server-side.
+
+### 4.4 Frontend API Proxy Surface
+
+Frontend route handlers mirror backend domains:
+
 - /api/auth/*
 - /api/doctor/*
 - /api/patient/*
 
-Protected route guard:
-- frontend/src/proxy.ts
-- /doctor-self/* -> requires DOCTOR
-- /user-self/* -> requires PATIENT
-- /admin/* -> requires ADMIN
+This keeps browser-facing API shape stable even if backend hostnames change by environment.
 
-## 5. Environment Variables
+## 5. End-to-End Request Flow
 
-Quick setup from templates:
+### 5.1 Patient Registration Flow
 
-Windows PowerShell:
+1. Frontend posts registration details to /api/auth/register.
+2. Backend creates PendingUser and sends OTP email.
+3. Frontend posts OTP to /api/auth/verify-otp.
+4. Backend atomically creates CustomUser + PatientProfile and deletes pending record.
 
-```bash
-Copy-Item backend/.env.example backend/.env
-Copy-Item frontend/.env.example frontend/.env.local
-```
+### 5.2 Doctor Appointment Booking Flow
 
-macOS/Linux:
+1. Doctor creates appointment slots.
+2. Patient fetches available slots (optionally by doctor/date filters).
+3. Patient books a slot; backend creates Appointment with PENDING status.
+4. Doctor accepts/rejects/completes/cancels or reschedules according to state rules.
 
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env.local
-```
+## 6. Security and Reliability Notes
 
-## 5.1 Backend .env (backend/.env)
+Current strengths:
 
-Required variables:
+- JWT + refresh token rotation.
+- OTP activation before account usability.
+- Role-based backend access checks on protected flows.
+- HTTP-only auth cookies in frontend proxy.
+- Transactional user/profile creation on OTP verification.
 
-```env
-DJANGO_SECRET_KEY=your-strong-secret-key
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/postgres
-```
+Operational assumptions:
 
-Recommended variables:
+- PostgreSQL connection is provided by DATABASE_URL.
+- Email credentials are valid so OTP delivery can complete registration.
+- CORS allowed origins are explicitly configured for deployed frontend domains.
 
-```env
-DJANGO_DEBUG=True
-DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
-DB_SSLMODE=require
+## 7. Known Limitations and Improvement Opportunities
 
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-CORS_ALLOW_CREDENTIALS=True
+- Chat capability is currently a placeholder in dashboard payloads.
+- Some profile responses still return static/default fallback values when optional data is missing.
+- Frontend and backend route coverage should be validated in CI with integration tests.
+- Observability can be extended by wiring UserActivityLog to analytics dashboards.
 
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@example.com
-EMAIL_HOST_PASSWORD=your-app-password
-```
+## 8. Documentation Index
 
-Notes:
-- Current backend settings require both DJANGO_SECRET_KEY and DATABASE_URL.
-- DATABASE_URL is parsed in settings.py and used as the primary database source.
-- DB_SSLMODE defaults to require.
-
-## 5.2 Frontend .env.local (frontend/.env.local)
-
-Required variable:
-
-```env
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
-```
-
-For production frontend deployment, set this to your Render backend URL, for example:
-
-```env
-NEXT_PUBLIC_BACKEND_URL=https://your-backend-service.onrender.com
-```
-
-## 6. Local Setup Guide
-
-## 6.1 Prerequisites
-
-Install:
-- Python 3.12+
-- Node.js 20 LTS
-- npm
-- Supabase project (or any PostgreSQL instance)
-
-## 6.2 Clone and Open
-
-```bash
-git clone <your-repo-url>
-cd e23-co2060-NexClinic
-```
-
-## 6.3 Backend Local Setup
-
-```bash
-cd backend
-python -m venv .venv
-```
-
-Activate venv:
-
-Windows PowerShell:
-
-```bash
-.\.venv\Scripts\Activate.ps1
-```
-
-macOS/Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Create backend .env file (or copy from backend/.env.example):
-
-```bash
-# backend/.env
-DJANGO_SECRET_KEY=your-strong-secret-key
-DJANGO_DEBUG=True
-DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
-
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/postgres
-DB_SSLMODE=require
-
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-CORS_ALLOW_CREDENTIALS=True
-
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@example.com
-EMAIL_HOST_PASSWORD=your-app-password
-```
-
-Run migrations and server:
-
-```bash
-python manage.py migrate
-python manage.py runserver
-```
-
-Backend URL:
-- http://localhost:8000
-
-## 6.4 Frontend Local Setup
-
-From repository root:
-
-```bash
-cd frontend
-npm install
-```
-
-Create frontend .env.local (or copy from frontend/.env.example):
-
-```bash
-# frontend/.env.local
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
-```
-
-Run frontend:
-
-```bash
-npm run dev
-```
-
-Frontend URL:
-- http://localhost:3000
-
-## 6.5 Local Smoke Test
-
-1. Register patient: /register
-2. Register doctor: /doctor/register
-3. Verify OTP: /verify-otp
-4. Patient login: /login
-5. Doctor login: /doctor/login
-6. Open protected dashboards and verify role-based redirects
-
-## 6.6 Full Local Setup Commands (Copy-Paste)
-
-Windows PowerShell (from repository root):
-
-```bash
-# Backend setup
-Set-Location backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-Copy-Item .env.example .env
-python manage.py migrate
-python manage.py runserver
-```
-
-Open a second terminal for frontend:
-
-```bash
-Set-Location frontend
-npm install
-Copy-Item .env.example .env.local
-npm run dev
-```
-
-## 6.7 First-Time Verify Commands
-
-Use these commands after setup to quickly confirm both services are healthy.
-
-Windows PowerShell:
-
-```bash
-# Backend health check
-Invoke-WebRequest http://localhost:8000/admin/ -UseBasicParsing | Select-Object StatusCode
-
-# Frontend production build check
-Set-Location frontend
-npm run build
-
-# Quick API check (example: doctor specializations via frontend proxy)
-Invoke-WebRequest http://localhost:3000/api/doctor/specializations -UseBasicParsing | Select-Object StatusCode
-```
-
-macOS/Linux:
-
-```bash
-# Backend health check
-curl -I http://localhost:8000/admin/
-
-# Frontend production build check
-cd frontend
-npm run build
-
-# Quick API check (example: doctor specializations via frontend proxy)
-curl -i http://localhost:3000/api/doctor/specializations
-```
-
-Expected results:
-- Backend health check returns HTTP 200 or HTTP 302.
-- Frontend build completes without errors.
-- API check returns HTTP 200 (or HTTP 401 for endpoints that require auth).
-
-macOS/Linux (from repository root):
-
-```bash
-# Backend setup
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-python manage.py migrate
-python manage.py runserver
-```
-
-Open a second terminal for frontend:
-
-```bash
-cd frontend
-npm install
-cp .env.example .env.local
-npm run dev
-```
-
-## 7. Supabase Setup Guide
-
-1. Create a Supabase project.
-2. Go to Project Settings -> Database -> Connection string.
-3. Copy the URI connection string.
-4. Use that URI as DATABASE_URL in backend .env (local) and Render environment variables.
-5. Keep DB_SSLMODE=require.
-6. Run migrations from backend to create/update tables.
-
-Example:
-
-```env
-DATABASE_URL=postgresql://postgres.xxxxx:password@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
-DB_SSLMODE=require
-```
-
-## 8. Deploy Backend on Render
-
-Create a Web Service in Render:
-- Connect your repository.
-- Root directory: backend
-- Runtime: Python 3
-
-Build command:
-
-```bash
-./build.sh
-```
-
-Start command:
-
-```bash
-gunicorn main.wsgi:application --bind 0.0.0.0:$PORT
-```
-
-Set Render environment variables:
-
-```env
-DJANGO_SECRET_KEY=your-production-secret
-DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=your-backend-service.onrender.com
-
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/postgres
-DB_SSLMODE=require
-
-CORS_ALLOWED_ORIGINS=https://your-frontend-project.vercel.app
-CORS_ALLOW_CREDENTIALS=True
-
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@example.com
-EMAIL_HOST_PASSWORD=your-app-password
-```
-
-After deploy:
-- Confirm API health by opening /admin/ or a known endpoint.
-- Confirm migrations ran successfully from build logs.
-
-## 9. Deploy Frontend on Vercel
-
-Create/import project in Vercel:
-- Framework: Next.js (auto-detected)
-- Root directory: frontend
-
-Set Vercel environment variable:
-
-```env
-NEXT_PUBLIC_BACKEND_URL=https://your-backend-service.onrender.com
-```
-
-Deploy.
-
-After deploy:
-- Test login and registration flow.
-- Verify browser network calls go to Vercel API routes and proxy to Render backend.
-
-## 9.1 Vercel CLI Commands
-
-If you prefer terminal-based deployment:
-
-```bash
-npm install -g vercel
-cd frontend
-vercel login
-vercel link
-vercel env add NEXT_PUBLIC_BACKEND_URL production
-vercel env add NEXT_PUBLIC_BACKEND_URL preview
-vercel
-vercel --prod
-```
-
-Recommended value for both preview and production env:
-
-```env
-NEXT_PUBLIC_BACKEND_URL=https://your-backend-service.onrender.com
-```
-
-## 10. Production Integration Checklist
-
-1. Backend deployed and reachable on Render.
-2. Supabase DATABASE_URL configured on Render.
-3. CORS_ALLOWED_ORIGINS includes Vercel domain.
-4. Frontend NEXT_PUBLIC_BACKEND_URL points to Render domain.
-5. OTP email credentials are valid in backend env.
-6. Role-based redirects work for PATIENT, DOCTOR, ADMIN.
-
-## 11. Admin Setup
-
-Create superuser:
-
-```bash
-cd backend
-python manage.py createsuperuser
-```
-
-Admin URL:
-- http://localhost:8000/admin/ (local)
-- https://your-backend-service.onrender.com/admin/ (production)
-
-## 12. Troubleshooting
-
-Frontend cannot reach backend:
-- Check NEXT_PUBLIC_BACKEND_URL value.
-- Confirm backend service is live.
-
-CORS issues:
-- Ensure CORS_ALLOWED_ORIGINS contains frontend origin exactly.
-- Include protocol (https://).
-
-Database connection issues:
-- Verify DATABASE_URL and DB_SSLMODE.
-- Ensure Supabase network/credentials are valid.
-
-Build/deploy issues on Render:
-- Confirm root directory is backend.
-- Confirm start command uses gunicorn main.wsgi:application.
-
-Verify OTP/email failures:
-- Confirm EMAIL_HOST_USER and EMAIL_HOST_PASSWORD.
-- Use app passwords for Gmail SMTP.
-
-## 13. Security Notes
-
-- Never commit secrets in code or tracked files.
-- Keep DJANGO_SECRET_KEY only in environment variables.
-- Keep DATABASE_URL and SMTP credentials only in environment variables.
-- Use DJANGO_DEBUG=False in production.
+- System architecture and behavior: this file.
+- Setup and development workflows: [DEV_GUIDE.md](DEV_GUIDE.md).
+- Integration notes: [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md).
+- Table-level data reference: [DATABASE_TABLES.txt](DATABASE_TABLES.txt).
