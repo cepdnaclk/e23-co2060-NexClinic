@@ -99,7 +99,7 @@ class Appointment(models.Model):
         COMPLETED = "COMPLETED", "Completed"
         CANCELLED = "CANCELLED", "Cancelled"
 
-    slot = models.OneToOneField(AppointmentAvailableSlot, on_delete=models.PROTECT, related_name="appointment")
+    slot = models.ForeignKey(AppointmentAvailableSlot, on_delete=models.PROTECT, related_name="appointments")
         
     doctor = models.ForeignKey(DoctorProfile, on_delete=models.PROTECT, related_name="appointments")
 

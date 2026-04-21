@@ -1,4 +1,4 @@
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -100,7 +100,6 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
 
 		today = timezone.localdate()
 		slots = AppointmentAvailableSlot.objects.filter(
-			appointment__isnull=True,
 			date__gte=today,
 		).select_related('doctor', 'doctor__user').order_by('date', 'start_time')
 
@@ -162,21 +161,14 @@ class PatientAppointmentsView(BasePatientAPIView):
 		if is_slot_in_past(slot):
 			return Response({'detail': 'Cannot book an appointment in the past.'}, status=status.HTTP_400_BAD_REQUEST)
 
-		is_booked = Appointment.objects.filter(slot=slot).exists()
-		if is_booked:
-			return Response({'detail': 'Selected slot is already booked.'}, status=status.HTTP_400_BAD_REQUEST)
-
-		try:
-			with transaction.atomic():
-				appointment = Appointment.objects.create(
-					slot=slot,
-					doctor=slot.doctor,
-					patient=patient_profile,
-					reason=reason,
-					status=Appointment.Status.PENDING,
-				)
-		except IntegrityError:
-			return Response({'detail': 'Selected slot is already booked.'}, status=status.HTTP_400_BAD_REQUEST)
+		with transaction.atomic():
+			appointment = Appointment.objects.create(
+				slot=slot,
+				doctor=slot.doctor,
+				patient=patient_profile,
+				reason=reason,
+				status=Appointment.Status.PENDING,
+			)
 
 		payload = PatientAppointmentSerializer(appointment).data
 		return Response(

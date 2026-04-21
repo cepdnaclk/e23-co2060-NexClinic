@@ -17,9 +17,14 @@ VALID_WEEK_DAYS = {
 
 
 class AppointmentAvailableSlotSerializer(serializers.ModelSerializer):
+    bookedCount = serializers.SerializerMethodField()
+
     class Meta:
         model = AppointmentAvailableSlot
-        fields = ['id', 'date', 'day_of_week', 'start_time', 'end_time']
+        fields = ['id', 'date', 'day_of_week', 'start_time', 'end_time', 'bookedCount']
+
+    def get_bookedCount(self, obj):
+        return obj.appointments.count()
 
 
 class AppointmentSlotInputSerializer(serializers.Serializer):

@@ -178,6 +178,12 @@ function DoctorNavBar() {
                             Appointments
                         </Link>
                         <Link
+                            href="/doctor-self/appointment-slots"
+                            className={`${isActive('/doctor-self/appointment-slots') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
+                        >
+                            Slots
+                        </Link>
+                        <Link
                             href="/doctor-self/chats"
                             className={`${isActive('/doctor-self/chats') ? 'text-green-600 dark:text-green-400 font-bold underline underline-offset-2' : 'text-gray-800 dark:text-white hover:underline underline-offset-2'}`}
                         >
@@ -223,6 +229,12 @@ function DoctorNavBar() {
                     className={`${isActive('/doctor-self/appointments') ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-800 dark:text-white'}`}
                 >
                     Appointments
+                </Link>
+                <Link
+                    href="/doctor-self/appointment-slots"
+                    className={`${isActive('/doctor-self/appointment-slots') ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-800 dark:text-white'}`}
+                >
+                    Slots
                 </Link>
                 <Link
                     href="/doctor-self/chats"

@@ -11,6 +11,7 @@ type AvailableSlot = {
   hospital: string;
   date: string;
   time: string;
+  bookedCount: number;
 };
 
 const formatTimeForDisplay = (time: string): string => {
@@ -92,7 +93,8 @@ const BookAppointmentPage = () => {
             typeof candidate.doctorName === "string" &&
             typeof candidate.hospital === "string" &&
             typeof candidate.date === "string" &&
-            typeof candidate.time === "string"
+            typeof candidate.time === "string" &&
+            typeof candidate.bookedCount === "number"
           );
         });
       setAvailableSlots(slots);
@@ -159,6 +161,11 @@ const BookAppointmentPage = () => {
       return;
     }
 
+    if (!selectedSlot) {
+      setError("Please select a valid available time slot.");
+      return;
+    }
+
     setSubmitting(true);
     setError("");
 
@@ -206,6 +213,16 @@ const BookAppointmentPage = () => {
             <div className="mt-4">
               <Link href="/user-self/appointments" className="text-green-600 hover:underline font-semibold">Go to My Appointments</Link>
             </div>
+            <button
+              type="button"
+              className="mt-4 bg-white/80 hover:bg-white text-green-700 font-semibold py-2 px-5 rounded-lg border border-green-300 transition-all"
+              onClick={() => {
+                setSuccess(false);
+                setError("");
+              }}
+            >
+              Book Another Appointment
+            </button>
           </div>
         ) : (
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
@@ -270,7 +287,7 @@ const BookAppointmentPage = () => {
               >
                 <option value="">Select a time slot</option>
                 {filteredSlots.map((slot) => (
-                  <option key={slot.id} value={slot.id}>{`${slot.date} ${formatTimeForDisplay(slot.time)}`}</option>
+                  <option key={slot.id} value={slot.id}>{`${slot.date} ${formatTimeForDisplay(slot.time)} (${slot.bookedCount} booked)`}</option>
                 ))}
               </select>
             </div>
@@ -285,6 +302,16 @@ const BookAppointmentPage = () => {
                 placeholder="Optional"
               />
             </div>
+
+            {selectedSlot && (
+              <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-100">
+                <div className="font-semibold">Selected Appointment</div>
+                <div>{selectedSlot.doctorName}</div>
+                <div>{selectedSlot.hospital}</div>
+                <div>{selectedSlot.date} at {formatTimeForDisplay(selectedSlot.time)}</div>
+                <div>{selectedSlot.bookedCount} appointment(s) already booked</div>
+              </div>
+            )}
 
             {loadingSlots && <div className="text-gray-500 text-sm text-center">Loading available slots...</div>}
             {error && <div className="text-red-500 text-sm text-center">{error}</div>}

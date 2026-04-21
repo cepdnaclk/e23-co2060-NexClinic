@@ -467,13 +467,6 @@ class DoctorAppointmentRescheduleView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        is_slot_booked = Appointment.objects.filter(slot=target_slot).exclude(id=appointment.id).exists()
-        if is_slot_booked:
-            return Response(
-                {'detail': 'Selected slot is already booked.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         appointment.slot = target_slot
         appointment.save(update_fields=['slot', 'updated_at'])
 

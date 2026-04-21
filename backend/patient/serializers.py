@@ -96,10 +96,11 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
     hospital = serializers.SerializerMethodField()
     date = serializers.SerializerMethodField()
     time = serializers.SerializerMethodField()
+    bookedCount = serializers.SerializerMethodField()
 
     class Meta:
         model = AppointmentAvailableSlot
-        fields = ['id', 'doctorId', 'doctorName', 'hospital', 'date', 'time']
+        fields = ['id', 'doctorId', 'doctorName', 'hospital', 'date', 'time', 'bookedCount']
 
     def get_doctorId(self, obj):
         return str(obj.doctor_id)
@@ -124,6 +125,9 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
 
     def get_time(self, obj):
         return obj.start_time.strftime('%H:%M')
+
+    def get_bookedCount(self, obj):
+        return obj.appointments.count()
 
 
 class PatientAppointmentCancelSerializer(serializers.Serializer):

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
@@ -24,6 +25,14 @@ type AppointmentItem = {
   requestedAt: string;
   status: AppointmentStatus;
   category: AppointmentCategory;
+};
+
+type AppointmentSlot = {
+  id: number;
+  date: string;
+  day_of_week: string;
+  start_time: string;
+  end_time: string;
 };
 
 type ApiAppointment = Omit<AppointmentItem, "id" | "patientId"> & {
@@ -283,6 +292,8 @@ function DoctorAppointmentsPage() {
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [isRescheduling, setIsRescheduling] = useState(false);
+  const [appointmentSlots, setAppointmentSlots] = useState<AppointmentSlot[]>([]);
+  const [isLoadingRescheduleSlots, setIsLoadingRescheduleSlots] = useState(false);
 
   useEffect(() => {
     const loadAppointments = async () => {
@@ -466,7 +477,43 @@ function DoctorAppointmentsPage() {
     setRescheduleTarget(appointment);
     setRescheduleDate(appointment.date);
     setRescheduleTime("");
+
+    void (async () => {
+      setIsLoadingRescheduleSlots(true);
+      try {
+        const response = await fetch("/api/doctor/appointment-slots", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (response.status === 401) {
+          handleDoctorSessionExpired(router);
+          return;
+        }
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || "Failed to load appointment slots");
+        }
+
+        setAppointmentSlots(Array.isArray(payload?.slots) ? payload.slots : []);
+      } catch (error) {
+        setAppointmentSlots([]);
+        setToastMessage(error instanceof Error ? error.message : "Failed to load appointment slots.");
+        window.setTimeout(() => setToastMessage(""), 2200);
+      } finally {
+        setIsLoadingRescheduleSlots(false);
+      }
+    })();
   };
+
+  const availableSlotsForReschedule = useMemo(
+    () =>
+      appointmentSlots
+        .filter((slot) => slot.date === rescheduleDate)
+        .sort((a, b) => a.start_time.localeCompare(b.start_time)),
+    [appointmentSlots, rescheduleDate]
+  );
 
   const confirmReschedule = async () => {
     if (!rescheduleTarget) {
@@ -474,7 +521,7 @@ function DoctorAppointmentsPage() {
     }
 
     if (!rescheduleDate || !rescheduleTime) {
-      setToastMessage("Please select both new date and time.");
+      setToastMessage("Please select both new date and a published slot.");
       window.setTimeout(() => setToastMessage(""), 2200);
       return;
     }
@@ -535,7 +582,12 @@ function DoctorAppointmentsPage() {
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
       <div className="mx-4 mt-6 mb-8 space-y-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sm:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Appointments Management</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Appointments Management</h1>
+            <Link href="/doctor-self/appointment-slots">
+              <WhiteButton className="px-4 py-2">Manage Slots</WhiteButton>
+            </Link>
+          </div>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Review patient requests, manage upcoming visits, and track previous appointments in one place.
           </p>
@@ -878,22 +930,40 @@ function DoctorAppointmentsPage() {
                   id="reschedule-date"
                   type="date"
                   value={rescheduleDate}
-                  onChange={(event) => setRescheduleDate(event.target.value)}
+                  onChange={(event) => {
+                    setRescheduleDate(event.target.value);
+                    setRescheduleTime("");
+                  }}
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
                 />
               </div>
 
               <div className="flex flex-col gap-2">
                 <label htmlFor="reschedule-time" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  New Time
+                  New Time Slot
                 </label>
-                <input
+                <select
                   id="reschedule-time"
-                  type="time"
                   value={rescheduleTime}
+                  disabled={isLoadingRescheduleSlots || availableSlotsForReschedule.length === 0}
                   onChange={(event) => setRescheduleTime(event.target.value)}
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
-                />
+                >
+                  <option value="">Select a slot</option>
+                  {availableSlotsForReschedule.map((slot) => (
+                    <option key={slot.id} value={slot.start_time}>
+                      {`${formatTimeForDisplay(slot.start_time)} - ${formatTimeForDisplay(slot.end_time)}`}
+                    </option>
+                  ))}
+                </select>
+                {isLoadingRescheduleSlots && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Loading available slots...</p>
+                )}
+                {!isLoadingRescheduleSlots && availableSlotsForReschedule.length === 0 && (
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                    No published slot is available for the selected date.
+                  </p>
+                )}
               </div>
             </div>
 

@@ -206,6 +206,9 @@ function DoctorDashboard() {
                         <Link href="/doctor-self/profile">
                             <WhiteButton>Edit Profile</WhiteButton>
                         </Link>
+                        <Link href="/doctor-self/appointment-slots">
+                            <WhiteButton>Manage Slots</WhiteButton>
+                        </Link>
                         <Link href="/doctor-self/appointments">
                             <GreenButton>Manage Appointments</GreenButton>
                         </Link>
