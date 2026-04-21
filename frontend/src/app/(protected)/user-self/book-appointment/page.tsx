@@ -103,7 +103,6 @@ const BookAppointmentPage = () => {
     } finally {
       setLoadingSlots(false);
     }
-  }, [date, doctorId, router]);
   }, [doctorId, router]);
 
   useEffect(() => {
@@ -237,7 +236,7 @@ const BookAppointmentPage = () => {
               >
                 <option value="">Select a slot</option>
                 {filteredSlots.map((slot) => (
-                  <option key={slot.id} value={slot.id}>{`${slot.date} ${formatTimeForDisplay(slot.time)} (${slot.bookedCount} booked)`}</option>
+                  <option key={slot.id} value={slot.id}>{`${slot.hospital} - ${slot.date} ${formatTimeForDisplay(slot.time)} (${slot.bookedCount} booked)`}</option>
                 ))}
               </select>
             </div>
