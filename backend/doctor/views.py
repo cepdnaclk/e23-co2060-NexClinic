@@ -556,6 +556,7 @@ class DoctorAppointmentSlotsView(APIView):
                     doctor=doctor_profile,
                     date=date_value,
                     day_of_week=slot['day_of_week'],
+                    hospital=slot['hospital'],
                     start_time=start_time,
                     end_time=end_time,
                 )
@@ -608,6 +609,7 @@ class DoctorAppointmentSlotDetailView(APIView):
         serializer.is_valid(raise_exception=True)
 
         date_value = serializer.validated_data.get('date', slot.date)
+        hospital = serializer.validated_data.get('hospital', slot.hospital)
         start_time = serializer.validated_data.get('start_time', slot.start_time)
         end_time = serializer.validated_data.get('end_time', slot.end_time)
 
@@ -634,9 +636,10 @@ class DoctorAppointmentSlotDetailView(APIView):
 
         slot.date = date_value
         slot.day_of_week = date_value.strftime('%A')
+        slot.hospital = hospital
         slot.start_time = start_time
         slot.end_time = end_time
-        slot.save(update_fields=['date', 'day_of_week', 'start_time', 'end_time'])
+        slot.save(update_fields=['date', 'day_of_week', 'hospital', 'start_time', 'end_time'])
 
         return Response(
             {

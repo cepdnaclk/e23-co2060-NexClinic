@@ -21,7 +21,7 @@ class AppointmentAvailableSlotSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AppointmentAvailableSlot
-        fields = ['id', 'date', 'day_of_week', 'start_time', 'end_time', 'bookedCount']
+        fields = ['id', 'date', 'day_of_week', 'hospital', 'start_time', 'end_time', 'bookedCount']
 
     def get_bookedCount(self, obj):
         return obj.appointments.count()
@@ -29,6 +29,7 @@ class AppointmentAvailableSlotSerializer(serializers.ModelSerializer):
 
 class AppointmentSlotInputSerializer(serializers.Serializer):
     date = serializers.DateField()
+    hospital = serializers.CharField(max_length=255)
     start_time = serializers.TimeField(input_formats=['%H:%M', '%H:%M:%S'])
     end_time = serializers.TimeField(input_formats=['%H:%M', '%H:%M:%S'])
 
@@ -46,6 +47,7 @@ class BulkAppointmentSlotCreateSerializer(serializers.Serializer):
 
 class AppointmentSlotUpdateSerializer(serializers.Serializer):
     date = serializers.DateField(required=False)
+    hospital = serializers.CharField(required=False, max_length=255)
     start_time = serializers.TimeField(required=False, input_formats=['%H:%M', '%H:%M:%S'])
     end_time = serializers.TimeField(required=False, input_formats=['%H:%M', '%H:%M:%S'])
 
@@ -156,6 +158,8 @@ class DoctorAppointmentSerializer(serializers.ModelSerializer):
         return obj.slot.start_time.strftime('%H:%M')
 
     def get_location(self, obj):
+        if obj.slot and obj.slot.hospital:
+            return obj.slot.hospital
         return obj.doctor.location or "NexClinic"
 
     def get_requestedAt(self, obj):

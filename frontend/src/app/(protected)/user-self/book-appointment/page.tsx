@@ -36,8 +36,6 @@ const formatTimeForDisplay = (time: string): string => {
 const BookAppointmentPage = () => {
   const router = useRouter();
   const [doctorId, setDoctorId] = useState("");
-  const [hospitalId, setHospitalId] = useState("");
-  const [date, setDate] = useState("");
   const [slotId, setSlotId] = useState("");
   const [reason, setReason] = useState("");
   const [success, setSuccess] = useState(false);
@@ -54,9 +52,6 @@ const BookAppointmentPage = () => {
       const params = new URLSearchParams();
       if (doctorId) {
         params.set("doctor_id", doctorId);
-      }
-      if (date) {
-        params.set("date", date);
       }
 
       const endpoint = params.toString()
@@ -109,6 +104,7 @@ const BookAppointmentPage = () => {
       setLoadingSlots(false);
     }
   }, [date, doctorId, router]);
+  }, [doctorId, router]);
 
   useEffect(() => {
     const initialDoctorFromQuery = new URLSearchParams(window.location.search).get("doctor");
@@ -131,32 +127,18 @@ const BookAppointmentPage = () => {
     return Array.from(map.values());
   }, [availableSlots]);
 
-  const hospitals = useMemo(() => {
-    const map = new Map<string, { id: string; name: string }>();
-    availableSlots
-      .filter((slot) => (doctorId ? slot.doctorId === doctorId : true))
-      .forEach((slot) => {
-        if (!map.has(slot.hospital)) {
-          map.set(slot.hospital, { id: slot.hospital, name: slot.hospital });
-        }
-      });
-    return Array.from(map.values());
-  }, [availableSlots, doctorId]);
-
   const filteredSlots = useMemo(() => {
     return availableSlots.filter((slot) => {
       const matchesDoctor = doctorId ? slot.doctorId === doctorId : true;
-      const matchesHospital = hospitalId ? slot.hospital === hospitalId : true;
-      const matchesDate = date ? slot.date === date : true;
-      return matchesDoctor && matchesHospital && matchesDate;
+      return matchesDoctor;
     });
-  }, [availableSlots, doctorId, hospitalId, date]);
+  }, [availableSlots, doctorId]);
 
   const selectedSlot = filteredSlots.find((slot) => String(slot.id) === slotId) || null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!doctorId || !date || !slotId) {
+    if (!doctorId || !slotId) {
       setError("Please fill in all fields.");
       return;
     }
@@ -233,7 +215,6 @@ const BookAppointmentPage = () => {
                 value={doctorId}
                 onChange={(e) => {
                   setDoctorId(e.target.value);
-                  setHospitalId("");
                   setSlotId("");
                 }}
                 required
@@ -246,38 +227,7 @@ const BookAppointmentPage = () => {
               </select>
             </div>
             <div>
-              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Hospital</label>
-              <select
-                className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none"
-                value={hospitalId}
-                onChange={(e) => {
-                  setHospitalId(e.target.value);
-                  setSlotId("");
-                }}
-                disabled={loadingSlots}
-              >
-                <option value="">Select a hospital</option>
-                {hospitals.map((hospital) => (
-                  <option key={hospital.id} value={hospital.id}>{hospital.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Date</label>
-              <input
-                type="date"
-                className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none"
-                value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  setSlotId("");
-                }}
-                required
-                min={new Date().toISOString().split("T")[0]}
-              />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Time Slot</label>
+              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">Appointment Slot</label>
               <select
                 className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none"
                 value={slotId}
@@ -285,7 +235,7 @@ const BookAppointmentPage = () => {
                 required
                 disabled={loadingSlots || filteredSlots.length === 0}
               >
-                <option value="">Select a time slot</option>
+                <option value="">Select a slot</option>
                 {filteredSlots.map((slot) => (
                   <option key={slot.id} value={slot.id}>{`${slot.date} ${formatTimeForDisplay(slot.time)} (${slot.bookedCount} booked)`}</option>
                 ))}

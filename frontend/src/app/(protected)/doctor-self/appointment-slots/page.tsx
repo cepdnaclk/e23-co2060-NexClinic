@@ -11,6 +11,7 @@ type AppointmentSlot = {
   id: number;
   date: string;
   day_of_week: string;
+  hospital: string;
   start_time: string;
   end_time: string;
 };
@@ -44,6 +45,7 @@ function DoctorAppointmentSlotsPage() {
   const [message, setMessage] = useState("");
 
   const [date, setDate] = useState("");
+  const [hospital, setHospital] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
@@ -104,8 +106,8 @@ function DoctorAppointmentSlotsPage() {
     setError("");
     setMessage("");
 
-    if (!date || !startTime || !endTime) {
-      setError("Please fill date, start time, and end time.");
+    if (!date || !hospital || !startTime || !endTime) {
+      setError("Please fill date, hospital, start time, and end time.");
       return;
     }
 
@@ -126,6 +128,7 @@ function DoctorAppointmentSlotsPage() {
           slots: [
             {
               date,
+              hospital,
               start_time: startTime,
               end_time: endTime,
             },
@@ -151,6 +154,7 @@ function DoctorAppointmentSlotsPage() {
 
       setMessage(payload?.message || "Appointment slot created successfully.");
       setDate("");
+      setHospital("");
       setStartTime("");
       setEndTime("");
       await loadSlots();
@@ -177,7 +181,7 @@ function DoctorAppointmentSlotsPage() {
           <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Create New Slot</h2>
           <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
-          <form onSubmit={handleCreateSlot} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+          <form onSubmit={handleCreateSlot} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
             <div className="flex flex-col gap-2">
               <label htmlFor="slot-date" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Date
@@ -188,6 +192,20 @@ function DoctorAppointmentSlotsPage() {
                 value={date}
                 min={new Date().toISOString().split("T")[0]}
                 onChange={(event) => setDate(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="slot-hospital" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Hospital
+              </label>
+              <input
+                id="slot-hospital"
+                type="text"
+                value={hospital}
+                onChange={(event) => setHospital(event.target.value)}
+                placeholder="e.g. NexClinic - Colombo"
                 className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
               />
             </div>
@@ -244,6 +262,7 @@ function DoctorAppointmentSlotsPage() {
                   <p className="font-semibold text-gray-900 dark:text-white">
                     {slot.date} ({slot.day_of_week || "-"})
                   </p>
+                  <p className="text-sm text-gray-700 dark:text-gray-200 mt-1">{slot.hospital || "NexClinic"}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                     {formatTimeForDisplay(slot.start_time)} - {formatTimeForDisplay(slot.end_time)}
                   </p>

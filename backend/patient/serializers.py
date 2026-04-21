@@ -52,6 +52,8 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
         return 'Doctor'
 
     def get_hospital(self, obj):
+        if obj.slot and obj.slot.hospital:
+            return obj.slot.hospital
         return obj.doctor.location or 'NexClinic'
 
     def get_date(self, obj):
@@ -118,7 +120,7 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
         return 'Doctor'
 
     def get_hospital(self, obj):
-        return obj.doctor.location or 'NexClinic'
+        return obj.hospital or obj.doctor.location or 'NexClinic'
 
     def get_date(self, obj):
         return obj.date.isoformat()

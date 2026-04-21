@@ -52,6 +52,7 @@ class AppointmentAvailableSlot(models.Model):
     doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='available_slots')
     date = models.DateField()
     day_of_week = models.CharField(max_length=12, blank=True, default='')
+    hospital = models.CharField(max_length=255, default='')
     start_time = models.TimeField()
     end_time = models.TimeField()
 
