@@ -113,6 +113,22 @@ The frontend will be available at `http://localhost:3000`
 
 ## API Endpoints
 
+### Doctor Registration (SLMC ID Format)
+Doctor signup accepts SLMC registration numbers in the following formats:
+
+- Number only: `12345`
+- Prefix + slash + number: `MB/1234`, `PMC/5678`
+
+Validation rule used across backend and frontend:
+
+- Regex: `^(\d{3,10}|[A-Za-z]{2,10}/\d{3,10})$`
+
+Integration notes:
+
+- Input is normalized to uppercase on the backend (for example, `mb/1234` becomes `MB/1234`).
+- Spaces are removed before validation.
+- Any other format is rejected with a validation error.
+
 ### Login
 **Next.js Route:** `POST /api/auth/login`
 ```json

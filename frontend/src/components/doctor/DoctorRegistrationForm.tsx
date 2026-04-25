@@ -159,13 +159,15 @@ function DoctorRegistrationForm() {
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="license-number"
                     type="text"
-                    placeholder="Sri Lanka Medical Council ID"
+                    placeholder="SLMC ID (e.g., 12345 or MB/1234)"
                     value={licenseNumber}
                     onChange={(e) => setLicenseNumber(e.target.value)}
                     disabled={loading}
                     required
-                    minLength={5}
-                    maxLength={20}
+                    minLength={3}
+                    maxLength={21}
+                    pattern="^(\d{3,10}|[A-Za-z]{2,10}/\d{3,10})$"
+                    title="Enter a valid SLMC number: 12345 or PREFIX/number (e.g., MB/1234, PMC/5678)"
                 />
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"

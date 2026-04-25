@@ -1,5 +1,6 @@
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from .serializers import (
     PatientRegistrationSerializer,
     DoctorRegistrationSerializer,
@@ -12,26 +13,36 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 class PatientRegisterView(generics.CreateAPIView):
     serializer_class = PatientRegistrationSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_register'
 
 class DoctorRegisterView(generics.CreateAPIView):
     serializer_class = DoctorRegistrationSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_register'
 
 
 class PatientLoginView(TokenObtainPairView):
     serializer_class = PatientTokenObtainPairSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_login'
 
 
 class DoctorLoginView(TokenObtainPairView):
     serializer_class = DoctorTokenObtainPairSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_login'
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+import logging
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from .models import PendingUser
-from .utils import generate_otp, send_otp_email, send_admin_notification_email
+from .utils import generate_otp, hash_otp, send_otp_email, send_admin_notification_email, verify_otp
 
 
 from django.utils import timezone
@@ -40,9 +51,18 @@ from patient.models import PatientProfile
 from doctor.models import DoctorProfile
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
+
+OTP_MAX_FAILED_ATTEMPTS = getattr(settings, 'OTP_MAX_FAILED_ATTEMPTS', 5)
+OTP_LOCKOUT_MINUTES = getattr(settings, 'OTP_LOCKOUT_MINUTES', 15)
+OTP_RESEND_COOLDOWN_SECONDS = getattr(settings, 'OTP_RESEND_COOLDOWN_SECONDS', 60)
+GENERIC_VERIFY_ERROR = 'Invalid or expired OTP.'
+GENERIC_RESEND_MESSAGE = 'If the account is eligible, a new OTP has been sent.'
 
 class VerifyOTPView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_verify_otp'
 
     def post(self, request):
         if not isinstance(request.data, dict):
@@ -57,15 +77,23 @@ class VerifyOTPView(APIView):
         try:
             pending_user = PendingUser.objects.get(email=email)
         except PendingUser.DoesNotExist:
-            if User.objects.filter(email=email).exists():
-                return Response({'error': 'User is already verified. Please log in.'}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({'error': 'Registration not found. Please register first.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': GENERIC_VERIFY_ERROR}, status=status.HTTP_400_BAD_REQUEST)
 
-        if pending_user.otp_code != otp_code:
-            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+        if pending_user.otp_locked_until and pending_user.otp_locked_until > timezone.now():
+            return Response({'error': 'Too many invalid attempts. Please try again later.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        otp_is_valid = verify_otp(otp_code, pending_user.otp_code_hash)
+
+        if not otp_is_valid:
+            pending_user.otp_failed_attempts += 1
+            if pending_user.otp_failed_attempts >= OTP_MAX_FAILED_ATTEMPTS:
+                pending_user.otp_locked_until = timezone.now() + timezone.timedelta(minutes=OTP_LOCKOUT_MINUTES)
+                pending_user.otp_failed_attempts = 0
+            pending_user.save(update_fields=['otp_failed_attempts', 'otp_locked_until'])
+            return Response({'error': GENERIC_VERIFY_ERROR}, status=status.HTTP_400_BAD_REQUEST)
 
         if pending_user.expires_at < timezone.now():
-            return Response({'error': 'OTP has expired'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': GENERIC_VERIFY_ERROR}, status=status.HTTP_400_BAD_REQUEST)
 
         # Atomic transaction to create User and Profile, then delete PendingUser
         with transaction.atomic():
@@ -83,7 +111,15 @@ class VerifyOTPView(APIView):
             elif pending_user.role == 'DOCTOR':
                 DoctorProfile.objects.create(user=user, **pending_user.profile_data)
                 doctor_name = pending_user.profile_data.get('preferred_name', 'Doctor')
-                send_admin_notification_email(user.email, doctor_name)
+
+                def send_doctor_notification():
+                    try:
+                        send_admin_notification_email(user.email, doctor_name)
+                    except Exception:
+                        # Avoid failing account verification due to notification email issues.
+                        logger.exception('Failed to send admin notification for doctor registration: %s', user.email)
+
+                transaction.on_commit(send_doctor_notification)
             
             pending_user.delete()
 
@@ -91,6 +127,8 @@ class VerifyOTPView(APIView):
 
 class ResendOTPView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_resend_otp'
 
     def post(self, request):
         if not isinstance(request.data, dict):
@@ -105,20 +143,25 @@ class ResendOTPView(APIView):
         try:
             pending_user = PendingUser.objects.get(email=email)
         except PendingUser.DoesNotExist:
-             if User.objects.filter(email=email).exists():
-                 return Response({'message': 'Account is already active'}, status=status.HTTP_200_OK)
-             return Response({'error': 'User not found'}, status=status.HTTP_400_BAD_REQUEST)
+             return Response({'message': GENERIC_RESEND_MESSAGE}, status=status.HTTP_200_OK)
+
+        if pending_user.otp_last_sent_at:
+            next_allowed_time = pending_user.otp_last_sent_at + timezone.timedelta(seconds=OTP_RESEND_COOLDOWN_SECONDS)
+            if next_allowed_time > timezone.now():
+                return Response({'error': 'Please wait before requesting another OTP.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         # Generate new OTP
         otp_code = generate_otp()
         
-        pending_user.otp_code = otp_code
+        pending_user.otp_code = ''
+        pending_user.otp_code_hash = hash_otp(otp_code)
+        pending_user.otp_last_sent_at = timezone.now()
         pending_user.expires_at = timezone.now() + timezone.timedelta(minutes=10)
-        pending_user.save()
+        pending_user.save(update_fields=['otp_code', 'otp_code_hash', 'otp_last_sent_at', 'expires_at'])
         
         send_otp_email(pending_user.email, otp_code)
 
-        return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
+        return Response({'message': GENERIC_RESEND_MESSAGE}, status=status.HTTP_200_OK)
 
 
 class LogoutView(APIView):

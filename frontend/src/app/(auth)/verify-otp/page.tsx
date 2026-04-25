@@ -91,6 +91,10 @@ function VerifyOtpPageContent() {
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
                         disabled={loading || resending}
+                        inputMode="numeric"
+                        maxLength={6}
+                        pattern="^\d{6}$"
+                        title="OTP must be a 6-digit code"
                         required
                     />
                     {error && <p className="text-sm text-red-500">{error}</p>}

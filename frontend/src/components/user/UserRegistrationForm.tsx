@@ -112,6 +112,7 @@ function UserRegistrationForm() {
                     <option value="">Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
+                    <option value="Other">Other</option>
                 </select>
                 <input
                     className="w-full shadow appearance-none border rounded-lg py-2 px-3 bg-white text-gray-700 leading-tight focus:outline-none focus:shadow-outline"

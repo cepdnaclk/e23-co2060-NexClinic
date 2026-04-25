@@ -173,7 +173,16 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_THROTTLE_CLASSES': (
+        'rest_framework.throttling.ScopedRateThrottle',
+    ),
+    'DEFAULT_THROTTLE_RATES': {
+        'auth_register': '5/hour',
+        'auth_login': '10/minute',
+        'auth_verify_otp': '8/minute',
+        'auth_resend_otp': '3/minute',
+    },
 }
 
 from datetime import timedelta
@@ -203,6 +212,11 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
+# OTP security controls
+OTP_MAX_FAILED_ATTEMPTS = int(os.getenv('OTP_MAX_FAILED_ATTEMPTS', '5'))
+OTP_LOCKOUT_MINUTES = int(os.getenv('OTP_LOCKOUT_MINUTES', '15'))
+OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv('OTP_RESEND_COOLDOWN_SECONDS', '60'))
+
 # Email Configuration
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
@@ -211,6 +225,10 @@ EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', True)
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@nexclinic.local')
+ADMIN_NOTIFICATION_EMAILS = _env_list(
+    'ADMIN_NOTIFICATION_EMAILS',
+    [EMAIL_HOST_USER] if EMAIL_HOST_USER else []
+)
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = _env_list(

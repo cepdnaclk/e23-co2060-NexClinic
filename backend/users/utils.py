@@ -1,9 +1,23 @@
-import random
+import secrets
+import logging
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
+
+logger = logging.getLogger(__name__)
 
 def generate_otp():
-    return str(random.randint(100000, 999999))
+    return str(secrets.randbelow(900000) + 100000)
+
+
+def hash_otp(otp):
+    return make_password(otp)
+
+
+def verify_otp(otp, otp_hash):
+    if not otp_hash:
+        return False
+    return check_password(otp, otp_hash)
 
 def send_otp_email(email, otp):
     subject = 'Verify your email'
@@ -17,6 +31,11 @@ def send_otp_email(email, otp):
     )
 
 def send_admin_notification_email(doctor_email, doctor_name):
+    recipients = getattr(settings, 'ADMIN_NOTIFICATION_EMAILS', [])
+    if not recipients:
+        logger.warning('ADMIN_NOTIFICATION_EMAILS is empty; skipping doctor admin notification email.')
+        return
+
     subject = 'Action Required: New Doctor Registration'
     message = f"""
     New Doctor Registered!
@@ -31,6 +50,6 @@ def send_admin_notification_email(doctor_email, doctor_name):
         subject,
         message,
         settings.DEFAULT_FROM_EMAIL,
-        ['nexclinicbynexaura@gmail.com'],
+        recipients,
         fail_silently=False,
     )

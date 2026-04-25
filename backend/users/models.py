@@ -44,6 +44,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class PendingUser(models.Model):
     email = models.EmailField(unique=True)
     otp_code = models.CharField(max_length=6)
+    otp_code_hash = models.CharField(max_length=128, blank=True, default="")
+    otp_failed_attempts = models.PositiveSmallIntegerField(default=0)
+    otp_locked_until = models.DateTimeField(null=True, blank=True)
+    otp_last_sent_at = models.DateTimeField(null=True, blank=True)
     password = models.CharField(max_length=128) # Store hashed password
     role = models.CharField(max_length=50)
     profile_data = models.JSONField() # Store profile-specific fields

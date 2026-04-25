@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ email, otp }),
     });
 
-    const data = await backendResponse.json();
+    const contentType = backendResponse.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await backendResponse.json()
+      : { error: await backendResponse.text() };
 
     if (!backendResponse.ok) {
       return NextResponse.json(
