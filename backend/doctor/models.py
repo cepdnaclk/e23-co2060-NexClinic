@@ -55,6 +55,8 @@ class AppointmentAvailableSlot(models.Model):
     hospital = models.CharField(max_length=255, default='')
     start_time = models.TimeField()
     end_time = models.TimeField()
+    booked_count = models.PositiveIntegerField(default=0)
+    remaining_count = models.PositiveIntegerField(default=0)
 
     class Meta:
         constraints = [
@@ -69,9 +71,19 @@ class AppointmentAvailableSlot(models.Model):
         if not self.day_of_week:
             self.day_of_week = self.date.strftime('%A')
         super().save(*args, **kwargs)
+    
+    def refresh_counts(self, save=True):
+        booked = self.appointments.count()
+        remaining = self.appointments.exclude(status=Appointment.Status.COMPLETED).count()
+        self.booked_count = booked
+        self.remaining_count = remaining
+
+        if save:
+            self.save(update_fields=["booked_count", "remaining_count"])
 
     def __str__(self):
         return f"{self.doctor.preferred_name} - {self.date} {self.start_time} to {self.end_time}"
+    
 
 
 class DoctorOnlineAdviceAvailability(models.Model):

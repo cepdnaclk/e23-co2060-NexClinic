@@ -45,7 +45,7 @@ function UserRegistrationForm() {
 
             const responseEmail = response.data?.email || email;
             setSuccess("Registration submitted. Check your email for the OTP.");
-            router.push(`/verify-otp?email=${encodeURIComponent(responseEmail)}`);
+            router.push(`/verify-otp?email=${encodeURIComponent(responseEmail)}&role=patient`);
         } catch (err: any) {
             const message = err.response?.data?.error || err.response?.data || "Registration failed.";
             setError(typeof message === "string" ? message : "Registration failed.");

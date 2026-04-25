@@ -9,6 +9,7 @@ function VerifyOtpPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [email, setEmail] = useState("");
+    const [role, setRole] = useState<string>("patient");
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
     const [resending, setResending] = useState(false);
@@ -17,8 +18,12 @@ function VerifyOtpPageContent() {
 
     useEffect(() => {
         const prefillEmail = searchParams.get("email");
+        const roleParam = searchParams.get("role");
         if (prefillEmail && !email) {
             setEmail(prefillEmail);
+        }
+        if (roleParam) {
+            setRole(roleParam.toLowerCase());
         }
     }, [searchParams, email]);
 
@@ -34,10 +39,12 @@ function VerifyOtpPageContent() {
                 otp,
             });
             setSuccess(response.data?.message || "Account verified successfully.");
-                // Redirect to login page after successful verification
-                setTimeout(() => {
-                    router.push("/login");
-                }, 2000);
+            const nextPath = role === "doctor" ? "/doctor/login" : "/login";
+
+            // Redirect to the correct login page after successful verification
+            setTimeout(() => {
+                router.push(nextPath);
+            }, 2000);
         } catch (err: any) {
             setError(err.response?.data?.error || "Verification failed.");
         } finally {

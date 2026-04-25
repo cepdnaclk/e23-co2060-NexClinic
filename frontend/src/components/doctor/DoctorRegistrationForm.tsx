@@ -98,7 +98,7 @@ function DoctorRegistrationForm() {
 
             const responseEmail = response.data?.email || email;
             setSuccess("Registration submitted. Check your email for the OTP.");
-            router.push(`/verify-otp?email=${encodeURIComponent(responseEmail)}`);
+            router.push(`/verify-otp?email=${encodeURIComponent(responseEmail)}&role=doctor`);
         } catch (err: unknown) {
             const message = axios.isAxiosError(err)
                 ? err.response?.data?.error || err.response?.data || "Registration failed."
@@ -194,7 +194,7 @@ function DoctorRegistrationForm() {
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="phone"
                     type="tel"
-                    placeholder="Phone"
+                    placeholder="Phone: +94712345678"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     disabled={loading}
