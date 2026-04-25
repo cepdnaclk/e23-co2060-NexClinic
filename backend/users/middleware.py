@@ -1,32 +1,67 @@
 import json
+import re
 import uuid
 
 from django.contrib.auth import get_user_model
 from django.utils.deprecation import MiddlewareMixin
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from .activity_log_settings import (
+    ACTIVITY_LOG_ENABLED,
+    ACTIVITY_LOG_EXCLUDED_PATH_PREFIXES,
+    ACTIVITY_LOG_EVENT_CATEGORY_PREFIXES,
+    ACTIVITY_LOG_LOG_ALL_VIEWS,
+    ACTIVITY_LOG_MAX_DICT_ITEMS,
+    ACTIVITY_LOG_MAX_LIST_ITEMS,
+    ACTIVITY_LOG_MAX_PAYLOAD_CHARS,
+    ACTIVITY_LOG_MAX_STRING_LENGTH,
+    ACTIVITY_LOG_SENSITIVE_KEYS,
+    ACTIVITY_LOG_SENSITIVE_VIEW_PREFIXES,
+)
 from .models import UserActivityLog
 
 
 class UserActivityLoggingMiddleware(MiddlewareMixin):
     """Persist an audit row for each request/response cycle."""
 
-    SENSITIVE_KEYS = {
-        'password',
-        'current_password',
-        'new_password',
+    NON_ENTITY_SEGMENTS = {
+        'action',
+        'reschedule',
+        'login',
+        'logout',
+        'verify-otp',
+        'resend-otp',
         'token',
-        'access',
         'refresh',
-        'otp',
-        'otp_code',
+        'change',
+        'add',
+        'list',
     }
+
+    SLUG_PATTERN = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_-]{5,63}$')
+
+    def __init__(self, get_response=None):
+        super().__init__(get_response)
+        self.logging_enabled = ACTIVITY_LOG_ENABLED
+        self.log_all_views = ACTIVITY_LOG_LOG_ALL_VIEWS
+        self.sensitive_keys = {str(key).lower() for key in ACTIVITY_LOG_SENSITIVE_KEYS}
+        self.excluded_path_prefixes = tuple(ACTIVITY_LOG_EXCLUDED_PATH_PREFIXES)
+        self.sensitive_view_prefixes = tuple(ACTIVITY_LOG_SENSITIVE_VIEW_PREFIXES)
+        self.event_category_prefixes = tuple(ACTIVITY_LOG_EVENT_CATEGORY_PREFIXES)
+        self.max_string_length = ACTIVITY_LOG_MAX_STRING_LENGTH
+        self.max_list_items = ACTIVITY_LOG_MAX_LIST_ITEMS
+        self.max_dict_items = ACTIVITY_LOG_MAX_DICT_ITEMS
+        self.max_payload_chars = ACTIVITY_LOG_MAX_PAYLOAD_CHARS
 
     def process_request(self, request):
         request._audit_request_id = request.headers.get('X-Request-ID', str(uuid.uuid4()))
         request._audit_payload = self._extract_request_payload(request)
 
     def process_response(self, request, response):
+        request_id = getattr(request, '_audit_request_id', '')
+        if request_id and hasattr(response, '__setitem__') and not response.get('X-Request-ID'):
+            response['X-Request-ID'] = request_id
+
         try:
             self._create_activity_log(request, response)
         except Exception:
@@ -35,12 +70,19 @@ class UserActivityLoggingMiddleware(MiddlewareMixin):
         return response
 
     def _create_activity_log(self, request, response):
+        if not self.logging_enabled:
+            return
+
         path = getattr(request, 'path', '') or ''
-        if path.startswith('/static/') or path.startswith('/media/'):
+        if self._should_skip_logging(path):
             return
 
         action_type = self._get_action_type(request)
+        if action_type == UserActivityLog.ActionType.VIEW and not self._should_log_view(path):
+            return
+
         entity_type, entity_id = self._get_entity_target(path)
+        event_category = self._get_event_category(path, action_type)
 
         actor_user = self._resolve_actor_user(request)
         actor_email = ''
@@ -51,7 +93,7 @@ class UserActivityLoggingMiddleware(MiddlewareMixin):
             actor_role = getattr(actor_user, 'role', '') or ''
 
         login_email = ''
-        request_payload = self._sanitize_payload(getattr(request, '_audit_payload', None))
+        request_payload = self._finalize_payload(getattr(request, '_audit_payload', None))
         if self._is_login_endpoint(path) and isinstance(request_payload, dict):
             login_email = request_payload.get('email', '')
             if not actor_email and login_email:
@@ -60,7 +102,7 @@ class UserActivityLoggingMiddleware(MiddlewareMixin):
                 if matched_user is not None:
                     actor_role = getattr(matched_user, 'role', '') or ''
 
-        response_data = self._extract_response_data(response)
+        response_data = self._finalize_payload(self._extract_response_data(response))
 
         UserActivityLog.objects.create(
             actor_user=actor_user,
@@ -82,6 +124,8 @@ class UserActivityLoggingMiddleware(MiddlewareMixin):
             metadata={
                 'response': response_data,
                 'login_email': login_email,
+                'event_category': event_category,
+                'path_segments': [segment for segment in path.strip('/').split('/') if segment],
             },
         )
 
@@ -111,13 +155,40 @@ class UserActivityLoggingMiddleware(MiddlewareMixin):
         data = getattr(response, 'data', None)
         if data is None:
             return None
-        return self._sanitize_payload(data)
+        return data
+
+    def _should_skip_logging(self, path):
+        return path.startswith(self.excluded_path_prefixes)
+
+    def _should_log_view(self, path):
+        if self.log_all_views:
+            return True
+        return path.startswith(self.sensitive_view_prefixes)
+
+    def _finalize_payload(self, value):
+        sanitized = self._sanitize_payload(value)
+        truncated = self._truncate_payload(sanitized)
+
+        try:
+            serialized = json.dumps(truncated, default=str)
+        except Exception:
+            return truncated
+
+        if len(serialized) <= self.max_payload_chars:
+            return truncated
+
+        return {
+            '_truncated': True,
+            'reason': 'payload_too_large',
+            'preview': serialized[: self.max_payload_chars],
+            'original_length': len(serialized),
+        }
 
     def _sanitize_payload(self, value):
         if isinstance(value, dict):
             sanitized = {}
             for key, val in value.items():
-                if str(key).lower() in self.SENSITIVE_KEYS:
+                if str(key).lower() in self.sensitive_keys:
                     sanitized[key] = '***'
                 else:
                     sanitized[key] = self._sanitize_payload(val)
@@ -125,6 +196,29 @@ class UserActivityLoggingMiddleware(MiddlewareMixin):
 
         if isinstance(value, list):
             return [self._sanitize_payload(item) for item in value]
+
+        return value
+
+    def _truncate_payload(self, value):
+        if isinstance(value, str):
+            if len(value) > self.max_string_length:
+                return value[: self.max_string_length] + '...[truncated]'
+            return value
+
+        if isinstance(value, list):
+            truncated_items = [self._truncate_payload(item) for item in value[: self.max_list_items]]
+            if len(value) > self.max_list_items:
+                truncated_items.append({'_truncated_items': len(value) - self.max_list_items})
+            return truncated_items
+
+        if isinstance(value, dict):
+            truncated_dict = {}
+            for idx, (key, val) in enumerate(value.items()):
+                if idx >= self.max_dict_items:
+                    truncated_dict['_truncated_keys'] = len(value) - self.max_dict_items
+                    break
+                truncated_dict[key] = self._truncate_payload(val)
+            return truncated_dict
 
         return value
 
@@ -183,14 +277,57 @@ class UserActivityLoggingMiddleware(MiddlewareMixin):
             app_label = segments[1]
             resource = segments[2]
             entity_type = f"{app_label}.{resource.replace('-', '_')}"
-            if len(segments) >= 4 and segments[3].isdigit():
-                entity_id = segments[3]
+            entity_id = self._extract_entity_id(segments[3:])
         else:
             entity_type = segments[0]
-            if len(segments) >= 2 and segments[1].isdigit():
-                entity_id = segments[1]
+            entity_id = self._extract_entity_id(segments[1:])
 
         return entity_type, entity_id
+
+    def _extract_entity_id(self, candidate_segments):
+        for segment in candidate_segments:
+            normalized = (segment or '').strip().lower()
+            if not normalized or normalized in self.NON_ENTITY_SEGMENTS:
+                continue
+
+            if normalized.isdigit() or self._is_uuid(normalized) or self.SLUG_PATTERN.match(normalized):
+                return segment
+
+        return ''
+
+    def _is_uuid(self, value):
+        try:
+            uuid.UUID(value)
+        except (TypeError, ValueError, AttributeError):
+            return False
+        return True
+
+    def _get_event_category(self, path, action_type):
+        normalized_path = (path or '').lower()
+
+        for prefix, category in self.event_category_prefixes:
+            if normalized_path.startswith(prefix.lower()):
+                return category
+
+        if action_type in {UserActivityLog.ActionType.LOGIN, UserActivityLog.ActionType.LOGOUT}:
+            return 'auth'
+        if normalized_path.startswith('/api/doctor/'):
+            return 'doctor'
+        if normalized_path.startswith('/api/patient/'):
+            return 'patient'
+        if normalized_path.startswith('/api/users/'):
+            return 'users'
+        if normalized_path.startswith('/admin/'):
+            return 'admin'
+        if action_type == UserActivityLog.ActionType.VIEW:
+            return 'read'
+        if action_type in {
+            UserActivityLog.ActionType.CREATE,
+            UserActivityLog.ActionType.UPDATE,
+            UserActivityLog.ActionType.DELETE,
+        }:
+            return 'write'
+        return 'other'
 
     def _get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')

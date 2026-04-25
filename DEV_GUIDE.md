@@ -233,9 +233,51 @@ DATABASE_URL=postgresql://postgres.xxxxx:password@aws-0-ap-southeast-1.pooler.su
 DB_SSLMODE=require
 ```
 
-## 10. Deployment
+## 10. Activity Log Configuration
 
-### 10.1 Backend (Render)
+Activity log behavior is configured in code (not environment variables).
+
+Configuration file:
+
+- backend/users/activity_log_settings.py
+
+What you can tune there:
+
+- ACTIVITY_LOG_ENABLED
+- ACTIVITY_LOG_LOG_ALL_VIEWS
+- ACTIVITY_LOG_SENSITIVE_KEYS
+- ACTIVITY_LOG_EXCLUDED_PATH_PREFIXES
+- ACTIVITY_LOG_SENSITIVE_VIEW_PREFIXES
+- ACTIVITY_LOG_MAX_STRING_LENGTH
+- ACTIVITY_LOG_MAX_LIST_ITEMS
+- ACTIVITY_LOG_MAX_DICT_ITEMS
+- ACTIVITY_LOG_MAX_PAYLOAD_CHARS
+- ACTIVITY_LOG_RETENTION_DAYS
+
+Recommended low-cost defaults for small/free hosting:
+
+- Keep ACTIVITY_LOG_LOG_ALL_VIEWS=False.
+- Keep ACTIVITY_LOG_MAX_PAYLOAD_CHARS at 2000-4000.
+- Keep ACTIVITY_LOG_RETENTION_DAYS at 90-180.
+
+Prune old logs (uses ACTIVITY_LOG_RETENTION_DAYS by default):
+
+```bash
+cd backend
+python manage.py prune_activity_logs --dry-run
+python manage.py prune_activity_logs
+```
+
+Override retention for one run:
+
+```bash
+cd backend
+python manage.py prune_activity_logs --days 30
+```
+
+## 11. Deployment
+
+### 11.1 Backend (Render)
 
 - Root directory: backend
 - Runtime: Python
@@ -273,7 +315,7 @@ EMAIL_HOST_USER=your-email@example.com
 EMAIL_HOST_PASSWORD=your-app-password
 ```
 
-### 10.2 Frontend (Vercel)
+### 11.2 Frontend (Vercel)
 
 - Root directory: frontend
 - Framework: Next.js
@@ -297,7 +339,7 @@ vercel
 vercel --prod
 ```
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 Frontend cannot reach backend:
 
