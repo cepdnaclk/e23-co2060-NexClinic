@@ -39,10 +39,10 @@ The Django backend expects a PostgreSQL database. Update `main/settings.py` if n
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "nexaura",
-        "USER": "nexaura",
-        "PASSWORD": "2ypnexaura",
-        "HOST": "localhost",
+        "NAME": "your_database_name",
+        "USER": "your_database_user",
+        "PASSWORD": "your_database_password",
+        "HOST": "your_database_host",
         "PORT": 5432,
     }
 }

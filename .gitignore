@@ -79,6 +79,7 @@ backend/ENV/
 backend/db.sqlite3
 backend/db.sqlite3-journal
 backend/*.log
+backend/otp_verify_response.html
 backend/local_settings.py
 backend/media/
 backend/staticfiles/
