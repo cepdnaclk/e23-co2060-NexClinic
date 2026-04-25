@@ -25,6 +25,29 @@ from .serializers import (
 )
 
 
+class VerifiedDoctorAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def _is_doctor(user):
+        return getattr(user, "role", None) == "DOCTOR"
+
+    def _get_verified_doctor_profile_or_response(self, user):
+        if not self._is_doctor(user):
+            return None, Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        doctor_profile = getattr(user, "doctor_profile", None)
+        if not doctor_profile:
+            return None, Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not doctor_profile.is_verified:
+            return None, Response(
+                {"detail": "Your account is pending admin verification."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        return doctor_profile, None
+
 class DoctorSpecializationsView(APIView):
     permission_classes = [AllowAny]
 
@@ -311,22 +334,13 @@ class DoctorProfileView(APIView):
         return self.get(request)
 
 
-class DoctorAppointmentsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @staticmethod
-    def _is_doctor(user):
-        return getattr(user, 'role', None) == 'DOCTOR'
+class DoctorAppointmentsView(VerifiedDoctorAPIView):
 
     def get(self, request):
         user = request.user
-
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
 
         queryset = Appointment.objects.filter(doctor=doctor_profile).select_related(
             'slot', 'patient', 'patient__user', 'doctor'
@@ -344,22 +358,15 @@ class DoctorAppointmentsView(APIView):
         return Response({'appointments': data}, status=status.HTTP_200_OK)
 
 
-class DoctorAppointmentActionView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @staticmethod
-    def _is_doctor(user):
-        return getattr(user, 'role', None) == 'DOCTOR'
+class DoctorAppointmentActionView(VerifiedDoctorAPIView):
 
     def patch(self, request, appointment_id):
         user = request.user
 
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        
+        if error_response:
+            return error_response
 
         appointment = Appointment.objects.filter(
             id=appointment_id,
@@ -411,23 +418,14 @@ class DoctorAppointmentActionView(APIView):
         return Response({'message': rule['message'], 'appointment': payload}, status=status.HTTP_200_OK)
 
 
-class DoctorAppointmentRescheduleView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @staticmethod
-    def _is_doctor(user):
-        return getattr(user, 'role', None) == 'DOCTOR'
+class DoctorAppointmentRescheduleView(VerifiedDoctorAPIView):
 
     def patch(self, request, appointment_id):
         user = request.user
-
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
-
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
+        
         appointment = Appointment.objects.filter(
             id=appointment_id,
             doctor=doctor_profile,
@@ -474,12 +472,7 @@ class DoctorAppointmentRescheduleView(APIView):
         return Response({'message': 'Appointment rescheduled successfully.', 'appointment': payload}, status=status.HTTP_200_OK)
 
 
-class DoctorAppointmentSlotsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @staticmethod
-    def _is_doctor(user):
-        return getattr(user, 'role', None) == 'DOCTOR'
+class DoctorAppointmentSlotsView(VerifiedDoctorAPIView):
 
     @staticmethod
     def _overlaps(start_a, end_a, start_b, end_b):
@@ -487,13 +480,9 @@ class DoctorAppointmentSlotsView(APIView):
 
     def get(self, request):
         user = request.user
-
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
 
         slots = AppointmentAvailableSlot.objects.filter(doctor=doctor_profile).order_by('date', 'start_time')
         data = AppointmentAvailableSlotSerializer(slots, many=True).data
@@ -502,13 +491,9 @@ class DoctorAppointmentSlotsView(APIView):
 
     def post(self, request):
         user = request.user
-
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
 
         serializer = BulkAppointmentSlotCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -580,12 +565,7 @@ class DoctorAppointmentSlotsView(APIView):
         )
 
 
-class DoctorAppointmentSlotDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @staticmethod
-    def _is_doctor(user):
-        return getattr(user, 'role', None) == 'DOCTOR'
+class DoctorAppointmentSlotDetailView(VerifiedDoctorAPIView):
 
     @staticmethod
     def _overlaps(start_a, end_a, start_b, end_b):
@@ -593,13 +573,9 @@ class DoctorAppointmentSlotDetailView(APIView):
 
     def patch(self, request, slot_id):
         user = request.user
-
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
 
         slot = AppointmentAvailableSlot.objects.filter(id=slot_id, doctor=doctor_profile).first()
         if not slot:
@@ -651,13 +627,9 @@ class DoctorAppointmentSlotDetailView(APIView):
 
     def delete(self, request, slot_id):
         user = request.user
-
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
 
         slot = AppointmentAvailableSlot.objects.filter(id=slot_id, doctor=doctor_profile).first()
         if not slot:
@@ -667,12 +639,7 @@ class DoctorAppointmentSlotDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class DoctorOnlineAdviceSlotsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @staticmethod
-    def _is_doctor(user):
-        return getattr(user, 'role', None) == 'DOCTOR'
+class DoctorOnlineAdviceSlotsView(VerifiedDoctorAPIView):
 
     @staticmethod
     def _overlaps(start_a, end_a, start_b, end_b):
@@ -680,14 +647,10 @@ class DoctorOnlineAdviceSlotsView(APIView):
 
     def get(self, request):
         user = request.user
-
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
-
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
+    
         slots = DoctorOnlineAdviceAvailability.objects.filter(doctor=doctor_profile).order_by('day_of_week', 'start_time')
         data = OnlineAdviceAvailabilitySerializer(slots, many=True).data
 
@@ -695,14 +658,10 @@ class DoctorOnlineAdviceSlotsView(APIView):
 
     def post(self, request):
         user = request.user
-
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
-
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
+        
         serializer = BulkOnlineAdviceSlotCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -771,12 +730,7 @@ class DoctorOnlineAdviceSlotsView(APIView):
         )
 
 
-class DoctorOnlineAdviceSlotDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    @staticmethod
-    def _is_doctor(user):
-        return getattr(user, 'role', None) == 'DOCTOR'
+class DoctorOnlineAdviceSlotDetailView(VerifiedDoctorAPIView):
 
     @staticmethod
     def _overlaps(start_a, end_a, start_b, end_b):
@@ -785,12 +739,9 @@ class DoctorOnlineAdviceSlotDetailView(APIView):
     def patch(self, request, slot_id):
         user = request.user
 
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
 
         slot = DoctorOnlineAdviceAvailability.objects.filter(id=slot_id, doctor=doctor_profile).first()
         if not slot:
@@ -838,14 +789,11 @@ class DoctorOnlineAdviceSlotDetailView(APIView):
         )
 
     def delete(self, request, slot_id):
+        
         user = request.user
-
-        if not self._is_doctor(user):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        doctor_profile = getattr(user, 'doctor_profile', None)
-        if not doctor_profile:
-            return Response({'detail': 'Doctor profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
 
         slot = DoctorOnlineAdviceAvailability.objects.filter(id=slot_id, doctor=doctor_profile).first()
         if not slot:
@@ -853,3 +801,4 @@ class DoctorOnlineAdviceSlotDetailView(APIView):
 
         slot.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
