@@ -1,82 +1,159 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { handlePatientSessionExpired } from "@/lib/patientSession";
 
-// Shape of user data used by this dashboard UI.
-interface User {
+type PatientProfilePayload = {
+    patient?: {
+        fullName?: string;
+        email?: string;
+        profileImage?: string;
+    };
+};
+
+type DashboardAppointment = {
     id: string;
-    name: string;
-    email: string;
-    role: string;
-    profileImage?: string;
+    doctorName: string;
+    date: string;
+    time: string;
+    type: string;
+    status: string;
+    category: "request" | "upcoming" | "previous";
+    requestedAt: string;
+};
+
+type AppointmentsPayload = {
+    appointments?: DashboardAppointment[];
+};
+
+type StatCard = {
+    label: string;
+    value: string;
 }
 
 export default function UserDashboard() {
-    const [user, setUser] = useState<User | null>(null);
+    const router = useRouter();
+    const [fullName, setFullName] = useState("");
+    const [email, setEmail] = useState("");
+    const [profileImage, setProfileImage] = useState<string | undefined>(undefined);
+    const [appointments, setAppointments] = useState<DashboardAppointment[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        // Support both new and legacy localStorage keys.
-        const userData = localStorage.getItem("userInfo") || localStorage.getItem("user");
-        if (userData) {
-            setUser(JSON.parse(userData));
-        }
-    }, []);
+        const loadDashboardData = async (showLoading: boolean) => {
+            if (showLoading) {
+                setIsLoading(true);
+            }
 
-    // Fallback display name for cases where full name is not available.
-    const displayName = user?.name || user?.email?.split("@")[0] || "User";
+            try {
+                const [profileResponse, appointmentsResponse] = await Promise.all([
+                    fetch("/api/patient/profile", { method: "GET", cache: "no-store" }),
+                    fetch("/api/patient/appointments", { method: "GET", cache: "no-store" }),
+                ]);
 
-    const stats = [
-        { label: "Upcoming Appointments", value: "3" },
-        { label: "Total Consultations", value: "12" },
-        { label: "Active Prescriptions", value: "2" },
-    ];
+                if (profileResponse.status === 401 || appointmentsResponse.status === 401) {
+                    handlePatientSessionExpired(router);
+                    return;
+                }
 
-    const recentChats = [
-        {
-            doctor: "Dr. Sarah Johnson",
-            unread: "2",
-            message: "Please continue the medication for 5 more days and update me if symptoms persist.",
-            time: "10 min ago",
-        },
-        {
-            doctor: "Dr. Michael Chen",
-            unread: "",
-            message: "Your latest test report looks normal. We can discuss details at your next appointment.",
-            time: "Yesterday",
-        },
-        {
-            doctor: "Dr. Emily Davis",
-            unread: "1",
-            message: "Kindly share your updated blood pressure readings before the follow-up consultation.",
-            time: "1 hour ago",
-        },
-    ];
+                const profilePayload = (await profileResponse.json().catch(() => ({}))) as PatientProfilePayload;
+                const appointmentsPayload = (await appointmentsResponse.json().catch(() => ({}))) as AppointmentsPayload;
 
-    const upcomingAppointments = [
-        {
-            doctor: "Dr. Sarah Johnson",
-            status: "Confirmed",
-            statusClass: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-            type: "General Checkup",
-            time: "March 2, 2026 - 10:00 AM",
-        },
-        {
-            doctor: "Dr. Michael Chen",
-            status: "Confirmed",
-            statusClass: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-            type: "Dental Cleaning",
-            time: "March 5, 2026 - 2:30 PM",
-        },
-        {
-            doctor: "Dr. Emily Davis",
-            status: "Upcoming",
-            statusClass: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-            type: "Follow-up Consultation",
-            time: "March 8, 2026 - 11:00 AM",
-        },
-    ];
+                if (!profileResponse.ok) {
+                    throw new Error("Failed to load patient profile");
+                }
+
+                if (!appointmentsResponse.ok) {
+                    throw new Error("Failed to load appointments");
+                }
+
+                const patient = profilePayload.patient || {};
+                setFullName(patient.fullName || "");
+                setEmail(patient.email || "");
+                setProfileImage(patient.profileImage || undefined);
+
+                const liveAppointments = Array.isArray(appointmentsPayload.appointments)
+                    ? appointmentsPayload.appointments
+                    : [];
+                setAppointments(liveAppointments);
+                setError("");
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to load dashboard data");
+            } finally {
+                if (showLoading) {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        void loadDashboardData(true);
+
+        const intervalId = window.setInterval(() => {
+            void loadDashboardData(false);
+        }, 20000);
+
+        const handleFocus = () => {
+            void loadDashboardData(false);
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                void loadDashboardData(false);
+            }
+        };
+
+        window.addEventListener("focus", handleFocus);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.removeEventListener("focus", handleFocus);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, [router]);
+
+    const displayName = fullName || email.split("@")[0] || "User";
+
+    const stats: StatCard[] = useMemo(() => {
+        const upcomingCount = appointments.filter((item) => item.category === "upcoming").length;
+        const pendingCount = appointments.filter((item) => item.category === "request").length;
+        const completedCount = appointments.filter((item) => item.status === "Completed").length;
+
+        return [
+            { label: "Upcoming Appointments", value: String(upcomingCount) },
+            { label: "Pending Requests", value: String(pendingCount) },
+            { label: "Completed Consultations", value: String(completedCount) },
+        ];
+    }, [appointments]);
+
+    const upcomingAppointments = useMemo(() => {
+        const getStatusClass = (status: string) => {
+            if (status === "Confirmed") {
+                return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
+            }
+            if (status === "Pending") {
+                return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
+            }
+            if (status === "Completed") {
+                return "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200";
+            }
+            return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200";
+        };
+
+        return [...appointments]
+            .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+            .map((item) => ({
+                doctor: item.doctorName,
+                status: item.status,
+                statusClass: getStatusClass(item.status),
+                type: item.type || "Consultation",
+                time: `${item.date} - ${item.time}`,
+            }));
+    }, [appointments]);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -84,9 +161,9 @@ export default function UserDashboard() {
                 <section className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
                     <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 xl:items-start xl:justify-between">
                         <div className="w-full flex flex-col sm:flex-row sm:items-center gap-4 min-w-0">
-                            {user?.profileImage ? (
+                            {profileImage ? (
                                 <Image
-                                    src={user.profileImage}
+                                    src={profileImage}
                                     alt={displayName}
                                     width={72}
                                     height={72}
@@ -106,8 +183,9 @@ export default function UserDashboard() {
                                     Welcome back, {displayName}!
                                 </h1>
                                 <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                                    Here is your health dashboard overview.
+                                    {isLoading ? "Loading your dashboard..." : "Here is your health dashboard overview."}
                                 </p>
+                                {error ? <p className="mt-2 text-sm text-red-500">{error}</p> : null}
                             </div>
                         </div>
 
@@ -165,31 +243,17 @@ export default function UserDashboard() {
                         <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
                         <div className="space-y-3">
-                            {recentChats.map((chat) => (
-                                <div
-                                    key={`${chat.doctor}-${chat.time}`}
-                                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4"
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <p className="font-semibold text-gray-900 dark:text-white break-words">{chat.doctor}</p>
-                                        {chat.unread ? (
-                                            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-500 text-white shrink-0">
-                                                {chat.unread}
-                                            </span>
-                                        ) : (
-                                            <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">{chat.time}</span>
-                                        )}
-                                    </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">{chat.message}</p>
-                                    {chat.unread ? <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{chat.time}</p> : null}
-                                </div>
-                            ))}
+                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4">
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    Online advice chat history is not available yet. It will appear here after chat features are implemented.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 h-full">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <h2 className="text-xl font-bold text-green-600 dark:text-green-400">Upcoming Appointments</h2>
+                            <h2 className="text-xl font-bold text-green-600 dark:text-green-400">In-Person Appointments</h2>
                             <Link
                                 href="/user-self/appointments"
                                 className="px-3 py-2 rounded-lg bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition text-center"
@@ -200,7 +264,11 @@ export default function UserDashboard() {
                         <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
                         <div className="space-y-3">
-                            {upcomingAppointments.map((appointment) => (
+                            {upcomingAppointments.length === 0 ? (
+                                <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4">
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">No appointments yet.</p>
+                                </div>
+                            ) : upcomingAppointments.map((appointment) => (
                                 <div
                                     key={`${appointment.doctor}-${appointment.time}`}
                                     className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4"
