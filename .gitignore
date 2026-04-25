@@ -131,3 +131,4 @@ temp/
 *.key
 *.crt
 *.cer
+collaborator-env-handoff.txt
