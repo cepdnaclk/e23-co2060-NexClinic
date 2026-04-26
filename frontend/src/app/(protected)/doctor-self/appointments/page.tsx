@@ -43,7 +43,7 @@ type ApiAppointment = Omit<AppointmentItem, "id" | "patientId"> & {
 type PatientProfile = {
   patientId: string;
   fullName: string;
-  age: number;
+  age: number | null;
   gender: string;
   bloodGroup: string;
   phone: string;
@@ -52,6 +52,20 @@ type PatientProfile = {
   conditions: string[];
   currentMedications: string[];
   lastVisit: string;
+};
+
+type ApiPatientProfile = {
+  patientId?: string | number;
+  fullName?: string;
+  age?: number | null;
+  gender?: string;
+  bloodGroup?: string;
+  phone?: string;
+  emergencyContact?: string;
+  allergies?: string[];
+  conditions?: string[];
+  currentMedications?: string[];
+  lastVisit?: string;
 };
 
 const statusFilters: AppointmentStatusFilter[] = ["All", "Pending", "Accepted", "Rejected", "Completed", "Cancelled"];
@@ -120,161 +134,6 @@ const normalizeAppointment = (item: ApiAppointment): AppointmentItem => {
   };
 };
 
-const initialAppointments: AppointmentItem[] = [
-  {
-    id: "REQ-901",
-    patientId: "P-104",
-    patientName: "Nimali Fernando",
-    patientAge: 29,
-    patientGender: "Female",
-    reason: "Frequent migraine episodes",
-    date: "2026-03-14",
-    time: "10:30 AM",
-    location: "NexClinic - Colombo",
-    requestedAt: "1 hour ago",
-    status: "Pending",
-    category: "request",
-  },
-  {
-    id: "REQ-902",
-    patientId: "P-117",
-    patientName: "Dinesh Perera",
-    patientAge: 41,
-    patientGender: "Male",
-    reason: "Follow-up for hypertension",
-    date: "2026-03-15",
-    time: "3:00 PM",
-    location: "NexClinic - Negombo",
-    requestedAt: "4 hours ago",
-    status: "Pending",
-    category: "request",
-  },
-  {
-    id: "UP-101",
-    patientId: "P-121",
-    patientName: "Sanduni Silva",
-    patientAge: 35,
-    patientGender: "Female",
-    reason: "Thyroid medication review",
-    date: "2026-03-13",
-    time: "2:00 PM",
-    location: "NexClinic - Kandy",
-    requestedAt: "Yesterday",
-    status: "Accepted",
-    category: "upcoming",
-  },
-  {
-    id: "UP-102",
-    patientId: "P-131",
-    patientName: "Lahiru Madushan",
-    patientAge: 26,
-    patientGender: "Male",
-    reason: "Skin allergy consultation",
-    date: "2026-03-13",
-    time: "5:30 PM",
-    location: "NexClinic - Galle",
-    requestedAt: "Today",
-    status: "Pending",
-    category: "upcoming",
-  },
-  {
-    id: "PV-511",
-    patientId: "P-111",
-    patientName: "Anusha Jayawardena",
-    patientAge: 52,
-    patientGender: "Female",
-    reason: "Diabetes monthly review",
-    date: "2026-03-09",
-    time: "11:30 AM",
-    location: "NexClinic - Colombo",
-    requestedAt: "-",
-    status: "Completed",
-    category: "previous",
-  },
-  {
-    id: "PV-512",
-    patientId: "P-117",
-    patientName: "Dinesh Perera",
-    patientAge: 41,
-    patientGender: "Male",
-    reason: "Blood pressure concern",
-    date: "2026-03-08",
-    time: "9:15 AM",
-    location: "NexClinic - Negombo",
-    requestedAt: "-",
-    status: "Cancelled",
-    category: "previous",
-  },
-];
-
-const patientProfiles: Record<string, PatientProfile> = {
-  "P-104": {
-    patientId: "P-104",
-    fullName: "Nimali Fernando",
-    age: 29,
-    gender: "Female",
-    bloodGroup: "A+",
-    phone: "+94 77 123 9021",
-    emergencyContact: "+94 71 345 9988",
-    allergies: ["Dust", "Pollen"],
-    conditions: ["Migraine"],
-    currentMedications: ["Sumatriptan"],
-    lastVisit: "2026-02-25",
-  },
-  "P-117": {
-    patientId: "P-117",
-    fullName: "Dinesh Perera",
-    age: 41,
-    gender: "Male",
-    bloodGroup: "B+",
-    phone: "+94 76 889 0021",
-    emergencyContact: "+94 71 120 8890",
-    allergies: ["None reported"],
-    conditions: ["Hypertension"],
-    currentMedications: ["Losartan"],
-    lastVisit: "2026-03-08",
-  },
-  "P-121": {
-    patientId: "P-121",
-    fullName: "Sanduni Silva",
-    age: 35,
-    gender: "Female",
-    bloodGroup: "O-",
-    phone: "+94 78 555 1122",
-    emergencyContact: "+94 70 111 3344",
-    allergies: ["Seafood"],
-    conditions: ["Hypothyroidism"],
-    currentMedications: ["Levothyroxine"],
-    lastVisit: "2026-03-01",
-  },
-  "P-131": {
-    patientId: "P-131",
-    fullName: "Lahiru Madushan",
-    age: 26,
-    gender: "Male",
-    bloodGroup: "AB+",
-    phone: "+94 75 442 1900",
-    emergencyContact: "+94 71 904 2244",
-    allergies: ["Peanuts"],
-    conditions: ["Eczema"],
-    currentMedications: ["Topical corticosteroid"],
-    lastVisit: "2026-02-17",
-  },
-  "P-111": {
-    patientId: "P-111",
-    fullName: "Anusha Jayawardena",
-    age: 52,
-    gender: "Female",
-    bloodGroup: "A-",
-    phone: "+94 77 991 2211",
-    emergencyContact: "+94 71 998 0055",
-    allergies: ["Penicillin"],
-    conditions: ["Type 2 Diabetes"],
-    currentMedications: ["Metformin", "Insulin"],
-    lastVisit: "2026-03-09",
-  },
-};
-
 function DoctorAppointmentsPage() {
   const router = useRouter();
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
@@ -282,6 +141,7 @@ function DoctorAppointmentsPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(true);
+  const [isLoadingPatientProfile, setIsLoadingPatientProfile] = useState(false);
   const [updatingAppointmentIds, setUpdatingAppointmentIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>("All");
@@ -430,13 +290,7 @@ function DoctorAppointmentsPage() {
     }
   };
 
-  const openPatientProfile = (patientId: string) => {
-    const profile = patientProfiles[patientId];
-    if (profile) {
-      setSelectedPatient(profile);
-      return;
-    }
-
+  const openPatientProfile = async (patientId: string) => {
     const relatedAppointment = appointments.find((appointment) => appointment.patientId === patientId);
 
     if (!relatedAppointment) {
@@ -446,9 +300,9 @@ function DoctorAppointmentsPage() {
 
     const fallbackProfile: PatientProfile = {
       patientId,
-      fullName: relatedAppointment.patientName,
-      age: relatedAppointment.patientAge,
-      gender: relatedAppointment.patientGender,
+      fullName: relatedAppointment.patientName?.trim() || "Not available",
+      age: Number.isFinite(relatedAppointment.patientAge) ? relatedAppointment.patientAge : null,
+      gender: relatedAppointment.patientGender || "Not available",
       bloodGroup: "Not available",
       phone: "Not available",
       emergencyContact: "Not available",
@@ -459,6 +313,44 @@ function DoctorAppointmentsPage() {
     };
 
     setSelectedPatient(fallbackProfile);
+    setIsLoadingPatientProfile(true);
+
+    try {
+      const response = await fetch(`/api/doctor/patients/${patientId}/profile`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (response.status === 401) {
+        handleDoctorSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        return;
+      }
+
+      const apiProfile = (payload?.patient ?? {}) as ApiPatientProfile;
+      const profileFromApi: PatientProfile = {
+        patientId: String(apiProfile.patientId ?? patientId),
+        fullName: apiProfile.fullName?.trim() || "Not available",
+        age: typeof apiProfile.age === "number" && Number.isFinite(apiProfile.age) ? apiProfile.age : null,
+        gender: apiProfile.gender?.trim() || "Not available",
+        bloodGroup: apiProfile.bloodGroup?.trim() || "Not available",
+        phone: apiProfile.phone?.trim() || "Not available",
+        emergencyContact: apiProfile.emergencyContact?.trim() || "Not available",
+        allergies: Array.isArray(apiProfile.allergies) && apiProfile.allergies.length > 0 ? apiProfile.allergies : ["Not available"],
+        conditions: Array.isArray(apiProfile.conditions) && apiProfile.conditions.length > 0 ? apiProfile.conditions : ["Not available"],
+        currentMedications: Array.isArray(apiProfile.currentMedications) && apiProfile.currentMedications.length > 0 ? apiProfile.currentMedications : ["Not available"],
+        lastVisit: apiProfile.lastVisit?.trim() || "Not available",
+      };
+
+      setSelectedPatient(profileFromApi);
+    } finally {
+      setIsLoadingPatientProfile(false);
+    }
   };
 
   const isUpdatingAppointment = (appointmentId: string) => updatingAppointmentIds.includes(appointmentId);
@@ -723,7 +615,7 @@ function DoctorAppointmentsPage() {
                   <div className="flex flex-wrap gap-2 mt-4">
                     <GreenButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "accept")}>Accept</GreenButton>
                     <WhiteButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "reject")}>Reject</WhiteButton>
-                    <WhiteButton className="px-4 py-2" onClick={() => openPatientProfile(appointment.patientId)}>
+                    <WhiteButton className="px-4 py-2" onClick={() => void openPatientProfile(appointment.patientId)}>
                       View Patient Profile
                     </WhiteButton>
                   </div>
@@ -800,7 +692,7 @@ function DoctorAppointmentsPage() {
                         {reminderSentIds.includes(appointment.id) ? "Reminder Sent" : "Send Reminder"}
                       </WhiteButton>
                     )}
-                    <WhiteButton className="px-4 py-2" onClick={() => openPatientProfile(appointment.patientId)}>
+                    <WhiteButton className="px-4 py-2" onClick={() => void openPatientProfile(appointment.patientId)}>
                       View Patient Profile
                     </WhiteButton>
                   </div>
@@ -843,7 +735,7 @@ function DoctorAppointmentsPage() {
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{appointment.location}</p>
                   <div className="mt-3">
-                    <WhiteButton className="px-4 py-2" onClick={() => openPatientProfile(appointment.patientId)}>
+                    <WhiteButton className="px-4 py-2" onClick={() => void openPatientProfile(appointment.patientId)}>
                       View Patient Profile
                     </WhiteButton>
                   </div>
@@ -870,10 +762,13 @@ function DoctorAppointmentsPage() {
             </div>
 
             <div className="mt-5 space-y-4 text-sm text-gray-700 dark:text-gray-300">
+              {isLoadingPatientProfile && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Loading latest patient details...</p>
+              )}
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                 <p className="font-semibold text-gray-900 dark:text-white">{selectedPatient.fullName}</p>
                 <p className="mt-1">Patient ID: {selectedPatient.patientId}</p>
-                <p>Age: {selectedPatient.age} • Gender: {selectedPatient.gender}</p>
+                <p>Age: {selectedPatient.age ?? "Not available"} • Gender: {selectedPatient.gender || "Not available"}</p>
                 <p>Blood Group: {selectedPatient.bloodGroup}</p>
                 <p>Phone: {selectedPatient.phone}</p>
                 <p>Emergency Contact: {selectedPatient.emergencyContact}</p>

@@ -232,11 +232,11 @@ export default function DoctorsDirectory() {
                 {/* Fees */}
                 <div className="bg-gray-50 rounded-xl p-3 mb-4 text-sm border border-gray-100">
                   <div className="flex justify-between mb-1">
-                    <span className="text-gray-600">Chat Session:</span>
+                    <span className="text-gray-600">Online Advice Session:</span>
                     <span className="font-semibold text-gray-800">{doctor.chatFee}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Appointment:</span>
+                    <span className="text-gray-600">In-person Appointment:</span>
                     <span className="font-semibold text-gray-800">{doctor.appointmentFee}</span>
                   </div>
                 </div>

@@ -187,6 +187,71 @@ class DoctorAppointmentSerializer(serializers.ModelSerializer):
         return 'previous'
 
 
+class DoctorPatientProfileSerializer(serializers.Serializer):
+    patientId = serializers.SerializerMethodField()
+    fullName = serializers.SerializerMethodField()
+    age = serializers.SerializerMethodField()
+    gender = serializers.SerializerMethodField()
+    bloodGroup = serializers.SerializerMethodField()
+    phone = serializers.SerializerMethodField()
+    emergencyContact = serializers.SerializerMethodField()
+    allergies = serializers.SerializerMethodField()
+    conditions = serializers.SerializerMethodField()
+    currentMedications = serializers.SerializerMethodField()
+    lastVisit = serializers.SerializerMethodField()
+
+    def get_patientId(self, obj):
+        return str(obj.id)
+
+    def get_fullName(self, obj):
+        if obj.full_name:
+            return obj.full_name
+        if obj.user and obj.user.email:
+            return obj.user.email
+        return 'Not available'
+
+    def get_age(self, obj):
+        dob = getattr(obj, 'date_of_birth', None)
+        if not dob:
+            return None
+        today = timezone.localdate()
+        return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+
+    def get_gender(self, obj):
+        return obj.gender or 'Not available'
+
+    def get_bloodGroup(self, obj):
+        return 'Not available'
+
+    def get_phone(self, obj):
+        return obj.phone or 'Not available'
+
+    def get_emergencyContact(self, obj):
+        return 'Not available'
+
+    def get_allergies(self, obj):
+        return ['Not available']
+
+    def get_conditions(self, obj):
+        return ['Not available']
+
+    def get_currentMedications(self, obj):
+        return ['Not available']
+
+    def get_lastVisit(self, obj):
+        doctor_profile = self.context.get('doctor_profile')
+
+        queryset = obj.appointments.select_related('slot').order_by('-slot__date', '-slot__start_time')
+        if doctor_profile is not None:
+            queryset = queryset.filter(doctor=doctor_profile)
+
+        appointment = queryset.first()
+        if not appointment or not appointment.slot:
+            return 'Not available'
+
+        return appointment.slot.date.isoformat()
+
+
 class DoctorAppointmentActionSerializer(serializers.Serializer):
     action = serializers.ChoiceField(choices=['accept', 'reject', 'complete', 'cancel'])
 

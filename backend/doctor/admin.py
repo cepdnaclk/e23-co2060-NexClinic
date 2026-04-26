@@ -9,13 +9,18 @@ from .models import (
 
 @admin.register(DoctorProfile)
 class DoctorProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'preferred_name', 'full_name', 'specialization', 'license_number', 'is_verified')
+    list_display = ('user', 'doctor_email', 'preferred_name', 'full_name', 'specialization', 'license_number', 'is_verified')
     list_filter = ('is_verified', 'specialization')
+    search_fields = ('user__email', 'full_name', 'preferred_name', 'specialization', 'license_number')
     actions = ['verify_doctors']
 
     @admin.action(description='Verify selected doctors')
     def verify_doctors(self, request, queryset):
         queryset.update(is_verified=True)
+
+    @admin.display(description='Email')
+    def doctor_email(self, obj):
+        return obj.user.email if obj.user else ''
 
 
 @admin.register(AppointmentAvailableSlot)
