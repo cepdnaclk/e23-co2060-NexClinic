@@ -56,7 +56,7 @@ The backend uses a custom user model (email as username field) with role values:
 Authentication is JWT-based:
 
 - Access token lifetime: 5 minutes.
-- Refresh token lifetime: 20 minutes.
+- Refresh token lifetime: 3 days.
 - Refresh token rotation enabled.
 - Blacklist after rotation enabled.
 

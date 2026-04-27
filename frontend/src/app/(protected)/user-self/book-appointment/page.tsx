@@ -74,7 +74,7 @@ const BookAppointmentPage = () => {
         throw new Error(payload?.error || "Failed to load available slots");
       }
 
-      const rawSlots = Array.isArray(payload?.slots) ? payload.slots : [];
+      const rawSlots: unknown[] = Array.isArray(payload?.slots) ? payload.slots : [];
       const slots: AvailableSlot[] = rawSlots
         .filter((slot): slot is AvailableSlot => {
           if (!slot || typeof slot !== "object") {
