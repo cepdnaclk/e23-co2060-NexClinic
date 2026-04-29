@@ -219,20 +219,24 @@ OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv('OTP_RESEND_COOLDOWN_SECONDS', '60')
 
 
 # Email Configuration
-# Use SendGrid if API key is provided (for production on Render), otherwise use SMTP
+# Keep Django's built-in email API and switch the SMTP provider via env vars.
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
-# if SENDGRID_API_KEY != '':
-#     EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
-
-# Email Configuration (default: Gmail SMTP)
-# To use Gmail SMTP locally or in production, set these env vars accordingly.
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', True)
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+
+if SENDGRID_API_KEY:
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.sendgrid.net')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', True)
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'apikey')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', SENDGRID_API_KEY)
+else:
+    # Default to Gmail SMTP unless a different provider is configured.
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', True)
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@nexclinic.local')
 ADMIN_NOTIFICATION_EMAILS = _env_list(

@@ -96,12 +96,14 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 CORS_ALLOW_CREDENTIALS=True
 
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp.gmail.com
+EMAIL_HOST=smtp.sendgrid.net
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@example.com
-EMAIL_HOST_PASSWORD=your-app-password
+EMAIL_HOST_USER=apikey
+EMAIL_HOST_PASSWORD=your-sendgrid-api-key
 ```
+
+If you want to keep Gmail for local development, set `EMAIL_HOST=smtp.gmail.com` and use the Gmail app password instead.
 
 Run migrations and start backend:
 
@@ -308,11 +310,11 @@ CORS_ALLOWED_ORIGINS=https://your-frontend-project.vercel.app
 CORS_ALLOW_CREDENTIALS=True
 
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp.gmail.com
+EMAIL_HOST=smtp.sendgrid.net
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@example.com
-EMAIL_HOST_PASSWORD=your-app-password
+EMAIL_HOST_USER=apikey
+EMAIL_HOST_PASSWORD=your-sendgrid-api-key
 ```
 
 ### 11.2 Frontend (Vercel)
