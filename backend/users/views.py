@@ -157,9 +157,15 @@ class ResendOTPView(APIView):
         pending_user.otp_code_hash = hash_otp(otp_code)
         pending_user.otp_last_sent_at = timezone.now()
         pending_user.expires_at = timezone.now() + timezone.timedelta(minutes=10)
+        try:
+            send_otp_email(pending_user.email, otp_code)
+        except Exception:
+            return Response(
+                {'error': 'Unable to send OTP email at the moment. Please try again later.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
         pending_user.save(update_fields=['otp_code', 'otp_code_hash', 'otp_last_sent_at', 'expires_at'])
-        
-        send_otp_email(pending_user.email, otp_code)
 
         return Response({'message': GENERIC_RESEND_MESSAGE}, status=status.HTTP_200_OK)
 
