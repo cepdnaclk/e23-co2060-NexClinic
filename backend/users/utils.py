@@ -30,6 +30,8 @@ def send_otp_email(email, otp):
         fail_silently=False,
     )
 
+
+
 def send_admin_notification_email(doctor_email, doctor_name):
     recipients = getattr(settings, 'ADMIN_NOTIFICATION_EMAILS', [])
     if not recipients:

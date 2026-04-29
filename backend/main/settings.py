@@ -219,18 +219,15 @@ OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv('OTP_RESEND_COOLDOWN_SECONDS', '60')
 
 
 # Email Configuration
-# Keep Django's built-in email API and switch the SMTP provider via env vars.
+# Use SendGrid's Django backend when an API key is present; otherwise fall back to SMTP.
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 
 if SENDGRID_API_KEY:
-    EMAIL_HOST = 'smtp.sendgrid.net'
-    EMAIL_PORT = '587'
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = 'apikey'
-    EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'sgbackend.SendGridBackend')
 else:
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
     # Default to Gmail SMTP unless a different provider is configured.
     EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
     EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
