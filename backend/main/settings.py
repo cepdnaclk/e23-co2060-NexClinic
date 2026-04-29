@@ -225,11 +225,11 @@ EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.Email
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
 
 if SENDGRID_API_KEY:
-    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.sendgrid.net')
-    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-    EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', True)
-    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'apikey')
-    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', SENDGRID_API_KEY)
+    EMAIL_HOST = 'smtp.sendgrid.net'
+    EMAIL_PORT = '587'
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'apikey'
+    EMAIL_HOST_PASSWORD = SENDGRID_API_KEY
 else:
     # Default to Gmail SMTP unless a different provider is configured.
     EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
