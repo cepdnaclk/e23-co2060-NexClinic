@@ -133,7 +133,9 @@ function DoctorNavBar() {
     };
 
     return (
-        <div className="w-full py-4 px-4 sm:px-6 shadow-md bg-white dark:bg-gray-800">
+        // <div className="w-full py-4 px-4 sm:px-6 shadow-md bg-white dark:bg-gray-800">
+        <div className="sticky top-0 left-0 right-0 z-50 w-full py-4 px-4 sm:px-6 shadow-md bg-white dark:bg-gray-800">
+        
             {isCheckingSession && (
                 <div className="fixed inset-0 z-50 bg-black/25 flex items-center justify-center">
                     <div className="rounded-lg bg-white dark:bg-gray-800 shadow-lg px-5 py-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
