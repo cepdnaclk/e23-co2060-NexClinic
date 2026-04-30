@@ -186,9 +186,16 @@ REST_FRAMEWORK = {
 }
 
 from datetime import timedelta
+
+# JWT Token Lifetime Configuration (in minutes and hours, read from .env)
+JWT_ACCESS_TOKEN_LIFETIME_MINUTES = int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', '5'))
+JWT_REFRESH_TOKEN_LIFETIME_HOURS = int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_HOURS', '2'))
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(hours=2),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=JWT_ACCESS_TOKEN_LIFETIME_MINUTES),
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=JWT_REFRESH_TOKEN_LIFETIME_HOURS),
+    # 'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+    # 'REFRESH_TOKEN_LIFETIME': timedelta(minutes=3),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
@@ -208,8 +215,8 @@ SIMPLE_JWT = {
     'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
     'JTI_CLAIM': 'jti',
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    # 'SLIDING_TOKEN_LIFETIME': timedelta(minutes=JWT_ACCESS_TOKEN_LIFETIME_MINUTES),
+    # 'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(hours=JWT_REFRESH_TOKEN_LIFETIME_HOURS),
 }
 
 # OTP security controls

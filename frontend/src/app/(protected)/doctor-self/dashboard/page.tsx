@@ -32,6 +32,7 @@ type DashboardData = {
     };
     stats: {
         todayAppointments: number;
+        upcomingAppointmentsCount: number;
         unreadChats: number;
         monthEarnings: number;
         onlineAdviceSessions: number;
@@ -98,8 +99,8 @@ function DoctorDashboard() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Today In-Person Appointments</p>
-                        <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{loading ? "..." : (stats?.todayAppointments ?? 0)}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Total Upcoming Appointments</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{loading ? "..." : (stats?.upcomingAppointmentsCount ?? 0)}</p>
                     </div>
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
                         <p className="text-sm text-gray-500 dark:text-gray-400">Unread Advice Chats</p>

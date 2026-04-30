@@ -138,7 +138,10 @@ class DoctorDashboardView(APIView):
         upcoming_queryset = appointment_queryset.filter(
             slot__date__gte=today,
             status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
-        ).order_by("slot__date", "slot__start_time")[:5]
+        ).order_by("slot__date", "slot__start_time")
+
+        upcoming_appointments_count = upcoming_queryset.count()
+        upcoming_queryset = upcoming_queryset[:5]
 
         upcoming_appointments = []
         for appointment in upcoming_queryset:
@@ -175,6 +178,7 @@ class DoctorDashboardView(APIView):
             },
             "stats": {
                 "todayAppointments": today_appointments,
+                "upcomingAppointmentsCount": upcoming_appointments_count,
                 "unreadChats": 0,
                 "monthEarnings": month_earnings,
                 "onlineAdviceSessions": DoctorOnlineAdviceAvailability.objects.filter(doctor=doctor_profile).count() if doctor_profile else 0,
