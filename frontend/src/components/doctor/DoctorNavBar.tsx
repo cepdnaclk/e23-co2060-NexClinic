@@ -251,6 +251,12 @@ function DoctorNavBar() {
                     My Profile
                 </Link>
                 <Link
+                    href="/doctors"
+                    className={`${isActive('/doctors') ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-800 dark:text-white'}`}
+                >
+                    Doctors
+                </Link>
+                <Link
                     href="/news-articles"
                     className={`${isActive('/news-articles') ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-800 dark:text-white'}`}
                 >

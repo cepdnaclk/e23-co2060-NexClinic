@@ -55,7 +55,7 @@ function UserRegistrationNavBar() {
                         className="flex gap-3"
                     >
                         <GreenButton>
-                            <Link href="/doctor/register" onClick={closeMobileMenu}>I'm a Doctor</Link>
+                            <Link href="/doctor/register" onClick={closeMobileMenu}>Are you a Doctor? Click here</Link>
                         </GreenButton>
                     </div>
                 </div>
@@ -71,7 +71,7 @@ function UserRegistrationNavBar() {
                 </div>
                 <div title="log-sign-buttons-mobile" className="flex gap-2">
                     <GreenButton className="flex-1">
-                        <Link href="/doctor/register" onClick={closeMobileMenu} className="block w-full text-center">I'm a Doctor</Link>
+                        <Link href="/doctor/register" onClick={closeMobileMenu} className="block w-full text-center">Are you a Doctor? Click here</Link>
                     </GreenButton>
                 </div>
             </div>

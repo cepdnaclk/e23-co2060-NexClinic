@@ -55,7 +55,7 @@ function DoctorLoginNavBar() {
                         className="flex gap-3"
                     >
                         <GreenButton>
-                            <Link href="/login" onClick={closeMobileMenu}>I'm not a Doctor</Link>
+                            <Link href="/login" onClick={closeMobileMenu}>Are you not a Doctor? Click here</Link>
                         </GreenButton>
                     </div>
                 </div>
@@ -71,7 +71,7 @@ function DoctorLoginNavBar() {
                 </div>
                 <div title="log-sign-buttons-mobile" className="flex gap-2">
                     <GreenButton className="flex-1">
-                        <Link href="/login" onClick={closeMobileMenu} className="block w-full text-center">I'm not a Doctor</Link>
+                        <Link href="/login" onClick={closeMobileMenu} className="block w-full text-center">Are you not a Doctor? Click here</Link>
                     </GreenButton>
                 </div>
             </div>

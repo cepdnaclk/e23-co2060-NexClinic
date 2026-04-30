@@ -115,9 +115,9 @@ function DoctorLoginForm() {
                 </BlackButton>
             </form>
 
-            <div title="forgot-password" className="mt-4 text-sm dark:text-gray-900">
+            {/* <div title="forgot-password" className="mt-4 text-sm dark:text-gray-900">
                 <p>Forgot password? <a href="/doctor/forgot-password" className="text-green-500 hover:underline">Reset here</a></p>
-            </div>
+            </div> */}
 
 
             <div title="login-card-footer" className="mt-2 text-sm dark:text-gray-900">

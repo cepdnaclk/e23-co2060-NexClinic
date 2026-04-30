@@ -8,8 +8,8 @@ function DoctorRegistration() {
         <div className="relative flex flex-col w-screen h-screen">
             <div title="row-1" className="relative gap-6 mt-8 h-full w-screen">
                 <img
-                    className="absolute opacity-80 object-cover h-full w-full"
-                    src="/images/doctor-registration-bg.jpg"
+                    className="absolute opacity-80 h-[1000] object-cover w-full"
+                    src="/images/main-bg.jpg"
                     alt="background"
                 />
                 <div className="absolute w-full mt-[100px] flex flex-col items-center justify-center gap-6">

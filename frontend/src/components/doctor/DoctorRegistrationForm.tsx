@@ -110,7 +110,7 @@ function DoctorRegistrationForm() {
     };
 
     return (
-        <div className="flex flex-col w-[320px] gap-4 p-6 bg-white items-center justify-center rounded-xl shadow-md">
+        <div className="flex flex-col w-[330px] gap-4 p-6 bg-white items-center justify-center rounded-xl shadow-md">
             <div title="registration-card-header" className="mb-4 items-center dark:text-gray-900 text-2xl font-bold">
                 <p>Welcome!</p>
             </div>

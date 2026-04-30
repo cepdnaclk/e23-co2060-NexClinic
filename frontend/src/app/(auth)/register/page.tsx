@@ -7,7 +7,7 @@ function UserRegistration() {
         <div className="relative flex flex-col w-screen h-screen">
             <div title="row-1" className="relative gap-6 mt-8 h-full w-screen">
                 <img
-                    className="absolute opacity-80 object-cover h-full w-full"
+                    className="absolute opacity-80 h-[1000] object-cover w-full"
                     src="/images/user-registration-bg.jpg"
                     alt="background"
                 />
