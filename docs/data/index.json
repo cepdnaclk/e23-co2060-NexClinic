@@ -1,37 +1,29 @@
 {
+    "title": "NexClini - Smart Healthcare System",
     "team": [
         {
-            "name": "Team Member Name 1",
+            "name": "M.T. Dineth",
             "email": "e23076@eng.pdn.ac.lk",
             "eNumber": "E/23/076"
         },
         {
-            "name": "Team Member Name 2",
+            "name": "H.M.U.A. Perera",
             "email": "e23266@eng.pdn.ac.lk",
             "eNumber": "E/23/266"
         },
         {
-            "name": "Team Member Name 3",
+            "name": "S.M.D.S.B. Samarakoon",
             "email": "e23336@eng.pdn.ac.lk",
             "eNumber": "E/23/336"
         },
         {
-            "name": "Team Member Name 4",
+            "name": "J.G.G. Methmaka",
             "email": "e23226@eng.pdn.ac.lk",
             "eNumber": "E/23/226"
         }
     ],
-    "supervisors": [
-        {
-            "name": "Dr. Supervisor 1",
-            "email": "email@eng.pdn.ac.lk"
-        },
-        {
-            "name": "Supervisor 2",
-            "email": "email@eng.pdn.ac.lk"
-        }
-    ],
-    "tags": ["Web Application", "Software Systems Development", "CO2060", "AI", "Healthcare", "Medical System"],
-    "image":"../images/cover_page.png",
-    "thumbnail":"../images/thumbnail.png"
+    
+    "tags": ["Web Application", "Software Systems Development", "AI", "Healthcare", "Medical"],
+    "image": "../images/cover_page.png",
+    "thumbnail": "../images/thumbnail.png"
 }
