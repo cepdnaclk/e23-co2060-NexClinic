@@ -88,6 +88,12 @@ export default function Home() {
                                 </p>
                                 <div className="mt-8 flex flex-wrap gap-3">
                                     <Link
+                                        href="/login"
+                                        className="inline-flex items-center rounded-lg border border-emerald-300 bg-white/95 px-6 py-3 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-50"
+                                    >
+                                        Patient Login
+                                    </Link>
+                                    <Link
                                         href="/doctors"
                                         className="inline-flex items-center rounded-lg bg-green-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-600"
                                     >
