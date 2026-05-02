@@ -119,7 +119,7 @@ export default function UserProfile() {
                         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Patient Profile</p>
                         <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Personal care overview</h1>
                         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                            A clean snapshot of your profile, health history, and emergency details in one place.
+                            A clean snapshot of your profile, health history and emergency details in one place.
                         </p>
                     </div>
                     <GreenButton className="w-full rounded-full px-6 py-3 sm:w-auto" onClick={() => router.push('/user-self/edit-profile')}>
