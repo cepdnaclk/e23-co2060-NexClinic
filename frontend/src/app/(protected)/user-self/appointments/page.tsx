@@ -236,8 +236,15 @@ const PatientAppointmentPage = () => {
     };
 
     return (
-        <div className="flex flex-col items-center w-full min-h-screen bg-gray-50 dark:bg-gray-900 py-8 transition-colors">
-            <div className="w-full max-w-4xl bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 md:p-8 flex flex-col gap-6 transition-colors">
+        <div className="relative flex flex-col items-center w-full min-h-screen bg-gray-50 dark:bg-gray-900 py-8 transition-colors">
+            <div aria-hidden className="absolute inset-0 -z-10">
+                <img src="/images/main-bg.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 dark:opacity-10 filter blur-sm" />
+                <div className="absolute -left-40 -top-32 w-96 h-96 rounded-full bg-gradient-to-br from-green-200 to-transparent opacity-40 dark:from-green-900 dark:opacity-30 blur-2xl transform rotate-12" />
+                <div className="absolute -right-40 -bottom-32 w-96 h-96 rounded-full bg-gradient-to-br from-teal-100 to-transparent opacity-30 dark:from-teal-800 dark:opacity-20 blur-2xl transform -rotate-12" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/40 dark:to-black/30 mix-blend-overlay" />
+            </div>
+
+            <div className="w-full max-w-4xl bg-white/90 dark:bg-gray-800/70 rounded-2xl shadow-lg p-4 md:p-8 flex flex-col gap-6 backdrop-blur-sm transition-colors">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
                     <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">My Appointments</h2>
                     <Link href="/user-self/book-appointment">
