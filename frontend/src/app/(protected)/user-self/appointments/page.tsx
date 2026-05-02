@@ -180,56 +180,57 @@ const PatientAppointmentPage = () => {
         }
 
         return (
-            <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse mt-2">
-                    <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-700">
-                            <th className="border-b border-gray-200 dark:border-gray-700 p-3 font-semibold text-gray-700 dark:text-gray-200">Doctor</th>
-                            <th className="border-b border-gray-200 dark:border-gray-700 p-3 font-semibold text-gray-700 dark:text-gray-200">Hospital</th>
-                            <th className="border-b border-gray-200 dark:border-gray-700 p-3 font-semibold text-gray-700 dark:text-gray-200">Date</th>
-                            <th className="border-b border-gray-200 dark:border-gray-700 p-3 font-semibold text-gray-700 dark:text-gray-200">Time</th>
-                            <th className="border-b border-gray-200 dark:border-gray-700 p-3 font-semibold text-gray-700 dark:text-gray-200">Status</th>
-                            <th className="border-b border-gray-200 dark:border-gray-700 p-3 font-semibold text-gray-700 dark:text-gray-200">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {items.map((appt) => {
-                            const canCancel = appt.status === "Pending" || appt.status === "Confirmed";
-                            const isCancelling = cancellingIds.includes(appt.id);
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                {items.map((appt) => {
+                    const canCancel = appt.status === "Pending" || appt.status === "Confirmed";
+                    const isCancelling = cancellingIds.includes(appt.id);
 
-                            return (
-                                <tr key={appt.id} className="hover:bg-green-50 dark:hover:bg-green-900 transition-colors">
-                                    <td className="p-3 text-gray-800 dark:text-gray-100">
-                                        <p>{appt.doctorName}</p>
-                                        {appt.reason && <p className="text-xs text-gray-500 dark:text-gray-300 mt-1">{appt.reason}</p>}
-                                    </td>
-                                    <td className="p-3 text-gray-800 dark:text-gray-100">{appt.hospital}</td>
-                                    <td className="p-3 text-gray-800 dark:text-gray-100">{appt.date}</td>
-                                    <td className="p-3 text-gray-800 dark:text-gray-100">{formatTimeForDisplay(appt.time)}</td>
-                                    <td className="p-3">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusPillClass(appt.status)}`}>
-                                            {appt.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-3">
+                    return (
+                        <div key={appt.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 flex flex-col sm:flex-row gap-4 items-start transition-transform hover:-translate-y-1">
+                            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-green-200 to-green-50 dark:from-green-800 dark:to-green-700 flex items-center justify-center text-green-700 dark:text-green-100 font-bold text-xl">
+                                {appt.doctorName.split(" ")[0][0] ?? "D"}
+                            </div>
+
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{appt.doctorName}</h4>
+                                        <p className="text-sm text-gray-500 dark:text-gray-300">{appt.hospital}</p>
+                                    </div>
+
+                                    <div className="text-right">
+                                        <div className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusPillClass(appt.status)}`}>{appt.status}</div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">Requested: {new Date(appt.requestedAt).toLocaleDateString()}</div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div className="text-sm text-gray-700 dark:text-gray-200">
+                                        <div className="font-medium">{appt.date} • {formatTimeForDisplay(appt.time)}</div>
+                                        {appt.reason && <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{appt.reason}</div>}
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <Link href={`/user-self/appointments/${appt.id}`} className="text-sm text-green-600 dark:text-green-300 font-semibold hover:underline">View</Link>
+
                                         {canCancel ? (
                                             <button
                                                 type="button"
-                                                className="border border-red-300 text-red-600 dark:text-red-300 dark:border-red-700 rounded px-3 py-1 text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-60"
+                                                className="ml-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-100 dark:border-red-700 rounded px-3 py-1 text-sm font-semibold hover:bg-red-100 dark:hover:bg-red-900/40 disabled:opacity-60"
                                                 disabled={isCancelling}
                                                 onClick={() => void cancelAppointment(appt.id)}
                                             >
                                                 {isCancelling ? "Cancelling..." : "Cancel"}
                                             </button>
                                         ) : (
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">-</span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">—</span>
                                         )}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         );
     };
