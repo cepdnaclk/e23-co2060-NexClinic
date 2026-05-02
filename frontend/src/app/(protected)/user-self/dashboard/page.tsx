@@ -190,7 +190,7 @@ export default function UserDashboard() {
                                             className="mx-auto h-[92px] w-[92px] shrink-0 rounded-full border-4 border-green-500 object-cover sm:mx-0"
                                         />
                                     ) : (
-                                        <div className="mx-auto flex h-[92px] w-[92px] shrink-0 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-green-600 via-emerald-600 to-green-800 text-3xl font-bold text-white shadow-xl sm:mx-0">
+                                        <div className="mx-auto flex h-[92px] w-[92px] shrink-0 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-green-600 via-emerald-300 to-green-700 text-3xl font-bold text-white shadow-xl sm:mx-0">
                                             {getInitials(displayName)}
                                         </div>
                                     )}
@@ -210,7 +210,7 @@ export default function UserDashboard() {
                                 </div>
                             </div>
 
-                            <div className="w-full rounded-[1.75rem] border border-green-100 bg-gradient-to-br from-green-700 via-emerald-700 to-green-800 p-5 text-white shadow-2xl xl:max-w-md">
+                            <div className="w-full rounded-[1.75rem] border border-green-100 bg-gradient-to-br from-green-600 via-emerald-600 to-green-700 p-5 text-white shadow-2xl xl:max-w-md">
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
                                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-100">Next Appointment</p>

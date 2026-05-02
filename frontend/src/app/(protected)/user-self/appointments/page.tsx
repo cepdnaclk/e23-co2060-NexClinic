@@ -3,20 +3,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
-
-interface Appointment {
-    id: string;
-    slotId: string;
-    doctorId: string;
-    doctorName: string;
-    hospital: string;
-    date: string;
-    time: string;
-    reason: string;
-    status: string;
-    requestedAt: string;
-    category: "request" | "upcoming" | "previous";
-}
+import AppointmentModal from "@/components/modals/AppointmentModal";
+import ConfirmationDialog from "@/components/modals/ConfirmationDialog";
+import { Appointment } from "@/types/appointment";
 
 type SortBy = "date" | "doctor" | "status";
 
@@ -56,6 +45,14 @@ const formatTimeForDisplay = (time: string): string => {
     return `${hour}:${minute} ${suffix}`;
 };
 
+const truncateText = (text: string, maxWords: number = 3): string => {
+    const words = text.trim().split(/\s+/);
+    if (words.length > maxWords) {
+        return words.slice(0, maxWords).join(" ") + "...";
+    }
+    return text;
+};
+
 const normalizeAppointment = (appointment: ApiAppointment): Appointment => ({
     ...appointment,
     id: String(appointment.id),
@@ -84,6 +81,37 @@ const PatientAppointmentPage = () => {
     const [error, setError] = useState("");
     const [toast, setToast] = useState("");
     const [cancellingIds, setCancellingIds] = useState<string[]>([]);
+    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [confirmationDialog, setConfirmationDialog] = useState<{ isOpen: boolean; appointmentId: string | null }>({
+        isOpen: false,
+        appointmentId: null,
+    });
+
+    const openAppointmentModal = (appointment: Appointment) => {
+        setSelectedAppointment(appointment);
+        setIsModalOpen(true);
+    };
+
+    const closeAppointmentModal = () => {
+        setIsModalOpen(false);
+        setSelectedAppointment(null);
+    };
+
+    const openCancelConfirmation = (appointmentId: string) => {
+        setConfirmationDialog({ isOpen: true, appointmentId });
+    };
+
+    const closeCancelConfirmation = () => {
+        setConfirmationDialog({ isOpen: false, appointmentId: null });
+    };
+
+    const handleConfirmCancellation = async () => {
+        if (!confirmationDialog.appointmentId) return;
+
+        await cancelAppointment(confirmationDialog.appointmentId);
+        closeCancelConfirmation();
+    };
 
     useEffect(() => {
         const loadAppointments = async () => {
@@ -207,18 +235,23 @@ const PatientAppointmentPage = () => {
                                 <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                     <div className="text-sm text-black dark:text-gray-200" style={{ color: '#000000' }}>
                                         <div className="font-medium">{appt.date} • {formatTimeForDisplay(appt.time)}</div>
-                                        {appt.reason && <div className="text-xs text-black dark:text-gray-400 mt-1" style={{ color: '#000000' }}>{appt.reason}</div>}
+                                        {appt.reason && <div className="text-xs text-black dark:text-gray-400 mt-1" style={{ color: '#000000' }}>{truncateText(appt.reason)}</div>}
                                     </div>
 
                                     <div className="flex items-center gap-2">
-                                        <Link href={`/user-self/appointments/${appt.id}`} className="text-sm text-green-600 dark:text-green-300 font-semibold hover:underline">View</Link>
-
+                                        {/* <Link href={`/user-self/appointments/${appt.id}`} className="text-sm text-green-600 dark:text-green-300 font-semibold hover:underline">View</Link> */}
+                                        <button
+                                            onClick={() => openAppointmentModal(appt)}
+                                            className="text-sm text-green-600 dark:text-green-300 font-semibold hover:underline bg-none border-none cursor-pointer p-0"
+                                        >
+                                            View
+                                        </button>
                                         {canCancel ? (
                                             <button
                                                 type="button"
                                                 className="ml-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-100 dark:border-red-700 rounded px-3 py-1 text-sm font-semibold hover:bg-red-100 dark:hover:bg-red-900/40 disabled:opacity-60"
                                                 disabled={isCancelling}
-                                                onClick={() => void cancelAppointment(appt.id)}
+                                                onClick={() => openCancelConfirmation(appt.id)}
                                             >
                                                 {isCancelling ? "Cancelling..." : "Cancel"}
                                             </button>
@@ -231,6 +264,7 @@ const PatientAppointmentPage = () => {
                         </div>
                     );
                 })}
+
             </div>
         );
     };
@@ -245,46 +279,65 @@ const PatientAppointmentPage = () => {
             </div>
             <div className="w-full max-w-6xl px-6 py-8 rounded-3xl border border-emerald-100/30 shadow-lg transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}>
                 <div className="w-full rounded-2xl shadow-sm p-4 md:p-8 flex flex-col gap-6 backdrop-blur-sm" style={{ backgroundColor: '#ffffff' }}>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
-                    <h2 className="text-4xl font-extrabold text-black dark:text-gray-100" style={{ color: '#000000' }}>My Appointments</h2>
-                    <Link href="/user-self/book-appointment">
-                        <button className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition-all">
-                            + Book Appointment
-                        </button>
-                    </Link>
-                </div>
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <span className="font-medium text-black dark:text-gray-200" style={{ color: '#000000' }}>Sort by:</span>
-                    <select
-                        className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-gray-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as SortBy)}
-                    >
-                        <option value="date">Date</option>
-                        <option value="doctor">Doctor</option>
-                        <option value="status">Status</option>
-                    </select>
-                </div>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
+                        <h2 className="text-4xl font-extrabold text-black dark:text-gray-100" style={{ color: '#000000' }}>My Appointments</h2>
+                        <Link href="/user-self/book-appointment">
+                            <button className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition-all">
+                                + Book Appointment
+                            </button>
+                        </Link>
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <span className="font-medium text-black dark:text-gray-200" style={{ color: '#000000' }}>Sort by:</span>
+                        <select
+                            className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-gray-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as SortBy)}
+                        >
+                            <option value="date">Date</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="status">Status</option>
+                        </select>
+                    </div>
 
-                {error && <div className="text-red-500 text-sm">{error}</div>}
-                {toast && <div className="text-green-600 dark:text-green-300 text-sm font-semibold">{toast}</div>}
+                    {error && <div className="text-red-500 text-sm">{error}</div>}
+                    {toast && <div className="text-green-600 dark:text-green-300 text-sm font-semibold">{toast}</div>}
 
-                <div>
-                    <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Pending Requests</h3>
-                    {renderTable(requests, "No pending requests.")}
-                </div>
+                    <div>
+                        <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Pending Requests</h3>
+                        {renderTable(requests, "No pending requests.")}
+                    </div>
 
-                <div>
-                    <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Upcoming Appointments</h3>
-                    {renderTable(upcoming, "No upcoming appointments.")}
-                </div>
+                    <div>
+                        <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Upcoming Appointments</h3>
+                        {renderTable(upcoming, "No upcoming appointments.")}
+                    </div>
 
-                <div>
-                    <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Appointment History</h3>
-                    {renderTable(previous, "No appointment history yet.")}
+                    <div>
+                        <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Appointment History</h3>
+                        {renderTable(previous, "No appointment history yet.")}
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <AppointmentModal
+                appointment={selectedAppointment}
+                isOpen={isModalOpen}
+                onClose={closeAppointmentModal}
+            />
+
+            <ConfirmationDialog
+                isOpen={confirmationDialog.isOpen}
+                title="Cancel Appointment"
+                message="Are you sure you want to cancel this appointment? This action cannot be undone."
+                confirmText="Cancel Appointment"
+                cancelText="Keep Appointment"
+                confirmButtonClass="bg-red-500 hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-600"
+                cancelButtonClass="bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500"
+                isLoading={confirmationDialog.appointmentId ? cancellingIds.includes(confirmationDialog.appointmentId) : false}
+                onConfirm={handleConfirmCancellation}
+                onCancel={closeCancelConfirmation}
+            />
         </div>
     );
 };
