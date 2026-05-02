@@ -68,7 +68,7 @@ function DoctorLoginForm() {
     return (
         <div className="flex flex-col w-[300px] gap-4 p-6 bg-white items-center justify-center rounded-xl shadow-md">
             <div title="login-card-header" className="mb-4 items-center dark:text-gray-900 text-2xl font-bold">
-                <p>Welcome Back!</p>
+                <p className="text-center">Welcome Back Doctor!</p>
             </div>
             <form
                 title="login-card-form"
@@ -115,10 +115,9 @@ function DoctorLoginForm() {
                 </BlackButton>
             </form>
 
-            {/* <div title="forgot-password" className="mt-4 text-sm dark:text-gray-900">
-                <p>Forgot password? <a href="/doctor/forgot-password" className="text-green-500 hover:underline">Reset here</a></p>
-            </div> */}
-
+            <div title="forgot-password" className="mt-4 text-sm dark:text-gray-900">
+                <p>Forgot password? <a href="/forgot-password" className="text-green-500 hover:underline">Reset here</a></p>
+            </div>
 
             <div title="login-card-footer" className="mt-2 text-sm dark:text-gray-900">
                 <p>Don't have an account? <a href="/doctor/register" className="text-green-500 hover:underline">Sign up here</a></p>

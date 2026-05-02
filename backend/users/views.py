@@ -169,7 +169,6 @@ class ResendOTPView(APIView):
 
         return Response({'message': GENERIC_RESEND_MESSAGE}, status=status.HTTP_200_OK)
 
-
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -185,3 +184,42 @@ class LogoutView(APIView):
                 pass
 
         return Response({'message': 'Logged out successfully.'}, status=status.HTTP_200_OK)
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_password_reset_request'
+
+    def post(self, request):
+        #  If the request data is not a dict, return an error response
+        if not isinstance(request.data, dict):
+            return Response({'error': 'Invalid data format. Expected JSON object.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # TODO: actual reset email logic in next step
+        return Response(
+            {'message': 'If an account with that email exists, a password reset link has been sent.'},
+            status=status.HTTP_200_OK
+        )
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_password_reset_confirm'
+
+    def post(self, request):
+        if not isinstance(request.data, dict):
+            return Response({'error': 'Invalid data format. Expected JSON object.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        uid = request.data.get('uid')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+
+        if not uid or not token or not new_password:
+            return Response({'error': 'uid, token and new_password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # TODO: actual token verification + password change in next step
+        return Response({'message': 'Password reset confirmed (stub).'}, status=status.HTTP_200_OK)

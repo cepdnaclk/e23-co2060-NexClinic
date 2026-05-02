@@ -104,7 +104,12 @@ function UserLoginForm() {
                     </span>
                 </BlackButton>
             </form>
-            <div title="login-card-footer" className="mt-4 text-sm dark:text-gray-900">
+            
+            <div title="forgot-password" className="mt-1 text-sm dark:text-gray-900">
+                <p>Forgot password? <a href="/forgot-password" className="text-green-500 hover:underline">Reset here</a></p>
+            </div>
+            
+            <div title="login-card-footer" className="mt-1 text-sm dark:text-gray-900">
                 <p>Don't have an account? <a href="/register" className="text-green-500 hover:underline">Sign up here</a></p>
             </div>
         </div>

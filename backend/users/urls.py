@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import PatientRegisterView, DoctorRegisterView, VerifyOTPView, ResendOTPView, LogoutView, DoctorLoginView, PatientLoginView
+from .views import PatientRegisterView, DoctorRegisterView, VerifyOTPView, ResendOTPView, LogoutView, DoctorLoginView, PatientLoginView, PasswordResetRequestView, PasswordResetConfirmView
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
@@ -22,4 +22,8 @@ urlpatterns = [
 
     # JWT logout
     path('logout/', LogoutView.as_view(), name='logout'),
+
+    # Password Reset
+    path('password-reset/request/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('password-reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 ]

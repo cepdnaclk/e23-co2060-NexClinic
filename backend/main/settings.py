@@ -182,7 +182,12 @@ REST_FRAMEWORK = {
         'auth_login': '10/minute',
         'auth_verify_otp': '8/minute',
         'auth_resend_otp': '3/minute',
+        'auth_password_reset_request': '5/hour',
+        'auth_password_reset_confirm': '10/hour',
     },
+
+
+
 }
 
 from datetime import timedelta
