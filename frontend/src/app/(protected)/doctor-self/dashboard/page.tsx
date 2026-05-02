@@ -107,8 +107,8 @@ function DoctorDashboard() {
                                 </h1>
                                 <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
                                     {dashboardData
-                                        ? `Welcome back, ${dashboardData.doctor.displayName}. Track appointments, advice chats, and earnings from one calm, modern view.`
-                                        : "Welcome back. Track appointments, advice chats, and earnings from one calm, modern view."}
+                                        ? `Welcome back, ${dashboardData.doctor.displayName}. Track appointments, advice chats and earnings from one calm, modern view.`
+                                        : "Welcome back. Track appointments, advice chats and earnings from one calm, modern view."}
                                 </p>
 
                                 {error && <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</p>}
