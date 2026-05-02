@@ -122,14 +122,22 @@ export default function DoctorsDirectory() {
       <div className="fixed w-full top-0 left-0 z-10">
         <RoleBasedNavbar />
       </div>
-      <div className="min-h-screen bg-gray-100 pt-24 sm:pt-28 pb-10">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_10%,rgba(16,185,129,0.20),transparent_35%),radial-gradient(circle_at_90%_20%,rgba(45,212,191,0.18),transparent_35%),linear-gradient(180deg,#f7fcfa_0%,#eef7f3_55%,#e9f5f2_100%)] pt-24 sm:pt-28 pb-14">
+        <div className="pointer-events-none absolute -top-16 -left-24 h-72 w-72 rounded-full bg-emerald-300/35 blur-3xl" />
+        <div className="pointer-events-none absolute top-40 -right-20 h-80 w-80 rounded-full bg-teal-300/30 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-10 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-white/40 blur-3xl" />
+
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 sm:p-8 shadow-[0_18px_50px_rgba(16,185,129,0.06)] backdrop-blur overflow-hidden">
+          <div className="relative rounded-[2rem] border border-white/80 bg-white/85 p-6 sm:p-8 shadow-[0_30px_80px_rgba(16,185,129,0.10)] backdrop-blur overflow-hidden">
+            <div className="pointer-events-none absolute -top-14 right-8 h-36 w-36 rounded-full bg-emerald-200/60 blur-2xl" />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
               <div className="lg:col-span-2">
                 <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight">Find Your Doctor</h1>
                 <p className="mt-2 text-gray-600">Discover verified specialists and book appointments confidently. Filter by specialty or availability.</p>
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white/80 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  Showing {filteredDoctors.length} of {doctors.length} doctors
+                </div>
               </div>
 
               <div className="w-full">
@@ -181,20 +189,26 @@ export default function DoctorsDirectory() {
           </div>
         </div>
 
+        {error && (
+          <div className="mx-auto mt-6 max-w-6xl rounded-2xl border border-rose-200 bg-rose-50/90 p-4 text-sm font-medium text-rose-700 shadow-sm">
+            {error}
+          </div>
+        )}
+
         {/* Doctors Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 sm:gap-8">
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 sm:gap-8">
           {loading ? (
             <div className="col-span-full text-center py-16">
               <p className="text-gray-500 text-lg">Loading doctors...</p>
             </div>
           ) : filteredDoctors.length > 0 ? (
             filteredDoctors.map((doctor) => (
-              <div key={doctor.id} className="flex h-full flex-col rounded-[1.5rem] border border-white/80 bg-white/90 shadow-[0_18px_50px_rgba(16,185,129,0.06)] p-6 hover:shadow-[0_25px_60px_rgba(16,185,129,0.08)] transition-all">
+              <div key={doctor.id} className="group flex h-full flex-col rounded-[1.5rem] border border-white/80 bg-white/90 shadow-[0_18px_50px_rgba(16,185,129,0.06)] p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_65px_rgba(16,185,129,0.13)]">
                 <div className="relative">
-                  <div className="h-2 w-full rounded-t-lg bg-gradient-to-r from-emerald-400 to-teal-400 absolute top-0 left-0" />
+                  <div className="h-2 w-full rounded-t-lg bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 absolute top-0 left-0" />
                   <div className="flex flex-col items-center pt-6">
                     <div className="relative">
-                      <img src={doctor.photo} alt={doctor.fullName} className="w-28 h-28 rounded-full object-cover ring-4 ring-white shadow-[0_10px_30px_rgba(16,185,129,0.12)]" onError={(e)=>{(e.currentTarget as HTMLImageElement).src='/images/user.png'}} />
+                      <img src={doctor.photo} alt={doctor.fullName} className="w-28 h-28 rounded-full object-cover ring-4 ring-white shadow-[0_10px_30px_rgba(16,185,129,0.12)] transition-transform duration-300 group-hover:scale-105" onError={(e)=>{(e.currentTarget as HTMLImageElement).src='/images/user.png'}} />
                       {doctor.availableForChat && <span className="absolute bottom-0 right-0 -mb-1 -mr-1 bg-emerald-600 text-white text-xs font-semibold px-2 py-1 rounded-full">Online</span>}
                     </div>
                     <h3 className="mt-4 text-lg font-bold text-gray-900 text-center">{doctor.fullName}</h3>
