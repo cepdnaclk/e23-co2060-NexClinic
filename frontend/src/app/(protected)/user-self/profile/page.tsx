@@ -146,15 +146,6 @@ export default function UserProfile() {
                                 </div>
 
                                 <div className="min-w-0 flex-1 text-center lg:text-left">
-                                    <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-                                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                                            Verified patient
-                                        </span>
-                                        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
-                                            {loading ? 'Refreshing profile' : 'Profile synced'}
-                                        </span>
-                                    </div>
-
                                     <h2 className="mt-4 break-words text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                                         {patientName}
                                     </h2>
