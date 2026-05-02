@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import GreenButton from "@/components/buttons/GreenButton";
 import ToggleSwitch from "@/components/buttons/ToggleSwitch";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
@@ -194,9 +195,11 @@ function DoctorProfilePage() {
                         </div>
                     </div>
                     <div className="flex w-full justify-center">
-                        <GreenButton className="px-8 py-3 rounded-full w-full sm:w-auto font-semibold shadow-[0_12px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.4)] transition-all duration-300">
-                            Edit Profile
-                        </GreenButton>
+                        <Link href="/doctor-self/edit-profile">
+                            <GreenButton className="px-8 py-3 rounded-full font-semibold shadow-[0_12px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.4)] transition-all duration-300">
+                                Edit Profile
+                            </GreenButton>
+                        </Link>
                     </div>
                 </div>
             </div>
