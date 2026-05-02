@@ -100,16 +100,19 @@ export default function Home() {
                                         Explore Health News
                                     </Link>
                                 </div>
-                                <div className="mt-8 grid max-w-xl grid-cols-3 gap-3">
-                                    <div className="rounded-2xl border border-emerald-100 bg-white/80 p-3 text-center">
+                                <div className="mt-8 grid max-w-xl grid-cols-3 gap-4">
+                                    <div className="relative rounded-[1.5rem] border border-white/80 bg-white/90 p-4 text-center shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur">
+                                        <div className="absolute -left-1 top-0 h-1 w-12 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
                                         <p className="text-2xl font-black text-gray-900">500+</p>
                                         <p className="text-xs text-gray-600">Verified Doctors</p>
                                     </div>
-                                    <div className="rounded-2xl border border-emerald-100 bg-white/80 p-3 text-center">
+                                    <div className="relative rounded-[1.5rem] border border-white/80 bg-white/90 p-4 text-center shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur">
+                                        <div className="absolute -left-1 top-0 h-1 w-12 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500" />
                                         <p className="text-2xl font-black text-gray-900">24/7</p>
                                         <p className="text-xs text-gray-600">Booking Access</p>
                                     </div>
-                                    <div className="rounded-2xl border border-emerald-100 bg-white/80 p-3 text-center">
+                                    <div className="relative rounded-[1.5rem] border border-white/80 bg-white/90 p-4 text-center shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur">
+                                        <div className="absolute -left-1 top-0 h-1 w-12 rounded-full bg-gradient-to-r from-emerald-500 to-lime-500" />
                                         <p className="text-2xl font-black text-gray-900">4.9</p>
                                         <p className="text-xs text-gray-600">Patient Rating</p>
                                     </div>
@@ -117,17 +120,17 @@ export default function Home() {
                             </div>
 
                             <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="rounded-3xl border border-emerald-100 bg-white p-5 shadow-md sm:col-span-2">
+                                <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur sm:col-span-2">
                                     <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Today&apos;s care insight</p>
                                     <h2 className="mt-2 text-2xl font-bold text-gray-900">Tele-consultations now reduce waiting time by up to 42%</h2>
                                     <p className="mt-3 text-sm text-gray-600">NexClinic makes it easier for patients to get faster access to specialist guidance.</p>
                                 </div>
-                                <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+                                <div className="rounded-[2rem] border border-white/80 bg-gradient-to-br from-emerald-50/60 to-emerald-50/30 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur transition-all duration-300 hover:shadow-[0_25px_60px_rgba(16,185,129,0.12)]">
                                     <img src="/images/chat.png" alt="Online consultation" className="h-12 w-12" />
                                     <h3 className="mt-3 font-bold text-gray-900">Quick Consult</h3>
                                     <p className="mt-2 text-sm text-gray-600">Start secure doctor conversations without complex setup.</p>
                                 </div>
-                                <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+                                <div className="rounded-[2rem] border border-white/80 bg-gradient-to-br from-cyan-50/60 to-cyan-50/30 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur transition-all duration-300 hover:shadow-[0_25px_60px_rgba(16,185,129,0.12)]">
                                     <img src="/images/appointment.png" alt="Appointment confirmation" className="h-12 w-12" />
                                     <h3 className="mt-3 font-bold text-gray-900">Smart Reminders</h3>
                                     <p className="mt-2 text-sm text-gray-600">Never miss checkups with automatic booking alerts.</p>
@@ -144,10 +147,10 @@ export default function Home() {
                             <h2 className="mt-2 text-3xl font-black text-gray-900">Built for trust, speed, and better care outcomes</h2>
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
                         {highlightCards.map((card) => (
-                            <article key={card.title} className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50">
+                            <article key={card.title} className="group rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_25px_60px_rgba(16,185,129,0.15)]">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-emerald-50 to-teal-50">
                                     <img src={card.icon} alt={card.title} className="h-8 w-8 object-contain" />
                                 </div>
                                 <h3 className="mt-4 text-lg font-bold text-gray-900 group-hover:text-emerald-700">{card.title}</h3>
@@ -206,8 +209,8 @@ export default function Home() {
 
                         <div className="space-y-4">
                             {quickStories.map((story) => (
-                                <article key={story.title} className="flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-                                    <img className="h-24 w-28 rounded-xl object-cover" src={story.image} alt={story.title} />
+                                <article key={story.title} className="flex gap-4 rounded-[2rem] border border-white/80 bg-white/90 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur transition-all duration-300 hover:shadow-[0_25px_60px_rgba(16,185,129,0.12)]">
+                                    <img className="h-24 w-28 rounded-[1rem] object-cover" src={story.image} alt={story.title} />
                                     <div>
                                         <h3 className="text-base font-bold text-gray-900">{story.title}</h3>
                                         <p className="mt-1 text-xs font-medium text-emerald-700">{story.location}</p>
@@ -219,17 +222,22 @@ export default function Home() {
                     </div>
                 </section>
 
-                <section className="mx-auto mb-12 max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
-                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <section className="relative mx-auto mb-12 max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="relative rounded-[2rem] border border-white/80 bg-gradient-to-r from-white/95 to-emerald-50/80 p-8 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur overflow-hidden">
+                        <div className="absolute inset-0 -z-10">
+                            <img className="h-full w-full object-cover opacity-[0.06]" src="/images/main-bg.jpg" alt="Background" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/92 to-emerald-50/90" />
+                        </div>
+                        <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-emerald-200/20 blur-3xl" />
+                        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Ready to Begin?</p>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Ready to Begin?</p>
                                 <h2 className="mt-2 text-3xl font-black text-gray-900">Find a specialist and book your first appointment today</h2>
                                 <p className="mt-2 text-sm text-gray-600">NexClinic helps you move from search to consultation without delays.</p>
                             </div>
                             <Link
                                 href="/doctors"
-                                className="inline-flex items-center justify-center rounded-lg bg-green-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-600"
+                                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-600 to-emerald-700 px-8 py-3 text-sm font-semibold text-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                             >
                                 Start Booking
                             </Link>

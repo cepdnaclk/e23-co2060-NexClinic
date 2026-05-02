@@ -150,12 +150,12 @@ function DoctorProfilePage() {
                 <div title="left-column" className="flex flex-col sm:flex-row gap-4 items-center xl:pl-4 justify-center">
                     <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover" />
                     <div title="name-spec-place" className="flex flex-col gap-2 text-center sm:text-left">
-                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold dark:text-white">{doctorName}</h1>
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">{doctorName}</h1>
                         <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                            <div title="specialization" className="flex items-center rounded-full bg-green-100 dark:bg-green-900 px-3 py-1 text-green-600 dark:text-green-300 font-semibold text-sm sm:text-base w-max mt-1 mx-auto sm:mx-0">{specialization}</div>
-                            <div title="experience" className="flex items-center rounded-full bg-green-100 dark:bg-green-900 px-3 py-1 text-green-600 dark:text-green-300 font-semibold text-sm sm:text-base w-max mt-1 mx-auto sm:mx-0">{experience}</div>
+                            <div title="specialization" className="flex items-center rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 font-semibold text-sm sm:text-base w-max mt-1 mx-auto sm:mx-0">{specialization}</div>
+                            <div title="experience" className="flex items-center rounded-full bg-teal-100 px-3 py-1 text-teal-700 font-semibold text-sm sm:text-base w-max mt-1 mx-auto sm:mx-0">{experience}</div>
                         </div>
-                        <p title="location" className="text-gray-600 dark:text-gray-400 mt-1">
+                        <p title="location" className="text-gray-700 mt-1">
                             <img src="/images/location.png" className="w-4 h-4 inline mr-2" alt="Location Icon" />
                             {location}
                         </p>
@@ -166,8 +166,8 @@ function DoctorProfilePage() {
                 <div title="right-column" className="flex flex-col gap-4 justify-center w-full xl:w-auto xl:pr-4">
                     <div title="toggle-btn" className="flex flex-col sm:flex-row gap-4 sm:gap-6 pb-2 items-center sm:justify-between w-full">
                         <div title="text-column" className="text-center sm:text-left">
-                            <p className="text-black dark:text-white font-bold text-lg sm:text-xl">Availability for Online Advice</p>
-                            <p className="text-gray-400 dark:text-gray-500 text-sm font-bold">
+                            <p className="text-gray-900 font-bold text-lg sm:text-xl">Availability for Online Advice</p>
+                            <p className="text-emerald-700 text-sm font-semibold">
                                 {isSavingAvailability ? "Saving..." : isOn ? "Available" : "Unavailable"}
                             </p>
                         </div>
@@ -191,28 +191,28 @@ function DoctorProfilePage() {
                 <div className="my-4 flex w-full border-t border-emerald-100"></div>
                 <div className="grid md:grid-cols-2 gap-6">
                     <div className="flex flex-col">
-                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">
+                        <p className="font-semibold text-gray-700 mb-2">
                             <img src="/images/chat.png" className="w-4 h-4 inline mr-2" alt="Chat Icon" />
                             Online Chat Session:
                         </p>
-                        <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">Rs. {chatFee.toLocaleString()}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Quick online advice for minor concerns</p>
+                        <p className="text-2xl sm:text-3xl font-black text-emerald-600">Rs. {chatFee.toLocaleString()}</p>
+                        <p className="text-sm text-gray-600 mt-1">Quick online advice for minor concerns</p>
                     </div>
                     <div className="flex flex-col">
-                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">
+                        <p className="font-semibold text-gray-700 mb-2">
                             <img src="/images/appointment.png" className="w-4 h-4 inline mr-2" alt="Appointment Icon" />
                             In-Person Appointment:
                         </p>
-                        <p className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200">Rs. {appointmentFee.toLocaleString()}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Full consultation and examination</p>
+                        <p className="text-2xl sm:text-3xl font-black text-teal-600">Rs. {appointmentFee.toLocaleString()}</p>
+                        <p className="text-sm text-gray-600 mt-1">Full consultation and examination</p>
                     </div>
                 </div>
                 <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
-                    <div className="text-gray-600 dark:text-gray-300 text-sm">
-                        <span className="font-semibold">Usually available times for Online Advice Chats:</span>
+                    <div className="text-gray-700 text-sm">
+                        <span className="font-semibold text-gray-800">Usually available times for Online Advice Chats:</span>
                         <ul className="flex flex-col list-disc pl-6 gap-2 mt-2">
                             {schedule.map((slot) => (
-                                <li key={slot}>{slot}</li>
+                                <li key={slot} className="text-gray-700">{slot}</li>
                             ))}
                         </ul>
                     </div>
@@ -229,41 +229,41 @@ function DoctorProfilePage() {
                     <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
                     <div title="SLMC-reg-ID" className="flex flex-col sm:flex-row my-2 items-start sm:items-center justify-between gap-2 sm:gap-4">
-                        <div className="text-gray-600 dark:text-gray-400">
-                            <span className="font-bold text-gray-800 dark:text-gray-200">SLMC Registration ID:</span>
-                            {licenseNumber}
+                        <div className="text-gray-700">
+                            <span className="font-semibold text-gray-800">SLMC Registration ID:</span>
+                            <span className="font-semibold text-gray-900 ml-2">{licenseNumber}</span>
                         </div>
-                        <div title="verification-status" className="flex items-center rounded-full bg-green-100 dark:bg-green-900 px-3 py-1 text-green-600 dark:text-green-300 font-semibold text-sm sm:text-md w-max mt-1">
+                        <div title="verification-status" className="flex items-center rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 font-semibold text-sm sm:text-md w-max mt-1">
                             <img src="/images/verified.png" className="w-4 h-4 inline mr-2" alt="Verified Icon" />
                             {isVerified ? "Verified" : "Pending Verification"}
                         </div>
 
                     </div>
 
-                    <div title="Qualifications" className="flex flex-col my-2 text-gray-600 dark:text-gray-400">
-                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Qualifications:</p>
+                    <div title="Qualifications" className="flex flex-col my-2">
+                        <p className="font-semibold text-gray-800 mb-2">Qualifications:</p>
                         <ul className="flex flex-col list-disc pl-6 gap-2">
                             {qualifications.map((item) => (
-                                <li key={item}>{item}</li>
+                                <li key={item} className="text-gray-700">{item}</li>
                             ))}
                         </ul>
                     </div>
 
 
-                    <div title="Currently-Practicing-Hospitals" className="flex flex-col my-2 text-gray-600 dark:text-gray-400">
-                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Currently Practicing Hospitals:</p>
+                    <div title="Currently-Practicing-Hospitals" className="flex flex-col my-2">
+                        <p className="font-semibold text-gray-800 mb-2">Currently Practicing Hospitals:</p>
                         <ul className="flex flex-col list-disc pl-6 gap-2">
                             {hospitals.map((item) => (
-                                <li key={item}>{item}</li>
+                                <li key={item} className="text-gray-700">{item}</li>
                             ))}
                         </ul>
                     </div>
 
-                    <div title="Languages" className="flex flex-col my-2 text-gray-600 dark:text-gray-400">
-                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Languages Spoken:</p>
+                    <div title="Languages" className="flex flex-col my-2">
+                        <p className="font-semibold text-gray-800 mb-2">Languages Spoken:</p>
                         <ul className="flex flex-col list-disc pl-6 gap-2">
                             {languages.map((item) => (
-                                <li key={item}>{item}</li>
+                                <li key={item} className="text-gray-700">{item}</li>
                             ))}
                         </ul>
                     </div>
@@ -277,18 +277,18 @@ function DoctorProfilePage() {
 
                     <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
-                    <div title="Email" className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
-                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Email Address:</p>
+                    <div title="Email" className="flex flex-col mb-4">
+                        <p className="font-semibold text-gray-800 mb-2">Email Address:</p>
                         <div className="flex items-start min-w-0">
                             <img src="/images/at.png" className="w-4 h-4 inline mr-2 mt-1 shrink-0" alt="Email Icon" />
-                            <p className="break-all sm:break-words">{email}</p>
+                            <p className="break-all sm:break-words text-gray-700 font-medium">{email}</p>
                         </div>
                     </div>
-                    <div title="Contact" className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
-                        <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Contact Number:</p>
+                    <div title="Contact" className="flex flex-col mb-4">
+                        <p className="font-semibold text-gray-800 mb-2">Contact Number:</p>
                         <div className="flex items-start min-w-0">
                             <img src="/images/phone.png" className="w-4 h-4 inline mr-2 mt-1 shrink-0" alt="Phone Icon" />
-                            <p className="break-all sm:break-words">{phone}</p>
+                            <p className="break-all sm:break-words text-gray-700 font-medium">{phone}</p>
                         </div>
                     </div>
 
