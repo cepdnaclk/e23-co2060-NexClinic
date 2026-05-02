@@ -59,6 +59,9 @@ function DoctorLoginForm() {
             } else {
                 setError("An error occurred. Please try again later.");
             }
+
+            setUsername("");
+            setPassword("");
             console.error("Login error:", err);
         } finally {
             setLoading(false);

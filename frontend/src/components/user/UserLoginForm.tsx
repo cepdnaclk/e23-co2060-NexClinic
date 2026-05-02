@@ -54,6 +54,10 @@ function UserLoginForm() {
                 setError("An error occurred. Please try again later.");
             }
             console.error("Login error:", err);
+            
+            setUsername("");
+            setPassword("");
+            
         } finally {
             setLoading(false);
         }

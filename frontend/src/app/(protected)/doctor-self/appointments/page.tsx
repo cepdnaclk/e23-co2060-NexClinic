@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
+import ConfirmationDialog from "@/components/modals/ConfirmationDialog";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
 
 type AppointmentStatus = "Pending" | "Accepted" | "Rejected" | "Completed" | "Cancelled";
@@ -289,6 +290,35 @@ function DoctorAppointmentsPage() {
       setUpdatingAppointmentIds((prev) => prev.filter((id) => id !== appointmentId));
     }
   };
+
+    // Confirmation dialog state and handlers for reject/cancel actions
+    const [confirmTarget, setConfirmTarget] = useState<
+      | { appointment: AppointmentItem; action: "reject" | "cancel" }
+      | null
+    >(null);
+    const [isConfirmProcessing, setIsConfirmProcessing] = useState(false);
+
+    const openConfirm = (appointment: AppointmentItem, action: "reject" | "cancel") => {
+      setConfirmTarget({ appointment, action });
+    };
+
+    const closeConfirm = () => {
+      setConfirmTarget(null);
+      setIsConfirmProcessing(false);
+    };
+
+    const handleConfirm = async () => {
+      if (!confirmTarget) return;
+      setIsConfirmProcessing(true);
+      try {
+        await setStatus(confirmTarget.appointment.id, confirmTarget.action);
+      } catch (err) {
+        // setStatus already sets toastMessage on error
+      } finally {
+        setIsConfirmProcessing(false);
+        closeConfirm();
+      }
+    };
 
   const openPatientProfile = async (patientId: string) => {
     const relatedAppointment = appointments.find((appointment) => appointment.patientId === patientId);
@@ -716,13 +746,13 @@ function DoctorAppointmentsPage() {
                     {appointment.status === "Pending" && (
                       <>
                         <GreenButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "accept")}>Accept</GreenButton>
-                        <WhiteButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "reject")}>Reject</WhiteButton>
+                        <WhiteButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => openConfirm(appointment, 'reject')}>Reject</WhiteButton>
                       </>
                     )}
                     {appointment.status === "Accepted" && (
                       <>
                         <GreenButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "complete")}>Mark Completed</GreenButton>
-                        <WhiteButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => void setStatus(appointment.id, "cancel")}>Cancel Appointment</WhiteButton>
+                        <WhiteButton className="px-4 py-2" disabled={isUpdatingAppointment(appointment.id)} onClick={() => openConfirm(appointment, 'cancel')}>Cancel Appointment</WhiteButton>
                       </>
                     )}
                     <WhiteButton className="px-4 py-2" onClick={() => openRescheduleModal(appointment)}>
@@ -922,6 +952,18 @@ function DoctorAppointmentsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {confirmTarget && (
+        <ConfirmationDialog
+          isOpen={true}
+          title={confirmTarget.action === "reject" ? "Reject Appointment" : "Cancel Appointment"}
+          message={`Are you sure you want to ${confirmTarget.action === "reject" ? "reject" : "cancel"} the appointment for ${confirmTarget.appointment.patientName}?`}
+          confirmText={confirmTarget.action === "reject" ? "Reject" : "Cancel"}
+          onCancel={closeConfirm}
+          onConfirm={handleConfirm}
+          isLoading={isConfirmProcessing}
+        />
       )}
     </div>
   );
