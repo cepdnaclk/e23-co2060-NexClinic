@@ -101,6 +101,22 @@ function DoctorAppointmentSlotsPage() {
       });
   }, [slots]);
 
+  const uniqueHospitalsCount = useMemo(() => {
+    const values = upcomingSlots
+      .map((slot) => slot.hospital?.trim())
+      .filter((value): value is string => Boolean(value));
+    return new Set(values).size;
+  }, [upcomingSlots]);
+
+  const nextSlotSummary = useMemo(() => {
+    if (upcomingSlots.length === 0) {
+      return "No published slot yet";
+    }
+
+    const next = upcomingSlots[0];
+    return `${next.date} • ${formatTimeForDisplay(next.start_time)}`;
+  }, [upcomingSlots]);
+
   const handleCreateSlot = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
@@ -166,24 +182,81 @@ function DoctorAppointmentSlotsPage() {
   };
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
-      <div className="mx-4 mt-6 mb-8 space-y-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sm:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">In-Person Appointment Slots</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Publish future in-person appointment slots. Patients can book only from slots you create here.
-          </p>
-          {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
-          {message && <p className="mt-3 text-sm text-green-600 dark:text-green-400 font-semibold">{message}</p>}
-        </div>
+    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_28%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)] pb-8">
+      <div className="absolute inset-0 bg-[url('/images/doctor-registration-bg.jpg')] bg-cover bg-center bg-no-repeat opacity-[0.08]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/88 via-white/80 to-white/95" aria-hidden="true" />
+      <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-emerald-100/55 to-transparent" aria-hidden="true" />
+      <div className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-emerald-200/25 blur-3xl" aria-hidden="true" />
+      <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-cyan-200/20 blur-3xl" aria-hidden="true" />
 
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Create New Slot</h2>
-          <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+      <div className="relative mx-auto mt-6 mb-8 max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-[2.5rem] border border-emerald-100/70 bg-white/85 shadow-[0_24px_80px_rgba(16,185,129,0.12)] backdrop-blur">
+          <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="relative p-6 sm:p-8 lg:p-10">
+              <div className="absolute right-0 top-0 h-44 w-44 translate-x-1/3 -translate-y-1/3 rounded-full bg-emerald-100/60 blur-3xl" aria-hidden="true" />
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold tracking-[0.24em] text-emerald-700">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  SLOT PLANNER
+                </div>
+                <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">In-Person Appointment Slots</h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                  Publish future in-person slot windows. Patients can book only from slots you create here.
+                </p>
 
-          <form onSubmit={handleCreateSlot} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                {error && <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</p>}
+                {message && <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">{message}</p>}
+
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <Link href="/doctor-self/appointments">
+                    <WhiteButton className="rounded-full px-5 py-3">Go To Appointments</WhiteButton>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative min-h-[280px] bg-gradient-to-br from-emerald-700 via-teal-700 to-cyan-700 p-5 sm:p-6">
+              <div className="absolute inset-0 bg-[url('/images/doctor-login-bg.png')] bg-cover bg-center bg-no-repeat opacity-25" aria-hidden="true" />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/20 via-transparent to-slate-950/30" aria-hidden="true" />
+              <div className="relative flex h-full flex-col justify-between rounded-[2rem] border border-white/15 bg-white/10 p-5 text-white backdrop-blur-sm sm:p-6">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/80">Live Snapshot</p>
+                  <p className="mt-3 text-2xl font-bold sm:text-3xl">Publish once, book smoothly all week.</p>
+                  <p className="mt-3 text-sm leading-6 text-white/85">
+                    Keep your availability clean and predictable with clearly defined in-person time blocks.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-3xl border border-white/20 bg-white/12 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Future Slots</p>
+                    <p className="mt-2 text-2xl font-bold">{isLoading ? "..." : upcomingSlots.length}</p>
+                  </div>
+                  <div className="rounded-3xl border border-white/20 bg-white/12 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Hospitals</p>
+                    <p className="mt-2 text-2xl font-bold">{isLoading ? "..." : uniqueHospitalsCount}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-emerald-700">Create New Slot</h2>
+              <p className="mt-1 text-sm text-slate-500">Define location and time range to publish one appointment window.</p>
+            </div>
+            <p className="rounded-full bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+              Next slot: {isLoading ? "..." : nextSlotSummary}
+            </p>
+          </div>
+          <div className="my-4 flex w-full border-t border-emerald-100"></div>
+
+          <form onSubmit={handleCreateSlot} className="grid grid-cols-1 items-end gap-3 md:grid-cols-5">
             <div className="flex flex-col gap-2">
-              <label htmlFor="slot-date" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label htmlFor="slot-date" className="text-sm font-semibold text-slate-700">
                 Date
               </label>
               <input
@@ -192,12 +265,12 @@ function DoctorAppointmentSlotsPage() {
                 value={date}
                 min={new Date().toISOString().split("T")[0]}
                 onChange={(event) => setDate(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="slot-hospital" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label htmlFor="slot-hospital" className="text-sm font-semibold text-slate-700">
                 Hospital
               </label>
               <input
@@ -206,12 +279,12 @@ function DoctorAppointmentSlotsPage() {
                 value={hospital}
                 onChange={(event) => setHospital(event.target.value)}
                 placeholder="e.g. NexClinic - Colombo"
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="slot-start" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label htmlFor="slot-start" className="text-sm font-semibold text-slate-700">
                 Start Time
               </label>
               <input
@@ -219,12 +292,12 @@ function DoctorAppointmentSlotsPage() {
                 type="time"
                 value={startTime}
                 onChange={(event) => setStartTime(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="slot-end" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label htmlFor="slot-end" className="text-sm font-semibold text-slate-700">
                 End Time
               </label>
               <input
@@ -232,38 +305,35 @@ function DoctorAppointmentSlotsPage() {
                 type="time"
                 value={endTime}
                 onChange={(event) => setEndTime(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
 
-            <GreenButton type="submit" disabled={isSubmitting} className="px-4 py-2">
-              {isSubmitting ? "Saving..." : "Add Slot"}
+            <GreenButton type="submit" disabled={isSubmitting} className="rounded-full px-5 py-3">
+              {isSubmitting ? "Saving..." : "Publish Slot"}
             </GreenButton>
           </form>
         </section>
 
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Published Future Slots</h2>
-            <Link href="/doctor-self/appointments">
-              <WhiteButton className="px-4 py-2">Go To Appointments</WhiteButton>
-            </Link>
+        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-bold text-emerald-700">Published Future Slots</h2>
+            <span className="text-sm text-slate-500">Sorted by date and start time</span>
           </div>
-          <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+          <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
           {isLoading ? (
-            <p className="text-gray-600 dark:text-gray-400">Loading slots...</p>
+            <p className="text-sm text-slate-600">Loading slots...</p>
           ) : upcomingSlots.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400">No future slots published yet.</p>
+            <p className="text-sm text-slate-600">No future slots published yet.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {upcomingSlots.map((slot) => (
-                <div key={slot.id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4">
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {slot.date} ({slot.day_of_week || "-"})
-                  </p>
-                  <p className="text-sm text-gray-700 dark:text-gray-200 mt-1">{slot.hospital || "NexClinic"}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                <div key={slot.id} className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-emerald-50/60 p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">{slot.day_of_week || "DAY"}</p>
+                  <p className="mt-2 text-lg font-bold text-slate-900">{slot.date}</p>
+                  <p className="mt-2 text-sm font-medium text-slate-700">{slot.hospital || "NexClinic"}</p>
+                  <p className="mt-2 text-sm text-slate-600">
                     {formatTimeForDisplay(slot.start_time)} - {formatTimeForDisplay(slot.end_time)}
                   </p>
                 </div>
