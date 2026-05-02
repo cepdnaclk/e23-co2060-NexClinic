@@ -236,25 +236,27 @@ export default function UserEditProfilePage() {
       <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-teal-200/20 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
-        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-emerald-700">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+        <div className="relative mb-8 overflow-hidden rounded-[2.5rem] border border-emerald-200/40 bg-[url('/images/user-registration-bg.jpg')] bg-cover bg-center bg-no-repeat shadow-[0_20px_60px_rgba(16,185,129,0.15)]">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/90 via-emerald-500/85 to-teal-600/85 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-emerald-900/10" />
+          <div className="relative px-5 py-10 sm:px-8 sm:py-14 lg:px-10 lg:py-16">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-white backdrop-blur-sm">
+              <span className="h-2 w-2 rounded-full bg-white" />
               PATIENT PROFILE EDITOR
             </div>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            <h1 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-5xl">
               Update your profile with confidence
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+            <p className="mt-4 max-w-2xl text-base leading-7 text-white/95 sm:text-lg">
               Keep your contact, health, and emergency details organized in a calm, easy-to-scan editor.
             </p>
           </div>
+        </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <BlackButton className="w-full rounded-full px-6 py-3 sm:w-auto" onClick={() => router.push('/user-self/profile')}>
-              Back to Profile
-            </BlackButton>
-          </div>
+        <div className="mb-6 flex justify-end">
+          <BlackButton className="rounded-full px-6 py-3" onClick={() => router.push('/user-self/profile')}>
+            Back to Profile
+          </BlackButton>
         </div>
 
         <form onSubmit={handleSaveDraft} className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
@@ -579,22 +581,22 @@ export default function UserEditProfilePage() {
           </section>
 
           <aside className="space-y-4">
-            <div className="overflow-hidden rounded-[2rem] border border-slate-900/5 bg-slate-950 text-white shadow-[0_18px_50px_rgba(15,23,42,0.18)]">
-              <div className="bg-[url('/images/main-bg.jpg')] bg-cover bg-center bg-no-repeat p-6">
-                <div className="rounded-[1.5rem] bg-slate-950/75 p-5 backdrop-blur-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-200">Helpful summary</p>
+            <div className="overflow-hidden rounded-[2rem] border border-emerald-100 bg-white/85 shadow-[0_18px_50px_rgba(16,185,129,0.12)] backdrop-blur-sm">
+              <div className="bg-[url('/images/user-registration-bg.jpg')] bg-cover bg-center bg-no-repeat p-6">
+                <div className="rounded-[1.5rem] border border-white/70 bg-white/78 p-5 text-slate-900 shadow-lg backdrop-blur-md">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">Helpful summary</p>
                   <div className="mt-5 space-y-4">
                     <div>
-                      <p className="text-sm text-slate-300">Profile completeness</p>
-                      <p className="mt-1 text-2xl font-bold">Comfortably editable</p>
+                      <p className="text-sm text-slate-600">Profile completeness</p>
+                      <p className="mt-1 text-2xl font-bold text-slate-900">Comfortably editable</p>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-300">Current name</p>
-                      <p className="mt-1 break-words text-lg font-semibold">{formData.name || 'Not set yet'}</p>
+                      <p className="text-sm text-slate-600">Current name</p>
+                      <p className="mt-1 break-words text-lg font-semibold text-slate-900">{formData.name || 'Not set yet'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-300">Current email</p>
-                      <p className="mt-1 break-words text-lg font-semibold">{formData.email || 'Not set yet'}</p>
+                      <p className="text-sm text-slate-600">Current email</p>
+                      <p className="mt-1 break-words text-lg font-semibold text-slate-900">{formData.email || 'Not set yet'}</p>
                     </div>
                   </div>
                 </div>
