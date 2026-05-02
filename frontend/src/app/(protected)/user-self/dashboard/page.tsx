@@ -196,14 +196,6 @@ export default function UserDashboard() {
                                     )}
 
                                     <div className="min-w-0 flex-1 text-center sm:text-left">
-                                        <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                                            <p className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-green-700">
-                                                Patient Dashboard
-                                            </p>
-                                            <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
-                                                Live updates enabled
-                                            </span>
-                                        </div>
                                         <h1 className="mt-3 break-words text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
                                             Welcome back, {displayName}
                                         </h1>
@@ -214,17 +206,6 @@ export default function UserDashboard() {
                                         </p>
                                         {error ? <p className="mt-3 text-sm font-semibold text-rose-600">{error}</p> : null}
 
-                                        <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
-                                            <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
-                                                Secure patient area
-                                            </span>
-                                            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                                                Appointment sync
-                                            </span>
-                                            <span className="rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-                                                Profile overview
-                                            </span>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -353,12 +334,6 @@ export default function UserDashboard() {
                                     <p className="text-sm font-medium text-slate-600">{item.label}</p>
                                     <p className="mt-1 text-4xl font-bold tracking-tight text-slate-900">{item.value}</p>
                                 </div>
-                                <div className="rounded-2xl bg-green-50 px-3 py-2 text-right">
-                                    <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-green-700">
-                                        {index === 0 ? "Live" : "Summary"}
-                                    </span>
-                                    <span className="mt-1 block text-sm font-semibold text-green-800">{index + 1}/3</span>
-                                </div>
                             </div>
                             <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                                 <div
@@ -386,11 +361,6 @@ export default function UserDashboard() {
                             <p className="text-sm leading-6 text-slate-600">
                                 Online advice chat history will appear here once conversations are available.
                             </p>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">Fast replies</span>
-                                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">Follow-up notes</span>
-                                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">Private & secure</span>
-                            </div>
                         </div>
                     </div>
 
