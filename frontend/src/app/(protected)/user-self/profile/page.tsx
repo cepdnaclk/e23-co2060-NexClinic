@@ -108,8 +108,13 @@ export default function UserProfile() {
     const profileImage = profileData?.patient.profileImage?.trim() ? profileData.patient.profileImage : '/images/user.png';
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(20,184,166,0.12),_transparent_24%),linear-gradient(180deg,#effbf6_0%,#f8fcfb_42%,#ffffff_100%)] pb-10">
-            <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-emerald-100/50 to-transparent" />
+        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(20,184,166,0.14),_transparent_24%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_45%,#ffffff_100%)] pb-10">
+            <div
+                className="absolute inset-0 bg-[url('/images/user-login-bg.png')] bg-cover bg-center bg-no-repeat opacity-10"
+                aria-hidden="true"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/78 to-white/92" aria-hidden="true" />
+            <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-emerald-100/40 to-transparent" />
             <div className="absolute -left-20 top-24 h-64 w-64 rounded-full bg-emerald-200/30 blur-3xl" />
             <div className="absolute right-0 top-40 h-72 w-72 rounded-full bg-teal-200/25 blur-3xl" />
 
