@@ -124,68 +124,51 @@ export default function DoctorsDirectory() {
       </div>
       <div className="min-h-screen bg-gray-100 pt-24 sm:pt-28 pb-10">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-center mb-4 text-gray-800 tracking-tight">
-          Find your Doctor
-        </h1>
-        <p className="text-center text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">Find and connect with experienced healthcare professionals</p>
+        <div className="mx-auto max-w-6xl">
+          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 sm:p-8 shadow-[0_18px_50px_rgba(16,185,129,0.06)] backdrop-blur overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+              <div className="lg:col-span-2">
+                <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight">Find Your Doctor</h1>
+                <p className="mt-2 text-gray-600">Discover verified specialists and book appointments confidently. Filter by specialty or availability.</p>
+              </div>
 
-        {error && (
-          <p className="text-center text-red-500 mb-4">{error}</p>
-        )}
+              <div className="w-full">
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Search name, specialty or hospital"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-sm sm:text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300"
+                  />
+                </div>
 
-        {/* Search & Filter Section */}
-        <div className="max-w-6xl mx-auto mb-6 sm:mb-8 space-y-4 rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
-          {/* Search Bar */}
-          <div className="w-full">
-            <input
-              type="text"
-              placeholder="Search by name, specialization, or working hospital..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
-            />
-          </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <select
+                    id="specialization"
+                    value={selectedSpecialty}
+                    onChange={(e) => setSelectedSpecialty(e.target.value)}
+                    className="px-3 py-2 rounded-full border border-gray-200 bg-white text-sm text-gray-700 shadow-sm"
+                  >
+                    {specialties.map((specialty) => (
+                      <option key={specialty} value={specialty}>{specialty}</option>
+                    ))}
+                  </select>
 
-          {/* Filter Controls */}
-          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:items-end">
-            {/* Specialization List */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-              <label htmlFor="specialization" className="text-sm font-semibold text-gray-700">
-                Specialization:
-              </label>
-              <select
-                id="specialization"
-                value={selectedSpecialty}
-                onChange={(e) => setSelectedSpecialty(e.target.value)}
-                className="w-full sm:min-w-52 sm:w-auto px-3 py-2 rounded-xl border border-gray-300 bg-white text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              >
-                {specialties.map((specialty) => (
-                  <option key={specialty} value={specialty}>
-                    {specialty}
-                  </option>
-                ))}
-              </select>
-            </div>
+                  <button
+                    onClick={() => setShowOnlineOnly((s) => !s)}
+                    className={`px-3 py-2 rounded-full text-sm font-semibold ${showOnlineOnly ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-700'}`}>
+                    {showOnlineOnly ? 'Online Now' : 'All'}
+                  </button>
 
-            {/* Online Availability Toggle */}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="onlineOnly"
-                checked={showOnlineOnly}
-                onChange={(e) => setShowOnlineOnly(e.target.checked)}
-                className="w-4 h-4 text-green-500 border-gray-300 rounded focus:ring-green-500"
-              />
-              <label htmlFor="onlineOnly" className="text-sm font-medium text-gray-700">
-                Available for Chat Now
-              </label>
+                  <button onClick={() => { setSearchQuery(''); setSelectedSpecialty('All'); setShowOnlineOnly(false); }} className="ml-auto px-4 py-2 rounded-full bg-white border border-gray-200 text-sm text-gray-700">
+                    Reset
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Results Count */}
-          {/* <p className="text-sm text-gray-600">
-            Showing {filteredDoctors.length} of {doctors.length} doctors
-          </p> */}
         </div>
 
         {/* Doctors Grid */}
@@ -196,86 +179,50 @@ export default function DoctorsDirectory() {
             </div>
           ) : filteredDoctors.length > 0 ? (
             filteredDoctors.map((doctor) => (
-              <div
-                key={doctor.id}
-                className="flex h-full flex-col bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-5 sm:p-6 hover:shadow-md transition-shadow"
-              >
-                {/* Doctor Image & Availability Badge */}
-                <div className="relative flex justify-center mb-4 sm:mb-5">
-                  <img
-                    src={doctor.photo}
-                    alt={doctor.fullName}
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-gray-300"
-                    onError={(event) => {
-                      event.currentTarget.src = '/images/user.png';
-                    }}
-                  />
-                  {doctor.availableForChat && (
-                    <span className="absolute -top-1 right-1/2 translate-x-12 sm:translate-x-14 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">
-                      Online Now
-                    </span>
-                  )}
-                </div>
-
-                {/* Doctor Info */}
-                <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-1 text-center leading-tight">
-                  {doctor.fullName}
-                </h2>
-                <p className="text-green-600 font-semibold mb-1 text-center text-sm sm:text-base">{doctor.specialization}</p>
-                <p className="text-sm text-gray-500 mb-3 text-center">
-                  {doctor.experience} experience
-                </p>
-                <p className="text-sm text-gray-400 mb-3 text-center line-clamp-2 min-h-10">
-                  {doctor.hospitals.join(", ")}
-                </p>
-
-                {/* Fees */}
-                <div className="bg-gray-50 rounded-xl p-3 mb-4 text-sm border border-gray-100">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-gray-600">Online Advice Session:</span>
-                    <span className="font-semibold text-gray-800">{doctor.chatFee}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">In-person Appointment:</span>
-                    <span className="font-semibold text-gray-800">{doctor.appointmentFee}</span>
+              <div key={doctor.id} className="flex h-full flex-col rounded-[1.5rem] border border-white/80 bg-white/90 shadow-[0_18px_50px_rgba(16,185,129,0.06)] p-6 hover:shadow-[0_25px_60px_rgba(16,185,129,0.08)] transition-all">
+                <div className="relative">
+                  <div className="h-2 w-full rounded-t-lg bg-gradient-to-r from-emerald-400 to-teal-400 absolute top-0 left-0" />
+                  <div className="flex flex-col items-center pt-6">
+                    <div className="relative">
+                      <img src={doctor.photo} alt={doctor.fullName} className="w-28 h-28 rounded-full object-cover ring-4 ring-white shadow-[0_10px_30px_rgba(16,185,129,0.12)]" onError={(e)=>{(e.currentTarget as HTMLImageElement).src='/images/user.png'}} />
+                      {doctor.availableForChat && <span className="absolute bottom-0 right-0 -mb-1 -mr-1 bg-emerald-600 text-white text-xs font-semibold px-2 py-1 rounded-full">Online</span>}
+                    </div>
+                    <h3 className="mt-4 text-lg font-bold text-gray-900 text-center">{doctor.fullName}</h3>
+                    <p className="mt-1 text-sm font-semibold text-emerald-700">{doctor.specialization}</p>
+                    <p className="mt-1 text-sm text-gray-600">{doctor.experience} experience</p>
+                    <div className="mt-3 flex flex-wrap gap-2 justify-center">
+                      {doctor.hospitals.slice(0,3).map((h)=> (
+                        <span key={h} className="text-xs px-3 py-1 rounded-full bg-white/80 border border-emerald-100 text-gray-700">{h}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Next Available */}
-                {/* <p className="text-xs text-gray-500 mb-4 text-center">
-                  Next Available: {doctor.nextAvailable}
-                </p> */}
+                <div className="mt-4 bg-white/60 rounded-xl p-4 w-full border border-white/80">
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-gray-600">Online Session</div>
+                    <div className="text-sm font-black text-gray-900">{doctor.chatFee}</div>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <div className="text-sm text-gray-600">In-person</div>
+                    <div className="text-sm font-black text-gray-900">{doctor.appointmentFee}</div>
+                  </div>
+                </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-2 mt-auto">
+                <div className="mt-5 flex flex-col gap-3">
                   {role === 'PATIENT' ? (
                     <>
-                      {/* Chat Now Button */}
-                      <GreenButton
-                        disabled={!doctor.availableForChat}
-                        className={`w-full text-sm ${!doctor.availableForChat ? 'bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed' : ''}`}
-                      >
-                        {doctor.availableForChat ? '💬 Chat Now' : '💬 Offline'}
-                      </GreenButton>
-
-                      {/* Book Appointment Button */}
+                      <GreenButton disabled={!doctor.availableForChat} className={`w-full ${!doctor.availableForChat? 'opacity-60 cursor-not-allowed':''}`}>{doctor.availableForChat ? '💬 Chat Now' : '💬 Offline'}</GreenButton>
                       <Link href={`/user-self/book-appointment?doctor=${doctor.id}`} className="w-full">
-                        <BlackButton className="w-full text-sm">
-                          📅 Book Appointment
-                        </BlackButton>
+                        <BlackButton className="w-full">📅 Book Appointment</BlackButton>
                       </Link>
                     </>
                   ) : (
-                    <p className="text-xs text-gray-500 text-center">
-                      Chat and booking are available for patients.
-                    </p>
+                    <p className="text-xs text-gray-500 text-center">Chat and booking are available for patients.</p>
                   )}
 
-                  {/* See Profile Link */}
                   <Link href={`/doctors/${doctor.id}`} className="w-full">
-                    <WhiteButton className="w-full text-sm">
-                    View Full Profile
-                    </WhiteButton>
+                    <WhiteButton className="w-full">View Full Profile</WhiteButton>
                   </Link>
                 </div>
               </div>
@@ -283,16 +230,7 @@ export default function DoctorsDirectory() {
           ) : (
             <div className="col-span-full text-center py-16">
               <p className="text-gray-500 text-lg">No doctors found matching your criteria</p>
-              <GreenButton
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedSpecialty('All');
-                  setShowOnlineOnly(false);
-                }}
-                className="mt-4"
-              >
-                Reset Filters
-              </GreenButton>
+              <GreenButton onClick={() => { setSearchQuery(''); setSelectedSpecialty('All'); setShowOnlineOnly(false); }} className="mt-4">Reset Filters</GreenButton>
             </div>
           )}
         </div>
