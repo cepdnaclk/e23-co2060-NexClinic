@@ -83,7 +83,7 @@ export default async function DoctorProfile({
 							<p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{doctor.experience} of Experience</p>
 							{doctor.availableForChat && (
 								<span className="inline-block mt-2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-									💬 Available for Chat
+									Available for Chat
 								</span>
 							)}
 						</div>
@@ -97,10 +97,10 @@ export default async function DoctorProfile({
 										: 'bg-gray-300 text-gray-500 cursor-not-allowed'
 									}`}
 							>
-								{doctor.availableForChat ? '💬 Start Chat Now' : '💬 Currently Offline'}
+								{doctor.availableForChat ? 'Start Chat Now' : 'Currently Offline'}
 							</button>
 							<button className="py-3 px-6 rounded-lg font-semibold bg-gray-800 hover:bg-gray-900 text-white transition-colors">
-								📅 Book Appointment
+								Book Appointment
 							</button>
 						</div>
 					</div>
@@ -112,12 +112,12 @@ export default async function DoctorProfile({
 					<div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 					<div className="grid md:grid-cols-2 gap-6">
 						<div className="flex flex-col">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">💬 Online Chat Session:</p>
+							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Online Chat Session:</p>
 							<p className="text-2xl font-bold text-green-600 dark:text-green-400">{doctor.chatFee}</p>
 							<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Quick online advice for minor concerns</p>
 						</div>
 						<div className="flex flex-col">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">📅 In-Person Appointment:</p>
+							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">In-Person Appointment:</p>
 							<p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{doctor.appointmentFee}</p>
 							<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Full consultation and examination</p>
 						</div>

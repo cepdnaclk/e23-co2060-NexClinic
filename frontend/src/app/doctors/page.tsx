@@ -134,7 +134,17 @@ export default function DoctorsDirectory() {
 
               <div className="w-full">
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                  <svg
+                    className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <circle cx="11" cy="11" r="7" />
+                    <line x1="16.65" y1="16.65" x2="21" y2="21" />
+                  </svg>
                   <input
                     type="text"
                     placeholder="Search name, specialty or hospital"
@@ -212,9 +222,9 @@ export default function DoctorsDirectory() {
                 <div className="mt-5 flex flex-col gap-3">
                   {role === 'PATIENT' ? (
                     <>
-                      <GreenButton disabled={!doctor.availableForChat} className={`w-full ${!doctor.availableForChat? 'opacity-60 cursor-not-allowed':''}`}>{doctor.availableForChat ? '💬 Chat Now' : '💬 Offline'}</GreenButton>
+                      <GreenButton disabled={!doctor.availableForChat} className={`w-full ${!doctor.availableForChat? 'opacity-60 cursor-not-allowed':''}`}>{doctor.availableForChat ? 'Chat Now' : 'Offline'}</GreenButton>
                       <Link href={`/user-self/book-appointment?doctor=${doctor.id}`} className="w-full">
-                        <BlackButton className="w-full">📅 Book Appointment</BlackButton>
+                        <BlackButton className="w-full">Book Appointment</BlackButton>
                       </Link>
                     </>
                   ) : (
