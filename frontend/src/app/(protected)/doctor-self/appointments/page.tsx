@@ -359,10 +359,10 @@ function DoctorAppointmentsPage() {
 
   const renderNoDataMessage = (emptyMessage: string) => {
     if (showSectionLoading) {
-      return <p className="text-gray-600 dark:text-gray-400">Loading appointments...</p>;
+      return <p className="text-sm text-slate-600">Loading appointments...</p>;
     }
 
-    return <p className="text-gray-600 dark:text-gray-400">{emptyMessage}</p>;
+    return <p className="text-sm text-slate-600">{emptyMessage}</p>;
   };
 
   const openRescheduleModal = (appointment: AppointmentItem) => {
@@ -471,36 +471,78 @@ function DoctorAppointmentsPage() {
   };
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
-      <div className="mx-4 mt-6 mb-8 space-y-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Appointments Management</h1>
-            <Link href="/doctor-self/appointment-slots">
-              <WhiteButton className="px-4 py-2">Manage Slots</WhiteButton>
-            </Link>
-          </div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Review patient requests, manage upcoming visits, and track previous appointments in one place.
-          </p>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Advice chats are managed separately from this page in the Chats section.
-          </p>
-          {errorMessage && (
-            <p className="mt-2 text-sm text-red-500">{errorMessage}</p>
-          )}
-          {toastMessage && (
-            <p className="mt-3 text-sm text-green-600 dark:text-green-400 font-semibold">{toastMessage}</p>
-          )}
-        </div>
+    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_28%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)] pb-8">
+      <div className="absolute inset-0 bg-[url('/images/doctor-login-bg.png')] bg-cover bg-center bg-no-repeat opacity-[0.08]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/88 via-white/80 to-white/95" aria-hidden="true" />
+      <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-emerald-100/55 to-transparent" aria-hidden="true" />
+      <div className="absolute -left-24 top-24 h-72 w-72 rounded-full bg-emerald-200/25 blur-3xl" aria-hidden="true" />
+      <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-cyan-200/20 blur-3xl" aria-hidden="true" />
 
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Find And Filter</h2>
-          <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+      <div className="relative mx-auto mt-6 mb-8 max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-[2.5rem] border border-emerald-100/70 bg-white/85 shadow-[0_24px_80px_rgba(16,185,129,0.12)] backdrop-blur">
+          <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="relative p-6 sm:p-8 lg:p-10">
+              <div className="absolute right-0 top-0 h-44 w-44 translate-x-1/3 -translate-y-1/3 rounded-full bg-emerald-100/60 blur-3xl" aria-hidden="true" />
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold tracking-[0.24em] text-emerald-700">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  APPOINTMENTS
+                </div>
+                <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">Appointments Management</h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                  Review patient requests, manage upcoming visits and track previous appointments in one place.
+                </p>
+                <p className="mt-2 text-sm text-slate-500">Advice chats are managed separately from this page in the Chats section.</p>
+
+                {errorMessage && (
+                  <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">{errorMessage}</p>
+                )}
+                {toastMessage && (
+                  <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">{toastMessage}</p>
+                )}
+
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <Link href="/doctor-self/appointment-slots">
+                    <WhiteButton className="rounded-full px-5 py-3">Manage Slots</WhiteButton>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative min-h-[280px] bg-gradient-to-br from-emerald-700 via-teal-700 to-cyan-700 p-5 sm:p-6">
+              <div className="absolute inset-0 bg-[url('/images/doctor-registration-bg.jpg')] bg-cover bg-center bg-no-repeat opacity-25" aria-hidden="true" />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/20 via-transparent to-slate-950/30" aria-hidden="true" />
+              <div className="relative flex h-full flex-col justify-between rounded-[2rem] border border-white/15 bg-white/10 p-5 text-white backdrop-blur-sm sm:p-6">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/80">Live Summary</p>
+                  <p className="mt-3 text-2xl font-bold sm:text-3xl">Clear actions for each appointment state.</p>
+                  <p className="mt-3 text-sm leading-6 text-white/85">
+                    Accept quickly, reschedule with published slots, and close visits without losing context.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-3xl border border-white/20 bg-white/12 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Reminder Queue</p>
+                    <p className="mt-2 text-2xl font-bold">{reminderQueueCount}</p>
+                  </div>
+                  <div className="rounded-3xl border border-white/20 bg-white/12 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Visible Results</p>
+                    <p className="mt-2 text-2xl font-bold">{isLoadingAppointments ? "..." : filteredAppointments.length}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+          <h2 className="text-xl font-bold text-emerald-700">Find And Filter</h2>
+          <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             <div className="flex flex-col gap-2">
-              <label htmlFor="appointment-search" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label htmlFor="appointment-search" className="text-sm font-semibold text-slate-700">
                 Search Patient Or ID
               </label>
               <input
@@ -509,19 +551,19 @@ function DoctorAppointmentsPage() {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Ex: Nimali or REQ-901"
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="status-filter" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label htmlFor="status-filter" className="text-sm font-semibold text-slate-700">
                 Status
               </label>
               <select
                 id="status-filter"
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value as AppointmentStatusFilter)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               >
                 {statusFilters.map((status) => (
                   <option key={status} value={status}>
@@ -532,14 +574,14 @@ function DoctorAppointmentsPage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="date-filter" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label htmlFor="date-filter" className="text-sm font-semibold text-slate-700">
                 Date Range
               </label>
               <select
                 id="date-filter"
                 value={dateFilter}
                 onChange={(event) => setDateFilter(event.target.value as DateFilter)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               >
                 <option value="all">All Dates</option>
                 <option value="today">Today</option>
@@ -549,7 +591,7 @@ function DoctorAppointmentsPage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="custom-date" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <label htmlFor="custom-date" className="text-sm font-semibold text-slate-700">
                 Custom Date
               </label>
               <input
@@ -558,57 +600,60 @@ function DoctorAppointmentsPage() {
                 value={customDate}
                 disabled={dateFilter !== "custom"}
                 onChange={(event) => setCustomDate(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white disabled:opacity-50"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 disabled:opacity-50"
               />
             </div>
           </div>
         </section>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Appointment Requests</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{isLoadingAppointments ? "..." : requests.length}</p>
+          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+            <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500" />
+            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Appointment Requests</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{isLoadingAppointments ? "..." : requests.length}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Upcoming Appointments</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{isLoadingAppointments ? "..." : upcoming.length}</p>
+          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+            <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Upcoming Appointments</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{isLoadingAppointments ? "..." : upcoming.length}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Previous Appointments</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{isLoadingAppointments ? "..." : previous.length}</p>
+          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+            <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-sky-500 to-cyan-500" />
+            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Previous Appointments</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{isLoadingAppointments ? "..." : previous.length}</p>
           </div>
         </div>
 
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
           <div className="flex items-center justify-between gap-4 mb-4">
-            <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Appointment Requests</h2>
-            <span className="text-sm text-gray-500 dark:text-gray-400">New requests waiting for your response</span>
+            <h2 className="text-xl font-bold text-emerald-700">Appointment Requests</h2>
+            <span className="text-sm text-slate-500">New requests waiting for your response</span>
           </div>
-          <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+          <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
           {requests.length === 0 ? (
             renderNoDataMessage("No pending requests right now.")
           ) : (
             <div className="space-y-3">
               {requests.map((appointment) => (
-                <div key={appointment.id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4">
+                <div key={appointment.id} className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-emerald-50/60 p-4 shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">{appointment.patientName}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                      <p className="font-semibold text-slate-900">{appointment.patientName}</p>
+                      <p className="mt-1 text-sm text-slate-600">
                         {appointment.reason}
                       </p>
                     </div>
-                    <span className="text-xs font-semibold px-3 py-1 rounded-full w-max bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                    <span className="w-max rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
                       Pending
                     </span>
                   </div>
 
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  <p className="mt-2 text-sm text-slate-500">
                     {appointment.date} • {formatTimeForDisplay(appointment.time)}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{appointment.location}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="mt-1 text-sm text-slate-500">{appointment.location}</p>
+                  <p className="mt-1 text-xs text-slate-500">
                     Requested: {appointment.requestedAt}
                   </p>
 
@@ -625,44 +670,44 @@ function DoctorAppointmentsPage() {
           )}
         </section>
 
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
           <div className="flex items-center justify-between gap-4 mb-4">
-            <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Upcoming Appointments</h2>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <h2 className="text-xl font-bold text-emerald-700">Upcoming Appointments</h2>
+            <span className="text-sm text-slate-500">
               {reminderQueueCount} reminder{reminderQueueCount === 1 ? "" : "s"} due in next 24 hours
             </span>
           </div>
-          <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+          <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
           {upcoming.length === 0 ? (
             renderNoDataMessage("No upcoming appointments scheduled.")
           ) : (
             <div className="space-y-3">
               {upcoming.map((appointment) => (
-                <div key={appointment.id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4">
+                <div key={appointment.id} className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-emerald-50/60 p-4 shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">{appointment.patientName}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{appointment.reason}</p>
+                      <p className="font-semibold text-slate-900">{appointment.patientName}</p>
+                      <p className="mt-1 text-sm text-slate-600">{appointment.reason}</p>
                     </div>
                     <span
-                      className={`text-xs font-semibold px-3 py-1 rounded-full w-max ${
+                      className={`w-max rounded-full px-3 py-1 text-xs font-semibold ${
                         appointment.status === "Accepted"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                          : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-amber-100 text-amber-700"
                       }`}
                     >
                       {appointment.status}
                     </span>
                   </div>
 
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  <p className="mt-2 text-sm text-slate-500">
                     {appointment.date} • {formatTimeForDisplay(appointment.time)}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{appointment.location}</p>
+                  <p className="mt-1 text-sm text-slate-500">{appointment.location}</p>
 
                   {appointment.status === "Accepted" && isReminderSuggested(appointment) && !reminderSentIds.includes(appointment.id) && (
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-2 font-semibold">
+                    <p className="mt-2 text-xs font-semibold text-amber-700">
                       Reminder recommended: this appointment is within the next 24 hours.
                     </p>
                   )}
@@ -702,38 +747,38 @@ function DoctorAppointmentsPage() {
           )}
         </section>
 
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
           <div className="flex items-center justify-between gap-4 mb-4">
-            <h2 className="text-xl font-bold text-green-500 dark:text-green-400">Previous Appointments</h2>
-            <span className="text-sm text-gray-500 dark:text-gray-400">Completed or closed records</span>
+            <h2 className="text-xl font-bold text-emerald-700">Previous Appointments</h2>
+            <span className="text-sm text-slate-500">Completed or closed records</span>
           </div>
-          <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+          <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
           {previous.length === 0 ? (
             renderNoDataMessage("No appointment history yet.")
           ) : (
             <div className="space-y-3">
               {previous.map((appointment) => (
-                <div key={appointment.id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4">
+                <div key={appointment.id} className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-sky-50/60 p-4 shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">{appointment.patientName}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{appointment.reason}</p>
+                      <p className="font-semibold text-slate-900">{appointment.patientName}</p>
+                      <p className="mt-1 text-sm text-slate-600">{appointment.reason}</p>
                     </div>
                     <span
-                      className={`text-xs font-semibold px-3 py-1 rounded-full w-max ${
+                      className={`w-max rounded-full px-3 py-1 text-xs font-semibold ${
                         appointment.status === "Completed"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                          : "bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-slate-200 text-slate-700"
                       }`}
                     >
                       {appointment.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  <p className="mt-2 text-sm text-slate-500">
                     {appointment.date} • {formatTimeForDisplay(appointment.time)}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{appointment.location}</p>
+                  <p className="mt-1 text-sm text-slate-500">{appointment.location}</p>
                   <div className="mt-3">
                     <WhiteButton className="px-4 py-2" onClick={() => void openPatientProfile(appointment.patientId)}>
                       View Patient Profile
@@ -747,26 +792,26 @@ function DoctorAppointmentsPage() {
       </div>
 
       {selectedPatient && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex justify-end" role="dialog" aria-modal="true">
-          <div className="w-full sm:max-w-lg h-full overflow-y-auto bg-white dark:bg-gray-800 shadow-2xl p-6">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/45" role="dialog" aria-modal="true">
+          <div className="h-full w-full overflow-y-auto bg-white p-6 shadow-2xl sm:max-w-lg">
             <div className="flex items-start justify-between gap-4">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Patient Profile</h3>
+              <h3 className="text-xl font-bold text-slate-900">Patient Profile</h3>
               <button
                 type="button"
                 onClick={() => setSelectedPatient(null)}
-                className="text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+                className="text-slate-500 hover:text-slate-800"
                 aria-label="Close profile panel"
               >
                 x
               </button>
             </div>
 
-            <div className="mt-5 space-y-4 text-sm text-gray-700 dark:text-gray-300">
+            <div className="mt-5 space-y-4 text-sm text-slate-700">
               {isLoadingPatientProfile && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">Loading latest patient details...</p>
+                <p className="text-sm text-slate-500">Loading latest patient details...</p>
               )}
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                <p className="font-semibold text-gray-900 dark:text-white">{selectedPatient.fullName}</p>
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <p className="font-semibold text-slate-900">{selectedPatient.fullName}</p>
                 <p className="mt-1">Patient ID: {selectedPatient.patientId}</p>
                 <p>Age: {selectedPatient.age ?? "Not available"} • Gender: {selectedPatient.gender || "Not available"}</p>
                 <p>Blood Group: {selectedPatient.bloodGroup}</p>
@@ -775,16 +820,16 @@ function DoctorAppointmentsPage() {
                 <p>Last Visit: {selectedPatient.lastVisit}</p>
               </div>
 
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white">Clinical Notes</h4>
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <h4 className="font-semibold text-slate-900">Clinical Notes</h4>
                 <p className="mt-2"><span className="font-semibold">Allergies:</span> {selectedPatient.allergies.join(", ")}</p>
                 <p className="mt-1"><span className="font-semibold">Known Conditions:</span> {selectedPatient.conditions.join(", ")}</p>
                 <p className="mt-1"><span className="font-semibold">Current Medications:</span> {selectedPatient.currentMedications.join(", ")}</p>
               </div>
 
-              <div className="rounded-lg border border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/30 p-4">
-                <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">Medical Records</h4>
-                <p className="mt-2 text-yellow-700 dark:text-yellow-300">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <h4 className="font-semibold text-amber-800">Medical Records</h4>
+                <p className="mt-2 text-amber-700">
                   Medical records module is not implemented yet. This section is ready to connect once backend records APIs are available.
                 </p>
               </div>
@@ -794,10 +839,10 @@ function DoctorAppointmentsPage() {
       )}
 
       {rescheduleTarget && (
-        <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <div className="w-full max-w-md rounded-lg bg-white dark:bg-gray-800 shadow-2xl p-6">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/55 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-[2rem] border border-white/80 bg-white p-6 shadow-2xl">
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Reschedule Appointment</h3>
+              <h3 className="text-xl font-bold text-slate-900">Reschedule Appointment</h3>
               <button
                 type="button"
                 onClick={() => {
@@ -805,20 +850,20 @@ function DoctorAppointmentsPage() {
                   setRescheduleDate("");
                   setRescheduleTime("");
                 }}
-                className="text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+                className="text-slate-500 hover:text-slate-800"
                 aria-label="Close reschedule dialog"
               >
                 x
               </button>
             </div>
 
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+            <p className="mt-2 text-sm text-slate-600">
               {rescheduleTarget.patientName} ({rescheduleTarget.id})
             </p>
 
             <div className="mt-4 space-y-3">
               <div className="flex flex-col gap-2">
-                <label htmlFor="reschedule-date" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label htmlFor="reschedule-date" className="text-sm font-semibold text-slate-700">
                   New Date
                 </label>
                 <input
@@ -829,12 +874,12 @@ function DoctorAppointmentsPage() {
                     setRescheduleDate(event.target.value);
                     setRescheduleTime("");
                   }}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
                 />
               </div>
 
               <div className="flex flex-col gap-2">
-                <label htmlFor="reschedule-time" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <label htmlFor="reschedule-time" className="text-sm font-semibold text-slate-700">
                   New Time Slot
                 </label>
                 <select
@@ -842,7 +887,7 @@ function DoctorAppointmentsPage() {
                   value={rescheduleTime}
                   disabled={isLoadingRescheduleSlots || availableSlotsForReschedule.length === 0}
                   onChange={(event) => setRescheduleTime(event.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
                 >
                   <option value="">Select a slot</option>
                   {availableSlotsForReschedule.map((slot) => (
@@ -852,10 +897,10 @@ function DoctorAppointmentsPage() {
                   ))}
                 </select>
                 {isLoadingRescheduleSlots && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Loading available slots...</p>
+                  <p className="text-xs text-slate-500">Loading available slots...</p>
                 )}
                 {!isLoadingRescheduleSlots && availableSlotsForReschedule.length === 0 && (
-                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                  <p className="text-xs text-amber-700">
                     No published slot is available for the selected date.
                   </p>
                 )}
