@@ -42,7 +42,7 @@ type DetailCardProps = {
 
 function DetailCard({ label, value, accentClassName = 'from-emerald-500 to-teal-500' }: DetailCardProps) {
     return (
-        <div className="rounded-3xl border border-white/70 bg-white/90 p-4 shadow-sm shadow-emerald-100/40">
+        <div className="rounded-3xl border border-white/70 bg-white/90 p-2 shadow-sm shadow-emerald-100/40">
             <div className={`h-1.5 w-14 rounded-full bg-gradient-to-r ${accentClassName}`} />
             <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
             <p className="mt-2 break-words text-lg font-bold text-slate-900">{value}</p>
@@ -162,8 +162,8 @@ export default function UserProfile() {
 
                                     <div className="mt-4 grid gap-3">
                                         <DetailCard label="Blood Type" value={bloodType} />
-                                        <DetailCard label="Phone" value={patientPhone} accentClassName="from-teal-500 to-cyan-500" />
-                                        <DetailCard label="City" value={patientCity} accentClassName="from-sky-500 to-blue-500" />
+                                        {/* <DetailCard label="Phone" value={patientPhone} accentClassName="from-teal-500 to-cyan-500" /> */}
+                                        {/* <DetailCard label="City" value={patientCity} accentClassName="from-sky-500 to-blue-500" /> */}
                                         <DetailCard label="Gender" value={patientGender} accentClassName="from-emerald-500 to-lime-500" />
                                     </div>
                                 </div>
@@ -183,6 +183,14 @@ export default function UserProfile() {
                                     <p className="text-sm text-slate-300">Address</p>
                                     <p className="mt-1 text-lg font-semibold leading-7">{patientAddress}</p>
                                 </div>
+                                <div>
+                                    <p className="text-sm text-slate-300">Email</p>
+                                    <p className="mt-1 text-lg font-semibold leading-7">{patientEmail}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-slate-300">Phone number</p>
+                                    <p className="mt-1 text-lg font-semibold leading-7">{patientPhone}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -193,11 +201,11 @@ export default function UserProfile() {
                             <p className="mt-1 text-sm text-slate-600">{emergencyPhone}</p>
                         </div>
 
-                        <div className="rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-lg shadow-emerald-100/40">
+                        {/* <div className="rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-lg shadow-emerald-100/40">
                             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-700">Insurance</p>
                             <p className="mt-4 text-lg font-bold text-slate-900">{insuranceProvider}</p>
                             <p className="mt-2 text-sm text-slate-600">Policy {insurancePolicy}</p>
-                        </div>
+                        </div> */}
                     </aside>
                 </div>
 
@@ -238,13 +246,13 @@ export default function UserProfile() {
                     </div>
 
                     <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-7">
-                        <h3 className="text-2xl font-bold text-slate-900">Emergency & Insurance</h3>
+                        <h3 className="text-2xl font-bold text-slate-900">Emergency Contact</h3>
                         <p className="mt-2 text-sm text-slate-600">Backup contact and coverage details for quicker assistance.</p>
                         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <DetailCard label="Emergency Contact" value={emergencyContact} />
                             <DetailCard label="Relation" value={emergencyRelation} accentClassName="from-teal-500 to-cyan-500" />
                             <DetailCard label="Emergency Phone" value={emergencyPhone} accentClassName="from-sky-500 to-blue-500" />
-                            <DetailCard label="Policy Number" value={insurancePolicy} accentClassName="from-emerald-500 to-lime-500" />
+                            {/* <DetailCard label="Policy Number" value={insurancePolicy} accentClassName="from-emerald-500 to-lime-500" /> */}
                         </div>
                     </div>
                 </section>
