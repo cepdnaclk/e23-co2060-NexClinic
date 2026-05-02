@@ -94,6 +94,7 @@ const FieldCard = ({
 export default function EditDoctorProfilePage() {
     const router = useRouter();
     const [formData, setFormData] = useState<DoctorFormData | null>(null);
+    const [profileImage, setProfileImage] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -123,10 +124,20 @@ export default function EditDoctorProfilePage() {
                 const formattedData = mapProfileToForm(data);
                 setFormData(formattedData);
 
-                // Check for draft
+                // Check for draft (support legacy draft as plain formData or new { formData, profileImage })
                 const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
                 if (savedDraft) {
-                    setFormData(JSON.parse(savedDraft));
+                    try {
+                        const parsed = JSON.parse(savedDraft);
+                        if (parsed && parsed.formData) {
+                            setFormData(parsed.formData);
+                            setProfileImage(parsed.profileImage || null);
+                        } else {
+                            setFormData(parsed);
+                        }
+                    } catch (e) {
+                        // if parse fails, ignore
+                    }
                 }
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Failed to load profile");
@@ -149,15 +160,35 @@ export default function EditDoctorProfilePage() {
         );
     };
 
+    const readFileAsDataUrl = (file: File) =>
+        new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+    const handleImageChange = async (file?: File) => {
+        if (!file) return;
+        try {
+            const dataUrl = await readFileAsDataUrl(file);
+            setProfileImage(dataUrl);
+        } catch (e) {
+            console.error("Failed to read image", e);
+        }
+    };
+
     const handleSaveDraft = () => {
         if (!formData) return;
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(formData));
+        // persist both form data and profile image for preview later
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ formData, profileImage }));
         setSuccessMessage("Draft saved successfully!");
         setTimeout(() => setSuccessMessage(""), 3000);
     };
 
     const handleReset = () => {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
+        setProfileImage(null);
         window.location.reload();
     };
 
@@ -221,6 +252,26 @@ export default function EditDoctorProfilePage() {
                                 subtitle="Update your basic professional details"
                             />
                             <div className="space-y-4">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-28 h-28 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center ring-1 ring-white/60">
+                                        {profileImage ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={profileImage} alt="Profile preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="text-gray-400 text-sm">No photo</div>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <label className="text-sm font-semibold text-gray-800">Profile Photo</label>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleImageChange(e.target.files?.[0])}
+                                            className="mt-2"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-2">Upload a recent headshot. Preview saved in draft.</p>
+                                    </div>
+                                </div>
                                 <FieldCard
                                     label="Full Name"
                                     value={formData.fullName}
@@ -334,9 +385,19 @@ export default function EditDoctorProfilePage() {
                             <div className="relative space-y-4">
                                 <h3 className="text-lg font-black text-gray-900">Profile Summary</h3>
                                 <div className="space-y-3 text-sm">
-                                    <div>
-                                        <p className="text-gray-600">Full Name</p>
-                                        <p className="font-semibold text-gray-900">{formData.fullName || "Not provided"}</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                                            {profileImage ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img src={profileImage} alt="preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="text-gray-400 text-sm">No photo</div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-600">Full Name</p>
+                                            <p className="font-semibold text-gray-900">{formData.fullName || "Not provided"}</p>
+                                        </div>
                                     </div>
                                     <div>
                                         <p className="text-gray-600">Specialization</p>
