@@ -100,7 +100,7 @@ function SectionHeader({ title, description }: { title: string; description: str
 
 function FieldCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-emerald-100/20">
+    <div className="rounded-2xl border border-white/80 bg-white/85 p-4 shadow-sm shadow-emerald-100/20 backdrop-blur-sm">
       <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
         {label}
       </label>
@@ -228,33 +228,52 @@ export default function UserEditProfilePage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(20,184,166,0.12),_transparent_24%),linear-gradient(180deg,#effbf6_0%,#f8fcfb_45%,#ffffff_100%)] pb-12">
-      <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-emerald-100/60 to-transparent" />
+    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(20,184,166,0.14),_transparent_24%),linear-gradient(180deg,#eefbf6_0%,#f7fcfa_45%,#ffffff_100%)] pb-10">
+      <div className="absolute inset-0 bg-[url('/images/user-registration-bg.jpg')] bg-cover bg-center bg-no-repeat opacity-[0.08]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/88 via-white/82 to-white/95" aria-hidden="true" />
+      <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-emerald-100/50 to-transparent" />
       <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-emerald-200/25 blur-3xl" />
       <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-teal-200/20 blur-3xl" />
 
-      <div className="relative mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8 lg:pt-10">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-emerald-700">Patient Settings</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+      <div className="relative mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
+        <div className="relative mb-8 overflow-hidden rounded-[2.5rem] border border-emerald-200/40 bg-[url('/images/user-registration-bg.jpg')] bg-cover bg-center bg-no-repeat shadow-[0_20px_60px_rgba(16,185,129,0.15)]">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/90 via-emerald-500/85 to-teal-600/85 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-emerald-900/10" />
+          <div className="relative px-5 py-10 sm:px-8 sm:py-14 lg:px-10 lg:py-16">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-white backdrop-blur-sm">
+              <span className="h-2 w-2 rounded-full bg-white" />
+              PATIENT PROFILE EDITOR
+            </div>
+            <h1 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-5xl">
               Update your profile with confidence
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+            <p className="mt-4 max-w-2xl text-base leading-7 text-white/95 sm:text-lg">
               Keep your contact, health, and emergency details organized in a calm, easy-to-scan editor.
             </p>
           </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <BlackButton className="w-full rounded-full px-6 py-3 sm:w-auto" onClick={() => router.push('/user-self/profile')}>
-              Back to Profile
-            </BlackButton>
-          </div>
         </div>
 
-        <form onSubmit={handleSaveDraft} className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-          <section className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/90 shadow-[0_20px_60px_rgba(16,185,129,0.12)] backdrop-blur">
-            <div className="p-6 sm:p-8 lg:p-10">
+        <div className="mb-6 flex justify-end">
+          <BlackButton className="rounded-full px-6 py-3" onClick={() => router.push('/user-self/profile')}>
+            Back to Profile
+          </BlackButton>
+        </div>
+
+        <form onSubmit={handleSaveDraft} className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
+          <section className="overflow-hidden rounded-[2.25rem] border border-white/80 bg-white/88 shadow-[0_24px_70px_rgba(16,185,129,0.12)] backdrop-blur">
+            <div className="p-5 sm:p-6 lg:p-8">
+              <div className="mb-5 flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                  Secure draft workspace
+                </span>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                  {loading ? 'Syncing profile data' : 'Ready to edit'}
+                </span>
+                <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 ring-1 ring-teal-200">
+                  Local changes only
+                </span>
+              </div>
+
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-center gap-4">
                   <div className="rounded-[1.75rem] bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-1 shadow-xl shadow-emerald-200/40">
@@ -276,8 +295,9 @@ export default function UserEditProfilePage() {
 
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">Profile photo</p>
-                    <h2 className="mt-1 text-2xl font-bold text-slate-900">{formData.name || 'Your Name'}</h2>
+                    <h2 className="mt-1 text-2xl font-bold text-slate-900">{formData.name || 'Your name'}</h2>
                     <p className="mt-1 text-sm text-slate-600">{formData.email || 'email@example.com'}</p>
+                    <p className="mt-1 text-xs text-slate-500">A simple, calm place to update personal details.</p>
                   </div>
                 </div>
 
@@ -288,7 +308,7 @@ export default function UserEditProfilePage() {
               </div>
 
               {loading ? (
-                <div className="mt-8 rounded-3xl border border-dashed border-emerald-200 bg-emerald-50/60 p-6 text-sm text-slate-600">
+                <div className="mt-7 rounded-3xl border border-dashed border-emerald-200 bg-emerald-50/60 p-6 text-sm text-slate-600">
                   Loading your current profile details...
                 </div>
               ) : (
@@ -296,7 +316,7 @@ export default function UserEditProfilePage() {
                   {error ? <p className="mt-6 text-sm font-medium text-rose-600">{error}</p> : null}
                   {notice ? <p className="mt-6 text-sm font-medium text-emerald-700">{notice}</p> : null}
 
-                  <div className="mt-8 space-y-8">
+                  <div className="mt-7 space-y-7">
                     <section>
                       <SectionHeader
                         title="Personal details"
@@ -541,8 +561,8 @@ export default function UserEditProfilePage() {
                       </div>
                     </section>
 
-                    <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-sm text-slate-600">
+                    <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="max-w-xl text-sm text-slate-600">
                         Changes are saved locally on this device until a profile sync endpoint is available.
                       </p>
                       <div className="flex flex-col gap-3 sm:flex-row">
@@ -561,20 +581,24 @@ export default function UserEditProfilePage() {
           </section>
 
           <aside className="space-y-4">
-            <div className="rounded-[2rem] border border-slate-900/5 bg-slate-950 p-6 text-white shadow-[0_18px_50px_rgba(15,23,42,0.18)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-200">Helpful summary</p>
-              <div className="mt-5 space-y-4">
-                <div>
-                  <p className="text-sm text-slate-300">Profile completeness</p>
-                  <p className="mt-1 text-2xl font-bold">Comfortably editable</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-300">Current name</p>
-                  <p className="mt-1 break-words text-lg font-semibold">{formData.name || 'Not set yet'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-300">Current email</p>
-                  <p className="mt-1 break-words text-lg font-semibold">{formData.email || 'Not set yet'}</p>
+            <div className="overflow-hidden rounded-[2rem] border border-emerald-100 bg-white/85 shadow-[0_18px_50px_rgba(16,185,129,0.12)] backdrop-blur-sm">
+              <div className="bg-[url('/images/user-registration-bg.jpg')] bg-cover bg-center bg-no-repeat p-6">
+                <div className="rounded-[1.5rem] border border-white/70 bg-white/78 p-5 text-slate-900 shadow-lg backdrop-blur-md">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">Helpful summary</p>
+                  <div className="mt-5 space-y-4">
+                    <div>
+                      <p className="text-sm text-slate-600">Profile completeness</p>
+                      <p className="mt-1 text-2xl font-bold text-slate-900">Comfortably editable</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-600">Current name</p>
+                      <p className="mt-1 break-words text-lg font-semibold text-slate-900">{formData.name || 'Not set yet'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-600">Current email</p>
+                      <p className="mt-1 break-words text-lg font-semibold text-slate-900">{formData.email || 'Not set yet'}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
