@@ -160,7 +160,7 @@ export default function UserProfile() {
                                     {loading && <p className="mt-3 text-sm font-medium text-emerald-700">Loading profile details...</p>}
                                     {error && <p className="mt-3 text-sm font-medium text-rose-600">{error}</p>}
 
-                                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                    <div className="mt-4 grid gap-3">
                                         <DetailCard label="Blood Type" value={bloodType} />
                                         <DetailCard label="Phone" value={patientPhone} accentClassName="from-teal-500 to-cyan-500" />
                                         <DetailCard label="City" value={patientCity} accentClassName="from-sky-500 to-blue-500" />
