@@ -581,7 +581,7 @@ export default function UserEditProfilePage() {
           </section>
 
           <aside className="space-y-4">
-            <div className="overflow-hidden rounded-[2rem] border border-emerald-100 bg-white/85 shadow-[0_18px_50px_rgba(16,185,129,0.12)] backdrop-blur-sm">
+            {/* <div className="overflow-hidden rounded-[2rem] border border-emerald-100 bg-white/85 shadow-[0_18px_50px_rgba(16,185,129,0.12)] backdrop-blur-sm">
               <div className="bg-[url('/images/user-registration-bg.jpg')] bg-cover bg-center bg-no-repeat p-6">
                 <div className="rounded-[1.5rem] border border-white/70 bg-white/78 p-5 text-slate-900 shadow-lg backdrop-blur-md">
                   <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">Helpful summary</p>
@@ -601,7 +601,7 @@ export default function UserEditProfilePage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             <div className="rounded-[2rem] border border-emerald-100 bg-white/90 p-6 shadow-lg shadow-emerald-100/40">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">How this works</p>

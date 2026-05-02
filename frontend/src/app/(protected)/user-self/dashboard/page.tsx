@@ -242,7 +242,7 @@ export default function UserDashboard() {
                                     </div>
                                 </div>
 
-                                <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
+                                {/* <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
                                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-100">Care snapshot</p>
                                     <div className="mt-3 space-y-2 text-sm text-green-50">
                                         <div className="flex items-center justify-between gap-3">
@@ -258,7 +258,7 @@ export default function UserDashboard() {
                                             <span className="font-semibold text-white">Protected</span>
                                         </div>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
 
@@ -335,12 +335,12 @@ export default function UserDashboard() {
                                     <p className="mt-1 text-4xl font-bold tracking-tight text-slate-900">{item.value}</p>
                                 </div>
                             </div>
-                            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                            {/* <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                                 <div
                                     className={`h-full rounded-full ${index === 0 ? "bg-green-500" : index === 1 ? "bg-emerald-500" : "bg-teal-500"}`}
                                     style={{ width: `${Math.max(35, (Number(item.value) + 1) * 24)}%` }}
                                 />
-                            </div>
+                            </div> */}
                         </div>
                     ))}
                 </section>
