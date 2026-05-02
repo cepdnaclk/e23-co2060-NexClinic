@@ -119,7 +119,7 @@ export default function DoctorsDirectory() {
 
   return (
     <>
-      <div className="fixed w-full top-0 left-0 z-10">
+      <div className="fixed w-full top-0 left-0 z-20">
         <RoleBasedNavbar />
       </div>
       <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_10%,rgba(16,185,129,0.20),transparent_35%),radial-gradient(circle_at_90%_20%,rgba(45,212,191,0.18),transparent_35%),linear-gradient(180deg,#f7fcfa_0%,#eef7f3_55%,#e9f5f2_100%)] pt-24 sm:pt-28 pb-14">
