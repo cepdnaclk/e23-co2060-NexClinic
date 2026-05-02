@@ -108,7 +108,7 @@ export default function UserProfile() {
     const profileImage = profileData?.patient.profileImage?.trim() ? profileData.patient.profileImage : '/images/user.png';
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(20,184,166,0.14),_transparent_24%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_45%,#ffffff_100%)] pb-10">
+        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(20,184,166,0.14),_transparent_24%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_45%,#ffffff_100%)] pb-6">
             <div
                 className="absolute inset-0 bg-[url('/images/user-login-bg.png')] bg-cover bg-center bg-no-repeat opacity-10"
                 aria-hidden="true"
@@ -118,8 +118,8 @@ export default function UserProfile() {
             <div className="absolute -left-20 top-24 h-64 w-64 rounded-full bg-emerald-200/30 blur-3xl" />
             <div className="absolute right-0 top-40 h-72 w-72 rounded-full bg-teal-200/25 blur-3xl" />
 
-            <div className="relative mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8 lg:pt-10">
-                <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="relative mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
+                <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Patient Profile</p>
                         <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Personal care overview</h1>
@@ -132,9 +132,9 @@ export default function UserProfile() {
                     </GreenButton>
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+                <div className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
                     <section className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 shadow-[0_20px_60px_rgba(16,185,129,0.12)] backdrop-blur">
-                        <div className="relative p-6 sm:p-8 lg:p-10">
+                        <div className="relative p-5 sm:p-6 lg:p-8">
                             <div className="absolute right-0 top-0 h-40 w-40 translate-x-1/3 -translate-y-1/3 rounded-full bg-emerald-100/60 blur-3xl" />
                             <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-8">
                                 <div className="mx-auto shrink-0 rounded-[2rem] bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-1 shadow-xl shadow-emerald-200/50 lg:mx-0">
@@ -160,7 +160,7 @@ export default function UserProfile() {
                                     {loading && <p className="mt-3 text-sm font-medium text-emerald-700">Loading profile details...</p>}
                                     {error && <p className="mt-3 text-sm font-medium text-rose-600">{error}</p>}
 
-                                    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                                         <DetailCard label="Blood Type" value={bloodType} />
                                         <DetailCard label="Phone" value={patientPhone} accentClassName="from-teal-500 to-cyan-500" />
                                         <DetailCard label="City" value={patientCity} accentClassName="from-sky-500 to-blue-500" />
@@ -201,7 +201,7 @@ export default function UserProfile() {
                     </aside>
                 </div>
 
-                <section className="mt-6 rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-8">
+                <section className="mt-5 rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-7">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <h3 className="text-2xl font-bold text-slate-900">Health Snapshot</h3>
@@ -209,7 +209,7 @@ export default function UserProfile() {
                         </div>
                     </div>
 
-                    <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
                             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">Allergies</p>
                             <p className="mt-3 text-base leading-7 text-slate-700">{allergies}</p>
@@ -225,11 +225,11 @@ export default function UserProfile() {
                     </div>
                 </section>
 
-                <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-8">
+                <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-7">
                         <h3 className="text-2xl font-bold text-slate-900">Personal Information</h3>
                         <p className="mt-2 text-sm text-slate-600">Basic contact and location details used across the dashboard.</p>
-                        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <DetailCard label="Phone" value={patientPhone} />
                             <DetailCard label="Email" value={patientEmail} accentClassName="from-teal-500 to-cyan-500" />
                             <DetailCard label="City" value={patientCity} accentClassName="from-sky-500 to-blue-500" />
@@ -237,10 +237,10 @@ export default function UserProfile() {
                         </div>
                     </div>
 
-                    <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-8">
+                    <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-7">
                         <h3 className="text-2xl font-bold text-slate-900">Emergency & Insurance</h3>
                         <p className="mt-2 text-sm text-slate-600">Backup contact and coverage details for quicker assistance.</p>
-                        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <DetailCard label="Emergency Contact" value={emergencyContact} />
                             <DetailCard label="Relation" value={emergencyRelation} accentClassName="from-teal-500 to-cyan-500" />
                             <DetailCard label="Emergency Phone" value={emergencyPhone} accentClassName="from-sky-500 to-blue-500" />
