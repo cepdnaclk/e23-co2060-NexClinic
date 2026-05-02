@@ -172,11 +172,11 @@ const PatientAppointmentPage = () => {
 
     const renderTable = (items: Appointment[], emptyText: string) => {
         if (loading) {
-            return <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded-lg text-gray-500 dark:text-gray-300 text-center">Loading appointments...</div>;
+            return <div className="bg-gray-200 dark:bg-gray-700 p-6 rounded-lg text-black dark:text-gray-300 text-center" style={{ color: '#000000' }}>Loading appointments...</div>
         }
 
         if (items.length === 0) {
-            return <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded-lg text-gray-500 dark:text-gray-300 text-center">{emptyText}</div>;
+            return <div className="bg-gray-200 dark:bg-gray-700 p-6 rounded-lg text-black dark:text-gray-300 text-center" style={{ color: '#000000' }}>{emptyText}</div>
         }
 
         return (
@@ -194,20 +194,20 @@ const PatientAppointmentPage = () => {
                             <div className="flex-1">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{appt.doctorName}</h4>
-                                        <p className="text-sm text-gray-500 dark:text-gray-300">{appt.hospital}</p>
+                                        <h4 className="text-lg font-semibold text-black dark:text-gray-100" style={{ color: '#000000' }}>{appt.doctorName}</h4>
+                                        <p className="text-sm text-black dark:text-gray-300" style={{ color: '#000000' }}>{appt.hospital}</p>
                                     </div>
 
                                     <div className="text-right">
                                         <div className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusPillClass(appt.status)}`}>{appt.status}</div>
-                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">Requested: {new Date(appt.requestedAt).toLocaleDateString()}</div>
+                                        <div className="text-xs text-black dark:text-gray-400 mt-2" style={{ color: '#000000' }}>Requested: {new Date(appt.requestedAt).toLocaleDateString()}</div>
                                     </div>
                                 </div>
 
                                 <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                    <div className="text-sm text-gray-700 dark:text-gray-200">
+                                    <div className="text-sm text-black dark:text-gray-200" style={{ color: '#000000' }}>
                                         <div className="font-medium">{appt.date} • {formatTimeForDisplay(appt.time)}</div>
-                                        {appt.reason && <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{appt.reason}</div>}
+                                        {appt.reason && <div className="text-xs text-black dark:text-gray-400 mt-1" style={{ color: '#000000' }}>{appt.reason}</div>}
                                     </div>
 
                                     <div className="flex items-center gap-2">
@@ -223,7 +223,7 @@ const PatientAppointmentPage = () => {
                                                 {isCancelling ? "Cancelling..." : "Cancel"}
                                             </button>
                                         ) : (
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">—</span>
+                                            <span className="text-xs text-black dark:text-gray-400">—</span>
                                         )}
                                     </div>
                                 </div>
@@ -236,17 +236,17 @@ const PatientAppointmentPage = () => {
     };
 
     return (
-        <div className="relative flex flex-col items-center w-full min-h-screen bg-gray-50 dark:bg-gray-900 py-8 transition-colors">
+        <div className="relative flex flex-col items-center w-full min-h-screen py-8 transition-colors" style={{ background: 'linear-gradient(180deg, #ecfdf5 0%, #f8fffb 60%)' }}>
             <div aria-hidden className="absolute inset-0 -z-10">
-                <img src="/images/main-bg.jpg" alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 dark:opacity-10 filter blur-sm" />
+                <img src="/images/hexagons.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 dark:opacity-12 filter blur-sm" />
                 <div className="absolute -left-40 -top-32 w-96 h-96 rounded-full bg-gradient-to-br from-green-200 to-transparent opacity-40 dark:from-green-900 dark:opacity-30 blur-2xl transform rotate-12" />
                 <div className="absolute -right-40 -bottom-32 w-96 h-96 rounded-full bg-gradient-to-br from-teal-100 to-transparent opacity-30 dark:from-teal-800 dark:opacity-20 blur-2xl transform -rotate-12" />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/40 dark:to-black/30 mix-blend-overlay" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-emerald-50/30 dark:to-black/20 mix-blend-overlay" />
             </div>
-
-            <div className="w-full max-w-4xl bg-white/90 dark:bg-gray-800/70 rounded-2xl shadow-lg p-4 md:p-8 flex flex-col gap-6 backdrop-blur-sm transition-colors">
+            <div className="w-full max-w-6xl px-6 py-8 rounded-3xl border border-emerald-100/30 shadow-lg transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}>
+                <div className="w-full rounded-2xl shadow-sm p-4 md:p-8 flex flex-col gap-6 backdrop-blur-sm" style={{ backgroundColor: '#ffffff' }}>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
-                    <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">My Appointments</h2>
+                    <h2 className="text-4xl font-extrabold text-black dark:text-gray-100" style={{ color: '#000000' }}>My Appointments</h2>
                     <Link href="/user-self/book-appointment">
                         <button className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition-all">
                             + Book Appointment
@@ -254,9 +254,9 @@ const PatientAppointmentPage = () => {
                     </Link>
                 </div>
                 <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <span className="font-medium text-gray-700 dark:text-gray-200">Sort by:</span>
+                    <span className="font-medium text-black dark:text-gray-200" style={{ color: '#000000' }}>Sort by:</span>
                     <select
-                        className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                        className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-gray-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as SortBy)}
                     >
@@ -270,20 +270,21 @@ const PatientAppointmentPage = () => {
                 {toast && <div className="text-green-600 dark:text-green-300 text-sm font-semibold">{toast}</div>}
 
                 <div>
-                    <h3 className="text-xl font-semibold mb-3 text-gray-700 dark:text-gray-200">Pending Requests</h3>
+                    <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Pending Requests</h3>
                     {renderTable(requests, "No pending requests.")}
                 </div>
 
                 <div>
-                    <h3 className="text-xl font-semibold mb-3 text-gray-700 dark:text-gray-200">Upcoming Appointments</h3>
+                    <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Upcoming Appointments</h3>
                     {renderTable(upcoming, "No upcoming appointments.")}
                 </div>
 
                 <div>
-                    <h3 className="text-xl font-semibold mb-3 text-gray-700 dark:text-gray-200">Appointment History</h3>
+                    <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Appointment History</h3>
                     {renderTable(previous, "No appointment history yet.")}
                 </div>
             </div>
+        </div>
         </div>
     );
 };
