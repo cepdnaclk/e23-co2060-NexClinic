@@ -113,18 +113,6 @@ function DoctorDashboard() {
 
                                 {error && <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</p>}
 
-                                <div className="mt-6 flex flex-wrap gap-2">
-                                    <span className="rounded-full bg-white/90 px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200">
-                                        {dashboardData?.doctor.specialization || 'Specialization unavailable'}
-                                    </span>
-                                    <span className="rounded-full bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                                        {loading ? 'Syncing dashboard data' : 'Live dashboard'}
-                                    </span>
-                                    <span className="rounded-full bg-cyan-50 px-4 py-2 text-xs font-semibold text-cyan-700 ring-1 ring-cyan-200">
-                                        {loading ? '...' : `${stats?.todayAppointments ?? 0} appointments today`}
-                                    </span>
-                                </div>
-
                                 <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
                                     <div className="rounded-3xl border border-white/70 bg-white/90 p-4 shadow-sm shadow-emerald-100/30">
                                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Today</p>
