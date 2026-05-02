@@ -60,7 +60,14 @@ const quickStories: Story[] = [
 
 export default function Home() {
   return (
-            <main className="min-h-screen w-full bg-[#f5faf7] text-gray-900">
+            <main className="relative min-h-screen w-full overflow-hidden bg-[#f5faf7] text-gray-900">
+                <div className="pointer-events-none absolute inset-0 -z-10">
+                    <img className="h-full w-full object-cover opacity-[0.24]" src="/images/doctor-registration-bg.jpg" alt="" aria-hidden="true" />
+                    <img className="absolute inset-0 h-full w-full object-cover opacity-[0.14]" src="/images/main-bg.jpg" alt="" aria-hidden="true" />
+                    <img className="absolute inset-0 h-full w-full object-cover opacity-[0.09]" src="/images/hexagons.png" alt="" aria-hidden="true" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_8%_10%,rgba(16,185,129,0.24),transparent_34%),radial-gradient(circle_at_90%_16%,rgba(34,211,238,0.20),transparent_35%),radial-gradient(circle_at_50%_100%,rgba(16,185,129,0.12),transparent_40%),linear-gradient(180deg,rgba(245,250,247,0.76),rgba(245,250,247,0.90))]" />
+                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/50 to-transparent" />
+                </div>
                 <div title="home-nav-bar" className="fixed w-full top-0 left-0 z-20">
                     <RoleBasedNavbar />
         </div>
