@@ -138,8 +138,15 @@ function DoctorProfilePage() {
     const isVerified = profileData?.doctor.isVerified ?? false;
 
     return (
-        <div className="bg-gray-100 dark:bg-gray-900 justify-center gap-4 min-h-screen">
-            <div title="profile-header-card" className="flex flex-col xl:flex-row items-center justify-between gap-6 xl:gap-8 mx-4 mt-4 sm:mt-8 bg-white dark:bg-gray-800 p-4 sm:p-8 xl:p-12 rounded-lg shadow-md">
+        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_28%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)]">
+            <div className="absolute inset-0 bg-[url('/images/doctor-login-bg.png')] bg-cover bg-center bg-no-repeat opacity-[0.08]" aria-hidden="true" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/88 via-white/82 to-white/95" aria-hidden="true" />
+            <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-emerald-100/50 to-transparent" aria-hidden="true" />
+            <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-emerald-200/25 blur-3xl" aria-hidden="true" />
+            <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-teal-200/20 blur-3xl" aria-hidden="true" />
+
+            <div className="relative mx-auto max-w-7xl justify-center gap-4">
+            <div title="profile-header-card" className="flex flex-col xl:flex-row items-center justify-between gap-6 xl:gap-8 mx-4 mt-4 sm:mt-8 bg-white/90 shadow-[0_20px_60px_rgba(16,185,129,0.12)] backdrop-blur p-4 sm:p-8 xl:p-12 rounded-[2rem] border border-white/80">
                 <div title="left-column" className="flex flex-col sm:flex-row gap-4 items-center xl:pl-4 justify-center">
                     <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover" />
                     <div title="name-spec-place" className="flex flex-col gap-2 text-center sm:text-left">
@@ -179,9 +186,9 @@ function DoctorProfilePage() {
                 </div>
             </div>
 
-            <div title="consultation-fees-section" className="bg-white dark:bg-gray-800 p-4 sm:p-6 lg:p-8 rounded-lg shadow-md mb-4 mx-4 mt-4">
-                <h2 className="text-xl sm:text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Consultation Fees and Active hours</h2>
-                <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+            <div title="consultation-fees-section" className="mx-4 mt-6 rounded-[2rem] border border-white/80 bg-white/90 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-6 lg:p-8">
+                <h2 className="mb-4 text-xl font-bold text-emerald-700 sm:text-2xl">Consultation Fees and Active hours</h2>
+                <div className="my-4 flex w-full border-t border-emerald-100"></div>
                 <div className="grid md:grid-cols-2 gap-6">
                     <div className="flex flex-col">
                         <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">
@@ -200,7 +207,7 @@ function DoctorProfilePage() {
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Full consultation and examination</p>
                     </div>
                 </div>
-                <div className="mt-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
                     <div className="text-gray-600 dark:text-gray-300 text-sm">
                         <span className="font-semibold">Usually available times for Online Advice Chats:</span>
                         <ul className="flex flex-col list-disc pl-6 gap-2 mt-2">
@@ -214,12 +221,12 @@ function DoctorProfilePage() {
 
             <div title="profile-content-section" className="flex flex-col lg:flex-row mx-4 my-6 gap-4">
 
-                <div title="professional-details" className="w-full lg:w-1/2 bg-white dark:bg-gray-800 p-4 sm:p-8 rounded-lg shadow-md">
+                <div title="professional-details" className="w-full rounded-[2rem] border border-white/80 bg-white/90 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-8 lg:w-1/2">
                     <div title="Title">
-                        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Professional Details</h2>
+                        <h2 className="mb-4 text-xl font-bold text-emerald-700 sm:text-2xl">Professional Details</h2>
                     </div>
 
-                    <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+                    <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
                     <div title="SLMC-reg-ID" className="flex flex-col sm:flex-row my-2 items-start sm:items-center justify-between gap-2 sm:gap-4">
                         <div className="text-gray-600 dark:text-gray-400">
@@ -263,12 +270,12 @@ function DoctorProfilePage() {
 
                 </div>
 
-                <div title="personal-info" className="w-full lg:w-1/2 bg-white dark:bg-gray-800 p-4 sm:p-8 rounded-lg shadow-md">
+                <div title="personal-info" className="w-full rounded-[2rem] border border-white/80 bg-white/90 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-8 lg:w-1/2">
                     <div title="Title">
-                        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Personal Information</h2>
+                        <h2 className="mb-4 text-xl font-bold text-emerald-700 sm:text-2xl">Personal Information</h2>
                     </div>
 
-                    <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+                    <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
                     <div title="Email" className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
                         <p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Email Address:</p>
@@ -287,6 +294,7 @@ function DoctorProfilePage() {
 
                 </div>
 
+            </div>
             </div>
         </div>
     );
