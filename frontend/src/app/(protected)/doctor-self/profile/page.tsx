@@ -146,40 +146,55 @@ function DoctorProfilePage() {
             <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-teal-200/20 blur-3xl" aria-hidden="true" />
 
             <div className="relative mx-auto max-w-7xl justify-center gap-4">
-            <div title="profile-header-card" className="flex flex-col xl:flex-row items-center justify-between gap-6 xl:gap-8 mx-4 mt-4 sm:mt-8 bg-white/90 shadow-[0_20px_60px_rgba(16,185,129,0.12)] backdrop-blur p-4 sm:p-8 xl:p-12 rounded-[2rem] border border-white/80">
-                <div title="left-column" className="flex flex-col sm:flex-row gap-4 items-center xl:pl-4 justify-center">
-                    <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover" />
-                    <div title="name-spec-place" className="flex flex-col gap-2 text-center sm:text-left">
-                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">{doctorName}</h1>
-                        <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                            <div title="specialization" className="flex items-center rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 font-semibold text-sm sm:text-base w-max mt-1 mx-auto sm:mx-0">{specialization}</div>
-                            <div title="experience" className="flex items-center rounded-full bg-teal-100 px-3 py-1 text-teal-700 font-semibold text-sm sm:text-base w-max mt-1 mx-auto sm:mx-0">{experience}</div>
+            <div title="profile-header-card" className="relative flex flex-col xl:flex-row items-center justify-between gap-8 xl:gap-12 mx-4 mt-4 sm:mt-8 bg-gradient-to-r from-white/95 to-emerald-50/80 shadow-[0_25px_60px_rgba(16,185,129,0.15)] backdrop-blur p-6 sm:p-10 xl:p-14 rounded-[2rem] border border-white/80 overflow-hidden">
+                <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-emerald-200/10 blur-3xl" aria-hidden="true" />
+                <div title="left-column" className="relative z-10 flex flex-col sm:flex-row gap-6 items-center xl:gap-8">
+                    <div className="relative">
+                        <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-28 h-28 sm:w-40 sm:h-40 rounded-full object-cover ring-4 ring-white shadow-[0_15px_40px_rgba(16,185,129,0.2)]" />
+                    </div>
+                    <div title="name-spec-place" className="flex flex-col gap-3 text-center sm:text-left">
+                        <div>
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900">{doctorName}</h1>
+                            <p className="text-emerald-600 text-sm font-semibold mt-1">Medical Professional</p>
                         </div>
-                        <p title="location" className="text-gray-700 mt-1">
-                            <img src="/images/location.png" className="w-4 h-4 inline mr-2" alt="Location Icon" />
+                        <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
+                            <div title="specialization" className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-100 to-emerald-50 px-4 py-2 text-emerald-700 font-semibold text-sm sm:text-base border border-emerald-200/50 w-max">
+                                <span className="inline-flex h-2 w-2 rounded-full bg-emerald-600"></span>
+                                {specialization}
+                            </div>
+                            <div title="experience" className="flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-100 to-teal-50 px-4 py-2 text-teal-700 font-semibold text-sm sm:text-base border border-teal-200/50 w-max">
+                                <span className="inline-flex h-2 w-2 rounded-full bg-teal-600"></span>
+                                {experience}
+                            </div>
+                        </div>
+                        <p title="location" className="text-gray-700 font-medium mt-2 flex items-center justify-center sm:justify-start">
+                            <img src="/images/location.png" className="w-5 h-5 mr-2" alt="Location Icon" />
                             {location}
                         </p>
-                        {loading && <p className="text-xs text-gray-500">Loading profile...</p>}
-                        {error && <p className="text-xs text-red-500">{error}</p>}
+                        {loading && <p className="text-xs text-gray-500 mt-2">Loading profile...</p>}
+                        {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
                     </div>
                 </div>
-                <div title="right-column" className="flex flex-col gap-4 justify-center w-full xl:w-auto xl:pr-4">
-                    <div title="toggle-btn" className="flex flex-col sm:flex-row gap-4 sm:gap-6 pb-2 items-center sm:justify-between w-full">
-                        <div title="text-column" className="text-center sm:text-left">
-                            <p className="text-gray-900 font-bold text-lg sm:text-xl">Availability for Online Advice</p>
-                            <p className="text-emerald-700 text-sm font-semibold">
-                                {isSavingAvailability ? "Saving..." : isOn ? "Available" : "Unavailable"}
-                            </p>
+                <div title="right-column" className="relative z-10 flex flex-col gap-6 justify-center w-full xl:w-auto">
+                    <div className="rounded-[1.5rem] bg-gradient-to-br from-emerald-50/80 to-white border border-emerald-100/50 p-6 backdrop-blur">
+                        <div title="toggle-btn" className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center sm:justify-between">
+                            <div title="text-column" className="text-center sm:text-left">
+                                <p className="text-gray-900 font-bold text-base sm:text-lg">Online Availability</p>
+                                <p className={`text-sm font-semibold mt-1 ${
+                                    isOn ? "text-emerald-600" : "text-gray-500"
+                                }`}>
+                                    {isSavingAvailability ? "Updating..." : isOn ? "✓ Available Now" : "○ Not Available"}
+                                </p>
+                            </div>
+                            <div title="toggle-switch" className={`transition-opacity duration-300 ${isSavingAvailability || loading || !profileData ? "pointer-events-none opacity-60" : ""}`}>
+                                <ToggleSwitch isOn={isOn} onToggle={(newState) => {
+                                    void handleAvailabilityToggle(newState);
+                                }} />
+                            </div>
                         </div>
-                        <div title="toggle-switch" className={`justify-center ${isSavingAvailability || loading || !profileData ? "pointer-events-none opacity-60" : ""}`}>
-                            <ToggleSwitch isOn={isOn} onToggle={(newState) => {
-                                void handleAvailabilityToggle(newState);
-                            }} />
-                        </div>
-
                     </div>
-                    <div className="flex w-full justify-center sm:justify-end">
-                        <GreenButton className="px-6 py-2 rounded-lg w-full sm:w-auto">
+                    <div className="flex w-full justify-center">
+                        <GreenButton className="px-8 py-3 rounded-full w-full sm:w-auto font-semibold shadow-[0_12px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.4)] transition-all duration-300">
                             Edit Profile
                         </GreenButton>
                     </div>
