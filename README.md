@@ -1,9 +1,120 @@
 # NexClinic by NexAura
 
-NexClinic is a full-stack healthcare platform with role-aware user journeys for patients, doctors, and administrators.
+NexClinic is a web-based appointment and clinic management platform that connects patients with doctors through a secure, digital system.
 
-This README is a system analysis and architecture reference.
-For setup, local development, and deployment procedures, use [DEV_GUIDE.md](DEV_GUIDE.md).
+## Quick Overview
+
+This README gives a high-level overview of the project for all stakeholders. For technical setup and architecture deep-dives, see the sections below or refer to [DEV_GUIDE.md](DEV_GUIDE.md).
+
+## Table of Contents
+1. [The Problem](#the-problem)
+2. [Our Solution](#our-solution)
+3. [Project Scope](#project-scope)
+4. [Technology Stack](#technology-stack)
+5. [Key Features](#key-features)
+6. [Project Team](#project-team)
+7. [Documentation & Setup](#documentation--setup)
+8. [Technical Reference](#technical-reference) — for developers and architects
+
+---
+
+## The Problem
+
+Healthcare clinics and outpatient centers face several operational challenges:
+
+- Patients cannot easily find available doctors or check real-time availability online.
+- Manual appointment booking leads to double-bookings, missed appointments, and wasted clinic time.
+- Doctors lack a centralized way to manage their schedules and patient information efficiently.
+- No automated reminders result in high no-show rates and administrative overhead.
+- Limited integration between patient records, prescriptions, and follow-up care.
+
+## Our Solution
+
+NexClinic automates the appointment lifecycle and clinic management process. It enables:
+
+- Patients to find and book appointments with qualified doctors online.
+- Doctors to manage availability, review bookings, and organize patient information.
+- Clinics to streamline operations and reduce administrative burden.
+- Automated reminders to reduce no-shows and improve patient engagement.
+
+## Project Scope
+
+NexClinic handles core outpatient workflows:
+
+**In Scope:**
+- Secure registration and email verification for patients and doctors.
+- Doctor directory: search by name, specialization, and availability.
+- Appointment booking: view slots, book, reschedule, or cancel.
+- Doctor actions: accept, reject, or complete appointments.
+- Email reminders and notifications.
+- Prescription and medical record storage with secure file uploads.
+- Admin dashboards for clinic oversight.
+
+**Planned for Future Releases:**
+- Real-time chat and video consultations.
+- Payment processing integration.
+- AI-powered scheduling recommendations.
+- Advanced analytics and reporting.
+
+## Technology Stack
+
+NexClinic uses modern, open-source, and widely-supported technologies:
+
+- **Backend**: Python (Django) — robust server logic and REST API.
+- **Frontend**: JavaScript/TypeScript (Next.js) — responsive, user-friendly web interface.
+- **Database**: PostgreSQL (production) / SQLite (local development) — reliable data storage.
+- **Hosting**: Cloud services (Vercel for frontend, Render/Heroku for backend) — scalable and secure.
+- **Authentication**: Email + OTP verification — secure, user-friendly access.
+
+## Key Features
+
+### For Patients
+✓ Create and verify account with email  
+✓ Search for doctors by name and specialization  
+✓ View availability and consultation fees  
+✓ Book, reschedule, and cancel appointments  
+✓ Receive email reminders before appointments  
+✓ Securely store and access medical records  
+✓ View complete appointment history  
+
+### For Doctors
+✓ Create and manage professional profiles  
+✓ Set and update availability slots  
+✓ Review and respond to appointment requests  
+✓ Accept, reject, reschedule, or complete appointments  
+✓ Attach prescriptions and medical notes  
+✓ View patient history and records  
+
+### For Administrators
+✓ Monitor overall clinic activity  
+✓ View patient and doctor statistics  
+✓ Manage clinic settings and policies  
+
+## Project Team
+
+**Team Name**: NexAura  
+**Course**: CO2060 — Semester 3
+
+- **E/23/076** — M.T. Dineth
+- **E/23/266** — H.P.U.A. Perera
+- **E/23/336** — S.M.D.S.B. Samarakoon
+- **E/23/226** — J.G.G. Methmaka
+
+## Documentation & Setup
+
+**For Everyone:**
+- [docs/README.md](docs/README.md) — Complete project description with roadmap and capabilities.
+
+**For Developers:**
+- [DEV_GUIDE.md](DEV_GUIDE.md) — Local setup, running the application, and testing.
+- [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) — Deployment and integration with external services.
+- [DATABASE_TABLES.txt](DATABASE_TABLES.txt) — Database schema reference.
+
+---
+
+## Technical Reference
+
+The sections below are for developers, architects, and technical stakeholders who need detailed information about the system design.
 
 ## 1. System Scope
 
@@ -43,176 +154,8 @@ e23-co2060-NexClinic/
 |- DEV_GUIDE.md
 ```
 
-## 3. Backend Analysis
 
-### 3.1 Identity and Access Model
 
-The backend uses a custom user model (email as username field) with role values:
-
-- ADMIN
-- PATIENT
-- DOCTOR
-
-Authentication is JWT-based:
-
-- Access token lifetime: 5 minutes.
-- Refresh token lifetime: 3 days.
-- Refresh token rotation enabled.
-- Blacklist after rotation enabled.
-
-### 3.2 Registration and OTP Verification Design
-
-NexClinic uses a two-stage registration flow:
-
-1. Registration writes to a pending registration store (PendingUser) with hashed password and profile payload.
-2. OTP verification promotes the pending record into the real user + profile tables in a single transaction.
-
-Strengths of this approach:
-
-- Unverified accounts do not become active users.
-- Profile creation is atomic with user activation.
-- OTP resend lifecycle is cleanly supported.
-
-### 3.3 Core Domain Entities
-
-- CustomUser: primary identity, role, and auth flags.
-- PendingUser: temporary pre-verification registration record.
-- PatientProfile: demographic and contact information for patients.
-- DoctorProfile: professional identity, specialization, pricing, and visibility metadata.
-- AppointmentAvailableSlot: concrete date/time slots for in-person bookings.
-- DoctorOnlineAdviceAvailability: day/time windows for online advisory availability.
-- Appointment: patient booking linked one-to-one with an appointment slot.
-
-Important integrity constraints:
-
-- One appointment per appointment slot (OneToOne relationship).
-- Unique doctor slot windows per date/time combination.
-- Validation that appointment.doctor matches slot.doctor.
-
-### 3.4 Appointment Lifecycle Rules
-
-Appointment status model:
-
-- PENDING
-- ACCEPTED
-- REJECTED
-- COMPLETED
-- CANCELLED
-
-Allowed transitions (doctor actions):
-
-- accept: PENDING -> ACCEPTED
-- reject: PENDING -> REJECTED
-- complete: ACCEPTED -> COMPLETED
-- cancel: PENDING or ACCEPTED -> CANCELLED
-
-Patient cancellation:
-
-- Allowed only when appointment is PENDING or ACCEPTED.
-
-Rescheduling constraints:
-
-- Disallowed for REJECTED, COMPLETED, and CANCELLED appointments.
-- Target slot must exist, belong to the same doctor, and be unbooked.
-
-### 3.5 Slot Management Logic
-
-Doctor slot creation and updates enforce non-overlap rules:
-
-- Bulk create is rejected if any submitted interval conflicts with existing intervals.
-- Update operations validate time ordering and overlap prevention.
-- Online advice slots use the same overlap strategy on weekday windows.
-
-### 3.6 Backend API Surface
-
-Base prefixes:
-
-- /api/users/
-- /api/doctor/
-- /api/patient/
-
-Users/auth endpoints:
-
-- POST /api/users/register/
-- POST /api/users/login/
-- POST /api/users/doctor/register/
-- POST /api/users/doctor/login/
-- POST /api/users/verify-otp/
-- POST /api/users/resend-otp/
-- POST /api/users/token/refresh/
-- POST /api/users/logout/
-
-Doctor endpoints:
-
-- GET /api/doctor/specializations/
-- GET /api/doctor/directory/
-- GET /api/doctor/directory/{doctor_id}/
-- GET /api/doctor/dashboard/
-- GET/PATCH /api/doctor/profile/
-- GET /api/doctor/appointments/
-- PATCH /api/doctor/appointments/{appointment_id}/action/
-- PATCH /api/doctor/appointments/{appointment_id}/reschedule/
-- GET/POST /api/doctor/appointment-slots/
-- PATCH/DELETE /api/doctor/appointment-slots/{slot_id}/
-- GET/POST /api/doctor/online-advice-slots/
-- PATCH/DELETE /api/doctor/online-advice-slots/{slot_id}/
-
-Patient endpoints:
-
-- GET /api/patient/profile/
-- GET/POST /api/patient/appointments/
-- PATCH /api/patient/appointments/{appointment_id}/cancel/
-- GET /api/patient/appointment-slots/
-
-## 4. Frontend Analysis
-
-### 4.1 Application Pattern
-
-The frontend is structured as a Next.js App Router application with server route handlers under /api that proxy to Django.
-
-This gives the project:
-
-- A single frontend-origin API surface for browser clients.
-- HTTP-only auth cookies managed on the server layer.
-- Centralized token refresh handling through shared proxy logic.
-
-### 4.2 Auth and Cookie Strategy
-
-The frontend stores these auth cookies:
-
-- authToken
-- refreshToken
-- userRole
-
-Cookie behavior:
-
-- httpOnly enabled.
-- sameSite=lax.
-- secure in production mode.
-
-If a backend call returns 401, the proxy utility attempts refresh via /api/users/token/refresh/ and retries the original call.
-If refresh fails, auth cookies are cleared and 401 is returned.
-
-### 4.3 Route Protection
-
-Route protection is implemented in [frontend/src/proxy.ts](frontend/src/proxy.ts):
-
-- /doctor-self/* requires DOCTOR.
-- /user-self/* requires PATIENT.
-- /admin/* requires ADMIN.
-- /doctors/* requires authenticated role in {DOCTOR, PATIENT, ADMIN}.
-
-Protection includes token expiry checks by decoding JWT expiry values server-side.
-
-### 4.4 Frontend API Proxy Surface
-
-Frontend route handlers mirror backend domains:
-
-- /api/auth/*
-- /api/doctor/*
-- /api/patient/*
-
-This keeps browser-facing API shape stable even if backend hostnames change by environment.
 
 ## 5. End-to-End Request Flow
 
