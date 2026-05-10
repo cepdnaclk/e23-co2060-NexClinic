@@ -32,7 +32,33 @@ type AppointmentsPayload = {
 type StatCard = {
     label: string;
     value: string;
-}
+};
+
+const getInitials = (name: string) => {
+    const initials = name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase();
+
+    return initials || "U";
+};
+
+const statusTheme = (status: string) => {
+    if (status === "Confirmed") {
+        return "bg-green-100 text-green-800 border-green-200";
+    }
+
+    if (status === "Pending") {
+        return "bg-amber-100 text-amber-800 border-amber-200";
+    }
+
+    if (status === "Completed") {
+        return "bg-slate-100 text-slate-700 border-slate-200";
+    }
+
+    return "bg-rose-100 text-rose-800 border-rose-200";
+};
 
 export default function UserDashboard() {
     const router = useRouter();
@@ -79,6 +105,7 @@ export default function UserDashboard() {
                 const liveAppointments = Array.isArray(appointmentsPayload.appointments)
                     ? appointmentsPayload.appointments
                     : [];
+
                 setAppointments(liveAppointments);
                 setError("");
             } catch (err) {
@@ -130,159 +157,246 @@ export default function UserDashboard() {
         ];
     }, [appointments]);
 
-    const upcomingAppointments = useMemo(() => {
-        const getStatusClass = (status: string) => {
-            if (status === "Confirmed") {
-                return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
-            }
-            if (status === "Pending") {
-                return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
-            }
-            if (status === "Completed") {
-                return "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200";
-            }
-            return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200";
-        };
-
+    const sortedAppointments = useMemo(() => {
         return [...appointments]
             .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
             .map((item) => ({
+                id: item.id,
                 doctor: item.doctorName,
                 status: item.status,
-                statusClass: getStatusClass(item.status),
+                statusClass: statusTheme(item.status),
                 type: item.type || "Consultation",
                 time: `${item.date} - ${item.time}`,
             }));
     }, [appointments]);
 
+    const nextAppointment = sortedAppointments[0];
+
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-                <section className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-                    <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 xl:items-start xl:justify-between">
-                        <div className="w-full flex flex-col sm:flex-row sm:items-center gap-4 min-w-0">
-                            {profileImage ? (
-                                <Image
-                                    src={profileImage}
-                                    alt={displayName}
-                                    width={72}
-                                    height={72}
-                                    className="rounded-full object-cover border-4 border-blue-500 mx-auto sm:mx-0 shrink-0"
-                                />
-                            ) : (
-                                <div className="w-18 h-18 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-white mx-auto sm:mx-0 shrink-0">
-                                    {displayName
-                                        .split(" ")
-                                        .map((n) => n[0])
-                                        .join("")
-                                        .toUpperCase()}
+        <div className="min-h-screen bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white">
+            <div className="mx-auto w-full max-w-7xl space-y-5 px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 sm:space-y-6">
+                <section className="relative overflow-hidden rounded-[2rem] border border-green-100 bg-white/95 shadow-[0_20px_60px_rgba(16,185,129,0.14)]">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(0,173,133,0.16),transparent_42%),radial-gradient(circle_at_bottom_left,_rgba(0,119,88,0.12),transparent_40%)]" />
+                    <div className="relative space-y-5 p-4 sm:space-y-6 sm:p-6 lg:p-8">
+                        <div className="flex flex-col gap-5 xl:flex-row xl:items-stretch xl:justify-between">
+                            <div className="flex-1 rounded-[1.75rem] border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur sm:p-5 lg:p-6">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                    {profileImage ? (
+                                        <Image
+                                            src={profileImage}
+                                            alt={displayName}
+                                            width={92}
+                                            height={92}
+                                            className="mx-auto h-[92px] w-[92px] shrink-0 rounded-full border-4 border-green-500 object-cover sm:mx-0"
+                                        />
+                                    ) : (
+                                        <div className="mx-auto flex h-[92px] w-[92px] shrink-0 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-green-600 via-emerald-300 to-green-700 text-3xl font-bold text-white shadow-xl sm:mx-0">
+                                            {getInitials(displayName)}
+                                        </div>
+                                    )}
+
+                                    <div className="min-w-0 flex-1 text-center sm:text-left">
+                                        <h1 className="mt-3 break-words text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+                                            Welcome back, {displayName}
+                                        </h1>
+                                        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                                            {isLoading
+                                                ? "Loading your latest updates..."
+                                                : "Track consultations, requests, and care activity in one calm, easy-to-scan workspace."}
+                                        </p>
+                                        {error ? <p className="mt-3 text-sm font-semibold text-rose-600">{error}</p> : null}
+
+                                    </div>
                                 </div>
-                            )}
-                            <div className="text-center sm:text-left min-w-0">
-                                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white break-words">
-                                    Welcome back, {displayName}!
-                                </h1>
-                                <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                                    {isLoading ? "Loading your dashboard..." : "Here is your health dashboard overview."}
-                                </p>
-                                {error ? <p className="mt-2 text-sm text-red-500">{error}</p> : null}
+                            </div>
+
+                            <div className="w-full rounded-[1.75rem] border border-green-100 bg-gradient-to-br from-green-600 via-emerald-600 to-green-700 p-5 text-white shadow-2xl xl:max-w-md">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-100">Next Appointment</p>
+                                        <p className="mt-2 text-lg font-bold leading-tight">
+                                            {nextAppointment ? nextAppointment.doctor : "No upcoming appointments"}
+                                        </p>
+                                        <p className="mt-1 text-sm text-green-100">
+                                            {nextAppointment ? nextAppointment.time : "Book one to start your care timeline."}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-right">
+                                        <p className="text-xs text-green-100">Upcoming</p>
+                                        <p className="text-2xl font-bold">{stats[0].value}</p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-5 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3 xl:grid-cols-2">
+                                    <div className="rounded-2xl bg-white/10 px-3 py-3 backdrop-blur">
+                                        <p className="text-green-100">Pending</p>
+                                        <p className="mt-1 text-lg font-bold text-white">{stats[1].value}</p>
+                                    </div>
+                                    <div className="rounded-2xl bg-white/10 px-3 py-3 backdrop-blur">
+                                        <p className="text-green-100">Completed</p>
+                                        <p className="mt-1 text-lg font-bold text-white">{stats[2].value}</p>
+                                    </div>
+                                    <div className="hidden rounded-2xl bg-white/10 px-3 py-3 backdrop-blur sm:block xl:hidden">
+                                        <p className="text-green-100">Status</p>
+                                        <p className="mt-1 text-lg font-bold text-white">Active</p>
+                                    </div>
+                                </div>
+
+                                {/* <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-100">Care snapshot</p>
+                                    <div className="mt-3 space-y-2 text-sm text-green-50">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span>Profile status</span>
+                                            <span className="font-semibold text-white">Synced</span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span>Dashboard refresh</span>
+                                            <span className="font-semibold text-white">Automatic</span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span>Patient access</span>
+                                            <span className="font-semibold text-white">Protected</span>
+                                        </div>
+                                    </div>
+                                </div> */}
                             </div>
                         </div>
 
-                        <div className="w-full xl:max-w-md bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4">
-                            <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Quick Actions</h2>
-                            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-3">
-                                <Link href="/user-self/book-appointment" className="w-full">
-                                    <button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition">
-                                        New Appointment
-                                    </button>
-                                </Link>
-                                <Link href="/user-self/chats" className="w-full">
-                                    <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition">
-                                        Ask Doctor
-                                    </button>
-                                </Link>
-                                <Link href="/user-self/profile" className="w-full">
-                                    <button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-lg transition">
-                                        View Prescriptions
-                                    </button>
-                                </Link>
-                            </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                            <Link
+                                href="/user-self/book-appointment"
+                                className="group rounded-2xl border border-green-100 bg-white/90 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-700">Quick Action</p>
+                                    <span className="rounded-full bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">New</span>
+                                </div>
+                                <p className="mt-3 text-lg font-bold text-slate-900">Book Appointment</p>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">Find a doctor and request your preferred slot.</p>
+                            </Link>
+                            <Link
+                                href="/user-self/chats"
+                                className="group rounded-2xl border border-green-100 bg-white/90 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-700">Quick Action</p>
+                                    <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">Fast</span>
+                                </div>
+                                <p className="mt-3 text-lg font-bold text-slate-900">Ask a Doctor</p>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">Reach out online for non-urgent guidance.</p>
+                            </Link>
+                            <Link
+                                href="/user-self/prescriptions"
+                                className="group rounded-2xl border border-green-100 bg-white/90 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-700">Quick Action</p>
+                                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">Records</span>
+                                </div>
+                                <p className="mt-3 text-lg font-bold text-slate-900">View Prescriptions</p>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">Review your active and past prescription details.</p>
+                            </Link>
+                            <Link
+                                href="/user-self/profile"
+                                className="group rounded-2xl border border-green-100 bg-white/90 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-700">Quick Action</p>
+                                    <span className="rounded-full bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">Edit</span>
+                                </div>
+                                <p className="mt-3 text-lg font-bold text-slate-900">Edit Profile</p>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">Update your personal details, photo, and contact information.</p>
+                            </Link>
                         </div>
-                    </div>
 
-                    <div className="rounded-lg bg-gray-50 dark:bg-gray-700/30 p-4 sm:p-5">
-                        <h2 className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400">Health Tip of the Day</h2>
-                        <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-3"></div>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                            Stay hydrated! Aim to drink at least 8 glasses of water daily to maintain optimal health and energy levels.
-                        </p>
+                        <div className="rounded-[1.5rem] border border-green-100 bg-gradient-to-r from-green-50 via-white to-emerald-50 p-4 shadow-sm">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <h2 className="text-lg font-bold text-green-800">Health Tip of the Day</h2>
+                                <span className="w-max rounded-full border border-green-200 bg-white px-3 py-1 text-xs font-semibold text-green-700">
+                                    Simple habit, better recovery
+                                </span>
+                            </div>
+                            <p className="mt-3 text-sm leading-6 text-slate-700">
+                                Stay hydrated throughout the day. Consistent water intake supports better concentration, joint health, and energy.
+                            </p>
+                        </div>
                     </div>
                 </section>
 
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {stats.map((item) => (
-                        <div key={item.label} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
-                            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{item.value}</p>
+                <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {stats.map((item, index) => (
+                        <div
+                            key={item.label}
+                            className="group rounded-2xl border border-green-100 bg-white p-5 shadow-md shadow-green-100/30 transition duration-200 hover:-translate-y-1 hover:shadow-xl"
+                        >
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-600">{item.label}</p>
+                                    <p className="mt-1 text-4xl font-bold tracking-tight text-slate-900">{item.value}</p>
+                                </div>
+                            </div>
+                            {/* <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                                <div
+                                    className={`h-full rounded-full ${index === 0 ? "bg-green-500" : index === 1 ? "bg-emerald-500" : "bg-teal-500"}`}
+                                    style={{ width: `${Math.max(35, (Number(item.value) + 1) * 24)}%` }}
+                                />
+                            </div> */}
                         </div>
                     ))}
                 </section>
 
-                <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 h-full">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <h2 className="text-xl font-bold text-green-600 dark:text-green-400">Recent Chats</h2>
+                <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    <div className="h-full rounded-2xl border border-green-100 bg-white p-4 shadow-md shadow-green-100/30 sm:p-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <h2 className="text-xl font-bold text-slate-900">Recent Chats</h2>
                             <Link
                                 href="/user-self/chats"
-                                className="px-3 py-2 rounded-lg bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition text-center"
+                                className="rounded-lg bg-green-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-green-700"
                             >
                                 View All Chats
                             </Link>
                         </div>
-                        <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
-                        <div className="space-y-3">
-                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4">
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                    Online advice chat history is not available yet. It will appear here after chat features are implemented.
-                                </p>
-                            </div>
+                        <div className="mt-4 rounded-2xl border border-dashed border-green-200 bg-gradient-to-br from-green-50/70 to-white p-4">
+                            <p className="text-sm leading-6 text-slate-600">
+                                Online advice chat history will appear here once conversations are available.
+                            </p>
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 h-full">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <h2 className="text-xl font-bold text-green-600 dark:text-green-400">In-Person Appointments</h2>
+                    <div className="h-full rounded-2xl border border-green-100 bg-white p-4 shadow-md shadow-green-100/30 sm:p-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <h2 className="text-xl font-bold text-slate-900">Appointments Timeline</h2>
                             <Link
                                 href="/user-self/appointments"
-                                className="px-3 py-2 rounded-lg bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition text-center"
+                                className="rounded-lg bg-green-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-green-700"
                             >
-                                View All Appointments
+                                View All
                             </Link>
                         </div>
-                        <div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 
-                        <div className="space-y-3">
-                            {upcomingAppointments.length === 0 ? (
-                                <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4">
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">No appointments yet.</p>
+                        <div className="mt-4 space-y-3">
+                            {sortedAppointments.length === 0 ? (
+                                <div className="rounded-xl border border-dashed border-green-200 bg-green-50/50 p-4">
+                                    <p className="text-sm text-slate-600">No appointments yet. Start by booking your first consultation.</p>
                                 </div>
-                            ) : upcomingAppointments.map((appointment) => (
-                                <div
-                                    key={`${appointment.doctor}-${appointment.time}`}
-                                    className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-4"
-                                >
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-                                        <p className="font-semibold text-gray-900 dark:text-white break-words">{appointment.doctor}</p>
-                                        <span className={`text-xs font-semibold px-3 py-1 rounded-full w-max ${appointment.statusClass}`}>
-                                            {appointment.status}
-                                        </span>
+                            ) : (
+                                sortedAppointments.slice(0, 5).map((appointment) => (
+                                    <div
+                                        key={appointment.id || `${appointment.doctor}-${appointment.time}`}
+                                        className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 transition hover:border-green-200 hover:bg-green-50/50"
+                                    >
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                            <p className="break-words font-semibold text-slate-900">{appointment.doctor}</p>
+                                            <span className={`w-max rounded-full border px-3 py-1 text-xs font-semibold ${appointment.statusClass}`}>
+                                                {appointment.status}
+                                            </span>
+                                        </div>
+                                        <p className="mt-1 text-sm text-slate-600">{appointment.type}</p>
+                                        <p className="mt-1 text-sm text-slate-500">{appointment.time}</p>
                                     </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{appointment.type}</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{appointment.time}</p>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
                 </section>

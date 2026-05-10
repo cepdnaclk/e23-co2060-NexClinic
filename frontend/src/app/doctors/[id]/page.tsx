@@ -1,4 +1,7 @@
 import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
+import { cookies, headers } from "next/headers";
+import Link from "next/link";
+import BlackButton from "@/components/buttons/BlackButton";
 
 type Doctor = {
 	id: string;
@@ -19,13 +22,21 @@ type Doctor = {
 };
 
 async function fetchDoctor(id: string): Promise<Doctor | null> {
-	const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+	const requestHeaders = await headers();
+	const protocol = requestHeaders.get("x-forwarded-proto") || "http";
+	const host = requestHeaders.get("host") || "localhost:3000";
+	const origin = `${protocol}://${host}`;
+	const cookieHeader = (await cookies())
+		.getAll()
+		.map((cookie) => `${cookie.name}=${cookie.value}`)
+		.join("; ");
 
 	try {
-		const response = await fetch(`${BACKEND_URL}/api/doctor/directory/${id}/`, {
+		const response = await fetch(`${origin}/api/doctor/directory/${id}/`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
+				...(cookieHeader ? { Cookie: cookieHeader } : {}),
 			},
 			cache: "no-store",
 		});
@@ -66,12 +77,9 @@ export default async function DoctorProfile({
 				<div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md mb-4">
 					<div className="flex flex-col sm:flex-row gap-6 items-center">
 						<img
-							src={doctor.photo}
+							src={doctor.photo || "/images/user.png"}
 							alt={doctor.fullName}
 							className="w-[140px] h-[140px] rounded-full object-cover"
-							onError={(event) => {
-								event.currentTarget.src = "/images/user.png";
-							}}
 						/>
 
 						<div className="flex-1 text-center sm:text-left">
@@ -83,7 +91,7 @@ export default async function DoctorProfile({
 							<p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{doctor.experience} of Experience</p>
 							{doctor.availableForChat && (
 								<span className="inline-block mt-2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-									💬 Available for Chat
+									Available for Chat
 								</span>
 							)}
 						</div>
@@ -93,15 +101,15 @@ export default async function DoctorProfile({
 							<button
 								disabled={!doctor.availableForChat}
 								className={`py-3 px-6 rounded-lg font-semibold transition-colors ${doctor.availableForChat
-										? 'bg-green-500 hover:bg-green-600 text-white'
-										: 'bg-gray-300 text-gray-500 cursor-not-allowed'
+									? 'bg-green-500 hover:bg-green-600 text-white'
+									: 'bg-gray-300 text-gray-500 cursor-not-allowed'
 									}`}
 							>
-								{doctor.availableForChat ? '💬 Start Chat Now' : '💬 Currently Offline'}
+								{doctor.availableForChat ? 'Start Chat Now' : 'Currently Offline'}
 							</button>
-							<button className="py-3 px-6 rounded-lg font-semibold bg-gray-800 hover:bg-gray-900 text-white transition-colors">
-								📅 Book Appointment
-							</button>
+							<Link href={`/user-self/book-appointment?doctor=${doctor.id}`} className="w-full">
+								<BlackButton className="w-full">Book Appointment</BlackButton>
+							</Link>
 						</div>
 					</div>
 				</div>
@@ -112,12 +120,12 @@ export default async function DoctorProfile({
 					<div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
 					<div className="grid md:grid-cols-2 gap-6">
 						<div className="flex flex-col">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">💬 Online Chat Session:</p>
+							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Online Chat Session:</p>
 							<p className="text-2xl font-bold text-green-600 dark:text-green-400">{doctor.chatFee}</p>
 							<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Quick online advice for minor concerns</p>
 						</div>
 						<div className="flex flex-col">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">📅 In-Person Appointment:</p>
+							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">In-Person Appointment:</p>
 							<p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{doctor.appointmentFee}</p>
 							<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Full consultation and examination</p>
 						</div>
@@ -176,13 +184,13 @@ export default async function DoctorProfile({
 									</div>
 								</div>
 
-								<div className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
+								{/* <div className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
 									<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Mobile Number:</p>
 									<div className="flex items-center">
 										<img src="/images/phone.png" className="w-4 h-4 inline mr-2" alt="Phone Icon" />
 										<p>{doctor.contactNumber}</p>
 									</div>
-								</div>
+								</div> */}
 							</>
 						) : (
 							<p className="text-sm text-gray-500 dark:text-gray-400">

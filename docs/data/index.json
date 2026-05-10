@@ -24,6 +24,6 @@
     ],
     
     "tags": ["Web Application", "Software Systems Development", "AI", "Healthcare", "Medical"],
-    "image": "../images/cover_page.png",
-    "thumbnail": "../images/thumbnail.png"
+    "image": "cover_page.jpg",
+    "thumbnail": "thumbnail.jpg"
 }
