@@ -110,7 +110,7 @@ function UserLoginForm() {
             </form>
             
             <div title="forgot-password" className="mt-1 text-sm dark:text-gray-900">
-                <p>Forgot password? <a href="/forgot-password" className="text-green-500 hover:underline">Reset here</a></p>
+                <p>Forgot password? <a href="/reset-password" className="text-green-500 hover:underline">Reset here</a></p>
             </div>
             
             <div title="login-card-footer" className="mt-1 text-sm dark:text-gray-900">

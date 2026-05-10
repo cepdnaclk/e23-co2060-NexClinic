@@ -41,6 +41,12 @@ import logging
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.encoding import force_str, force_bytes
 from .models import PendingUser
 from .utils import generate_otp, hash_otp, send_otp_email, send_admin_notification_email, verify_otp
 
@@ -58,6 +64,25 @@ OTP_LOCKOUT_MINUTES = getattr(settings, 'OTP_LOCKOUT_MINUTES', 15)
 OTP_RESEND_COOLDOWN_SECONDS = getattr(settings, 'OTP_RESEND_COOLDOWN_SECONDS', 60)
 GENERIC_VERIFY_ERROR = 'Invalid or expired OTP.'
 GENERIC_RESEND_MESSAGE = 'If the account is eligible, a new OTP has been sent.'
+GENERIC_PASSWORD_RESET_MESSAGE = 'If an account with that email exists, a password reset link has been sent.'
+
+
+def _get_client_ip(request):
+    forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '')
+
+
+def _mask_email(email):
+    if not email or '@' not in email:
+        return 'unknown'
+    local, domain = email.split('@', 1)
+    if not local:
+        return f'***@{domain}'
+    if len(local) == 1:
+        return f'{local}***@{domain}'
+    return f'{local[0]}***{local[-1]}@{domain}'
 
 class VerifyOTPView(APIView):
     permission_classes = [AllowAny]
@@ -193,17 +218,61 @@ class PasswordResetRequestView(APIView):
     def post(self, request):
         #  If the request data is not a dict, return an error response
         if not isinstance(request.data, dict):
+            logger.warning('password_reset_request.invalid_payload ip=%s', _get_client_ip(request))
             return Response({'error': 'Invalid data format. Expected JSON object.'}, status=status.HTTP_400_BAD_REQUEST)
 
         email = request.data.get('email')
         if not email:
+            logger.warning('password_reset_request.missing_email ip=%s', _get_client_ip(request))
             return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # TODO: actual reset email logic in next step
-        return Response(
-            {'message': 'If an account with that email exists, a password reset link has been sent.'},
-            status=status.HTTP_200_OK
-        )
+        user = User.objects.filter(email__iexact=email.strip(), is_active=True).first()
+        masked_email = _mask_email(email.strip())
+        client_ip = _get_client_ip(request)
+
+        if user:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            role = str(getattr(user, 'role', 'PATIENT') or 'PATIENT').lower()
+
+            frontend_base_url = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000').rstrip('/')
+            reset_link = f"{frontend_base_url}/reset-password?uid={uid}&token={token}&role={role}"
+
+            subject = 'Reset your NexClinic password'
+            message = (
+                'We received a request to reset your password.\n\n'
+                f'Click this link to set a new password:\n{reset_link}\n\n'
+                'If you did not request this, you can safely ignore this email.'
+            )
+
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
+                logger.info(
+                    'password_reset_request.email_sent user_id=%s role=%s email=%s ip=%s',
+                    user.pk,
+                    role,
+                    masked_email,
+                    client_ip,
+                )
+            except Exception:
+                # Keep response non-disclosing even if mail delivery fails.
+                logger.exception(
+                    'password_reset_request.email_send_failed user_id=%s role=%s email=%s ip=%s',
+                    user.pk,
+                    role,
+                    masked_email,
+                    client_ip,
+                )
+        else:
+            logger.info('password_reset_request.unknown_email email=%s ip=%s', masked_email, client_ip)
+
+        return Response({'message': GENERIC_PASSWORD_RESET_MESSAGE}, status=status.HTTP_200_OK)
 
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
@@ -212,14 +281,49 @@ class PasswordResetConfirmView(APIView):
 
     def post(self, request):
         if not isinstance(request.data, dict):
+            logger.warning('password_reset_confirm.invalid_payload ip=%s', _get_client_ip(request))
             return Response({'error': 'Invalid data format. Expected JSON object.'}, status=status.HTTP_400_BAD_REQUEST)
 
         uid = request.data.get('uid')
         token = request.data.get('token')
         new_password = request.data.get('new_password')
+        client_ip = _get_client_ip(request)
 
         if not uid or not token or not new_password:
+            logger.warning('password_reset_confirm.missing_fields ip=%s', client_ip)
             return Response({'error': 'uid, token and new_password are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # TODO: actual token verification + password change in next step
-        return Response({'message': 'Password reset confirmed (stub).'}, status=status.HTTP_200_OK)
+        try:
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=user_id)
+        except (TypeError, ValueError, OverflowError, UnicodeDecodeError, User.DoesNotExist):
+            logger.warning('password_reset_confirm.invalid_uid_or_user uid=%s ip=%s', uid, client_ip)
+            return Response(
+                {'error': 'Invalid or expired reset link.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not default_token_generator.check_token(user, token):
+            logger.warning('password_reset_confirm.invalid_token user_id=%s role=%s ip=%s', user.pk, user.role, client_ip)
+            return Response(
+                {'error': 'Invalid or expired reset link.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            validate_password(new_password, user=user)
+        except ValidationError as exc:
+            logger.warning('password_reset_confirm.password_validation_failed user_id=%s role=%s ip=%s', user.pk, user.role, client_ip)
+            return Response({'error': ' '.join(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save(update_fields=['password'])
+        logger.info('password_reset_confirm.success user_id=%s role=%s ip=%s', user.pk, user.role, client_ip)
+
+        return Response(
+            {
+                'message': 'Password reset successful.',
+                'role': user.role,
+            },
+            status=status.HTTP_200_OK,
+        )

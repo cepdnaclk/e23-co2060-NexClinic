@@ -64,9 +64,10 @@ function ResetPasswordPage() {
             return;
         }
 
-        // Validate password is not empty
-        if (newPassword.length < 8) {
-            setError("Password must be at least 8 characters long.");
+        // Validate password complexity (must match registration requirements)
+        const passwordPattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+        if (!passwordPattern.test(newPassword)) {
+            setError("Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long");
             return;
         }
 
@@ -139,7 +140,8 @@ function ResetPasswordPage() {
                             className="mt-1 p-2 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
                             placeholder="Enter new Password"
                             required
-
+                            pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$"
+                            title="Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"
                         />
                     </div>
 
@@ -156,7 +158,8 @@ function ResetPasswordPage() {
                             className="mt-1 p-2 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
                             placeholder="Confirm new Password"
                             required
-
+                            pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$"
+                            title="Password must contain at least one digit, one lowercase letter, one uppercase letter, and be at least 8 characters long"
                         />
                     </div>
 
