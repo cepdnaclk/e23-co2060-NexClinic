@@ -6,6 +6,8 @@ from .serializers import (
     DoctorRegistrationSerializer,
     PatientTokenObtainPairSerializer,
     DoctorTokenObtainPairSerializer,
+    HospitalAdminRegistrationSerializer,
+    HospitalAdminTokenObtainPairSerializer,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -22,6 +24,11 @@ class DoctorRegisterView(generics.CreateAPIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'auth_register'
 
+class HospitalAdminRegisterView(generics.CreateAPIView):
+    serializer_class = HospitalAdminRegistrationSerializer
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_register'
 
 class PatientLoginView(TokenObtainPairView):
     serializer_class = PatientTokenObtainPairSerializer
@@ -31,6 +38,11 @@ class PatientLoginView(TokenObtainPairView):
 
 class DoctorLoginView(TokenObtainPairView):
     serializer_class = DoctorTokenObtainPairSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_login'
+
+class HospitalAdminLoginView(TokenObtainPairView):
+    serializer_class = HospitalAdminTokenObtainPairSerializer
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'auth_login'
 

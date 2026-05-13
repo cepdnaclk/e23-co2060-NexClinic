@@ -10,6 +10,7 @@ import logging
 from patient.models import PatientProfile
 from doctor.models import DoctorProfile
 from doctor.constants import DOCTOR_SPECIALIZATIONS
+from hospital.models import HospitalAdmin
 
 logger = logging.getLogger(__name__)
 
@@ -280,4 +281,110 @@ class PatientTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         data['role'] = getattr(self.user, 'role', '')
         data['email'] = getattr(self.user, 'email', '')
+        return data
+
+
+class HospitalAdminRegistrationSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(write_only=True)
+    phone = serializers.CharField(write_only=True)
+    hospital_id = serializers.IntegerField(write_only=True)
+    email = serializers.EmailField(
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+    password2 = serializers.CharField(
+        write_only=True, required=True, style={'input_type': 'password'}
+    )
+
+    class Meta:
+        model = User
+        fields = ('full_name', 'phone', 'hospital_id', 'email', 'password', 'password2')
+
+    def validate_full_name(self, value):
+        cleaned = value.strip()
+        if len(cleaned) < 2:
+            raise serializers.ValidationError('Full name must be at least 2 characters long.')
+        return cleaned
+
+    def validate_phone(self, value):
+        return _normalize_sl_phone(value)
+
+    def validate_hospital_id(self, value):
+        from hospital.models import Hospital
+        try:
+            Hospital.objects.get(id=value, is_active=True)
+        except Hospital.DoesNotExist:
+            raise serializers.ValidationError('Invalid or inactive hospital.')
+        return value
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({"password": "Password fields didn't match."})
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('password2')
+        email = validated_data.pop('email')
+        password = validated_data.pop('password')
+        hospital_id = validated_data.pop('hospital_id')
+
+        # Check if PendingUser already exists for this email
+        PendingUser.objects.filter(email=email).delete()
+
+        # Extract profile data
+        profile_data = {
+            'full_name': validated_data.pop('full_name'),
+            'phone': validated_data.pop('phone'),
+            'hospital_id': hospital_id,
+        }
+        
+        # Generate and Send OTP
+        otp_code = generate_otp()
+        
+        # Create PendingUser
+        PendingUser.objects.create(
+            email=email,
+            password=make_password(password),
+            role='HOSPITAL_ADMIN',
+            profile_data=profile_data,
+            otp_code='',
+            otp_code_hash=hash_otp(otp_code),
+            otp_last_sent_at=timezone.now(),
+            expires_at=timezone.now() + timezone.timedelta(minutes=10)
+        )
+
+        try:
+            send_otp_email(email, otp_code)
+        except Exception as e:
+            logger.error(f'Failed to send OTP email to {email}: {type(e).__name__}: {e}')
+            PendingUser.objects.filter(email=email).delete()
+            raise serializers.ValidationError({
+                'email': 'Unable to send OTP email at the moment. Please try again later.'
+            })
+
+        return {'email': email}
+
+
+class HospitalAdminTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if getattr(self.user, 'role', None) != 'HOSPITAL_ADMIN':
+            raise AuthenticationFailed('No hospital admin account found for this email.')
+
+        # Get the admin's hospitals
+        admin_roles = HospitalAdmin.objects.filter(
+            user=self.user, is_active=True
+        ).select_related('hospital').values('hospital_id', 'hospital__name')
+        
+        hospitals = [{'id': role['hospital_id'], 'name': role['hospital__name']} for role in admin_roles]
+        
+        data['role'] = getattr(self.user, 'role', '')
+        data['email'] = getattr(self.user, 'email', '')
+        data['hospitals'] = hospitals
+
         return data

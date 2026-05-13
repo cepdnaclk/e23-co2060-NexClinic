@@ -1,5 +1,11 @@
 from django.urls import path
 from .views import (
+    AdminHospitalListView,
+    AdminDoctorVerificationListView,
+    AdminDoctorVerificationActionView,
+    AdminSlotTemplateListCreateView,
+    AdminSlotTemplateDetailView,
+    AdminAppointmentCancelView,
     DoctorSpecializationsView,
     DoctorDirectoryView,
     DoctorDirectoryDetailView,
@@ -29,4 +35,10 @@ urlpatterns = [
     path("appointment-slots/<int:slot_id>/", DoctorAppointmentSlotDetailView.as_view(), name="doctor-appointment-slot-detail"),
     path("online-advice-slots/", DoctorOnlineAdviceSlotsView.as_view(), name="doctor-online-advice-slots"),
     path("online-advice-slots/<int:slot_id>/", DoctorOnlineAdviceSlotDetailView.as_view(), name="doctor-online-advice-slot-detail"),
+    path("admin/hospitals/", AdminHospitalListView.as_view(), name="admin-hospitals"),
+    path("admin/doctor-verifications/", AdminDoctorVerificationListView.as_view(), name="admin-doctor-verifications"),
+    path("admin/doctor-verifications/<int:verification_id>/action/", AdminDoctorVerificationActionView.as_view(), name="admin-doctor-verification-action"),
+    path("admin/slot-templates/", AdminSlotTemplateListCreateView.as_view(), name="admin-slot-templates"),
+    path("admin/slot-templates/<int:template_id>/", AdminSlotTemplateDetailView.as_view(), name="admin-slot-template-detail"),
+    path("admin/appointments/<int:appointment_id>/cancel/", AdminAppointmentCancelView.as_view(), name="admin-appointment-cancel"),
 ]

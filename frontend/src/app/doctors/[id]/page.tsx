@@ -1,4 +1,5 @@
 import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
+import DoctorSlots from '@/components/doctor/DoctorSlots';
 import { cookies, headers } from "next/headers";
 import Link from "next/link";
 import BlackButton from "@/components/buttons/BlackButton";
@@ -139,6 +140,12 @@ export default async function DoctorProfile({
 
 				{/* Two Column Layout for Details */}
 				<div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-4">
+
+				{/* Doctor slots (2-week view) */}
+				<div className="w-full max-w-6xl mx-auto px-6">
+					<DoctorSlots doctorId={doctor.id} />
+				</div>
+
 
 					{/* Professional Details */}
 					<div className="w-full lg:w-1/2 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">

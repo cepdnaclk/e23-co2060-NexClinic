@@ -24,6 +24,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         ADMIN = "ADMIN", "Admin"
         PATIENT = "PATIENT", "Patient"
         DOCTOR = "DOCTOR", "Doctor"
+        HOSPITAL_ADMIN = "HOSPITAL_ADMIN", "Hospital Admin"
 
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, blank=True, null=True) # Optional, strictly using email for auth

@@ -1,19 +1,25 @@
 from django.db import transaction
+
 from django.utils import timezone
+from datetime import timedelta
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from doctor.models import Appointment, AppointmentAvailableSlot
-from .serializers import (
-	PatientAppointmentSerializer,
-	PatientAppointmentCreateSerializer,
-	PatientAvailableSlotSerializer,
-	is_slot_in_past,
+from doctor.models import (
+    Appointment,
+    AppointmentAvailableSlot,
 )
+from hospital.models import Hospital
 
-
+from .serializers import (
+    PatientAppointmentSerializer,
+    PatientAppointmentCreateSerializer,
+    PatientAvailableSlotSerializer,
+    PatientAppointmentCancelSerializer,
+    is_slot_in_past,
+)
 class BasePatientAPIView(APIView):
 	permission_classes = [IsAuthenticated]
 
@@ -99,9 +105,13 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
 			return error_response
 
 		today = timezone.localdate()
+		window_end = today + timedelta(days=13)
+
 		slots = AppointmentAvailableSlot.objects.filter(
-			date__gte=today,
-		).select_related('doctor', 'doctor__user').order_by('date', 'start_time')
+    		date__gte=today,
+    		date__lte=window_end,
+    		is_active=True,
+			).select_related('doctor', 'doctor__user').order_by('date', 'start_time')
 
 		doctor_id = request.query_params.get('doctor_id')
 		if doctor_id:
@@ -117,6 +127,22 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
 			except ValueError:
 				return Response({'detail': 'Invalid date format. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
 			slots = slots.filter(date=selected_date)
+
+		start_param = request.query_params.get('start')
+		if start_param:
+			try:
+				start_date = timezone.datetime.strptime(start_param, '%Y-%m-%d').date()
+				slots = slots.filter(date__gte=start_date)
+			except ValueError:
+				return Response({'detail': 'Invalid start format. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+
+		end_param = request.query_params.get('end')
+		if end_param:
+			try:
+				end_date = timezone.datetime.strptime(end_param, '%Y-%m-%d').date()
+				slots = slots.filter(date__lte=end_date)
+			except ValueError:
+				return Response({'detail': 'Invalid end format. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
 
 		data = PatientAvailableSlotSerializer(slots, many=True).data
 		return Response({'slots': data}, status=status.HTTP_200_OK)
@@ -154,21 +180,42 @@ class PatientAppointmentsView(BasePatientAPIView):
 		slot_id = serializer.validated_data['slot_id']
 		reason = serializer.validated_data.get('reason', '')
 
-		slot = AppointmentAvailableSlot.objects.filter(id=slot_id).select_related('doctor').first()
-		if not slot:
-			return Response({'detail': 'Appointment slot not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-		if is_slot_in_past(slot):
-			return Response({'detail': 'Cannot book an appointment in the past.'}, status=status.HTTP_400_BAD_REQUEST)
-
 		with transaction.atomic():
+			slot = AppointmentAvailableSlot.objects.select_for_update().select_related('doctor').filter(id=slot_id).first()
+			if not slot:
+				return Response({'detail': 'Appointment slot not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+			if not slot.is_active:
+				return Response({'detail': 'This slot is not active.'}, status=status.HTTP_400_BAD_REQUEST)
+
+			if is_slot_in_past(slot):
+				return Response({'detail': 'Cannot book an appointment in the past.'}, status=status.HTTP_400_BAD_REQUEST)
+
+			# Prevent duplicate active booking by same patient for same slot
+			existing = Appointment.objects.filter(
+				slot=slot,
+				patient=patient_profile,
+				status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED]
+			).exists()
+			if existing:
+				return Response({'detail': 'You already have an active appointment for this slot.'}, status=status.HTTP_400_BAD_REQUEST)
+
+			current_booked = slot.booked_count if slot.booked_count is not None else slot.appointments.count()
+			if current_booked >= slot.patient_limit:
+				return Response({'detail': 'This slot is full.'}, status=status.HTTP_400_BAD_REQUEST)
+
 			appointment = Appointment.objects.create(
 				slot=slot,
 				doctor=slot.doctor,
 				patient=patient_profile,
 				reason=reason,
-				status=Appointment.Status.PENDING,
+				status=Appointment.Status.ACCEPTED,  # auto-accepted
+				hospital=Hospital.objects.filter(name=slot.hospital).first(),
 			)
+
+			slot.booked_count = current_booked + 1
+			slot.remaining_count = max(slot.patient_limit - slot.booked_count, 0)
+			slot.save(update_fields=['booked_count', 'remaining_count'])
 
 		payload = PatientAppointmentSerializer(appointment).data
 		return Response(
@@ -197,8 +244,30 @@ class PatientAppointmentCancelView(BasePatientAPIView):
 				status=status.HTTP_400_BAD_REQUEST,
 			)
 
-		appointment.status = Appointment.Status.CANCELLED
-		appointment.save(update_fields=['status', 'updated_at'])
+		cancel_serializer = PatientAppointmentCancelSerializer(data=request.data)
+		cancel_serializer.is_valid(raise_exception=True)
+		cancel_reason = cancel_serializer.validated_data['reason']
+
+		deadline = appointment.requested_at + timedelta(hours=24)
+		if timezone.now() > deadline:
+			return Response(
+				{'detail': 'You can cancel only within 24 hours from booking time.'},
+				status=status.HTTP_400_BAD_REQUEST,
+			)
+
+		with transaction.atomic():
+			locked_slot = AppointmentAvailableSlot.objects.select_for_update().filter(id=appointment.slot_id).first()
+
+			appointment.status = Appointment.Status.CANCELLED
+			appointment.cancelled_by = 'PATIENT'
+			appointment.cancellation_reason = cancel_reason
+			appointment.cancelled_at = timezone.now()
+			appointment.save(update_fields=['status', 'cancelled_by', 'cancellation_reason', 'cancelled_at', 'updated_at'])
+
+			if locked_slot and locked_slot.booked_count > 0:
+				locked_slot.booked_count -= 1
+				locked_slot.remaining_count = max(locked_slot.patient_limit - locked_slot.booked_count, 0)
+				locked_slot.save(update_fields=['booked_count', 'remaining_count'])
 
 		payload = PatientAppointmentSerializer(appointment).data
 		return Response({'message': 'Appointment cancelled successfully.', 'appointment': payload}, status=status.HTTP_200_OK)

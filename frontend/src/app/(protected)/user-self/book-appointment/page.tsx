@@ -120,9 +120,14 @@ const BookAppointmentPage = () => {
   }, [doctorId, router]);
 
   useEffect(() => {
-    const initialDoctorFromQuery = new URLSearchParams(window.location.search).get("doctor");
+    const params = new URLSearchParams(window.location.search);
+    const initialDoctorFromQuery = params.get("doctor");
+    const initialSlotFromQuery = params.get("slot");
     if (initialDoctorFromQuery) {
       setDoctorId(initialDoctorFromQuery);
+    }
+    if (initialSlotFromQuery) {
+      setSlotId(initialSlotFromQuery);
     }
   }, []);
 

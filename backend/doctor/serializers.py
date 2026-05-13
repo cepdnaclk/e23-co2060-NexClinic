@@ -2,8 +2,8 @@ from rest_framework import serializers
 from django.utils import timezone
 from datetime import datetime
 
-from .models import AppointmentAvailableSlot, DoctorOnlineAdviceAvailability, Appointment, DoctorProfile
-
+from doctor.models import Appointment, AppointmentAvailableSlot, DoctorOnlineAdviceAvailability, DoctorProfile
+from hospital.models import Hospital, HospitalAdmin, DoctorHospitalVerification, SlotTemplate
 
 VALID_WEEK_DAYS = {
     'monday': 'Monday',
@@ -15,6 +15,108 @@ VALID_WEEK_DAYS = {
     'sunday': 'Sunday',
 }
 
+
+class HospitalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hospital
+        fields = [
+            'id',
+            'name',
+            'address',
+            'contact_numbers',
+            'email',
+            'is_active',
+            'created_at',
+            'updated_at',
+        ]
+
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+class HospitalAdminSerializer(serializers.ModelSerializer):
+
+    hospitalName = serializers.CharField(source='hospital.name', read_only=True)
+    userEmail = serializers.CharField(source='user.email', read_only=True)
+
+    class Meta:
+        model = HospitalAdmin
+        fields = [
+            'id',
+            'user',
+            'userEmail',
+            'hospital',
+            'hospitalName',
+            'is_active',
+            'created_at',
+        ]
+
+        read_only_fields = ['id', 'created_at', 'userEmail', 'hospitalName']
+
+
+class DoctorHospitalVerificationSerializer(serializers.ModelSerializer):
+    doctorName = serializers.CharField(source='doctor.full_name', read_only=True)
+    hospitalName = serializers.CharField(source='hospital.name', read_only=True)
+    verifiedByEmail = serializers.CharField(source='verified_by.email', read_only=True)
+
+    class Meta:
+        model = DoctorHospitalVerification
+        fields = [
+            'id',
+            'doctor',
+            'doctorName',
+            'hospital',
+            'hospitalName',
+            'status',
+            'verified_by',
+            'verifiedByEmail',
+            'verified_at',
+            'rejection_reason',
+            'created_at',
+        ]
+
+        read_only_fields = [
+            'id',
+            'doctorName',
+            'hospitalName',
+            'verifiedByEmail',
+            'verified_at',
+            'created_at',
+        ]
+
+class SlotTemplateSerializer(serializers.ModelSerializer):
+    doctorName = serializers.CharField(source='doctor.full_name', read_only=True)
+    hospitalName = serializers.CharField(source='hospital.name', read_only=True)
+
+    class Meta:
+        model = SlotTemplate
+        fields = [
+            'id',
+            'doctor',
+            'doctorName',
+            'hospital',
+            'hospitalName',
+            'day_of_week',
+            'start_time',
+            'end_time',
+            'slot_duration_minutes',
+            'default_patient_limit',
+            'is_active',
+            'created_by',
+            'created_at',
+            'updated_at',
+        ]
+
+        read_only_fields = [
+            'id',
+            'doctorName',
+            'hospitalName',
+            'created_by',
+            'created_at',
+            'updated_at',
+        ]
+
+
+class AdminAppointmentCancelSerializer(serializers.Serializer):
+    reason = serializers.CharField(required=True, allow_blank=False)
 
 class AppointmentAvailableSlotSerializer(serializers.ModelSerializer):
     bookedCount = serializers.SerializerMethodField()

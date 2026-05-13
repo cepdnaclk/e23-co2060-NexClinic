@@ -1,4 +1,5 @@
 from django.contrib import admin
+from hospital.models import Hospital, HospitalAdmin as HospitalAdminRole, DoctorHospitalVerification, SlotTemplate
 from .models import (
     DoctorProfile,
     Appointment,
@@ -6,6 +7,7 @@ from .models import (
     DoctorAppointmentAvailability,
     DoctorOnlineAdviceAvailability,
 )
+
 
 @admin.register(DoctorProfile)
 class DoctorProfileAdmin(admin.ModelAdmin):
@@ -23,6 +25,34 @@ class DoctorProfileAdmin(admin.ModelAdmin):
         return obj.user.email if obj.user else ''
 
 
+@admin.register(Hospital)
+class HospitalAdminAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'email', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'email', 'contact_numbers')
+
+
+@admin.register(HospitalAdminRole)
+class HospitalAdminRoleAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'hospital', 'is_active', 'created_at')
+    list_filter = ('is_active', 'hospital')
+    search_fields = ('user__email', 'hospital__name')
+
+
+@admin.register(DoctorHospitalVerification)
+class DoctorHospitalVerificationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'doctor', 'hospital', 'status', 'verified_by', 'verified_at', 'created_at')
+    list_filter = ('status', 'hospital')
+    search_fields = ('doctor__full_name', 'doctor__preferred_name', 'hospital__name', 'verified_by__email')
+
+
+@admin.register(SlotTemplate)
+class SlotTemplateAdmin(admin.ModelAdmin):
+    list_display = ('id', 'doctor', 'hospital', 'day_of_week', 'start_time', 'end_time', 'slot_duration_minutes', 'default_patient_limit', 'is_active')
+    list_filter = ('is_active', 'hospital', 'day_of_week')
+    search_fields = ('doctor__full_name', 'doctor__preferred_name', 'hospital__name')
+
+
 @admin.register(AppointmentAvailableSlot)
 class AppointmentAvailableSlotAdmin(admin.ModelAdmin):
     list_display = (
@@ -30,7 +60,7 @@ class AppointmentAvailableSlotAdmin(admin.ModelAdmin):
         'start_time', 'end_time',
         'booked_count', 'remaining_count',
     )
-    list_filter = ('date', 'day_of_week', 'hospital')
+    list_filter = ('date', 'day_of_week', 'hospital', 'is_active')
     readonly_fields = ('booked_count', 'remaining_count')
     search_fields = ('doctor__full_name', 'doctor__preferred_name', 'doctor__user__email', 'hospital')
 
@@ -49,12 +79,13 @@ class DoctorOnlineAdviceAvailabilityAdmin(admin.ModelAdmin):
 
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'doctor', 'patient', 'slot', 'status', 'requested_at', 'updated_at')
-    list_filter = ('status', 'slot__date', 'doctor')
+    list_display = ('id', 'doctor', 'patient', 'slot', 'hospital', 'status', 'requested_at', 'updated_at')
+    list_filter = ('status', 'doctor', 'hospital')
     search_fields = (
         'doctor__full_name',
         'doctor__preferred_name',
         'doctor__user__email',
         'patient__full_name',
         'patient__user__email',
+        'slot__hospital',
     )

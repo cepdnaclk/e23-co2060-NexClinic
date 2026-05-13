@@ -1,5 +1,8 @@
 from django.urls import path
-from .views import PatientRegisterView, DoctorRegisterView, VerifyOTPView, ResendOTPView, LogoutView, DoctorLoginView, PatientLoginView, PasswordResetRequestView, PasswordResetConfirmView
+from .views import (PatientRegisterView, DoctorRegisterView, HospitalAdminRegisterView, 
+                    VerifyOTPView, ResendOTPView, LogoutView, DoctorLoginView, 
+                    PatientLoginView, HospitalAdminLoginView,
+                    PasswordResetRequestView, PasswordResetConfirmView)
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
@@ -12,6 +15,10 @@ urlpatterns = [
     # Doctor URLs
     path('doctor/register/', DoctorRegisterView.as_view(), name='doctor_register'),
     path('doctor/login/', DoctorLoginView.as_view(), name='doctor_login'),
+    
+    # Hospital Admin URLs
+    path('hospital-admin/register/', HospitalAdminRegisterView.as_view(), name='hospital_admin_register'),
+    path('hospital-admin/login/', HospitalAdminLoginView.as_view(), name='hospital_admin_login'),
     
     # OTP endpoints
     path('verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),

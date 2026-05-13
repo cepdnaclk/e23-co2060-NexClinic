@@ -99,10 +99,24 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField()
     time = serializers.SerializerMethodField()
     bookedCount = serializers.SerializerMethodField()
+    patientLimit = serializers.SerializerMethodField()
+    remainingCount = serializers.SerializerMethodField()
+    isFull = serializers.SerializerMethodField()
 
     class Meta:
         model = AppointmentAvailableSlot
-        fields = ['id', 'doctorId', 'doctorName', 'hospital', 'date', 'time', 'bookedCount']
+        fields = [
+            'id',
+            'doctorId',
+            'doctorName',
+            'hospital',
+            'date',
+            'time',
+            'bookedCount',
+            'patientLimit',
+            'remainingCount',
+            'isFull',
+        ]
 
     def get_doctorId(self, obj):
         return str(obj.doctor_id)
@@ -112,12 +126,8 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
             return obj.doctor.full_name
         if obj.doctor and obj.doctor.preferred_name:
             return obj.doctor.preferred_name
-
         doctor_user = getattr(obj.doctor, 'user', None)
-        if doctor_user:
-            return doctor_user.email
-
-        return 'Doctor'
+        return doctor_user.email if doctor_user else 'Doctor'
 
     def get_hospital(self, obj):
         return obj.hospital or obj.doctor.location or 'NexClinic'
@@ -129,11 +139,22 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
         return obj.start_time.strftime('%H:%M')
 
     def get_bookedCount(self, obj):
-        return obj.appointments.count()
+        return obj.booked_count if obj.booked_count is not None else obj.appointments.count()
 
+    def get_patientLimit(self, obj):
+        return obj.patient_limit
+
+    def get_remainingCount(self, obj):
+        booked = obj.booked_count if obj.booked_count is not None else obj.appointments.count()
+        return max(obj.patient_limit - booked, 0)
+
+    def get_isFull(self, obj):
+        booked = obj.booked_count if obj.booked_count is not None else obj.appointments.count()
+        return booked >= obj.patient_limit
 
 class PatientAppointmentCancelSerializer(serializers.Serializer):
-    reason = serializers.CharField(required=False, allow_blank=True, default='')
+    reason = serializers.CharField(required=True, allow_blank=True)
+    # reason = serializers.CharField(required=False, allow_blank=True, default='')
 
 
 def is_slot_in_past(slot_obj):
