@@ -53,7 +53,18 @@ class PatientProfileView(BasePatientAPIView):
 		gender = ""
 		phone = ""
 		address = ""
+		city = ""
+		country = ""
 		medical_history = ""
+		allergies = ""
+		blood_type = ""
+		emergency_contact_name = ""
+		emergency_contact_phone = ""
+		emergency_contact_relation = ""
+		insurance_policy_number = ""
+		insurance_provider = ""
+		medications = ""
+		postal_code = ""
 
 		if patient_profile:
 			full_name = patient_profile.full_name or user.email
@@ -65,6 +76,17 @@ class PatientProfileView(BasePatientAPIView):
 			gender = patient_profile.gender or ""
 			phone = patient_profile.phone or ""
 			address = patient_profile.address or ""
+			allergies = getattr(patient_profile, "allergies", "") or ""
+			blood_type = getattr(patient_profile, "blood_type", "") or ""
+			city = getattr(patient_profile, "city", "") or ""
+			country = getattr(patient_profile, "country", "") or ""
+			emergency_contact_name = getattr(patient_profile, "emergency_contact_name", "") or ""
+			emergency_contact_phone = getattr(patient_profile, "emergency_contact_phone", "") or ""
+			emergency_contact_relation = getattr(patient_profile, "emergency_contact_relation", "") or ""
+			insurance_policy_number = getattr(patient_profile, "insurance_policy_number", "") or ""
+			insurance_provider = getattr(patient_profile, "insurance_provider", "") or ""
+			medications = getattr(patient_profile, "medications", "") or ""
+			postal_code = getattr(patient_profile, "postal_code", "") or ""
 			medical_history = patient_profile.medical_history or ""
 
 		data = {
@@ -75,23 +97,25 @@ class PatientProfileView(BasePatientAPIView):
 				"dateOfBirth": date_of_birth,
 				"gender": gender,
 				"address": address,
-				"city": "",
+				"city": city,
+				"country": country,
+				"postalCode": postal_code,
 				"profileImage": "",
 			},
 			"health": {
-				"bloodType": "",
-				"allergies": "",
-				"medications": "",
+				"bloodType": blood_type,
+				"allergies": allergies,
+				"medications": medications,
 				"medicalHistory": medical_history,
 			},
 			"emergencyContact": {
-				"name": "",
-				"phone": "",
-				"relation": "",
+				"name": emergency_contact_name,
+				"phone": emergency_contact_phone,
+				"relation": emergency_contact_relation,
 			},
 			"insurance": {
-				"provider": "",
-				"policyNumber": "",
+				"provider": insurance_provider,
+				"policyNumber": insurance_policy_number,
 			},
 		}
 
