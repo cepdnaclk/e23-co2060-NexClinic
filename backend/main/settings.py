@@ -291,3 +291,20 @@ LOGGING = {
         },
     },
 }
+
+# Celery configuration
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', CELERY_BROKER_URL)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Schedule: weekly regeneration of slots (run every Monday at 02:00)
+from celery.schedules import crontab
+CELERY_BEAT_SCHEDULE = {
+    'generate_slots_weekly': {
+        'task': 'hospital.tasks.generate_slots',
+        'schedule': crontab(hour=2, minute=0, day_of_week='mon'),
+        'args': (),
+    },
+}
