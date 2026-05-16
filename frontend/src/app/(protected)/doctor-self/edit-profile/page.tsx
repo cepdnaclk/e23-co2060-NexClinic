@@ -28,6 +28,7 @@ type DoctorProfileData = {
         email: string;
         specialization: string;
         phone: string;
+        profileImage: string;
     };
     profileDetails: {
         experience: string;
@@ -58,23 +59,6 @@ function mapProfileToForm(data: DoctorProfileData): DoctorFormData {
         qualifications: data.profileDetails.qualifications || [],
         hospitals: data.profileDetails.hospitals || [],
         languages: data.profileDetails.languages || [],
-    };
-}
-
-function buildProfilePayload(formData: DoctorFormData) {
-    return {
-        fullName: formData.fullName,
-        preferredName: formData.preferredName,
-        email: formData.email,
-        phone: formData.phone,
-        specialization: formData.specialization,
-        experienceYears: Number.parseInt(formData.experience || "0", 10) || 0,
-        location: formData.location,
-        chatFee: Number.parseFloat(formData.chatFee || "0") || 0,
-        appointmentFee: Number.parseFloat(formData.appointmentFee || "0") || 0,
-        qualifications: formData.qualifications.join(", "),
-        hospitals: formData.hospitals.join(", "),
-        languages: formData.languages.join(", "),
     };
 }
 
@@ -114,6 +98,7 @@ export default function EditDoctorProfilePage() {
     const router = useRouter();
     const [formData, setFormData] = useState<DoctorFormData | null>(null);
     const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -142,6 +127,7 @@ export default function EditDoctorProfilePage() {
                 const data: DoctorProfileData = await response.json();
                 const formattedData = mapProfileToForm(data);
                 setFormData(formattedData);
+                setProfileImage(data.doctor.profileImage || null);
 
                 // Check for draft (support legacy draft as plain formData or new { formData, profileImage })
                 const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -191,6 +177,7 @@ export default function EditDoctorProfilePage() {
         if (!file) return;
         try {
             const dataUrl = await readFileAsDataUrl(file);
+            setSelectedImageFile(file);
             setProfileImage(dataUrl);
         } catch (e) {
             console.error("Failed to read image", e);
@@ -215,12 +202,36 @@ export default function EditDoctorProfilePage() {
         setSuccessMessage("");
 
         try {
+            const requestBody = new FormData();
+            requestBody.set("fullName", formData.fullName);
+            requestBody.set("preferredName", formData.preferredName);
+            requestBody.set("email", formData.email);
+            requestBody.set("phone", formData.phone);
+            requestBody.set("specialization", formData.specialization);
+            requestBody.set(
+                "experienceYears",
+                String(Number.parseInt(formData.experience || "0", 10) || 0),
+            );
+            requestBody.set("location", formData.location);
+            requestBody.set(
+                "chatFee",
+                String(Number.parseFloat(formData.chatFee || "0") || 0),
+            );
+            requestBody.set(
+                "appointmentFee",
+                String(Number.parseFloat(formData.appointmentFee || "0") || 0),
+            );
+            requestBody.set("qualifications", formData.qualifications.join(", "));
+            requestBody.set("hospitals", formData.hospitals.join(", "));
+            requestBody.set("languages", formData.languages.join(", "));
+
+            if (selectedImageFile) {
+                requestBody.set("profileImage", selectedImageFile);
+            }
+
             const response = await fetch("/api/doctor/profile", {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(buildProfilePayload(formData)),
+                body: requestBody,
             });
 
             if (response.status === 401) {
@@ -235,6 +246,8 @@ export default function EditDoctorProfilePage() {
 
             const updatedProfile = payload as DoctorProfileData;
             setFormData(mapProfileToForm(updatedProfile));
+            setProfileImage(updatedProfile.doctor.profileImage || null);
+            setSelectedImageFile(null);
             localStorage.removeItem(DRAFT_STORAGE_KEY);
             setSuccessMessage("Profile updated successfully!");
         } catch (err) {
@@ -246,6 +259,7 @@ export default function EditDoctorProfilePage() {
 
     const handleReset = () => {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
+        setSelectedImageFile(null);
         setProfileImage(null);
         window.location.reload();
     };

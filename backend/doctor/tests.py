@@ -1,9 +1,16 @@
 from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from doctor.models import DoctorProfile
 from users.models import CustomUser
+
+SMALL_GIF = (
+    b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00"
+    b"\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00"
+    b"\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+)
 
 
 class DoctorProfileViewTests(TestCase):
@@ -68,3 +75,22 @@ class DoctorProfileViewTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.json()["detail"], "A user with this email already exists.")
+
+    def test_doctor_can_upload_profile_image(self):
+        self.client.force_authenticate(user=self.user)
+        image = SimpleUploadedFile(
+            "doctor.jpg",
+            SMALL_GIF,
+            content_type="image/gif",
+        )
+
+        response = self.client.patch(
+            "/api/doctor/profile/",
+            {"profileImage": image},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.profile.refresh_from_db()
+        self.assertTrue(bool(self.profile.profile_picture))
+        self.assertIn("/media/doctor_profiles/", response.json()["doctor"]["profileImage"])
