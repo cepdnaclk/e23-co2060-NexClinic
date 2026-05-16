@@ -327,7 +327,7 @@ export default function EditDoctorProfilePage() {
                                             onChange={(e) => handleImageChange(e.target.files?.[0])}
                                             className="mt-2"
                                         />
-                                <p className="text-xs text-gray-500 mt-2">Upload a recent headshot. Preview stays local until image upload support is added.</p>
+                                        <p className="text-xs text-gray-500 mt-2">Upload a recent headshot. Preview stays local until image upload support is added.</p>
                                     </div>
                                 </div>
                                 <FieldCard

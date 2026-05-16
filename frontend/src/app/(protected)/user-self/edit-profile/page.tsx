@@ -339,7 +339,7 @@ export default function UserEditProfilePage() {
                   {loading ? 'Syncing profile data' : 'Ready to edit'}
                 </span>
                 <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 ring-1 ring-teal-200">
-                  Local changes only
+                  Backend sync enabled
                 </span>
               </div>
 
@@ -679,8 +679,8 @@ export default function UserEditProfilePage() {
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">How this works</p>
               <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                 <li>1. Review and update your details in a calm, grouped layout.</li>
-                <li>2. Upload a new profile image if you want the dashboard to feel more personal.</li>
-                <li>3. Save a draft on this device while the profile sync endpoint is unavailable.</li>
+                <li>2. Save changes to sync your profile details to the backend.</li>
+                <li>3. Save a draft on this device if you want to pause before submitting.</li>
               </ul>
             </div>
 
