@@ -145,7 +145,10 @@ class PatientProfileView(BasePatientAPIView):
         if not self._is_patient(user):
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
-        patient_profile = getattr(user, "patient_profile", None)
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
         return Response(self._build_profile_response(request, user, patient_profile))
 
     def patch(self, request):

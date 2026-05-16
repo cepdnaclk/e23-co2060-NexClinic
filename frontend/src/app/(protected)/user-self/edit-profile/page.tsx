@@ -90,6 +90,7 @@ function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
     emergencyContactRelation: profile.emergencyContact.relation || "",
     insuranceProvider: profile.insurance.provider || "",
     insurancePolicyNumber: profile.insurance.policyNumber || "",
+    profileImage: profile.patient.profileImage || defaultFormData.profileImage,
   };
 }
 
@@ -256,7 +257,10 @@ export default function UserEditProfilePage() {
       requestBody.set("medicalHistory", formData.medicalHistory);
       requestBody.set("emergencyContactName", formData.emergencyContactName);
       requestBody.set("emergencyContactPhone", formData.emergencyContactPhone);
-      requestBody.set("emergencyContactRelation", formData.emergencyContactRelation);
+      requestBody.set(
+        "emergencyContactRelation",
+        formData.emergencyContactRelation,
+      );
       requestBody.set("insuranceProvider", formData.insuranceProvider);
       requestBody.set("insurancePolicyNumber", formData.insurancePolicyNumber);
 

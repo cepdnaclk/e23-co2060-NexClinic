@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { proxyBackendWithRefresh } from "@/lib/serverAuthProxy";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     console.error("Patient profile API error", error);
     return NextResponse.json(
       { error: "An error occurred while fetching profile data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -27,8 +28,10 @@ export async function PATCH(request: NextRequest) {
     let forwardedContentType: string | null = "application/json";
 
     if (contentType?.includes("multipart/form-data")) {
-      body = await request.formData();
-      forwardedContentType = null;
+      // Read raw body and forward the original Content-Type (including boundary)
+      const buf = await request.arrayBuffer();
+      body = buf;
+      forwardedContentType = contentType;
     } else {
       body = JSON.stringify(await request.json().catch(() => ({})));
     }
@@ -45,7 +48,7 @@ export async function PATCH(request: NextRequest) {
     console.error("Patient profile update API error", error);
     return NextResponse.json(
       { error: "An error occurred while updating profile data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
