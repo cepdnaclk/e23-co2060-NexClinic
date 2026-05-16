@@ -10,336 +10,417 @@ import { Appointment } from "@/types/appointment";
 type SortBy = "date" | "doctor" | "status";
 
 type ApiAppointment = Omit<Appointment, "id" | "slotId" | "doctorId"> & {
-    id: string | number;
-    slotId: string | number;
-    doctorId: string | number;
+  id: string | number;
+  slotId: string | number;
+  doctorId: string | number;
 };
 
 const sortAppointments = (appointments: Appointment[], sortBy: string) => {
-    if (sortBy === "date") {
-        return [...appointments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    } else if (sortBy === "doctor") {
-        return [...appointments].sort((a, b) => a.doctorName.localeCompare(b.doctorName));
-    } else if (sortBy === "status") {
-        return [...appointments].sort((a, b) => a.status.localeCompare(b.status));
-    }
-    return appointments;
+  if (sortBy === "date") {
+    return [...appointments].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+  } else if (sortBy === "doctor") {
+    return [...appointments].sort((a, b) =>
+      a.doctorName.localeCompare(b.doctorName),
+    );
+  } else if (sortBy === "status") {
+    return [...appointments].sort((a, b) => a.status.localeCompare(b.status));
+  }
+  return appointments;
 };
 
 const formatTimeForDisplay = (time: string): string => {
-    const twentyFourHourMatch = time.match(/^(\d{2}):(\d{2})$/);
-    if (!twentyFourHourMatch) {
-        return time;
-    }
+  const twentyFourHourMatch = time.match(/^(\d{2}):(\d{2})$/);
+  if (!twentyFourHourMatch) {
+    return time;
+  }
 
-    let hour = Number(twentyFourHourMatch[1]);
-    const minute = twentyFourHourMatch[2];
-    const suffix = hour >= 12 ? "PM" : "AM";
+  let hour = Number(twentyFourHourMatch[1]);
+  const minute = twentyFourHourMatch[2];
+  const suffix = hour >= 12 ? "PM" : "AM";
 
-    if (hour === 0) {
-        hour = 12;
-    } else if (hour > 12) {
-        hour -= 12;
-    }
+  if (hour === 0) {
+    hour = 12;
+  } else if (hour > 12) {
+    hour -= 12;
+  }
 
-    return `${hour}:${minute} ${suffix}`;
+  return `${hour}:${minute} ${suffix}`;
 };
 
 const truncateText = (text: string, maxWords: number = 3): string => {
-    const words = text.trim().split(/\s+/);
-    if (words.length > maxWords) {
-        return words.slice(0, maxWords).join(" ") + "...";
-    }
-    return text;
+  const words = text.trim().split(/\s+/);
+  if (words.length > maxWords) {
+    return words.slice(0, maxWords).join(" ") + "...";
+  }
+  return text;
 };
 
 const normalizeAppointment = (appointment: ApiAppointment): Appointment => ({
-    ...appointment,
-    id: String(appointment.id),
-    slotId: String(appointment.slotId),
-    doctorId: String(appointment.doctorId),
+  ...appointment,
+  id: String(appointment.id),
+  slotId: String(appointment.slotId),
+  doctorId: String(appointment.doctorId),
 });
 
 const statusPillClass = (status: string) => {
-    if (status === "Confirmed") {
-        return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
-    }
-    if (status === "Pending") {
-        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200";
-    }
-    if (status === "Completed") {
-        return "bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200";
-    }
-    return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200";
+  if (status === "Confirmed") {
+    return "bg-green-100 text-green-800 border border-green-200";
+  }
+  if (status === "Pending") {
+    return "bg-amber-100 text-amber-800 border border-amber-200";
+  }
+  if (status === "Completed") {
+    return "bg-slate-100 text-slate-700 border border-slate-200";
+  }
+  return "bg-rose-100 text-rose-800 border border-rose-200";
 };
 
 const PatientAppointmentPage = () => {
-    const router = useRouter();
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [sortBy, setSortBy] = useState<SortBy>("date");
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [toast, setToast] = useState("");
-    const [cancellingIds, setCancellingIds] = useState<string[]>([]);
-    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [confirmationDialog, setConfirmationDialog] = useState<{ isOpen: boolean; appointmentId: string | null }>({
-        isOpen: false,
-        appointmentId: null,
-    });
+  const router = useRouter();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [sortBy, setSortBy] = useState<SortBy>("date");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
+  const [cancellingIds, setCancellingIds] = useState<string[]>([]);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [confirmationDialog, setConfirmationDialog] = useState<{
+    isOpen: boolean;
+    appointmentId: string | null;
+  }>({
+    isOpen: false,
+    appointmentId: null,
+  });
 
-    const openAppointmentModal = (appointment: Appointment) => {
-        setSelectedAppointment(appointment);
-        setIsModalOpen(true);
-    };
+  const openAppointmentModal = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsModalOpen(true);
+  };
 
-    const closeAppointmentModal = () => {
-        setIsModalOpen(false);
-        setSelectedAppointment(null);
-    };
+  const closeAppointmentModal = () => {
+    setIsModalOpen(false);
+    setSelectedAppointment(null);
+  };
 
-    const openCancelConfirmation = (appointmentId: string) => {
-        setConfirmationDialog({ isOpen: true, appointmentId });
-    };
+  const openCancelConfirmation = (appointmentId: string) => {
+    setConfirmationDialog({ isOpen: true, appointmentId });
+  };
 
-    const closeCancelConfirmation = () => {
-        setConfirmationDialog({ isOpen: false, appointmentId: null });
-    };
+  const closeCancelConfirmation = () => {
+    setConfirmationDialog({ isOpen: false, appointmentId: null });
+  };
 
-    const handleConfirmCancellation = async () => {
-        if (!confirmationDialog.appointmentId) return;
+  const handleConfirmCancellation = async () => {
+    if (!confirmationDialog.appointmentId) return;
 
-        await cancelAppointment(confirmationDialog.appointmentId);
-        closeCancelConfirmation();
-    };
+    await cancelAppointment(confirmationDialog.appointmentId);
+    closeCancelConfirmation();
+  };
 
-    useEffect(() => {
-        const loadAppointments = async () => {
-            setLoading(true);
-            setError("");
+  useEffect(() => {
+    const loadAppointments = async () => {
+      setLoading(true);
+      setError("");
 
-            try {
-                const response = await fetch("/api/patient/appointments", {
-                    method: "GET",
-                    cache: "no-store",
-                });
+      try {
+        const response = await fetch("/api/patient/appointments", {
+          method: "GET",
+          cache: "no-store",
+        });
 
-                if (response.status === 401) {
-                    handlePatientSessionExpired(router);
-                    return;
-                }
-
-                const payload = await response.json().catch(() => ({}));
-
-                if (!response.ok) {
-                    throw new Error(payload?.error || "Failed to load appointments");
-                }
-
-                const normalized = Array.isArray(payload?.appointments)
-                    ? payload.appointments.map((item: ApiAppointment) => normalizeAppointment(item))
-                    : [];
-
-                setAppointments(normalized);
-            } catch (err) {
-                setAppointments([]);
-                setError(err instanceof Error ? err.message : "Failed to load appointments");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        void loadAppointments();
-    }, [router]);
-
-    const cancelAppointment = async (appointmentId: string) => {
-        setCancellingIds((prev) => (prev.includes(appointmentId) ? prev : [...prev, appointmentId]));
-
-        try {
-            const response = await fetch(`/api/patient/appointments/${appointmentId}/cancel`, {
-                method: "PATCH",
-            });
-
-            if (response.status === 401) {
-                handlePatientSessionExpired(router);
-                return;
-            }
-
-            const payload = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-                throw new Error(payload?.error || "Failed to cancel appointment");
-            }
-
-            const updated = payload?.appointment ? normalizeAppointment(payload.appointment as ApiAppointment) : null;
-            if (updated) {
-                setAppointments((prev) => prev.map((item) => (item.id === appointmentId ? updated : item)));
-            }
-
-            setToast(payload?.message || "Appointment cancelled successfully.");
-            window.setTimeout(() => setToast(""), 2200);
-        } catch (err) {
-            setToast(err instanceof Error ? err.message : "Failed to cancel appointment.");
-            window.setTimeout(() => setToast(""), 2200);
-        } finally {
-            setCancellingIds((prev) => prev.filter((id) => id !== appointmentId));
-        }
-    };
-
-    const requests = useMemo(
-        () => sortAppointments(appointments.filter((item) => item.category === "request"), sortBy),
-        [appointments, sortBy]
-    );
-    const upcoming = useMemo(
-        () => sortAppointments(appointments.filter((item) => item.category === "upcoming"), sortBy),
-        [appointments, sortBy]
-    );
-    const previous = useMemo(
-        () => sortAppointments(appointments.filter((item) => item.category === "previous"), sortBy),
-        [appointments, sortBy]
-    );
-
-    const renderTable = (items: Appointment[], emptyText: string) => {
-        if (loading) {
-            return <div className="bg-gray-200 dark:bg-gray-700 p-6 rounded-lg text-black dark:text-gray-300 text-center" style={{ color: '#000000' }}>Loading appointments...</div>
+        if (response.status === 401) {
+          handlePatientSessionExpired(router);
+          return;
         }
 
-        if (items.length === 0) {
-            return <div className="bg-gray-200 dark:bg-gray-700 p-6 rounded-lg text-black dark:text-gray-300 text-center" style={{ color: '#000000' }}>{emptyText}</div>
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Failed to load appointments");
         }
 
-        return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                {items.map((appt) => {
-                    const canCancel = appt.status === "Pending" || appt.status === "Confirmed";
-                    const isCancelling = cancellingIds.includes(appt.id);
+        const normalized = Array.isArray(payload?.appointments)
+          ? payload.appointments.map((item: ApiAppointment) =>
+              normalizeAppointment(item),
+            )
+          : [];
 
-                    return (
-                        <div key={appt.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 flex flex-col sm:flex-row gap-4 items-start transition-transform hover:-translate-y-1">
-                            <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-green-200 to-green-50 dark:from-green-800 dark:to-green-700 flex items-center justify-center text-green-700 dark:text-green-100 font-bold text-xl">
-                                {appt.doctorName.split(" ")[0][0] ?? "D"}
-                            </div>
-
-                            <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h4 className="text-lg font-semibold text-black dark:text-gray-100" style={{ color: '#000000' }}>{appt.doctorName}</h4>
-                                        <p className="text-sm text-black dark:text-gray-300" style={{ color: '#000000' }}>{appt.hospital}</p>
-                                    </div>
-
-                                    <div className="text-right">
-                                        <div className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusPillClass(appt.status)}`}>{appt.status}</div>
-                                        <div className="text-xs text-black dark:text-gray-400 mt-2" style={{ color: '#000000' }}>Requested: {new Date(appt.requestedAt).toLocaleDateString()}</div>
-                                    </div>
-                                </div>
-
-                                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                    <div className="text-sm text-black dark:text-gray-200" style={{ color: '#000000' }}>
-                                        <div className="font-medium">{appt.date} • {formatTimeForDisplay(appt.time)}</div>
-                                        {appt.reason && <div className="text-xs text-black dark:text-gray-400 mt-1" style={{ color: '#000000' }}>{truncateText(appt.reason)}</div>}
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        {/* <Link href={`/user-self/appointments/${appt.id}`} className="text-sm text-green-600 dark:text-green-300 font-semibold hover:underline">View</Link> */}
-                                        <button
-                                            onClick={() => openAppointmentModal(appt)}
-                                            className="text-sm text-green-600 dark:text-green-300 font-semibold hover:underline bg-none border-none cursor-pointer p-0"
-                                        >
-                                            View
-                                        </button>
-                                        {canCancel ? (
-                                            <button
-                                                type="button"
-                                                className="ml-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 border border-red-100 dark:border-red-700 rounded px-3 py-1 text-sm font-semibold hover:bg-red-100 dark:hover:bg-red-900/40 disabled:opacity-60"
-                                                disabled={isCancelling}
-                                                onClick={() => openCancelConfirmation(appt.id)}
-                                            >
-                                                {isCancelling ? "Cancelling..." : "Cancel"}
-                                            </button>
-                                        ) : (
-                                            <span className="text-xs text-black dark:text-gray-400">—</span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-
-            </div>
+        setAppointments(normalized);
+      } catch (err) {
+        setAppointments([]);
+        setError(
+          err instanceof Error ? err.message : "Failed to load appointments",
         );
+      } finally {
+        setLoading(false);
+      }
     };
+
+    void loadAppointments();
+  }, [router]);
+
+  const cancelAppointment = async (appointmentId: string) => {
+    setCancellingIds((prev) =>
+      prev.includes(appointmentId) ? prev : [...prev, appointmentId],
+    );
+
+    try {
+      const response = await fetch(
+        `/api/patient/appointments/${appointmentId}/cancel`,
+        {
+          method: "PATCH",
+        },
+      );
+
+      if (response.status === 401) {
+        handlePatientSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to cancel appointment");
+      }
+
+      const updated = payload?.appointment
+        ? normalizeAppointment(payload.appointment as ApiAppointment)
+        : null;
+      if (updated) {
+        setAppointments((prev) =>
+          prev.map((item) => (item.id === appointmentId ? updated : item)),
+        );
+      }
+
+      setToast(payload?.message || "Appointment cancelled successfully.");
+      window.setTimeout(() => setToast(""), 2200);
+    } catch (err) {
+      setToast(
+        err instanceof Error ? err.message : "Failed to cancel appointment.",
+      );
+      window.setTimeout(() => setToast(""), 2200);
+    } finally {
+      setCancellingIds((prev) => prev.filter((id) => id !== appointmentId));
+    }
+  };
+
+  const requests = useMemo(
+    () =>
+      sortAppointments(
+        appointments.filter((item) => item.category === "request"),
+        sortBy,
+      ),
+    [appointments, sortBy],
+  );
+  const upcoming = useMemo(
+    () =>
+      sortAppointments(
+        appointments.filter((item) => item.category === "upcoming"),
+        sortBy,
+      ),
+    [appointments, sortBy],
+  );
+  const previous = useMemo(
+    () =>
+      sortAppointments(
+        appointments.filter((item) => item.category === "previous"),
+        sortBy,
+      ),
+    [appointments, sortBy],
+  );
+
+  const renderTable = (items: Appointment[], emptyText: string) => {
+    if (loading) {
+      return (
+        <div className="bg-white/90 p-6 rounded-lg text-slate-700 text-center shadow-sm">
+          Loading appointments...
+        </div>
+      );
+    }
+
+    if (items.length === 0) {
+      return (
+        <div className="bg-white/90 p-6 rounded-lg text-slate-700 text-center shadow-sm">
+          {emptyText}
+        </div>
+      );
+    }
 
     return (
-        <div className="relative flex flex-col items-center w-full min-h-screen py-8 transition-colors" style={{ background: 'linear-gradient(180deg, #ecfdf5 0%, #f8fffb 60%)' }}>
-            <div aria-hidden className="absolute inset-0 -z-10">
-                <img src="/images/hexagons.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 dark:opacity-12 filter blur-sm" />
-                <div className="absolute -left-40 -top-32 w-96 h-96 rounded-full bg-gradient-to-br from-green-200 to-transparent opacity-40 dark:from-green-900 dark:opacity-30 blur-2xl transform rotate-12" />
-                <div className="absolute -right-40 -bottom-32 w-96 h-96 rounded-full bg-gradient-to-br from-teal-100 to-transparent opacity-30 dark:from-teal-800 dark:opacity-20 blur-2xl transform -rotate-12" />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-emerald-50/30 dark:to-black/20 mix-blend-overlay" />
-            </div>
-            <div className="w-full max-w-6xl px-6 py-8 rounded-3xl border border-emerald-100/30 shadow-lg transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}>
-                <div className="w-full rounded-2xl shadow-sm p-4 md:p-8 flex flex-col gap-6 backdrop-blur-sm" style={{ backgroundColor: '#ffffff' }}>
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-4">
-                        <h2 className="text-4xl font-extrabold text-black dark:text-gray-100" style={{ color: '#000000' }}>My Appointments</h2>
-                        <Link href="/user-self/book-appointment">
-                            <button className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition-all">
-                                + Book Appointment
-                            </button>
-                        </Link>
-                    </div>
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                        <span className="font-medium text-black dark:text-gray-200" style={{ color: '#000000' }}>Sort by:</span>
-                        <select
-                            className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-black dark:text-gray-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as SortBy)}
-                        >
-                            <option value="date">Date</option>
-                            <option value="doctor">Doctor</option>
-                            <option value="status">Status</option>
-                        </select>
-                    </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+        {items.map((appt) => {
+          const canCancel =
+            appt.status === "Pending" || appt.status === "Confirmed";
+          const isCancelling = cancellingIds.includes(appt.id);
 
-                    {error && <div className="text-red-500 text-sm">{error}</div>}
-                    {toast && <div className="text-green-600 dark:text-green-300 text-sm font-semibold">{toast}</div>}
+          return (
+            <div
+              key={appt.id}
+              className="bg-white rounded-xl shadow-md p-4 flex flex-col sm:flex-row gap-4 items-start transition-transform hover:-translate-y-1 border border-green-50"
+            >
+              <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-emerald-200 to-emerald-50 flex items-center justify-center text-emerald-700 font-bold text-xl">
+                {appt.doctorName.split(" ")[0][0] ?? "D"}
+              </div>
 
-                    <div>
-                        <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Pending Requests</h3>
-                        {renderTable(requests, "No pending requests.")}
-                    </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-lg font-semibold text-slate-900">
+                      {appt.doctorName}
+                    </h4>
+                    <p className="text-sm text-slate-600">{appt.hospital}</p>
+                  </div>
 
-                    <div>
-                        <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Upcoming Appointments</h3>
-                        {renderTable(upcoming, "No upcoming appointments.")}
+                  <div className="text-right">
+                    <div
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusPillClass(appt.status)}`}
+                    >
+                      {appt.status}
                     </div>
-
-                    <div>
-                        <h3 className="text-xl font-semibold mb-3 text-black dark:text-gray-200" style={{ color: '#000000' }}>Appointment History</h3>
-                        {renderTable(previous, "No appointment history yet.")}
+                    <div className="text-xs text-slate-500 mt-2">
+                      Requested:{" "}
+                      {new Date(appt.requestedAt).toLocaleDateString()}
                     </div>
+                  </div>
                 </div>
+
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="text-sm text-slate-700">
+                    <div className="font-medium">
+                      {appt.date} • {formatTimeForDisplay(appt.time)}
+                    </div>
+                    {appt.reason && (
+                      <div className="text-xs text-slate-500 mt-1">
+                        {truncateText(appt.reason)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => openAppointmentModal(appt)}
+                      className="text-sm text-green-600 font-semibold hover:underline bg-none border-none cursor-pointer p-0"
+                    >
+                      View
+                    </button>
+                    {canCancel ? (
+                      <button
+                        type="button"
+                        className="ml-2 bg-red-50 text-red-600 border border-red-100 rounded px-3 py-1 text-sm font-semibold hover:bg-red-100 disabled:opacity-60"
+                        disabled={isCancelling}
+                        onClick={() => openCancelConfirmation(appt.id)}
+                      >
+                        {isCancelling ? "Cancelling..." : "Cancel"}
+                      </button>
+                    ) : (
+                      <span className="text-xs text-slate-400">—</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-
-            <AppointmentModal
-                appointment={selectedAppointment}
-                isOpen={isModalOpen}
-                onClose={closeAppointmentModal}
-            />
-
-            <ConfirmationDialog
-                isOpen={confirmationDialog.isOpen}
-                title="Cancel Appointment"
-                message="Are you sure you want to cancel this appointment? This action cannot be undone."
-                confirmText="Cancel Appointment"
-                cancelText="Keep Appointment"
-                confirmButtonClass="bg-red-500 hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-600"
-                cancelButtonClass="bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500"
-                isLoading={confirmationDialog.appointmentId ? cancellingIds.includes(confirmationDialog.appointmentId) : false}
-                onConfirm={handleConfirmCancellation}
-                onCancel={closeCancelConfirmation}
-            />
-        </div>
+          );
+        })}
+      </div>
     );
+  };
+
+  return (
+    <div className="relative flex flex-col items-center w-full min-h-screen py-8 transition-colors bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white">
+      <div aria-hidden className="absolute inset-0 -z-10">
+        <img
+          src="/images/hexagons.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover opacity-12 filter blur-sm"
+        />
+        <div className="absolute -left-40 -top-32 w-96 h-96 rounded-full bg-gradient-to-br from-emerald-200 to-transparent opacity-30 blur-2xl transform rotate-12" />
+        <div className="absolute -right-40 -bottom-32 w-96 h-96 rounded-full bg-gradient-to-br from-emerald-100 to-transparent opacity-20 blur-2xl transform -rotate-12" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-emerald-50/30 mix-blend-overlay" />
+      </div>
+      <div className="w-full max-w-6xl px-6 py-8 rounded-3xl border border-emerald-100/30 shadow-lg transition-colors bg-white/95">
+        <div
+          className="w-full rounded-2xl shadow-sm p-4 md:p-8 flex flex-col gap-6 backdrop-blur-sm"
+          style={{ backgroundColor: "#ffffff" }}
+        >
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-green-100 pb-4">
+            <h2 className="text-4xl font-extrabold text-slate-900">
+              My Appointments
+            </h2>
+            <Link href="/user-self/book-appointment">
+              <button className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition-all">
+                + Book Appointment
+              </button>
+            </Link>
+          </div>
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <span className="font-medium text-slate-700">Sort by:</span>
+            <select
+              className="border border-gray-300 bg-white text-slate-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+            >
+              <option value="date">Date</option>
+              <option value="doctor">Doctor</option>
+              <option value="status">Status</option>
+            </select>
+          </div>
+
+          {error && <div className="text-red-500 text-sm">{error}</div>}
+          {toast && (
+            <div className="text-green-600 text-sm font-semibold">{toast}</div>
+          )}
+
+          <div>
+            <h3 className="text-xl font-semibold mb-3 text-slate-900">
+              Pending Requests
+            </h3>
+            {renderTable(requests, "No pending requests.")}
+          </div>
+
+          <div>
+            <h3 className="text-xl font-semibold mb-3 text-slate-900">
+              Upcoming Appointments
+            </h3>
+            {renderTable(upcoming, "No upcoming appointments.")}
+          </div>
+
+          <div>
+            <h3 className="text-xl font-semibold mb-3 text-slate-900">
+              Appointment History
+            </h3>
+            {renderTable(previous, "No appointment history yet.")}
+          </div>
+        </div>
+      </div>
+
+      <AppointmentModal
+        appointment={selectedAppointment}
+        isOpen={isModalOpen}
+        onClose={closeAppointmentModal}
+      />
+
+      <ConfirmationDialog
+        isOpen={confirmationDialog.isOpen}
+        title="Cancel Appointment"
+        message="Are you sure you want to cancel this appointment? This action cannot be undone."
+        confirmText="Cancel Appointment"
+        cancelText="Keep Appointment"
+        confirmButtonClass="bg-red-500 hover:bg-red-600"
+        cancelButtonClass="bg-gray-300 hover:bg-gray-400"
+        isLoading={
+          confirmationDialog.appointmentId
+            ? cancellingIds.includes(confirmationDialog.appointmentId)
+            : false
+        }
+        onConfirm={handleConfirmCancellation}
+        onCancel={closeCancelConfirmation}
+      />
+    </div>
+  );
 };
 
 export default PatientAppointmentPage;
