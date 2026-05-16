@@ -12,6 +12,7 @@ from rest_framework import status
 from .constants import DOCTOR_SPECIALIZATIONS
 from doctor.models import AppointmentAvailableSlot, DoctorOnlineAdviceAvailability, Appointment, DoctorProfile
 from hospital.models import Hospital, HospitalAdmin, DoctorHospitalVerification, SlotTemplate
+from users.models import CustomUser
 from .serializers import (
     AppointmentAvailableSlotSerializer,
     BulkAppointmentSlotCreateSerializer,
@@ -507,6 +508,19 @@ class DoctorProfileView(APIView):
             return Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
 
         payload = request.data if isinstance(request.data, dict) else {}
+        user_update_fields = []
+
+        if "email" in payload:
+            email = str(payload.get("email") or "").strip()
+            if not email:
+                return Response({"detail": "email cannot be blank."}, status=status.HTTP_400_BAD_REQUEST)
+
+            existing_user = CustomUser.objects.filter(email__iexact=email).exclude(id=user.id).exists()
+            if existing_user:
+                return Response({"detail": "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+            user.email = email
+            user_update_fields.append("email")
 
         field_map = {
             "fullName": "full_name",
@@ -569,6 +583,9 @@ class DoctorProfileView(APIView):
 
         if update_fields:
             doctor_profile.save(update_fields=sorted(set(update_fields)))
+
+        if user_update_fields:
+            user.save(update_fields=sorted(set(user_update_fields)))
 
         return self.get(request)
 
