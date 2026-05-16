@@ -1,0 +1,12 @@
+from rest_framework import serializers
+from .models import ActivityLog
+
+class ActivityLogSerializer(serializers.ModelSerializer):
+    user_email = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActivityLog
+        fields = ('id','user_email','hospital_id','action','model_name','object_id','data','created_at')
+
+    def get_user_email(self, obj):
+        return obj.user.email if obj.user else None

@@ -9,6 +9,22 @@ from doctor.models import AppointmentAvailableSlot
 class Command(BaseCommand):
     help = "Generate appointment slots from templates for the next 2 weeks. Prevents duplicates."
 
+    def _doctor_label(self, template):
+        doctor = template.doctor
+        user = getattr(doctor, 'user', None)
+
+        if user is not None:
+            full_name = getattr(user, 'get_full_name', None)
+            if callable(full_name):
+                label = full_name()
+                if label:
+                    return label
+            email = getattr(user, 'email', '')
+            if email:
+                return email
+
+        return getattr(doctor, 'preferred_name', '') or getattr(doctor, 'full_name', '') or str(doctor)
+
     def add_arguments(self, parser):
         parser.add_argument(
             '--days',
@@ -99,7 +115,7 @@ class Command(BaseCommand):
                                 self.stdout.write(
                                     self.style.WARNING(
                                         f"  Skipped duplicate slot: "
-                                        f"{template.doctor.user.get_full_name()} at "
+                                        f"{self._doctor_label(template)} at "
                                         f"{template.hospital.name} on {slot_start}"
                                     )
                                 )
@@ -109,8 +125,11 @@ class Command(BaseCommand):
                                     slot = AppointmentAvailableSlot.objects.create(
                                         doctor=template.doctor,
                                         hospital=template.hospital,
+                                        date=slot_start.date(),
                                         date_start=slot_start,
                                         date_end=slot_end,
+                                        start_time=template.start_time,
+                                        end_time=template.end_time,
                                         slot_template=template,
                                         patient_limit=template.default_patient_limit,
                                         booked_count=0,
@@ -120,7 +139,7 @@ class Command(BaseCommand):
                                     created_count += 1
                                     self.stdout.write(
                                         self.style.SUCCESS(
-                                            f"  Created slot: {template.doctor.user.get_full_name()} at "
+                                            f"  Created slot: {self._doctor_label(template)} at "
                                             f"{template.hospital.name} on {slot_start}"
                                         )
                                     )

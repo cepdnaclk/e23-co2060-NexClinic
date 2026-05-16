@@ -109,3 +109,22 @@ class SlotTemplate(models.Model):
 
     def __str__(self):
         return f"Template: {self.doctor} @ {self.hospital} on {self.day_of_week} {self.start_time}-{self.end_time}"
+
+
+class ActivityLog(models.Model):
+    """Audit log for admin actions and important events."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='hospital_activity_logs'
+    )
+    hospital = models.ForeignKey(Hospital, null=True, blank=True, on_delete=models.SET_NULL, related_name='activity_logs')
+    action = models.CharField(max_length=100)
+    model_name = models.CharField(max_length=100, blank=True, default='')
+    object_id = models.CharField(max_length=64, blank=True, default='')
+    data = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['hospital', 'action', 'created_at'])]
+
+    def __str__(self):
+        return f"{self.created_at}: {self.action} by {self.user}"
