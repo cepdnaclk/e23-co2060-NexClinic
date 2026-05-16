@@ -129,6 +129,7 @@ export default function UserEditProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<PatientProfileResponse | null>(null);
   const [formData, setFormData] = useState<Patient>(defaultFormData);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -219,6 +220,7 @@ export default function UserEditProfilePage() {
 
     const reader = new FileReader();
     reader.onloadend = () => {
+      setSelectedImageFile(file);
       setFormData((previous) => ({
         ...previous,
         profileImage: reader.result as string,
@@ -238,31 +240,33 @@ export default function UserEditProfilePage() {
     setNotice("");
 
     try {
+      const requestBody = new FormData();
+      requestBody.set("fullName", formData.name);
+      requestBody.set("email", formData.email);
+      requestBody.set("phone", formData.phone);
+      requestBody.set("dateOfBirth", formData.dateOfBirth);
+      requestBody.set("gender", formData.gender);
+      requestBody.set("address", formData.address);
+      requestBody.set("city", formData.city);
+      requestBody.set("postalCode", formData.postalCode);
+      requestBody.set("country", formData.country);
+      requestBody.set("bloodType", formData.bloodType);
+      requestBody.set("allergies", formData.allergies);
+      requestBody.set("medications", formData.medications);
+      requestBody.set("medicalHistory", formData.medicalHistory);
+      requestBody.set("emergencyContactName", formData.emergencyContactName);
+      requestBody.set("emergencyContactPhone", formData.emergencyContactPhone);
+      requestBody.set("emergencyContactRelation", formData.emergencyContactRelation);
+      requestBody.set("insuranceProvider", formData.insuranceProvider);
+      requestBody.set("insurancePolicyNumber", formData.insurancePolicyNumber);
+
+      if (selectedImageFile) {
+        requestBody.set("profileImage", selectedImageFile);
+      }
+
       const response = await fetch("/api/patient/profile", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullName: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          dateOfBirth: formData.dateOfBirth,
-          gender: formData.gender,
-          address: formData.address,
-          city: formData.city,
-          postalCode: formData.postalCode,
-          country: formData.country,
-          bloodType: formData.bloodType,
-          allergies: formData.allergies,
-          medications: formData.medications,
-          medicalHistory: formData.medicalHistory,
-          emergencyContactName: formData.emergencyContactName,
-          emergencyContactPhone: formData.emergencyContactPhone,
-          emergencyContactRelation: formData.emergencyContactRelation,
-          insuranceProvider: formData.insuranceProvider,
-          insurancePolicyNumber: formData.insurancePolicyNumber,
-        }),
+        body: requestBody,
       });
 
       if (response.status === 401 || response.status === 403) {
@@ -280,11 +284,11 @@ export default function UserEditProfilePage() {
       const updatedProfile = payload as PatientProfileResponse;
       const nextFormData = {
         ...mapProfileToForm(updatedProfile),
-        profileImage: formData.profileImage,
       };
 
       setProfile(updatedProfile);
       setFormData(nextFormData);
+      setSelectedImageFile(null);
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       window.localStorage.removeItem("patient-profile-draft-saved-at");
       setNotice("Your profile has been updated successfully.");
@@ -324,6 +328,7 @@ export default function UserEditProfilePage() {
 
     if (profile) {
       setFormData(mapProfileToForm(profile));
+      setSelectedImageFile(null);
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
     }
   };

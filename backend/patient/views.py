@@ -56,7 +56,14 @@ class BasePatientAPIView(APIView):
 
 class PatientProfileView(BasePatientAPIView):
     @staticmethod
-    def _build_profile_response(user, patient_profile):
+    def _build_profile_image_url(request, patient_profile):
+        if not patient_profile or not patient_profile.profile_picture:
+            return ""
+
+        return request.build_absolute_uri(patient_profile.profile_picture.url)
+
+    @staticmethod
+    def _build_profile_response(request, user, patient_profile):
         full_name = user.email
         date_of_birth = ""
         gender = ""
@@ -111,7 +118,9 @@ class PatientProfileView(BasePatientAPIView):
                 "city": city,
                 "postalCode": postal_code,
                 "country": country,
-                "profileImage": "",
+                "profileImage": PatientProfileView._build_profile_image_url(
+                    request, patient_profile
+                ),
             },
             "health": {
                 "bloodType": blood_type,
@@ -137,7 +146,7 @@ class PatientProfileView(BasePatientAPIView):
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
         patient_profile = getattr(user, "patient_profile", None)
-        return Response(self._build_profile_response(user, patient_profile))
+        return Response(self._build_profile_response(request, user, patient_profile))
 
     def patch(self, request):
         patient_profile, error_response = self._get_patient_profile_or_response(request)
@@ -154,7 +163,7 @@ class PatientProfileView(BasePatientAPIView):
         updated_profile = serializer.save()
 
         return Response(
-            self._build_profile_response(request.user, updated_profile),
+            self._build_profile_response(request, request.user, updated_profile),
             status=status.HTTP_200_OK,
         )
 

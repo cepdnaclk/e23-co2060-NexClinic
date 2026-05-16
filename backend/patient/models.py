@@ -22,6 +22,7 @@ class PatientProfile(models.Model):
     emergency_contact_relation = models.CharField(max_length=100, blank=True, default="")
     insurance_provider = models.CharField(max_length=255, blank=True, default="")
     insurance_policy_number = models.CharField(max_length=100, blank=True, default="")
+    profile_picture = models.ImageField(upload_to='patient_profiles/', null=True, blank=True)
 
     def __str__(self):
         return f"{self.full_name} ({self.user.email})"

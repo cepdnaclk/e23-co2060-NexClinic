@@ -428,6 +428,13 @@ class DoctorDashboardView(APIView):
 class DoctorProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @staticmethod
+    def _build_profile_image_url(request, doctor_profile):
+        if not doctor_profile or not doctor_profile.profile_picture:
+            return ""
+
+        return request.build_absolute_uri(doctor_profile.profile_picture.url)
+
     def get(self, request):
         user = request.user
 
@@ -474,6 +481,7 @@ class DoctorProfileView(APIView):
                 "email": user.email,
                 "specialization": specialization,
                 "phone": phone,
+                "profileImage": self._build_profile_image_url(request, doctor_profile),
                 "licenseNumber": license_number,
                 "isVerified": is_verified,
             },
@@ -580,6 +588,11 @@ class DoctorProfileView(APIView):
         if "availabilityForOnlineAdvice" in payload:
             doctor_profile.availability = bool(payload.get("availabilityForOnlineAdvice"))
             update_fields.append("availability")
+
+        profile_image = request.FILES.get("profileImage")
+        if profile_image is not None:
+            doctor_profile.profile_picture = profile_image
+            update_fields.append("profile_picture")
 
         if update_fields:
             doctor_profile.save(update_fields=sorted(set(update_fields)))

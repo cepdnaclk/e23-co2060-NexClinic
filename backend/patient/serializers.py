@@ -178,6 +178,7 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
     emergencyContactRelation = serializers.CharField(max_length=100, required=False, allow_blank=True)
     insuranceProvider = serializers.CharField(max_length=255, required=False, allow_blank=True)
     insurancePolicyNumber = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    profileImage = serializers.ImageField(required=False)
 
     def validate(self, attrs):
         if not attrs:
@@ -214,6 +215,7 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
             "emergencyContactRelation": "emergency_contact_relation",
             "insuranceProvider": "insurance_provider",
             "insurancePolicyNumber": "insurance_policy_number",
+            "profileImage": "profile_picture",
         }
 
         update_fields = []
