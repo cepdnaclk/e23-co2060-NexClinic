@@ -18,6 +18,7 @@ from .serializers import (
     PatientAppointmentCreateSerializer,
     PatientAvailableSlotSerializer,
     PatientAppointmentCancelSerializer,
+    PatientProfileUpdateSerializer,
     is_slot_in_past,
 )
 class BasePatientAPIView(APIView):
@@ -39,21 +40,25 @@ class BasePatientAPIView(APIView):
 
 
 class PatientProfileView(BasePatientAPIView):
-
-	def get(self, request):
-		user = request.user
-
-		if not self._is_patient(user):
-			return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
-
-		patient_profile = getattr(user, "patient_profile", None)
-
+	@staticmethod
+	def _build_profile_response(user, patient_profile):
 		full_name = user.email
 		date_of_birth = ""
 		gender = ""
 		phone = ""
 		address = ""
+		city = ""
+		postal_code = ""
+		country = ""
+		blood_type = ""
+		allergies = ""
+		medications = ""
 		medical_history = ""
+		emergency_contact_name = ""
+		emergency_contact_phone = ""
+		emergency_contact_relation = ""
+		insurance_provider = ""
+		insurance_policy_number = ""
 
 		if patient_profile:
 			full_name = patient_profile.full_name or user.email
@@ -65,9 +70,20 @@ class PatientProfileView(BasePatientAPIView):
 			gender = patient_profile.gender or ""
 			phone = patient_profile.phone or ""
 			address = patient_profile.address or ""
+			city = patient_profile.city or ""
+			postal_code = patient_profile.postal_code or ""
+			country = patient_profile.country or ""
+			blood_type = patient_profile.blood_type or ""
+			allergies = patient_profile.allergies or ""
+			medications = patient_profile.medications or ""
 			medical_history = patient_profile.medical_history or ""
+			emergency_contact_name = patient_profile.emergency_contact_name or ""
+			emergency_contact_phone = patient_profile.emergency_contact_phone or ""
+			emergency_contact_relation = patient_profile.emergency_contact_relation or ""
+			insurance_provider = patient_profile.insurance_provider or ""
+			insurance_policy_number = patient_profile.insurance_policy_number or ""
 
-		data = {
+		return {
 			"patient": {
 				"fullName": full_name,
 				"email": user.email,
@@ -75,27 +91,52 @@ class PatientProfileView(BasePatientAPIView):
 				"dateOfBirth": date_of_birth,
 				"gender": gender,
 				"address": address,
-				"city": "",
+				"city": city,
+				"postalCode": postal_code,
+				"country": country,
 				"profileImage": "",
 			},
 			"health": {
-				"bloodType": "",
-				"allergies": "",
-				"medications": "",
+				"bloodType": blood_type,
+				"allergies": allergies,
+				"medications": medications,
 				"medicalHistory": medical_history,
 			},
 			"emergencyContact": {
-				"name": "",
-				"phone": "",
-				"relation": "",
+				"name": emergency_contact_name,
+				"phone": emergency_contact_phone,
+				"relation": emergency_contact_relation,
 			},
 			"insurance": {
-				"provider": "",
-				"policyNumber": "",
+				"provider": insurance_provider,
+				"policyNumber": insurance_policy_number,
 			},
 		}
 
-		return Response(data)
+	def get(self, request):
+		user = request.user
+
+		if not self._is_patient(user):
+			return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+		patient_profile = getattr(user, "patient_profile", None)
+		return Response(self._build_profile_response(user, patient_profile))
+
+	def patch(self, request):
+		patient_profile, error_response = self._get_patient_profile_or_response(request)
+		if error_response:
+			return error_response
+
+		serializer = PatientProfileUpdateSerializer(
+			instance=patient_profile,
+			data=request.data,
+			partial=True,
+			context={"patient_profile": patient_profile},
+		)
+		serializer.is_valid(raise_exception=True)
+		updated_profile = serializer.save()
+
+		return Response(self._build_profile_response(request.user, updated_profile), status=status.HTTP_200_OK)
 
 
 class PatientAvailableAppointmentSlotsView(BasePatientAPIView):

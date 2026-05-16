@@ -19,3 +19,23 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json().catch(() => ({}));
+
+    return await proxyBackendWithRefresh({
+      request,
+      endpoint: `${BACKEND_URL}/api/patient/profile/`,
+      method: "PATCH",
+      body,
+      failureMessage: "Failed to update patient profile",
+    });
+  } catch (error) {
+    console.error("Patient profile update API error", error);
+    return NextResponse.json(
+      { error: "An error occurred while updating profile data" },
+      { status: 500 }
+    );
+  }
+}
