@@ -18,6 +18,8 @@ type PatientProfileResponse = {
     gender: string;
     address: string;
     city: string;
+    postalCode?: string;
+    country?: string;
     profileImage: string;
   };
   health: {
@@ -77,6 +79,8 @@ function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
     gender: (profile.patient.gender as Patient['gender']) || 'other',
     address: profile.patient.address || '',
     city: profile.patient.city || '',
+    postalCode: profile.patient.postalCode || '',
+    country: profile.patient.country || '',
     bloodType: profile.health.bloodType || '',
     allergies: profile.health.allergies || '',
     medications: profile.health.medications || '',
@@ -202,6 +206,71 @@ export default function UserEditProfilePage() {
 
   const handleSaveDraft = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    void handleSubmitProfile();
+  };
+
+  const handleSubmitProfile = async () => {
+    setSaving(true);
+    setError('');
+    setNotice('');
+
+    try {
+      const response = await fetch('/api/patient/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender,
+          address: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          country: formData.country,
+          bloodType: formData.bloodType,
+          allergies: formData.allergies,
+          medications: formData.medications,
+          medicalHistory: formData.medicalHistory,
+          emergencyContactName: formData.emergencyContactName,
+          emergencyContactPhone: formData.emergencyContactPhone,
+          emergencyContactRelation: formData.emergencyContactRelation,
+          insuranceProvider: formData.insuranceProvider,
+          insurancePolicyNumber: formData.insurancePolicyNumber,
+        }),
+      });
+
+      if (response.status === 401) {
+        handlePatientSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Could not save your profile changes.');
+      }
+
+      const updatedProfile = payload as PatientProfileResponse;
+      const nextFormData = {
+        ...mapProfileToForm(updatedProfile),
+        profileImage: formData.profileImage,
+      };
+
+      setProfile(updatedProfile);
+      setFormData(nextFormData);
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+      window.localStorage.removeItem('patient-profile-draft-saved-at');
+      setNotice('Your profile has been updated successfully.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save your profile changes.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveDraftOnly = () => {
     setSaving(true);
     setError('');
     setNotice('');
@@ -563,14 +632,17 @@ export default function UserEditProfilePage() {
 
                     <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
                       <p className="max-w-xl text-sm text-slate-600">
-                        Changes are saved locally on this device until a profile sync endpoint is available.
+                        Profile details sync to your account. Your uploaded photo preview still stays on this device for now.
                       </p>
                       <div className="flex flex-col gap-3 sm:flex-row">
+                        <BlackButton type="button" className="w-full rounded-full px-6 py-3 sm:w-auto" onClick={handleSaveDraftOnly}>
+                          Save Draft
+                        </BlackButton>
                         <BlackButton type="button" className="w-full rounded-full px-6 py-3 sm:w-auto" onClick={handleReset}>
                           Reset
                         </BlackButton>
                         <GreenButton type="submit" className="w-full rounded-full px-6 py-3 sm:w-auto" disabled={saving}>
-                          {saving ? 'Saving...' : 'Save Draft'}
+                          {saving ? 'Saving...' : 'Save Changes'}
                         </GreenButton>
                       </div>
                     </div>
