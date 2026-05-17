@@ -42,17 +42,21 @@ class Command(BaseCommand):
             type=int,
             help='Optional: Generate slots for specific hospital only',
         )
+        # By default we skip duplicates. Provide `--no-skip-duplicates` to allow creating duplicates.
         parser.add_argument(
-            '--skip-duplicates',
-            action='store_true',
-            help='Skip if slots already exist for a date-time (default: True)',
+            '--no-skip-duplicates',
+            dest='skip_duplicates',
+            action='store_false',
+            help='Do not skip duplicates (allow creating slots even if same date/time exist)',
         )
+        parser.set_defaults(skip_duplicates=True)
 
     def handle(self, *args, **options):
         days = options['days']
         doctor_id = options.get('doctor_id')
         hospital_id = options.get('hospital_id')
-        skip_duplicates = options.get('skip_duplicates', True)
+        # use explicit option (default True). If user passed --no-skip-duplicates, this will be False.
+        skip_duplicates = options['skip_duplicates']
 
         # Calculate date range: today to today + N days
         today = timezone.now().date()

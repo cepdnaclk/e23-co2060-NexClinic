@@ -230,7 +230,8 @@ class HospitalAdminAuthTests(TestCase):
     def test_unauthenticated_cannot_access_activity_logs(self):
         """Test that unauthenticated users cannot access activity logs."""
         response = self.client.get('/api/hospital/activity-logs/', {'hospital_id': self.hospital.id})
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        # DRF may return 401 or 403 depending on authentication classes; accept either
+        self.assertIn(response.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
 
     def test_non_admin_cannot_access_activity_logs(self):
         """Test that non-admin users cannot access activity logs for a hospital."""

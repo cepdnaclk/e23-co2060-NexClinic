@@ -4,7 +4,8 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("patient", "0005_patientprofile_extended_fields"),
+        ("patient", "0005_patientprofile_blood_type_patientprofile_city_and_more"),
+        # ("patient", "0005_patientprofile_extended_fields"),
     ]
 
     operations = [
