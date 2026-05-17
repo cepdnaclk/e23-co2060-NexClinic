@@ -14,7 +14,8 @@ type ProxyWithRefreshOptions = {
   request: NextRequest;
   endpoint: string;
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  body?: unknown;
+  body?: BodyInit | null;
+  contentType?: string | null;
   failureMessage: string;
   successStatus?: number;
 };
@@ -126,6 +127,7 @@ export async function proxyBackendWithRefresh({
   endpoint,
   method,
   body,
+  contentType,
   failureMessage,
   successStatus,
 }: ProxyWithRefreshOptions): Promise<NextResponse> {
@@ -140,16 +142,22 @@ export async function proxyBackendWithRefresh({
     return unauthorizedResponse;
   }
 
-  const callBackend = (token: string) =>
-    fetch(endpoint, {
+  const callBackend = (token: string) => {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+    };
+
+    if (contentType) {
+      headers["Content-Type"] = contentType;
+    }
+
+    return fetch(endpoint, {
       method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      headers,
+      body: body ?? undefined,
       cache: "no-store",
     });
+  };
 
   let backendResponse = await callBackend(authToken);
   let refreshedTokens: RefreshedTokens | null = null;

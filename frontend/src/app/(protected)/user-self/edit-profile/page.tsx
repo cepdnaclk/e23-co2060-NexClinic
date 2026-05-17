@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
-import GreenButton from '@/components/buttons/GreenButton';
-import BlackButton from '@/components/buttons/BlackButton';
-import { handlePatientSessionExpired } from '@/lib/patientSession';
-import { Patient } from '@/data/patients';
+import GreenButton from "@/components/buttons/GreenButton";
+import BlackButton from "@/components/buttons/BlackButton";
+import { handlePatientSessionExpired } from "@/lib/patientSession";
+import { Patient } from "@/data/patients";
 
 type PatientProfileResponse = {
   patient: {
@@ -18,6 +18,8 @@ type PatientProfileResponse = {
     gender: string;
     address: string;
     city: string;
+    postalCode?: string;
+    country?: string;
     profileImage: string;
   };
   health: {
@@ -37,30 +39,30 @@ type PatientProfileResponse = {
   };
 };
 
-const DRAFT_STORAGE_KEY = 'patient-profile-draft';
+const DRAFT_STORAGE_KEY = "patient-profile-draft";
 
 const defaultFormData: Patient = {
-  id: '',
-  name: '',
-  email: '',
-  phone: '',
-  dateOfBirth: '',
-  gender: 'other',
-  address: '',
-  city: '',
-  postalCode: '',
-  country: '',
-  bloodType: '',
-  allergies: '',
-  medications: '',
-  medicalHistory: '',
-  emergencyContactName: '',
-  emergencyContactPhone: '',
-  emergencyContactRelation: '',
-  insuranceProvider: '',
-  insurancePolicyNumber: '',
-  profileImage: '/images/user.png',
-  lastUpdated: new Date().toISOString().split('T')[0],
+  id: "",
+  name: "",
+  email: "",
+  phone: "",
+  dateOfBirth: "",
+  gender: "other",
+  address: "",
+  city: "",
+  postalCode: "",
+  country: "",
+  bloodType: "",
+  allergies: "",
+  medications: "",
+  medicalHistory: "",
+  emergencyContactName: "",
+  emergencyContactPhone: "",
+  emergencyContactRelation: "",
+  insuranceProvider: "",
+  insurancePolicyNumber: "",
+  profileImage: "/images/user.png",
+  lastUpdated: new Date().toISOString().split("T")[0],
 };
 
 function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
@@ -70,26 +72,35 @@ function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
 
   return {
     ...defaultFormData,
-    name: profile.patient.fullName || '',
-    email: profile.patient.email || '',
-    phone: profile.patient.phone || '',
-    dateOfBirth: profile.patient.dateOfBirth || '',
-    gender: (profile.patient.gender as Patient['gender']) || 'other',
-    address: profile.patient.address || '',
-    city: profile.patient.city || '',
-    bloodType: profile.health.bloodType || '',
-    allergies: profile.health.allergies || '',
-    medications: profile.health.medications || '',
-    medicalHistory: profile.health.medicalHistory || '',
-    emergencyContactName: profile.emergencyContact.name || '',
-    emergencyContactPhone: profile.emergencyContact.phone || '',
-    emergencyContactRelation: profile.emergencyContact.relation || '',
-    insuranceProvider: profile.insurance.provider || '',
-    insurancePolicyNumber: profile.insurance.policyNumber || '',
+    name: profile.patient.fullName || "",
+    email: profile.patient.email || "",
+    phone: profile.patient.phone || "",
+    dateOfBirth: profile.patient.dateOfBirth || "",
+    gender: (profile.patient.gender as Patient["gender"]) || "other",
+    address: profile.patient.address || "",
+    city: profile.patient.city || "",
+    postalCode: profile.patient.postalCode || "",
+    country: profile.patient.country || "",
+    bloodType: profile.health.bloodType || "",
+    allergies: profile.health.allergies || "",
+    medications: profile.health.medications || "",
+    medicalHistory: profile.health.medicalHistory || "",
+    emergencyContactName: profile.emergencyContact.name || "",
+    emergencyContactPhone: profile.emergencyContact.phone || "",
+    emergencyContactRelation: profile.emergencyContact.relation || "",
+    insuranceProvider: profile.insurance.provider || "",
+    insurancePolicyNumber: profile.insurance.policyNumber || "",
+    profileImage: profile.patient.profileImage || defaultFormData.profileImage,
   };
 }
 
-function SectionHeader({ title, description }: { title: string; description: string }) {
+function SectionHeader({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <div>
       <h2 className="text-xl font-bold text-slate-900">{title}</h2>
@@ -98,7 +109,13 @@ function SectionHeader({ title, description }: { title: string; description: str
   );
 }
 
-function FieldCard({ label, children }: { label: string; children: React.ReactNode }) {
+function FieldCard({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-2xl border border-white/80 bg-white/85 p-4 shadow-sm shadow-emerald-100/20 backdrop-blur-sm">
       <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -113,30 +130,33 @@ export default function UserEditProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<PatientProfileResponse | null>(null);
   const [formData, setFormData] = useState<Patient>(defaultFormData);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     const loadProfile = async () => {
       setLoading(true);
-      setError('');
+      setError("");
 
       try {
-        const response = await fetch('/api/patient/profile', {
-          method: 'GET',
-          cache: 'no-store',
+        const response = await fetch("/api/patient/profile", {
+          method: "GET",
+          cache: "no-store",
         });
 
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
           handlePatientSessionExpired(router);
           return;
         }
 
         if (!response.ok) {
           const errorPayload = await response.json().catch(() => ({}));
-          throw new Error(errorPayload?.error || 'Failed to load profile details');
+          throw new Error(
+            errorPayload?.error || "Failed to load profile details",
+          );
         }
 
         const data: PatientProfileResponse = await response.json();
@@ -153,7 +173,9 @@ export default function UserEditProfilePage() {
           setFormData(mapProfileToForm(data));
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load profile details');
+        setError(
+          err instanceof Error ? err.message : "Failed to load profile details",
+        );
       } finally {
         setLoading(false);
       }
@@ -163,19 +185,26 @@ export default function UserEditProfilePage() {
   }, [router]);
 
   const profileImage = useMemo(() => {
-    return formData.profileImage?.trim() ? formData.profileImage : '/images/user.png';
+    return formData.profileImage?.trim()
+      ? formData.profileImage
+      : "/images/user.png";
   }, [formData.profileImage]);
 
   const initials = useMemo(() => {
     const parts = formData.name.trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) {
-      return 'P';
+      return "P";
     }
-    return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() || '').join('');
+    return parts
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || "")
+      .join("");
   }, [formData.name]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((previous) => ({
@@ -192,6 +221,7 @@ export default function UserEditProfilePage() {
 
     const reader = new FileReader();
     reader.onloadend = () => {
+      setSelectedImageFile(file);
       setFormData((previous) => ({
         ...previous,
         profileImage: reader.result as string,
@@ -202,35 +232,121 @@ export default function UserEditProfilePage() {
 
   const handleSaveDraft = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    void handleSubmitProfile();
+  };
+
+  const handleSubmitProfile = async () => {
     setSaving(true);
-    setError('');
-    setNotice('');
+    setError("");
+    setNotice("");
+
+    try {
+      const requestBody = new FormData();
+      requestBody.set("fullName", formData.name);
+      requestBody.set("email", formData.email);
+      requestBody.set("phone", formData.phone);
+      requestBody.set("dateOfBirth", formData.dateOfBirth);
+      requestBody.set("gender", formData.gender);
+      requestBody.set("address", formData.address);
+      requestBody.set("city", formData.city);
+      requestBody.set("postalCode", formData.postalCode);
+      requestBody.set("country", formData.country);
+      requestBody.set("bloodType", formData.bloodType);
+      requestBody.set("allergies", formData.allergies);
+      requestBody.set("medications", formData.medications);
+      requestBody.set("medicalHistory", formData.medicalHistory);
+      requestBody.set("emergencyContactName", formData.emergencyContactName);
+      requestBody.set("emergencyContactPhone", formData.emergencyContactPhone);
+      requestBody.set(
+        "emergencyContactRelation",
+        formData.emergencyContactRelation,
+      );
+      requestBody.set("insuranceProvider", formData.insuranceProvider);
+      requestBody.set("insurancePolicyNumber", formData.insurancePolicyNumber);
+
+      if (selectedImageFile) {
+        requestBody.set("profileImage", selectedImageFile);
+      }
+
+      const response = await fetch("/api/patient/profile", {
+        method: "PATCH",
+        body: requestBody,
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        handlePatientSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(
+          payload?.error || "Could not save your profile changes.",
+        );
+      }
+
+      const updatedProfile = payload as PatientProfileResponse;
+      const nextFormData = {
+        ...mapProfileToForm(updatedProfile),
+      };
+
+      setProfile(updatedProfile);
+      setFormData(nextFormData);
+      setSelectedImageFile(null);
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+      window.localStorage.removeItem("patient-profile-draft-saved-at");
+      setNotice("Your profile has been updated successfully.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not save your profile changes.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveDraftOnly = () => {
+    setSaving(true);
+    setError("");
+    setNotice("");
 
     try {
       window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(formData));
-      window.localStorage.setItem('patient-profile-draft-saved-at', new Date().toISOString());
-      setNotice('Your changes were saved as a draft on this device.');
+      window.localStorage.setItem(
+        "patient-profile-draft-saved-at",
+        new Date().toISOString(),
+      );
+      setNotice("Your changes were saved as a draft on this device.");
     } catch {
-      setError('Could not save the draft in this browser.');
+      setError("Could not save the draft in this browser.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleReset = () => {
-    setNotice('');
-    setError('');
+    setNotice("");
+    setError("");
 
     if (profile) {
       setFormData(mapProfileToForm(profile));
+      setSelectedImageFile(null);
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
     }
   };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(20,184,166,0.14),_transparent_24%),linear-gradient(180deg,#eefbf6_0%,#f7fcfa_45%,#ffffff_100%)] pb-10">
-      <div className="absolute inset-0 bg-[url('/images/user-registration-bg.jpg')] bg-cover bg-center bg-no-repeat opacity-[0.08]" aria-hidden="true" />
-      <div className="absolute inset-0 bg-gradient-to-b from-white/88 via-white/82 to-white/95" aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-[url('/images/user-registration-bg.jpg')] bg-cover bg-center bg-no-repeat opacity-[0.08]"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 bg-gradient-to-b from-white/88 via-white/82 to-white/95"
+        aria-hidden="true"
+      />
       <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-emerald-100/50 to-transparent" />
       <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-emerald-200/25 blur-3xl" />
       <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-teal-200/20 blur-3xl" />
@@ -248,18 +364,25 @@ export default function UserEditProfilePage() {
               Update your profile with confidence
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-white/95 sm:text-lg">
-              Keep your contact, health, and emergency details organized in a calm, easy-to-scan editor.
+              Keep your contact, health, and emergency details organized in a
+              calm, easy-to-scan editor.
             </p>
           </div>
         </div>
 
         <div className="mb-6 flex justify-end">
-          <BlackButton className="rounded-full px-6 py-3" onClick={() => router.push('/user-self/profile')}>
+          <BlackButton
+            className="rounded-full px-6 py-3"
+            onClick={() => router.push("/user-self/profile")}
+          >
             Back to Profile
           </BlackButton>
         </div>
 
-        <form onSubmit={handleSaveDraft} className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
+        <form
+          onSubmit={handleSaveDraft}
+          className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]"
+        >
           <section className="overflow-hidden rounded-[2.25rem] border border-white/80 bg-white/88 shadow-[0_24px_70px_rgba(16,185,129,0.12)] backdrop-blur">
             <div className="p-5 sm:p-6 lg:p-8">
               <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -267,10 +390,10 @@ export default function UserEditProfilePage() {
                   Secure draft workspace
                 </span>
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
-                  {loading ? 'Syncing profile data' : 'Ready to edit'}
+                  {loading ? "Syncing profile data" : "Ready to edit"}
                 </span>
                 <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 ring-1 ring-teal-200">
-                  Local changes only
+                  Backend sync enabled
                 </span>
               </div>
 
@@ -285,25 +408,39 @@ export default function UserEditProfilePage() {
                         height={120}
                         className="h-[120px] w-[120px] rounded-[1.25rem] object-cover"
                       />
-                      {!profileImage.startsWith('data:') && !profileImage.trim() && (
-                        <div className="absolute inset-0 flex items-center justify-center rounded-[1.25rem] bg-emerald-600 text-3xl font-bold text-white">
-                          {initials}
-                        </div>
-                      )}
+                      {!profileImage.startsWith("data:") &&
+                        !profileImage.trim() && (
+                          <div className="absolute inset-0 flex items-center justify-center rounded-[1.25rem] bg-emerald-600 text-3xl font-bold text-white">
+                            {initials}
+                          </div>
+                        )}
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">Profile photo</p>
-                    <h2 className="mt-1 text-2xl font-bold text-slate-900">{formData.name || 'Your name'}</h2>
-                    <p className="mt-1 text-sm text-slate-600">{formData.email || 'email@example.com'}</p>
-                    <p className="mt-1 text-xs text-slate-500">A simple, calm place to update personal details.</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
+                      Profile photo
+                    </p>
+                    <h2 className="mt-1 text-2xl font-bold text-slate-900">
+                      {formData.name || "Your name"}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {formData.email || "email@example.com"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      A simple, calm place to update personal details.
+                    </p>
                   </div>
                 </div>
 
                 <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
                   Change photo
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
                 </label>
               </div>
 
@@ -313,8 +450,16 @@ export default function UserEditProfilePage() {
                 </div>
               ) : (
                 <>
-                  {error ? <p className="mt-6 text-sm font-medium text-rose-600">{error}</p> : null}
-                  {notice ? <p className="mt-6 text-sm font-medium text-emerald-700">{notice}</p> : null}
+                  {error ? (
+                    <p className="mt-6 text-sm font-medium text-rose-600">
+                      {error}
+                    </p>
+                  ) : null}
+                  {notice ? (
+                    <p className="mt-6 text-sm font-medium text-emerald-700">
+                      {notice}
+                    </p>
+                  ) : null}
 
                   <div className="mt-7 space-y-7">
                     <section>
@@ -563,14 +708,30 @@ export default function UserEditProfilePage() {
 
                     <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
                       <p className="max-w-xl text-sm text-slate-600">
-                        Changes are saved locally on this device until a profile sync endpoint is available.
+                        Profile details sync to your account. Your uploaded
+                        photo preview still stays on this device for now.
                       </p>
                       <div className="flex flex-col gap-3 sm:flex-row">
-                        <BlackButton type="button" className="w-full rounded-full px-6 py-3 sm:w-auto" onClick={handleReset}>
+                        <BlackButton
+                          type="button"
+                          className="w-full rounded-full px-6 py-3 sm:w-auto"
+                          onClick={handleSaveDraftOnly}
+                        >
+                          Save Draft
+                        </BlackButton>
+                        <BlackButton
+                          type="button"
+                          className="w-full rounded-full px-6 py-3 sm:w-auto"
+                          onClick={handleReset}
+                        >
                           Reset
                         </BlackButton>
-                        <GreenButton type="submit" className="w-full rounded-full px-6 py-3 sm:w-auto" disabled={saving}>
-                          {saving ? 'Saving...' : 'Save Draft'}
+                        <GreenButton
+                          type="submit"
+                          className="w-full rounded-full px-6 py-3 sm:w-auto"
+                          disabled={saving}
+                        >
+                          {saving ? "Saving..." : "Save Changes"}
                         </GreenButton>
                       </div>
                     </div>
@@ -604,29 +765,50 @@ export default function UserEditProfilePage() {
             </div> */}
 
             <div className="rounded-[2rem] border border-emerald-100 bg-white/90 p-6 shadow-lg shadow-emerald-100/40">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">How this works</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">
+                How this works
+              </p>
               <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-                <li>1. Review and update your details in a calm, grouped layout.</li>
-                <li>2. Upload a new profile image if you want the dashboard to feel more personal.</li>
-                <li>3. Save a draft on this device while the profile sync endpoint is unavailable.</li>
+                <li>
+                  1. Review and update your details in a calm, grouped layout.
+                </li>
+                <li>
+                  2. Save changes to sync your profile details to the backend.
+                </li>
+                <li>
+                  3. Save a draft on this device if you want to pause before
+                  submitting.
+                </li>
               </ul>
             </div>
 
             <div className="rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-lg shadow-emerald-100/40">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">Quick preview</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">
+                Quick preview
+              </p>
               <div className="mt-4 grid gap-3">
                 <div className="rounded-2xl bg-white p-4 ring-1 ring-emerald-100">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Name</p>
-                  <p className="mt-1 break-words text-base font-semibold text-slate-900">{formData.name || 'Your full name'}</p>
-                </div>
-                <div className="rounded-2xl bg-white p-4 ring-1 ring-emerald-100">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Blood type</p>
-                  <p className="mt-1 text-base font-semibold text-slate-900">{formData.bloodType || 'Not specified'}</p>
-                </div>
-                <div className="rounded-2xl bg-white p-4 ring-1 ring-emerald-100">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Emergency contact</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Name
+                  </p>
                   <p className="mt-1 break-words text-base font-semibold text-slate-900">
-                    {formData.emergencyContactName || 'Not set'}
+                    {formData.name || "Your full name"}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white p-4 ring-1 ring-emerald-100">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Blood type
+                  </p>
+                  <p className="mt-1 text-base font-semibold text-slate-900">
+                    {formData.bloodType || "Not specified"}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white p-4 ring-1 ring-emerald-100">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Emergency contact
+                  </p>
+                  <p className="mt-1 break-words text-base font-semibold text-slate-900">
+                    {formData.emergencyContactName || "Not set"}
                   </p>
                 </div>
               </div>

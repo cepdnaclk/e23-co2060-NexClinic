@@ -4,6 +4,8 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from doctor.models import Appointment, AppointmentAvailableSlot
+from patient.models import PatientProfile
+from users.models import CustomUser
 
 
 class PatientAppointmentSerializer(serializers.ModelSerializer):
@@ -155,6 +157,81 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
 class PatientAppointmentCancelSerializer(serializers.Serializer):
     reason = serializers.CharField(required=True, allow_blank=True)
     # reason = serializers.CharField(required=False, allow_blank=True, default='')
+
+
+class PatientProfileUpdateSerializer(serializers.Serializer):
+    fullName = serializers.CharField(max_length=255, required=False)
+    email = serializers.EmailField(required=False)
+    phone = serializers.CharField(max_length=15, required=False)
+    dateOfBirth = serializers.DateField(required=False)
+    gender = serializers.ChoiceField(choices=["male", "female", "other"], required=False)
+    address = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    city = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    postalCode = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    country = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    bloodType = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    allergies = serializers.CharField(required=False, allow_blank=True)
+    medications = serializers.CharField(required=False, allow_blank=True)
+    medicalHistory = serializers.CharField(required=False, allow_blank=True)
+    emergencyContactName = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    emergencyContactPhone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    emergencyContactRelation = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    insuranceProvider = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    insurancePolicyNumber = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    profileImage = serializers.ImageField(required=False)
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError("At least one field must be provided for update.")
+        return attrs
+
+    def validate_email(self, value):
+        patient_profile = self.context.get("patient_profile")
+        queryset = CustomUser.objects.filter(email__iexact=value)
+        if patient_profile is not None:
+            queryset = queryset.exclude(id=patient_profile.user_id)
+        if queryset.exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+    def update(self, instance: PatientProfile, validated_data):
+        user = instance.user
+
+        field_map = {
+            "fullName": "full_name",
+            "phone": "phone",
+            "dateOfBirth": "date_of_birth",
+            "gender": "gender",
+            "address": "address",
+            "city": "city",
+            "postalCode": "postal_code",
+            "country": "country",
+            "bloodType": "blood_type",
+            "allergies": "allergies",
+            "medications": "medications",
+            "medicalHistory": "medical_history",
+            "emergencyContactName": "emergency_contact_name",
+            "emergencyContactPhone": "emergency_contact_phone",
+            "emergencyContactRelation": "emergency_contact_relation",
+            "insuranceProvider": "insurance_provider",
+            "insurancePolicyNumber": "insurance_policy_number",
+            "profileImage": "profile_picture",
+        }
+
+        update_fields = []
+        for serializer_field, model_field in field_map.items():
+            if serializer_field in validated_data:
+                setattr(instance, model_field, validated_data[serializer_field])
+                update_fields.append(model_field)
+
+        if "email" in validated_data:
+            user.email = validated_data["email"]
+            user.save(update_fields=["email"])
+
+        if update_fields:
+            instance.save(update_fields=sorted(set(update_fields)))
+
+        return instance
 
 
 def is_slot_in_past(slot_obj):
