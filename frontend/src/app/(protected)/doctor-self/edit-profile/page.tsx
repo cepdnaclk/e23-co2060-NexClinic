@@ -601,13 +601,39 @@ export default function EditDoctorProfilePage() {
                             <div className="mt-6 grid gap-4 md:grid-cols-2">
                                 <div className="md:col-span-2 rounded-[1.75rem] border border-emerald-100/70 bg-gradient-to-br from-emerald-50/90 to-white p-4 shadow-[0_12px_30px_rgba(16,185,129,0.06)]">
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                        <div className="w-28 h-28 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center ring-1 ring-white/60 shrink-0">
+                                        <div
+                                            className="w-28 h-28 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center ring-1 ring-white/60 shrink-0 relative cursor-pointer transition-transform hover:scale-[1.02]"
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                const file = e.dataTransfer?.files?.[0];
+                                                if (file) void handleImageChange(file);
+                                            }}
+                                            onClick={() => fileInputRef.current?.click()}
+                                            title="Click or drop an image to change"
+                                        >
                                             {profileImage ? (
                                                 // eslint-disable-next-line @next/next/no-img-element
                                                 <img src={profileImage} alt="Profile preview" className="w-full h-full object-cover" />
                                             ) : (
                                                 <div className="text-gray-400 text-sm">No photo</div>
                                             )}
+
+                                            {/* overlay edit icon */}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    fileInputRef.current?.click();
+                                                }}
+                                                className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white shadow-md hover:bg-emerald-700"
+                                                aria-label="Change photo"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" width="18" height="18">
+                                                    <path d="M3 7a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                                                    <path d="M12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </button>
                                         </div>
                                         <div className="flex flex-1 flex-col">
                                             <label className="text-sm font-semibold text-gray-800">Profile Photo</label>
@@ -836,6 +862,25 @@ export default function EditDoctorProfilePage() {
                             </BlackButton>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Mobile Sticky Action Bar */}
+            <div className="fixed inset-x-4 bottom-4 z-50 sm:hidden">
+                <div className="rounded-2xl bg-white/95 p-3 shadow-lg backdrop-blur-md flex gap-3">
+                    <GreenButton
+                        onClick={handleSaveDraft}
+                        disabled={saving}
+                        className="flex-1 rounded-full py-3 font-semibold shadow-[0_8px_24px_rgba(16,185,129,0.2)]"
+                    >
+                        {saving ? "Saving..." : "Save Draft"}
+                    </GreenButton>
+                    <BlackButton
+                        onClick={handleReset}
+                        className="rounded-full px-4 py-3 font-semibold"
+                    >
+                        Reset
+                    </BlackButton>
                 </div>
             </div>
         </div>
