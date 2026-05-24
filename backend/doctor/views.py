@@ -203,6 +203,7 @@ class DoctorProfileView(APIView):
         phone = ""
         license_number = ""
         is_verified = False
+        photo = ""
         experience_years = 0
         location = ""
         qualifications = ""
@@ -219,6 +220,12 @@ class DoctorProfileView(APIView):
             phone = doctor_profile.phone or ""
             license_number = doctor_profile.license_number or ""
             is_verified = bool(doctor_profile.is_verified)
+            if doctor_profile.profile_picture:
+                request_obj = request if request else None
+                if request_obj:
+                    photo = request_obj.build_absolute_uri(doctor_profile.profile_picture.url)
+                else:
+                    photo = doctor_profile.profile_picture.url
             experience_years = doctor_profile.experience_years
             location = doctor_profile.location
             qualifications = doctor_profile.qualifications
@@ -237,6 +244,7 @@ class DoctorProfileView(APIView):
                 "phone": phone,
                 "licenseNumber": license_number,
                 "isVerified": is_verified,
+                "photo": photo,
             },
             "profileDetails": {
                 "experience": f"{experience_years} years of experience",
@@ -268,7 +276,7 @@ class DoctorProfileView(APIView):
         if not doctor_profile:
             return Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        payload = request.data if isinstance(request.data, dict) else {}
+        payload = request.data
 
         field_map = {
             "fullName": "full_name",
@@ -283,6 +291,14 @@ class DoctorProfileView(APIView):
         }
 
         update_fields = []
+
+        if request.FILES.get("profilePicture"):
+            doctor_profile.profile_picture = request.FILES.get("profilePicture")
+            update_fields.append("profile_picture")
+
+        if str(payload.get("clearProfilePicture", "")).lower() in {"1", "true", "yes", "on"}:
+            doctor_profile.profile_picture = None
+            update_fields.append("profile_picture")
 
         for payload_key, model_field in field_map.items():
             if payload_key in payload:

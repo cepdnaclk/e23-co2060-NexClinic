@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GreenButton from "@/components/buttons/GreenButton";
 import BlackButton from "@/components/buttons/BlackButton";
@@ -28,6 +28,7 @@ type DoctorProfileData = {
         email: string;
         specialization: string;
         phone: string;
+        photo?: string;
     };
     profileDetails: {
         experience: string;
@@ -93,10 +94,12 @@ const FieldCard = ({
 
 export default function EditDoctorProfilePage() {
     const router = useRouter();
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [formData, setFormData] = useState<DoctorFormData | null>(null);
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [updatingPhoto, setUpdatingPhoto] = useState(false);
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
 
@@ -123,6 +126,7 @@ export default function EditDoctorProfilePage() {
                 const data: DoctorProfileData = await response.json();
                 const formattedData = mapProfileToForm(data);
                 setFormData(formattedData);
+                setProfileImage(data.doctor.photo || null);
 
                 // Check for draft (support legacy draft as plain formData or new { formData, profileImage })
                 const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -170,11 +174,80 @@ export default function EditDoctorProfilePage() {
 
     const handleImageChange = async (file?: File) => {
         if (!file) return;
+        const previousImage = profileImage;
         try {
             const dataUrl = await readFileAsDataUrl(file);
             setProfileImage(dataUrl);
+
+            const formDataPayload = new FormData();
+            formDataPayload.append("profilePicture", file);
+
+            setUpdatingPhoto(true);
+            setError("");
+
+            const response = await fetch("/api/doctor/profile", {
+                method: "PATCH",
+                body: formDataPayload,
+            });
+
+            if (response.status === 401) {
+                handleDoctorSessionExpired(router);
+                return;
+            }
+
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload?.detail || errorPayload?.error || "Failed to update profile photo");
+            }
+
+            const updatedProfile: DoctorProfileData = await response.json();
+            setProfileImage(updatedProfile.doctor.photo || dataUrl);
+            setSuccessMessage("Profile photo updated successfully!");
+            setTimeout(() => setSuccessMessage(""), 3000);
         } catch (e) {
+            setProfileImage(previousImage);
+            setError(e instanceof Error ? e.message : "Failed to update profile photo");
             console.error("Failed to read image", e);
+        } finally {
+            setUpdatingPhoto(false);
+        }
+    };
+
+    const handleRemoveImage = async () => {
+        const previousImage = profileImage;
+        try {
+            setProfileImage(null);
+            setUpdatingPhoto(true);
+            setError("");
+
+            const formDataPayload = new FormData();
+            formDataPayload.append("clearProfilePicture", "true");
+
+            const response = await fetch("/api/doctor/profile", {
+                method: "PATCH",
+                body: formDataPayload,
+            });
+
+            if (response.status === 401) {
+                handleDoctorSessionExpired(router);
+                return;
+            }
+
+            if (!response.ok) {
+                const errorPayload = await response.json().catch(() => ({}));
+                throw new Error(errorPayload?.detail || errorPayload?.error || "Failed to remove profile photo");
+            }
+
+            setSuccessMessage("Profile photo removed successfully!");
+            setTimeout(() => setSuccessMessage(""), 3000);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        } catch (e) {
+            setProfileImage(previousImage);
+            setError(e instanceof Error ? e.message : "Failed to remove profile photo");
+        } finally {
+            setUpdatingPhoto(false);
         }
     };
 
@@ -282,8 +355,9 @@ export default function EditDoctorProfilePage() {
                                 subtitle="Update your basic professional details"
                             />
                             <div className="space-y-4">
-                                <div className="flex items-center gap-6">
-                                    <div className="w-28 h-28 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center ring-1 ring-white/60">
+                                <div className="rounded-[1.75rem] border border-emerald-100/70 bg-gradient-to-br from-emerald-50/90 to-white p-4 shadow-[0_12px_30px_rgba(16,185,129,0.06)]">
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                    <div className="w-28 h-28 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center ring-1 ring-white/60 shrink-0">
                                         {profileImage ? (
                                             // eslint-disable-next-line @next/next/no-img-element
                                             <img src={profileImage} alt="Profile preview" className="w-full h-full object-cover" />
@@ -291,15 +365,43 @@ export default function EditDoctorProfilePage() {
                                             <div className="text-gray-400 text-sm">No photo</div>
                                         )}
                                     </div>
-                                    <div className="flex flex-col">
+                                    <div className="flex flex-1 flex-col">
                                         <label className="text-sm font-semibold text-gray-800">Profile Photo</label>
+                                        <p className="mt-2 text-sm text-gray-600">Upload a recent headshot so your patients can recognize you faster.</p>
+                                        <p className="mt-1 text-xs text-gray-500">PNG or JPG works best. The change is saved immediately.</p>
+                                        <div className="mt-4 flex flex-wrap gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={updatingPhoto}
+                                                className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {updatingPhoto ? "Updating..." : "Change Photo"}
+                                            </button>
+                                            {profileImage && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        void handleRemoveImage();
+                                                    }}
+                                                    disabled={updatingPhoto}
+                                                    className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-red-200 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                    Remove Photo
+                                                </button>
+                                            )}
+                                        </div>
                                         <input
+                                            ref={fileInputRef}
                                             type="file"
                                             accept="image/*"
-                                            onChange={(e) => handleImageChange(e.target.files?.[0])}
-                                            className="mt-2"
+                                            onChange={(e) => {
+                                                void handleImageChange(e.target.files?.[0]);
+                                                e.currentTarget.value = "";
+                                            }}
+                                            className="hidden"
                                         />
-                                        <p className="text-xs text-gray-500 mt-2">Upload a recent headshot. Preview saved in draft.</p>
+                                    </div>
                                     </div>
                                 </div>
                                 <FieldCard
