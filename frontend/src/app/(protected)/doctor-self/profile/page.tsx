@@ -140,14 +140,14 @@ function DoctorProfilePage() {
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_28%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.06),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.06),_transparent_28%),linear-gradient(180deg,#1a1a1a_0%,#252525_42%,#1f1f1f_100%)]">
-            <div className="absolute inset-0 bg-[url('/images/doctor-login-bg.png')] bg-cover bg-center bg-no-repeat opacity-[0.08] dark:opacity-[0.04]" aria-hidden="true" />
-            <div className="absolute inset-0 bg-gradient-to-b from-white/88 via-white/82 to-white/95 dark:from-gray-900/88 dark:via-gray-800/82 dark:to-gray-900/95" aria-hidden="true" />
+            <div className="absolute inset-0 bg-[url('/images/doctor-registration-bg.jpg')] bg-cover bg-center bg-no-repeat opacity-[0.10] dark:opacity-[0.05]" aria-hidden="true" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/84 via-white/78 to-white/96 dark:from-gray-900/86 dark:via-gray-800/80 dark:to-gray-900/96" aria-hidden="true" />
             <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-emerald-100/50 dark:from-emerald-900/30 to-transparent" aria-hidden="true" />
             <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-emerald-200/25 dark:bg-emerald-800/15 blur-3xl" aria-hidden="true" />
             <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-teal-200/20 dark:bg-teal-800/15 blur-3xl" aria-hidden="true" />
 
             <div className="relative mx-auto max-w-7xl justify-center gap-4">
-            <div title="profile-header-card" className="relative flex flex-col xl:flex-row items-center justify-between gap-8 xl:gap-12 mx-4 mt-4 sm:mt-8 bg-gradient-to-r from-white/95 dark:from-gray-800/95 to-emerald-50/80 dark:to-gray-700/80 shadow-[0_25px_60px_rgba(16,185,129,0.15)] dark:shadow-black/30 backdrop-blur p-6 sm:p-10 xl:p-14 rounded-[2rem] border border-white/80 dark:border-gray-600 overflow-hidden">
+            <div title="profile-header-card" className="relative flex flex-col xl:flex-row items-center justify-between gap-8 xl:gap-12 mx-4 mt-4 sm:mt-8 bg-gradient-to-r from-white/96 dark:from-gray-800/96 via-white/92 to-emerald-50/78 dark:via-gray-800/90 dark:to-gray-700/80 shadow-[0_25px_60px_rgba(16,185,129,0.14)] dark:shadow-black/30 backdrop-blur p-6 sm:p-10 xl:p-14 rounded-[2rem] border border-white/80 dark:border-gray-600 overflow-hidden">
                 <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-emerald-200/10 dark:bg-emerald-900/10 blur-3xl" aria-hidden="true" />
                 <div title="left-column" className="relative z-10 flex flex-col sm:flex-row gap-6 items-center xl:gap-8">
                     <div className="relative">
@@ -177,7 +177,7 @@ function DoctorProfilePage() {
                     </div>
                 </div>
                 <div title="right-column" className="relative z-10 flex flex-col gap-6 justify-center w-full xl:w-auto">
-                    <div className="rounded-[1.5rem] bg-gradient-to-br from-emerald-50/80 dark:from-emerald-900/30 to-white dark:to-gray-800 border border-emerald-100/50 dark:border-emerald-700/50 p-6 backdrop-blur">
+                    <div className="rounded-[1.5rem] bg-gradient-to-br from-emerald-50/85 dark:from-emerald-900/30 via-white/90 to-white dark:via-gray-800/85 dark:to-gray-800 border border-emerald-100/50 dark:border-emerald-700/50 p-6 backdrop-blur">
                         <div title="toggle-btn" className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center sm:justify-between">
                             <div title="text-column" className="text-center sm:text-left">
                                 <p className="text-gray-900 dark:text-gray-100 font-bold text-base sm:text-lg">Online Availability</p>
@@ -204,7 +204,7 @@ function DoctorProfilePage() {
                 </div>
             </div>
 
-            <div title="consultation-fees-section" className="mx-4 mt-6 rounded-[2rem] border border-white/80 dark:border-gray-600 bg-white/90 dark:bg-gray-800 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] dark:shadow-black/20 sm:p-6 lg:p-8">
+            <div title="consultation-fees-section" className="mx-4 mt-6 rounded-[2rem] border border-white/80 dark:border-gray-600 bg-white/92 dark:bg-gray-800/92 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] dark:shadow-black/20 sm:p-6 lg:p-8">
                 <h2 className="mb-4 text-xl font-bold text-emerald-700 dark:text-emerald-400 sm:text-2xl">Consultation Fees and Active hours</h2>
                 <div className="my-4 flex w-full border-t border-emerald-100 dark:border-emerald-800"></div>
                 <div className="grid md:grid-cols-2 gap-6">
@@ -225,7 +225,7 @@ function DoctorProfilePage() {
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Full consultation and examination</p>
                     </div>
                 </div>
-                <div className="rounded-3xl border border-emerald-100 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 dark:from-emerald-900/30 to-white dark:to-gray-800 p-4">
+                <div className="rounded-3xl border border-emerald-100 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 dark:from-emerald-900/30 via-white to-white dark:via-gray-800/85 dark:to-gray-800 p-4">
                     <div className="text-gray-700 dark:text-gray-300 text-sm">
                         <span className="font-semibold text-gray-800 dark:text-gray-200">Usually available times for Online Advice Chats:</span>
                         <ul className="flex flex-col list-disc pl-6 gap-2 mt-2">
@@ -239,7 +239,7 @@ function DoctorProfilePage() {
 
             <div title="profile-content-section" className="flex flex-col lg:flex-row mx-4 my-6 gap-4">
 
-                <div title="professional-details" className="w-full rounded-[2rem] border border-white/80 dark:border-gray-600 bg-white/90 dark:bg-gray-800 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] dark:shadow-black/20 sm:p-8 lg:w-1/2">
+                <div title="professional-details" className="w-full rounded-[2rem] border border-white/80 dark:border-gray-600 bg-white/92 dark:bg-gray-800/92 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] dark:shadow-black/20 sm:p-8 lg:w-1/2">
                     <div title="Title">
                         <h2 className="mb-4 text-xl font-bold text-emerald-700 dark:text-emerald-400 sm:text-2xl">Professional Details</h2>
                     </div>
