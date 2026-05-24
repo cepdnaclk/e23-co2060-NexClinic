@@ -230,6 +230,57 @@ const SRI_LANKA_DISTRICTS = [
     "Ampara",
 ];
 
+const DISTRICT_HOSPITALS: Record<string, string[]> = {
+    Colombo: [
+        "National Hospital of Sri Lanka",
+        "Lady Ridgeway Hospital",
+        "Sri Jayewardenepura General Hospital",
+        "Durdans Hospital",
+        "Asiri Surgical Hospital",
+    ],
+    Gampaha: [
+        "Negombo General Hospital",
+        "Ragama Teaching Hospital",
+        "Base Hospital Gampaha",
+        "Nawaloka Hospitals - Negombo",
+    ],
+    Kalutara: [
+        "General Hospital Kalutara",
+        "Base Hospital Panadura",
+        "Teaching Hospital Horana",
+    ],
+    Kandy: [
+        "Teaching Hospital Kandy",
+        "Nawaloka Hospital Kandy",
+        "General Hospital Nawalapitiya",
+    ],
+    Galle: [
+        "Teaching Hospital Karapitiya",
+        "Base Hospital Balapitiya",
+        "General Hospital Galle",
+    ],
+    Matara: [
+        "Teaching Hospital Matara",
+        "Base Hospital Akuressa",
+        "General Hospital Tangalle",
+    ],
+    Jaffna: [
+        "Teaching Hospital Jaffna",
+        "Base Hospital Chavakachcheri",
+        "District General Hospital Kilinochchi",
+    ],
+};
+
+const DEFAULT_HOSPITALS = [
+    "National Hospital of Sri Lanka",
+    "General Hospital Kandy",
+    "Teaching Hospital Karapitiya",
+    "Teaching Hospital Jaffna",
+    "Base Hospital Kurunegala",
+];
+
+const getHospitalsForDistrict = (district: string) => DISTRICT_HOSPITALS[district] || DEFAULT_HOSPITALS;
+
 const LANGUAGE_OPTIONS = [
     "Sinhala",
     "English",
@@ -281,6 +332,7 @@ export default function EditDoctorProfilePage() {
     const [updatingPhoto, setUpdatingPhoto] = useState(false);
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const availableHospitals = getHospitalsForDistrict(formData?.location || "");
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -341,6 +393,23 @@ export default function EditDoctorProfilePage() {
                 }
                 : null
         );
+    };
+
+    const handleLocationChange = (value: string) => {
+        setFormData((prev) => {
+            if (!prev) {
+                return null;
+            }
+
+            const hospitalsForDistrict = getHospitalsForDistrict(value);
+            const filteredHospitals = prev.hospitals.filter((hospital) => hospitalsForDistrict.includes(hospital));
+
+            return {
+                ...prev,
+                location: value,
+                hospitals: filteredHospitals,
+            };
+        });
     };
 
     const readFileAsDataUrl = (file: File) =>
@@ -657,13 +726,24 @@ export default function EditDoctorProfilePage() {
                                     placeholder="e.g., 5 years of experience"
                                 />
                                 <SelectCard
-                                    label="District"
+                                    label="Location / District"
                                     value={formData.location}
-                                    onChange={(value) => handleChange("location", value)}
+                                    onChange={handleLocationChange}
                                     options={SRI_LANKA_DISTRICTS.map((district) => ({
                                         label: district,
                                         value: district,
                                     }))}
+                                />
+                                <MultiSelectCard
+                                    label="Available Hospitals"
+                                    values={formData.hospitals}
+                                    onChange={(values) => handleChange("hospitals", values)}
+                                    options={availableHospitals}
+                                    helperText={
+                                        formData.location
+                                            ? `Hospitals commonly available in ${formData.location}.`
+                                            : "Choose a location to see the matching hospitals."
+                                    }
                                 />
                             </div>
                         </div>
