@@ -209,8 +209,8 @@ export default function EditDoctorProfilePage() {
     }
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_28%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)]">
-            <div className="absolute inset-0 bg-[url('/images/doctor-login-bg.png')] bg-cover bg-center bg-no-repeat opacity-[0.08]" aria-hidden="true" />
+        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.20),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(20,184,166,0.16),_transparent_26%),linear-gradient(180deg,#edf9f4_0%,#f8fcfb_42%,#ffffff_100%)]">
+            <div className="absolute inset-0 bg-[url('/images/doctor-registration-bg.jpg')] bg-cover bg-center bg-no-repeat opacity-[0.07]" aria-hidden="true" />
             <div className="absolute inset-0 bg-gradient-to-b from-white/88 via-white/82 to-white/95" aria-hidden="true" />
             <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-emerald-100/50 to-transparent" aria-hidden="true" />
             <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-emerald-200/25 blur-3xl" aria-hidden="true" />
@@ -218,14 +218,44 @@ export default function EditDoctorProfilePage() {
 
             <div className="relative mx-auto max-w-7xl px-4 py-8">
                 {/* Header */}
-                <div className="mb-8 flex items-center justify-between">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Doctor Profile</p>
-                        <h1 className="mt-2 text-4xl font-black text-gray-900">Edit Your Profile</h1>
+                <div className="mb-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+                    <div className="rounded-[2.25rem] border border-white/80 bg-white/88 p-6 shadow-[0_20px_60px_rgba(16,185,129,0.08)] backdrop-blur sm:p-8">
+                        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">Doctor Profile</p>
+                                <h1 className="mt-3 text-4xl font-black text-gray-900 sm:text-5xl">Edit Your Profile</h1>
+                                <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600 sm:text-base">
+                                    Shape a clear, trustworthy profile with updated details, fees, and a polished photo so patients can recognize your practice instantly.
+                                </p>
+                            </div>
+                            <BlackButton onClick={() => router.back()} className="rounded-full px-6 py-3">
+                                Back to Profile
+                            </BlackButton>
+                        </div>
                     </div>
-                    <BlackButton onClick={() => router.back()} className="rounded-full px-6 py-3">
-                        Back to Profile
-                    </BlackButton>
+
+                    <div className="relative overflow-hidden rounded-[2.25rem] border border-white/80 bg-white/90 shadow-[0_20px_60px_rgba(16,185,129,0.12)] backdrop-blur min-h-[220px]">
+                        <div className="absolute inset-0 bg-[url('/images/doctor-registration-bg.jpg')] bg-cover bg-center bg-no-repeat" aria-hidden="true" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/70 via-emerald-900/45 to-cyan-900/55" aria-hidden="true" />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.22),_transparent_38%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.16),_transparent_32%)]" aria-hidden="true" />
+                        <div className="relative z-10 flex h-full flex-col justify-end p-6 sm:p-8 text-white">
+                            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-100/90">Profile canvas</p>
+                            <h2 className="mt-3 text-2xl font-black sm:text-3xl">A cleaner profile starts with a calmer workspace.</h2>
+                            <p className="mt-3 max-w-md text-sm leading-6 text-white/85">
+                                The soft medical background and layered glass panels keep the form readable while still feeling premium and professional.
+                            </p>
+                            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                                <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-100/80">Focus</p>
+                                    <p className="mt-1 text-sm font-semibold text-white">Patient-ready presentation</p>
+                                </div>
+                                <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-100/80">Theme</p>
+                                    <p className="mt-1 text-sm font-semibold text-white">Medical teal + emerald palette</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Success Message */}
@@ -380,7 +410,7 @@ export default function EditDoctorProfilePage() {
                     <div className="space-y-6">
                         {/* Summary Panel */}
                         <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur overflow-hidden relative">
-                            <div className="absolute inset-0 bg-[url('/images/doctor-login-bg.png')] bg-cover bg-center opacity-[0.08]" aria-hidden="true" />
+                            <div className="absolute inset-0 bg-[url('/images/doctor-registration-bg.jpg')] bg-cover bg-center opacity-[0.08]" aria-hidden="true" />
                             <div className="absolute inset-0 bg-gradient-to-br from-white/78 to-white/90" aria-hidden="true" />
                             <div className="relative space-y-4">
                                 <h3 className="text-lg font-black text-gray-900">Profile Summary</h3>
