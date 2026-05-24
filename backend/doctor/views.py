@@ -207,7 +207,6 @@ class DoctorProfileView(APIView):
         photo = ""
         date_of_birth = ""
         gender = ""
-        blood_type = ""
         address = ""
         experience_years = 0
         location = ""
@@ -234,7 +233,6 @@ class DoctorProfileView(APIView):
             if doctor_profile.date_of_birth:
                 date_of_birth = doctor_profile.date_of_birth.isoformat()
             gender = doctor_profile.gender or ""
-            blood_type = doctor_profile.blood_type or ""
             address = doctor_profile.address or ""
             experience_years = doctor_profile.experience_years
             location = doctor_profile.location
@@ -257,7 +255,6 @@ class DoctorProfileView(APIView):
                 "photo": photo,
                 "dateOfBirth": date_of_birth,
                 "gender": gender,
-                "bloodType": blood_type,
                 "address": address,
             },
             "profileDetails": {
@@ -351,10 +348,6 @@ class DoctorProfileView(APIView):
                 return Response({"detail": "gender must be Male or Female."}, status=status.HTTP_400_BAD_REQUEST)
             doctor_profile.gender = gender_value
             update_fields.append("gender")
-
-        if "bloodType" in payload:
-            doctor_profile.blood_type = (payload.get("bloodType") or "").strip()
-            update_fields.append("blood_type")
 
         if "address" in payload:
             doctor_profile.address = (payload.get("address") or "").strip()

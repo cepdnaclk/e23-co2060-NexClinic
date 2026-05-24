@@ -13,7 +13,6 @@ class DoctorProfile(models.Model):
     nic_number = models.CharField(max_length=20, default="")
     date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10, blank=True, default="")
-    blood_type = models.CharField(max_length=5, blank=True, default="")
     address = models.CharField(max_length=255, blank=True, default="")
     is_verified = models.BooleanField(default=False)
     experience_years = models.IntegerField(default=1)

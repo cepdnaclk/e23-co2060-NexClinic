@@ -13,7 +13,6 @@ type DoctorFormData = {
     phone: string;
     dateOfBirth: string;
     gender: string;
-    bloodType: string;
     address: string;
     specialization: string;
     experience: string;
@@ -35,7 +34,6 @@ type DoctorProfileData = {
         photo?: string;
         dateOfBirth?: string;
         gender?: string;
-        bloodType?: string;
         address?: string;
     };
     profileDetails: {
@@ -59,7 +57,6 @@ function mapProfileToForm(data: DoctorProfileData): DoctorFormData {
         phone: data.doctor.phone || "",
         dateOfBirth: data.doctor.dateOfBirth || "",
         gender: data.doctor.gender || "",
-        bloodType: data.doctor.bloodType || "",
         address: data.doctor.address || "",
         specialization: data.doctor.specialization || "",
         experience: data.profileDetails.experience || "",
@@ -508,12 +505,6 @@ export default function EditDoctorProfilePage() {
                                         { label: "Male", value: "Male" },
                                         { label: "Female", value: "Female" },
                                     ]}
-                                />
-                                <FieldCard
-                                    label="Blood Type"
-                                    value={formData.bloodType}
-                                    onChange={(value) => handleChange("bloodType", value)}
-                                    placeholder="A+, O-, AB+"
                                 />
                                 <TextAreaCard
                                     label="Address"
