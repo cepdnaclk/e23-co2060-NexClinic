@@ -11,6 +11,10 @@ type DoctorFormData = {
     preferredName: string;
     email: string;
     phone: string;
+    dateOfBirth: string;
+    gender: string;
+    bloodType: string;
+    address: string;
     specialization: string;
     experience: string;
     location: string;
@@ -29,6 +33,10 @@ type DoctorProfileData = {
         specialization: string;
         phone: string;
         photo?: string;
+        dateOfBirth?: string;
+        gender?: string;
+        bloodType?: string;
+        address?: string;
     };
     profileDetails: {
         experience: string;
@@ -49,6 +57,10 @@ function mapProfileToForm(data: DoctorProfileData): DoctorFormData {
         preferredName: data.doctor.preferredName || "",
         email: data.doctor.email || "",
         phone: data.doctor.phone || "",
+        dateOfBirth: data.doctor.dateOfBirth || "",
+        gender: data.doctor.gender || "",
+        bloodType: data.doctor.bloodType || "",
+        address: data.doctor.address || "",
         specialization: data.doctor.specialization || "",
         experience: data.profileDetails.experience || "",
         location: data.profileDetails.location || "",
@@ -91,6 +103,57 @@ const FieldCard = ({
         />
     </div>
 );
+
+    const SelectCard = ({
+        label,
+        value,
+        onChange,
+        options,
+    }: {
+        label: string;
+        value: string;
+        onChange: (value: string) => void;
+        options: Array<{ label: string; value: string }>;
+    }) => (
+        <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">{label}</label>
+            <select
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="w-full rounded-2xl border border-white/80 bg-white/85 px-4 py-3 text-gray-900 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
+            >
+                <option value="">Select {label}</option>
+                {options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                        {option.label}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
+
+    const TextAreaCard = ({
+        label,
+        value,
+        onChange,
+        placeholder,
+    }: {
+        label: string;
+        value: string;
+        onChange: (value: string) => void;
+        placeholder?: string;
+    }) => (
+        <div className="md:col-span-2">
+            <label className="block text-sm font-semibold text-gray-800 mb-2">{label}</label>
+            <textarea
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+                rows={4}
+                className="w-full rounded-2xl border border-white/80 bg-white/85 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
+            />
+        </div>
+    );
 
 export default function EditDoctorProfilePage() {
     const router = useRouter();
@@ -180,6 +243,7 @@ export default function EditDoctorProfilePage() {
             setProfileImage(dataUrl);
 
             const formDataPayload = new FormData();
+            formDataPayload.append("email", formData?.email || "");
             formDataPayload.append("profilePicture", file);
 
             setUpdatingPhoto(true);
@@ -221,6 +285,7 @@ export default function EditDoctorProfilePage() {
             setError("");
 
             const formDataPayload = new FormData();
+            formDataPayload.append("email", formData?.email || "");
             formDataPayload.append("clearProfilePicture", "true");
 
             const response = await fetch("/api/doctor/profile", {
@@ -354,58 +419,58 @@ export default function EditDoctorProfilePage() {
                                 title="Personal Information"
                                 subtitle="Update your basic professional details"
                             />
-                            <div className="space-y-4">
-                                <div className="rounded-[1.75rem] border border-emerald-100/70 bg-gradient-to-br from-emerald-50/90 to-white p-4 shadow-[0_12px_30px_rgba(16,185,129,0.06)]">
+                            <div className="mt-6 grid gap-4 md:grid-cols-2">
+                                <div className="md:col-span-2 rounded-[1.75rem] border border-emerald-100/70 bg-gradient-to-br from-emerald-50/90 to-white p-4 shadow-[0_12px_30px_rgba(16,185,129,0.06)]">
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                    <div className="w-28 h-28 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center ring-1 ring-white/60 shrink-0">
-                                        {profileImage ? (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={profileImage} alt="Profile preview" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="text-gray-400 text-sm">No photo</div>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-1 flex-col">
-                                        <label className="text-sm font-semibold text-gray-800">Profile Photo</label>
-                                        <p className="mt-2 text-sm text-gray-600">Upload a recent headshot so your patients can recognize you faster.</p>
-                                        <p className="mt-1 text-xs text-gray-500">PNG or JPG works best. The change is saved immediately.</p>
-                                        <div className="mt-4 flex flex-wrap gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => fileInputRef.current?.click()}
-                                                disabled={updatingPhoto}
-                                                className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                            >
-                                                {updatingPhoto ? "Updating..." : "Change Photo"}
-                                            </button>
-                                            {profileImage && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        void handleRemoveImage();
-                                                    }}
-                                                    disabled={updatingPhoto}
-                                                    className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-red-200 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                                >
-                                                    Remove Photo
-                                                </button>
+                                        <div className="w-28 h-28 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center ring-1 ring-white/60 shrink-0">
+                                            {profileImage ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img src={profileImage} alt="Profile preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="text-gray-400 text-sm">No photo</div>
                                             )}
                                         </div>
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                void handleImageChange(e.target.files?.[0]);
-                                                e.currentTarget.value = "";
-                                            }}
-                                            className="hidden"
-                                        />
-                                    </div>
+                                        <div className="flex flex-1 flex-col">
+                                            <label className="text-sm font-semibold text-gray-800">Profile Photo</label>
+                                            <p className="mt-2 text-sm text-gray-600">Upload a recent headshot so your patients can recognize you faster.</p>
+                                            <p className="mt-1 text-xs text-gray-500">PNG or JPG works best. The change is saved immediately.</p>
+                                            <div className="mt-4 flex flex-wrap gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    disabled={updatingPhoto}
+                                                    className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(16,185,129,0.22)] transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                    {updatingPhoto ? "Updating..." : "Change Photo"}
+                                                </button>
+                                                {profileImage && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            void handleRemoveImage();
+                                                        }}
+                                                        disabled={updatingPhoto}
+                                                        className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-red-200 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    >
+                                                        Remove Photo
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    void handleImageChange(e.target.files?.[0]);
+                                                    e.currentTarget.value = "";
+                                                }}
+                                                className="hidden"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                                 <FieldCard
-                                    label="Full Name"
+                                    label="Name"
                                     value={formData.fullName}
                                     onChange={(value) => handleChange("fullName", value)}
                                     placeholder="Dr. John Doe"
@@ -417,17 +482,44 @@ export default function EditDoctorProfilePage() {
                                     placeholder="How would you like to be called?"
                                 />
                                 <FieldCard
-                                    label="Email Address"
+                                    label="Email"
                                     type="email"
                                     value={formData.email}
                                     onChange={(value) => handleChange("email", value)}
                                     placeholder="your.email@example.com"
                                 />
                                 <FieldCard
-                                    label="Contact Phone"
+                                    label="Phone"
                                     value={formData.phone}
                                     onChange={(value) => handleChange("phone", value)}
                                     placeholder="+94 XX XXX XXXX"
+                                />
+                                <FieldCard
+                                    label="Date of Birth"
+                                    type="date"
+                                    value={formData.dateOfBirth}
+                                    onChange={(value) => handleChange("dateOfBirth", value)}
+                                />
+                                <SelectCard
+                                    label="Gender"
+                                    value={formData.gender}
+                                    onChange={(value) => handleChange("gender", value)}
+                                    options={[
+                                        { label: "Male", value: "Male" },
+                                        { label: "Female", value: "Female" },
+                                    ]}
+                                />
+                                <FieldCard
+                                    label="Blood Type"
+                                    value={formData.bloodType}
+                                    onChange={(value) => handleChange("bloodType", value)}
+                                    placeholder="A+, O-, AB+"
+                                />
+                                <TextAreaCard
+                                    label="Address"
+                                    value={formData.address}
+                                    onChange={(value) => handleChange("address", value)}
+                                    placeholder="Your home or practice address"
                                 />
                             </div>
                         </div>

@@ -1,7 +1,8 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -204,6 +205,10 @@ class DoctorProfileView(APIView):
         license_number = ""
         is_verified = False
         photo = ""
+        date_of_birth = ""
+        gender = ""
+        blood_type = ""
+        address = ""
         experience_years = 0
         location = ""
         qualifications = ""
@@ -226,6 +231,11 @@ class DoctorProfileView(APIView):
                     photo = request_obj.build_absolute_uri(doctor_profile.profile_picture.url)
                 else:
                     photo = doctor_profile.profile_picture.url
+            if doctor_profile.date_of_birth:
+                date_of_birth = doctor_profile.date_of_birth.isoformat()
+            gender = doctor_profile.gender or ""
+            blood_type = doctor_profile.blood_type or ""
+            address = doctor_profile.address or ""
             experience_years = doctor_profile.experience_years
             location = doctor_profile.location
             qualifications = doctor_profile.qualifications
@@ -245,6 +255,10 @@ class DoctorProfileView(APIView):
                 "licenseNumber": license_number,
                 "isVerified": is_verified,
                 "photo": photo,
+                "dateOfBirth": date_of_birth,
+                "gender": gender,
+                "bloodType": blood_type,
+                "address": address,
             },
             "profileDetails": {
                 "experience": f"{experience_years} years of experience",
@@ -292,6 +306,21 @@ class DoctorProfileView(APIView):
 
         update_fields = []
 
+        if "email" in payload:
+            new_email = (payload.get("email") or "").strip().lower()
+            if not new_email:
+                return Response({"detail": "email cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+            User = get_user_model()
+            email_in_use = User.objects.exclude(pk=user.pk).filter(email__iexact=new_email).exists()
+            if email_in_use:
+                return Response({"detail": "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+            user.email = new_email
+            if hasattr(user, "username"):
+                user.username = new_email
+            user.save(update_fields=["email", "username"] if hasattr(user, "username") else ["email"])
+
         if request.FILES.get("profilePicture"):
             doctor_profile.profile_picture = request.FILES.get("profilePicture")
             update_fields.append("profile_picture")
@@ -304,6 +333,32 @@ class DoctorProfileView(APIView):
             if payload_key in payload:
                 setattr(doctor_profile, model_field, payload.get(payload_key) or "")
                 update_fields.append(model_field)
+
+        if "dateOfBirth" in payload:
+            raw_date = (payload.get("dateOfBirth") or "").strip()
+            if raw_date:
+                try:
+                    doctor_profile.date_of_birth = date.fromisoformat(raw_date)
+                except ValueError:
+                    return Response({"detail": "dateOfBirth must be a valid date in YYYY-MM-DD format."}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                doctor_profile.date_of_birth = None
+            update_fields.append("date_of_birth")
+
+        if "gender" in payload:
+            gender_value = (payload.get("gender") or "").strip()
+            if gender_value and gender_value not in {"Male", "Female"}:
+                return Response({"detail": "gender must be Male or Female."}, status=status.HTTP_400_BAD_REQUEST)
+            doctor_profile.gender = gender_value
+            update_fields.append("gender")
+
+        if "bloodType" in payload:
+            doctor_profile.blood_type = (payload.get("bloodType") or "").strip()
+            update_fields.append("blood_type")
+
+        if "address" in payload:
+            doctor_profile.address = (payload.get("address") or "").strip()
+            update_fields.append("address")
 
         if "experienceYears" in payload:
             try:
