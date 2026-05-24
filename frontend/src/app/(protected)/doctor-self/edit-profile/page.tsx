@@ -17,8 +17,6 @@ type DoctorFormData = {
     specialization: string;
     experience: string;
     location: string;
-    chatFee: string;
-    appointmentFee: string;
     qualifications: string[];
     hospitals: string[];
     languages: string[];
@@ -39,8 +37,6 @@ type DoctorProfileData = {
     profileDetails: {
         experience: string;
         location: string;
-        chatFee: number;
-        appointmentFee: number;
         qualifications: string[];
         hospitals: string[];
         languages: string[];
@@ -61,8 +57,6 @@ function mapProfileToForm(data: DoctorProfileData): DoctorFormData {
         specialization: data.doctor.specialization || "",
         experience: data.profileDetails.experience || "",
         location: data.profileDetails.location || "",
-        chatFee: String(data.profileDetails.chatFee || 0),
-        appointmentFee: String(data.profileDetails.appointmentFee || 0),
         qualifications: data.profileDetails.qualifications || [],
         hospitals: data.profileDetails.hospitals || [],
         languages: data.profileDetails.languages || [],
@@ -748,30 +742,6 @@ export default function EditDoctorProfilePage() {
                             </div>
                         </div>
 
-                        {/* Consultation Fees */}
-                        <div className="rounded-[2rem] border border-white/80 bg-white/90 p-8 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur">
-                            <SectionHeader
-                                title="Consultation Fees"
-                                subtitle="Set your service rates in LKR"
-                            />
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <FieldCard
-                                    label="Online Chat Session Fee"
-                                    type="number"
-                                    value={formData.chatFee}
-                                    onChange={(value) => handleChange("chatFee", value)}
-                                    placeholder="500"
-                                />
-                                <FieldCard
-                                    label="In-Person Appointment Fee"
-                                    type="number"
-                                    value={formData.appointmentFee}
-                                    onChange={(value) => handleChange("appointmentFee", value)}
-                                    placeholder="3000"
-                                />
-                            </div>
-                        </div>
-
                         {/* Languages */}
                         <div className="rounded-[2rem] border border-white/80 bg-white/90 p-8 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur">
                             <SectionHeader
@@ -816,14 +786,6 @@ export default function EditDoctorProfilePage() {
                                     <div>
                                         <p className="text-gray-600">Specialization</p>
                                         <p className="font-semibold text-emerald-700">{formData.specialization || "Not specified"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-600">Chat Fee</p>
-                                        <p className="font-semibold text-gray-900">Rs. {formData.chatFee || "0"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-600">Appointment Fee</p>
-                                        <p className="font-semibold text-teal-700">Rs. {formData.appointmentFee || "0"}</p>
                                     </div>
                                 </div>
                             </div>
