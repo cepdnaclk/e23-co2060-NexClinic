@@ -152,6 +152,125 @@ const FieldCard = ({
         </div>
     );
 
+const DOCTOR_SPECIALIZATIONS = [
+    "Allergy and Immunology",
+    "Anesthesiology",
+    "Cardiology",
+    "Cardiothoracic Surgery",
+    "Clinical Genetics",
+    "Clinical Oncology",
+    "Critical Care Medicine",
+    "Dermatology",
+    "Emergency Medicine",
+    "Endocrinology",
+    "Family Medicine",
+    "Forensic Medicine",
+    "Gastroenterology",
+    "General Practitioner",
+    "General Surgery",
+    "Geriatric Medicine",
+    "Gynecology",
+    "Hematology",
+    "Hepatology",
+    "Infectious Diseases",
+    "Internal Medicine",
+    "Interventional Radiology",
+    "Nephrology",
+    "Neurology",
+    "Neurosurgery",
+    "Nuclear Medicine",
+    "Obstetrics",
+    "Occupational Medicine",
+    "Oncology",
+    "Ophthalmology",
+    "Oral and Maxillofacial Surgery",
+    "Orthopedic Surgery",
+    "Otolaryngology (ENT)",
+    "Palliative Medicine",
+    "Pathology",
+    "Pediatric Cardiology",
+    "Pediatrics",
+    "Physical Medicine and Rehabilitation",
+    "Plastic and Reconstructive Surgery",
+    "Psychiatry",
+    "Pulmonology",
+    "Radiology",
+    "Rheumatology",
+    "Sports Medicine",
+    "Urology",
+    "Vascular Surgery",
+    "Other",
+];
+
+const SRI_LANKA_DISTRICTS = [
+    "Colombo",
+    "Gampaha",
+    "Kalutara",
+    "Kandy",
+    "Matale",
+    "Nuwara Eliya",
+    "Galle",
+    "Matara",
+    "Hambantota",
+    "Jaffna",
+    "Kilinochchi",
+    "Mannar",
+    "Mullaitivu",
+    "Vavuniya",
+    "Puttalam",
+    "Kurunegala",
+    "Anuradhapura",
+    "Polonnaruwa",
+    "Badulla",
+    "Monaragala",
+    "Ratnapura",
+    "Kegalle",
+    "Trincomalee",
+    "Batticaloa",
+    "Ampara",
+];
+
+const LANGUAGE_OPTIONS = [
+    "Sinhala",
+    "English",
+    "Tamil",
+    "Hindi",
+    "Arabic",
+    "French",
+    "German",
+];
+
+const MultiSelectCard = ({
+    label,
+    values,
+    onChange,
+    options,
+    helperText,
+}: {
+    label: string;
+    values: string[];
+    onChange: (value: string[]) => void;
+    options: string[];
+    helperText?: string;
+}) => (
+    <div className="md:col-span-2">
+        <label className="block text-sm font-semibold text-gray-800 mb-2">{label}</label>
+        <select
+            multiple
+            value={values}
+            onChange={(e) => onChange(Array.from(e.target.selectedOptions, (option) => option.value))}
+            className="min-h-32 w-full rounded-2xl border border-white/80 bg-white/85 px-4 py-3 text-gray-900 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
+        >
+            {options.map((option) => (
+                <option key={option} value={option}>
+                    {option}
+                </option>
+            ))}
+        </select>
+        {helperText && <p className="mt-2 text-xs text-gray-500">{helperText}</p>}
+    </div>
+);
+
 export default function EditDoctorProfilePage() {
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -521,12 +640,15 @@ export default function EditDoctorProfilePage() {
                                 title="Professional Details"
                                 subtitle="Share your medical expertise and credentials"
                             />
-                            <div className="space-y-4">
-                                <FieldCard
+                            <div className="mt-6 grid gap-4 md:grid-cols-2">
+                                <SelectCard
                                     label="Specialization"
                                     value={formData.specialization}
                                     onChange={(value) => handleChange("specialization", value)}
-                                    placeholder="e.g., General Practitioner, Cardiologist"
+                                    options={DOCTOR_SPECIALIZATIONS.map((specialization) => ({
+                                        label: specialization,
+                                        value: specialization,
+                                    }))}
                                 />
                                 <FieldCard
                                     label="Years of Experience"
@@ -534,11 +656,14 @@ export default function EditDoctorProfilePage() {
                                     onChange={(value) => handleChange("experience", value)}
                                     placeholder="e.g., 5 years of experience"
                                 />
-                                <FieldCard
-                                    label="Location / City"
+                                <SelectCard
+                                    label="District"
                                     value={formData.location}
                                     onChange={(value) => handleChange("location", value)}
-                                    placeholder="Your primary practice location"
+                                    options={SRI_LANKA_DISTRICTS.map((district) => ({
+                                        label: district,
+                                        value: district,
+                                    }))}
                                 />
                             </div>
                         </div>
@@ -571,21 +696,15 @@ export default function EditDoctorProfilePage() {
                         <div className="rounded-[2rem] border border-white/80 bg-white/90 p-8 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur">
                             <SectionHeader
                                 title="Languages"
-                                subtitle="Languages you speak and consult in (comma-separated)"
+                                subtitle="Select all languages you speak and consult in"
                             />
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-800 mb-2">Languages Spoken</label>
-                                <textarea
-                                    value={formData.languages.join(", ")}
-                                    onChange={(e) =>
-                                        handleChange(
-                                            "languages",
-                                            e.target.value.split(",").map((l) => l.trim())
-                                        )
-                                    }
-                                    placeholder="English, Sinhala, Tamil"
-                                    className="w-full rounded-2xl border border-white/80 bg-white/85 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
-                                    rows={3}
+                            <div className="mt-6">
+                                <MultiSelectCard
+                                    label="Languages Spoken"
+                                    values={formData.languages}
+                                    onChange={(values) => handleChange("languages", values)}
+                                    options={LANGUAGE_OPTIONS}
+                                    helperText="Hold Ctrl or Cmd to choose multiple languages."
                                 />
                             </div>
                         </div>
