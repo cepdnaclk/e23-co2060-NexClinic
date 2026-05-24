@@ -16,6 +16,7 @@ type DoctorProfileData = {
         phone: string;
         licenseNumber: string;
         isVerified: boolean;
+        photo?: string;
     };
     profileDetails: {
         experience: string;
@@ -137,6 +138,7 @@ function DoctorProfilePage() {
     const email = profileData?.doctor.email || "Not available";
     const phone = profileData?.doctor.phone || "Not available";
     const isVerified = profileData?.doctor.isVerified ?? false;
+    const profileImage = profileData?.doctor.photo?.trim() ? profileData.doctor.photo : "/images/male-doctor-profile-pic.jpg";
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_28%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.06),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.06),_transparent_28%),linear-gradient(180deg,#1a1a1a_0%,#252525_42%,#1f1f1f_100%)]">
@@ -151,7 +153,7 @@ function DoctorProfilePage() {
                 <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-emerald-200/10 dark:bg-emerald-900/10 blur-3xl" aria-hidden="true" />
                 <div title="left-column" className="relative z-10 flex flex-col sm:flex-row gap-6 items-center xl:gap-8">
                     <div className="relative">
-                        <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-28 h-28 sm:w-40 sm:h-40 rounded-full object-cover ring-4 ring-white dark:ring-gray-700 shadow-[0_15px_40px_rgba(16,185,129,0.2)] dark:shadow-black/40" />
+                        <img src={profileImage} alt="Doctor Profile" className="w-28 h-28 sm:w-40 sm:h-40 rounded-full object-cover ring-4 ring-white dark:ring-gray-700 shadow-[0_15px_40px_rgba(16,185,129,0.2)] dark:shadow-black/40" />
                     </div>
                     <div title="name-spec-place" className="flex flex-col gap-3 text-center sm:text-left">
                         <div>
