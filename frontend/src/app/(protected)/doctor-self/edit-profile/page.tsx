@@ -537,17 +537,35 @@ export default function EditDoctorProfilePage() {
                 {/* Header */}
                 <div className="mb-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
                     <div className="rounded-[2.25rem] border border-white/80 bg-white/88 p-6 shadow-[0_20px_60px_rgba(16,185,129,0.08)] backdrop-blur sm:p-8">
-                        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">Doctor Profile</p>
-                                <h1 className="mt-3 text-4xl font-black text-gray-900 sm:text-5xl">Edit Your Profile</h1>
-                                <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600 sm:text-base">
-                                    Shape a clear, trustworthy profile with updated details, fees, and a polished photo so patients can recognize your practice instantly.
+                        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-3">
+                                    <span className="inline-flex items-center rounded-full bg-emerald-50/90 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">DOCTOR PROFILE</span>
+                                    <span className="ml-2 inline-flex items-center rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-gray-700">Edit • Public</span>
+                                </div>
+
+                                <h1 className="display-heading mt-4 text-5xl leading-tight font-extrabold text-gray-900 sm:text-6xl">Edit Your Profile</h1>
+
+                                <p className="mt-4 max-w-3xl text-lg leading-7 text-gray-700">
+                                    Shape a clear, <span className="font-semibold text-emerald-700">trustworthy</span> profile with updated details and a polished photo so patients can recognize your practice instantly.
                                 </p>
+
+                                <div className="mt-6 flex items-center gap-3">
+                                    <BlackButton onClick={() => router.back()} className="rounded-full px-6 py-3 shadow-sm">
+                                        Back to Profile
+                                    </BlackButton>
+                                    <button
+                                        type="button"
+                                        onClick={() => window.scrollTo({ top: 800, behavior: 'smooth' })}
+                                        className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(16,185,129,0.15)] hover:bg-emerald-700"
+                                    >
+                                        Preview Profile
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H3m12 0l-4-4m4 4l-4 4" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                            <BlackButton onClick={() => router.back()} className="rounded-full px-6 py-3">
-                                Back to Profile
-                            </BlackButton>
                         </div>
                     </div>
 
@@ -555,18 +573,33 @@ export default function EditDoctorProfilePage() {
                         <div className="absolute inset-0 bg-[url('/images/doctor-registration-bg.jpg')] bg-cover bg-center bg-no-repeat" aria-hidden="true" />
                         <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/70 via-emerald-900/45 to-cyan-900/55" aria-hidden="true" />
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.22),_transparent_38%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.16),_transparent_32%)]" aria-hidden="true" />
-                        <div className="relative z-10 flex h-full flex-col justify-end p-6 sm:p-8 text-white">
-                            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-100/90">Profile canvas</p>
-                            <h2 className="mt-3 text-2xl font-black sm:text-3xl">A cleaner profile starts with a calmer workspace.</h2>
+                        <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 text-white">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-100/90">Profile canvas</p>
+                                    <h2 className="mt-2 text-2xl font-black sm:text-3xl">A cleaner profile starts with a calmer workspace.</h2>
+                                </div>
+                                <div className="ml-4 flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => alert('Preview not implemented in this demo')}
+                                        className="rounded-full bg-white/12 px-3 py-1 text-xs font-semibold text-white/90 hover:bg-white/20"
+                                    >
+                                        Live Preview
+                                    </button>
+                                </div>
+                            </div>
+
                             <p className="mt-3 max-w-md text-sm leading-6 text-white/85">
                                 The soft medical background and layered glass panels keep the form readable while still feeling premium and professional.
                             </p>
+
                             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                                <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                                <div className="rounded-2xl border border-white/20 bg-white/6 px-4 py-3 backdrop-blur-md">
                                     <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-100/80">Focus</p>
                                     <p className="mt-1 text-sm font-semibold text-white">Patient-ready presentation</p>
                                 </div>
-                                <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                                <div className="rounded-2xl border border-white/20 bg-white/6 px-4 py-3 backdrop-blur-md">
                                     <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-100/80">Theme</p>
                                     <p className="mt-1 text-sm font-semibold text-white">Medical teal + emerald palette</p>
                                 </div>
