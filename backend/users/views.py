@@ -146,7 +146,9 @@ class VerifyOTPView(APIView):
             if pending_user.role == 'PATIENT':
                 PatientProfile.objects.create(user=user, **pending_user.profile_data)
             elif pending_user.role == 'DOCTOR':
-                DoctorProfile.objects.create(user=user, **pending_user.profile_data)
+                doctor_profile_data = dict(pending_user.profile_data)
+                doctor_profile_data.setdefault('gender', 'Other')
+                DoctorProfile.objects.create(user=user, **doctor_profile_data)
                 doctor_name = pending_user.profile_data.get('preferred_name', 'Doctor')
 
                 def send_doctor_notification():

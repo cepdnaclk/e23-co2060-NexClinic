@@ -158,6 +158,7 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(write_only=True)
     preferred_name = serializers.CharField(write_only=True)
     nic_number = serializers.CharField(write_only=True)
+    gender = serializers.CharField(write_only=True, required=False)
     license_number = serializers.CharField(write_only=True)
     specialization = serializers.CharField(write_only=True)
     phone = serializers.CharField(write_only=True)
@@ -175,7 +176,7 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('full_name', 'preferred_name', 'nic_number', 'license_number', 'specialization',  'phone', 'email', 'password', 'password2')
+        fields = ('full_name', 'preferred_name', 'nic_number', 'gender', 'license_number', 'specialization',  'phone', 'email', 'password', 'password2')
 
     def validate_full_name(self, value):
         cleaned = value.strip()
@@ -194,6 +195,12 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
         if not SL_NIC_REGEX.match(cleaned):
             raise serializers.ValidationError('Enter a valid Sri Lankan NIC number.')
         return cleaned
+
+    def validate_gender(self, value):
+        normalized = GENDER_LOOKUP.get((value or '').strip().lower())
+        if not normalized:
+            raise serializers.ValidationError('Gender must be Male, Female, or Other.')
+        return normalized
 
     def validate_license_number(self, value):
         cleaned = re.sub(r'\s+', '', (value or '').strip().upper())
@@ -227,6 +234,7 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
 
         profile_data = {
             'specialization': validated_data.pop('specialization'),
+            'gender': validated_data.pop('gender', 'Other'),
             'license_number': validated_data.pop('license_number'),
             'phone': validated_data.pop('phone'),
             'full_name': validated_data.pop('full_name'),
