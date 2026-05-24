@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 
+from chat.models import AdviceChatThread
 from .constants import DOCTOR_SPECIALIZATIONS
 from doctor.models import AppointmentAvailableSlot, DoctorOnlineAdviceAvailability, Appointment, DoctorProfile
 from hospital.models import Hospital, HospitalAdmin, DoctorHospitalVerification, SlotTemplate
@@ -339,11 +340,10 @@ class DoctorDashboardView(APIView):
 
     def get(self, request):
         user = request.user
+        doctor_profile = getattr(user, "doctor_profile", None)
 
         if getattr(user, "role", None) != "DOCTOR":
             return Response({"detail": "Forbidden"}, status=403)
-
-        doctor_profile = getattr(user, "doctor_profile", None)
 
         display_name = user.email
         specialization = "General"
@@ -403,8 +403,29 @@ class DoctorDashboardView(APIView):
                 }
             )
 
-        # Chat model is not available yet, so return empty real-state data.
+        recent_chat_threads = (
+            AdviceChatThread.objects.filter(doctor=doctor_profile)
+            .select_related("patient")
+            .order_by("-last_message_at", "-started_at")[:5]
+            if doctor_profile
+            else []
+        )
+
         recent_chats = []
+        unread_chat_count = 0
+        for thread in recent_chat_threads:
+            unread_count = thread.messages.exclude(sender_user=user).filter(is_read=False).count()
+            unread_chat_count += unread_count
+            last_message = thread.messages.order_by("-sent_at", "-id").first()
+            recent_chats.append(
+                {
+                    "id": str(thread.id),
+                    "patientName": thread.patient.full_name,
+                    "lastMessage": last_message.message_text if last_message else "",
+                    "unreadCount": unread_count,
+                    "time": thread.last_message_at.strftime("%b %d, %I:%M %p") if thread.last_message_at else thread.started_at.strftime("%b %d, %I:%M %p"),
+                }
+            )
 
         data = {
             "doctor": {

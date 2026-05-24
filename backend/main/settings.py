@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "patient",
     "doctor",
     "hospital",
+    "chat",
 ]
 
 AUTH_USER_MODEL = 'users.CustomUser'

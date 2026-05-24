@@ -99,15 +99,21 @@ export default async function DoctorProfile({
 
 						{/* Action Buttons */}
 						<div className="flex flex-col gap-3 w-full sm:w-auto min-w-[200px]">
-							<button
-								disabled={!doctor.availableForChat}
-								className={`py-3 px-6 rounded-lg font-semibold transition-colors ${doctor.availableForChat
-									? 'bg-green-500 hover:bg-green-600 text-white'
-									: 'bg-gray-300 text-gray-500 cursor-not-allowed'
-									}`}
-							>
-								{doctor.availableForChat ? 'Start Chat Now' : 'Currently Offline'}
-							</button>
+							{doctor.availableForChat ? (
+								<Link
+									href={`/user-self/chats?doctor=${doctor.id}`}
+									className="inline-flex w-full items-center justify-center py-3 px-6 rounded-lg font-semibold transition-colors bg-green-500 hover:bg-green-600 text-white"
+								>
+									Start Chat Now
+								</Link>
+							) : (
+								<button
+									disabled
+									className="w-full py-3 px-6 rounded-lg font-semibold transition-colors bg-gray-300 text-gray-500 cursor-not-allowed"
+								>
+									Currently Offline
+								</button>
+							)}
 							<Link href={`/user-self/book-appointment?doctor=${doctor.id}`} className="w-full">
 								<BlackButton className="w-full">Book Appointment</BlackButton>
 							</Link>
