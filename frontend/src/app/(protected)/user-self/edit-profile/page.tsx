@@ -876,23 +876,7 @@ export default function UserEditProfilePage() {
               </div>
             </div> */}
 
-            <div className="rounded-[2rem] border border-emerald-100 bg-white/90 p-6 shadow-lg shadow-emerald-100/40">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">
-                How this works
-              </p>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-                <li>
-                  1. Review and update your details in a calm, grouped layout.
-                </li>
-                <li>
-                  2. Save changes to sync your profile details to the backend.
-                </li>
-                <li>
-                  3. Save a draft on this device if you want to pause before
-                  submitting.
-                </li>
-              </ul>
-            </div>
+            {/* "How this works" summary removed per request */}
 
             <div className="rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-lg shadow-emerald-100/40">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">
