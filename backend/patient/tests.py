@@ -46,6 +46,7 @@ class PatientProfileViewTests(TestCase):
                 "bloodType": "O+",
                 "allergies": "Pollen",
                 "emergencyContactName": "Alex",
+                "emergencyContactEmail": "alex@example.com",
             },
             format="json",
         )
@@ -61,6 +62,7 @@ class PatientProfileViewTests(TestCase):
         self.assertEqual(self.profile.blood_type, "O+")
         self.assertEqual(self.profile.allergies, "Pollen")
         self.assertEqual(self.profile.emergency_contact_name, "Alex")
+        self.assertEqual(self.profile.emergency_contact_email, "alex@example.com")
 
     def test_patient_profile_update_rejects_duplicate_email(self):
         CustomUser.objects.create_user(

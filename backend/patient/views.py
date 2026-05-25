@@ -86,6 +86,7 @@ class PatientProfileView(BasePatientAPIView):
         emergency_contact_name = ""
         emergency_contact_phone = ""
         emergency_contact_relation = ""
+        emergency_contact_email = ""
         insurance_provider = ""
         insurance_policy_number = ""
         medical_reports = ""
@@ -113,6 +114,7 @@ class PatientProfileView(BasePatientAPIView):
             emergency_contact_relation = (
                 patient_profile.emergency_contact_relation or ""
             )
+            emergency_contact_email = patient_profile.emergency_contact_email or ""
             insurance_provider = patient_profile.insurance_provider or ""
             insurance_policy_number = patient_profile.insurance_policy_number or ""
             medical_reports = PatientProfileView._build_file_url(
@@ -149,6 +151,7 @@ class PatientProfileView(BasePatientAPIView):
                 "name": emergency_contact_name,
                 "phone": emergency_contact_phone,
                 "relation": emergency_contact_relation,
+                "email": emergency_contact_email,
             },
             "insurance": {
                 "provider": insurance_provider,

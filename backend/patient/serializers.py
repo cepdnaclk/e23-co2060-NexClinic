@@ -176,6 +176,7 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
     emergencyContactName = serializers.CharField(max_length=255, required=False, allow_blank=True)
     emergencyContactPhone = serializers.CharField(max_length=20, required=False, allow_blank=True)
     emergencyContactRelation = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    emergencyContactEmail = serializers.EmailField(required=False, allow_blank=True)
     insuranceProvider = serializers.CharField(max_length=255, required=False, allow_blank=True)
     insurancePolicyNumber = serializers.CharField(max_length=100, required=False, allow_blank=True)
     profileImage = serializers.ImageField(required=False)
@@ -215,6 +216,7 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
             "emergencyContactName": "emergency_contact_name",
             "emergencyContactPhone": "emergency_contact_phone",
             "emergencyContactRelation": "emergency_contact_relation",
+            "emergencyContactEmail": "emergency_contact_email",
             "insuranceProvider": "insurance_provider",
             "insurancePolicyNumber": "insurance_policy_number",
             "profileImage": "profile_picture",

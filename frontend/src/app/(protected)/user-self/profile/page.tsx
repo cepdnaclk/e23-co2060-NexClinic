@@ -27,6 +27,7 @@ type PatientProfileResponse = {
     name: string;
     phone: string;
     relation: string;
+    email: string;
   };
   insurance: {
     provider: string;
@@ -121,6 +122,7 @@ export default function UserProfile() {
   const emergencyPhone = profileData?.emergencyContact.phone || "Not specified";
   const emergencyRelation =
     profileData?.emergencyContact.relation || "Not specified";
+  const emergencyEmail = profileData?.emergencyContact.email || "Not specified";
   const insuranceProvider = profileData?.insurance.provider || "Not provided";
   const insurancePolicy = profileData?.insurance.policyNumber || "Not provided";
   const profileImage = profileData?.patient.profileImage?.trim()
@@ -248,6 +250,7 @@ export default function UserProfile() {
               </p>
               <p className="mt-2 text-sm text-slate-600">{emergencyRelation}</p>
               <p className="mt-1 text-sm text-slate-600">{emergencyPhone}</p>
+              <p className="mt-1 text-sm text-slate-600">{emergencyEmail}</p>
             </div>
 
             {/* <div className="rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-lg shadow-emerald-100/40">

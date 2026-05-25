@@ -34,6 +34,7 @@ type PatientProfileResponse = {
     name: string;
     phone: string;
     relation: string;
+    email: string;
   };
   insurance: {
     provider: string;
@@ -63,6 +64,7 @@ const defaultFormData: Patient = {
   emergencyContactName: "",
   emergencyContactPhone: "",
   emergencyContactRelation: "",
+  emergencyContactEmail: "",
   insuranceProvider: "",
   insurancePolicyNumber: "",
   profileImage: "/images/user.png",
@@ -94,6 +96,7 @@ function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
     emergencyContactName: profile.emergencyContact.name || "",
     emergencyContactPhone: profile.emergencyContact.phone || "",
     emergencyContactRelation: profile.emergencyContact.relation || "",
+    emergencyContactEmail: profile.emergencyContact.email || "",
     insuranceProvider: profile.insurance.provider || "",
     insurancePolicyNumber: profile.insurance.policyNumber || "",
     profileImage: profile.patient.profileImage || defaultFormData.profileImage,
@@ -322,6 +325,7 @@ export default function UserEditProfilePage() {
         "emergencyContactRelation",
         formData.emergencyContactRelation,
       );
+      requestBody.set("emergencyContactEmail", formData.emergencyContactEmail);
       requestBody.set("insuranceProvider", formData.insuranceProvider);
       requestBody.set("insurancePolicyNumber", formData.insurancePolicyNumber);
 
@@ -804,6 +808,17 @@ export default function UserEditProfilePage() {
                             onChange={handleChange}
                             className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
                             placeholder="Spouse, sibling, parent"
+                          />
+                        </FieldCard>
+
+                        <FieldCard label="Contact email">
+                          <input
+                            type="email"
+                            name="emergencyContactEmail"
+                            value={formData.emergencyContactEmail}
+                            onChange={handleChange}
+                            className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
+                            placeholder="contact@example.com"
                           />
                         </FieldCard>
                       </div>

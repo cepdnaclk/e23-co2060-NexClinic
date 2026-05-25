@@ -20,6 +20,7 @@ class PatientProfile(models.Model):
     emergency_contact_name = models.CharField(max_length=255, blank=True, default="")
     emergency_contact_phone = models.CharField(max_length=20, blank=True, default="")
     emergency_contact_relation = models.CharField(max_length=100, blank=True, default="")
+    emergency_contact_email = models.EmailField(blank=True, default="")
     insurance_provider = models.CharField(max_length=255, blank=True, default="")
     insurance_policy_number = models.CharField(max_length=100, blank=True, default="")
     profile_picture = models.ImageField(upload_to='patient_profiles/', null=True, blank=True)
