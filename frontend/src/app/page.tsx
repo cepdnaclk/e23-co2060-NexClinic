@@ -62,11 +62,11 @@ export default function Home() {
   return (
             <main className="relative min-h-screen w-full overflow-hidden bg-[#f5faf7] text-gray-900">
                 <div className="pointer-events-none absolute inset-0 -z-10">
-                    <img className="h-full w-full object-cover opacity-[0.24]" src="/images/doctor-registration-bg.jpg" alt="" aria-hidden="true" />
-                    <img className="absolute inset-0 h-full w-full object-cover opacity-[0.14]" src="/images/main-bg.jpg" alt="" aria-hidden="true" />
-                    <img className="absolute inset-0 h-full w-full object-cover opacity-[0.09]" src="/images/hexagons.png" alt="" aria-hidden="true" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_8%_10%,rgba(16,185,129,0.24),transparent_34%),radial-gradient(circle_at_90%_16%,rgba(34,211,238,0.20),transparent_35%),radial-gradient(circle_at_50%_100%,rgba(16,185,129,0.12),transparent_40%),linear-gradient(180deg,rgba(245,250,247,0.76),rgba(245,250,247,0.90))]" />
-                    <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/50 to-transparent" />
+                    <img className="h-full w-full object-cover opacity-[0.18]" src="/images/main-bg.jpg" alt="" aria-hidden="true" />
+                    <img className="absolute inset-0 h-full w-full object-cover opacity-[0.10]" src="/images/doctor-registration-bg.jpg" alt="" aria-hidden="true" />
+                    <img className="absolute inset-0 h-full w-full object-cover opacity-[0.06]" src="/images/hexagons.png" alt="" aria-hidden="true" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_8%_10%,rgba(16,185,129,0.26),transparent_34%),radial-gradient(circle_at_90%_16%,rgba(34,211,238,0.18),transparent_35%),radial-gradient(circle_at_50%_100%,rgba(16,185,129,0.10),transparent_42%),linear-gradient(180deg,rgba(245,250,247,0.70),rgba(245,250,247,0.94))]" />
+                    <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-white/60 to-transparent" />
                 </div>
                 <div title="home-nav-bar" className="fixed w-full top-0 left-0 z-20">
                     <RoleBasedNavbar />
@@ -74,8 +74,8 @@ export default function Home() {
 
                 <section className="relative mt-[70px] overflow-hidden border-b border-emerald-100 bg-white">
                     <div className="absolute inset-0">
-                        <img className="h-full w-full object-cover opacity-20" src="/images/main-bg.jpg" alt="NexClinic healthcare background" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-emerald-50/80" />
+                        <img className="h-full w-full object-cover opacity-22" src="/images/doctor-registration-bg.jpg" alt="NexClinic healthcare background" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/92 to-emerald-50/78" />
                     </div>
                     <div className="absolute -top-16 right-10 h-64 w-64 rounded-full bg-emerald-200/60 blur-3xl" />
                     <div className="absolute -bottom-20 left-10 h-64 w-64 rounded-full bg-lime-100/80 blur-3xl" />
@@ -132,15 +132,19 @@ export default function Home() {
                                     <h2 className="mt-2 text-2xl font-bold text-gray-900">Tele-consultations now reduce waiting time by up to 42%</h2>
                                     <p className="mt-3 text-sm text-gray-600">NexClinic makes it easier for patients to get faster access to specialist guidance.</p>
                                 </div>
-                                <div className="rounded-[2rem] border border-white/80 bg-gradient-to-br from-emerald-50/60 to-emerald-50/30 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur transition-all duration-300 hover:shadow-[0_25px_60px_rgba(16,185,129,0.12)]">
-                                    <img src="/images/chat.png" alt="Online consultation" className="h-12 w-12" />
-                                    <h3 className="mt-3 font-bold text-gray-900">Quick Consult</h3>
-                                    <p className="mt-2 text-sm text-gray-600">Start secure doctor conversations without complex setup.</p>
+                                <div className="overflow-hidden rounded-[2rem] border border-white/80 bg-gradient-to-br from-emerald-50/60 to-emerald-50/30 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur transition-all duration-300 hover:shadow-[0_25px_60px_rgba(16,185,129,0.12)]">
+                                    <img src="/images/HealthDoc.avif" alt="Online consultation" className="h-44 w-full object-cover" />
+                                    <div className="p-5">
+                                        <h3 className="font-bold text-gray-900">Quick Consult</h3>
+                                        <p className="mt-2 text-sm text-gray-600">Start secure doctor conversations without complex setup.</p>
+                                    </div>
                                 </div>
-                                <div className="rounded-[2rem] border border-white/80 bg-gradient-to-br from-cyan-50/60 to-cyan-50/30 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur transition-all duration-300 hover:shadow-[0_25px_60px_rgba(16,185,129,0.12)]">
-                                    <img src="/images/appointment.png" alt="Appointment confirmation" className="h-12 w-12" />
-                                    <h3 className="mt-3 font-bold text-gray-900">Smart Reminders</h3>
-                                    <p className="mt-2 text-sm text-gray-600">Never miss checkups with automatic booking alerts.</p>
+                                <div className="overflow-hidden rounded-[2rem] border border-white/80 bg-gradient-to-br from-cyan-50/60 to-cyan-50/30 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur transition-all duration-300 hover:shadow-[0_25px_60px_rgba(16,185,129,0.12)]">
+                                    <img src="/images/doc.jpg" alt="Appointment confirmation" className="h-44 w-full object-cover" />
+                                    <div className="p-5">
+                                        <h3 className="font-bold text-gray-900">Smart Reminders</h3>
+                                        <p className="mt-2 text-sm text-gray-600">Never miss checkups with automatic booking alerts.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
