@@ -26,6 +26,8 @@ type PatientProfileResponse = {
     bloodType: string;
     allergies: string;
     medications: string;
+    medicalReports: string;
+    medicalDocuments: string;
     medicalHistory: string;
   };
   emergencyContact: {
@@ -55,6 +57,8 @@ const defaultFormData: Patient = {
   bloodType: "",
   allergies: "",
   medications: "",
+  medicalReports: "",
+  medicalDocuments: "",
   medicalHistory: "",
   emergencyContactName: "",
   emergencyContactPhone: "",
@@ -84,6 +88,8 @@ function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
     bloodType: profile.health.bloodType || "",
     allergies: profile.health.allergies || "",
     medications: profile.health.medications || "",
+    medicalReports: profile.health.medicalReports || "",
+    medicalDocuments: profile.health.medicalDocuments || "",
     medicalHistory: profile.health.medicalHistory || "",
     emergencyContactName: profile.emergencyContact.name || "",
     emergencyContactPhone: profile.emergencyContact.phone || "",
@@ -131,7 +137,11 @@ export default function UserEditProfilePage() {
   const [profile, setProfile] = useState<PatientProfileResponse | null>(null);
   const [formData, setFormData] = useState<Patient>(defaultFormData);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [selectedMedicalReportFile, setSelectedMedicalReportFile] = useState<File | null>(null);
+  const [selectedMedicalDocumentFile, setSelectedMedicalDocumentFile] = useState<File | null>(null);
   const [bloodTypeUnknown, setBloodTypeUnknown] = useState(false);
+  const [medicalReportLabel, setMedicalReportLabel] = useState("No file selected");
+  const [medicalDocumentLabel, setMedicalDocumentLabel] = useState("No file selected");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -195,6 +205,18 @@ export default function UserEditProfilePage() {
       : "/images/user.png";
   }, [formData.profileImage]);
 
+  const getAttachmentLabel = (url: string) => {
+    if (!url.trim()) {
+      return "No file uploaded";
+    }
+
+    try {
+      return decodeURIComponent(url.split("/").pop() || "Uploaded file");
+    } catch {
+      return "Uploaded file";
+    }
+  };
+
   const initials = useMemo(() => {
     const parts = formData.name.trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) {
@@ -235,6 +257,26 @@ export default function UserEditProfilePage() {
     reader.readAsDataURL(file);
   };
 
+  const handleMedicalReportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setSelectedMedicalReportFile(file);
+    setMedicalReportLabel(file.name);
+  };
+
+  const handleMedicalDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setSelectedMedicalDocumentFile(file);
+    setMedicalDocumentLabel(file.name);
+  };
+
   const handleBloodTypeToggle = (checked: boolean) => {
     setBloodTypeUnknown(checked);
     setFormData((previous) =>
@@ -271,6 +313,8 @@ export default function UserEditProfilePage() {
       requestBody.set("bloodType", formData.bloodType);
       requestBody.set("allergies", formData.allergies);
       requestBody.set("medications", formData.medications);
+      requestBody.set("medicalReports", formData.medicalReports);
+      requestBody.set("medicalDocuments", formData.medicalDocuments);
       requestBody.set("medicalHistory", formData.medicalHistory);
       requestBody.set("emergencyContactName", formData.emergencyContactName);
       requestBody.set("emergencyContactPhone", formData.emergencyContactPhone);
@@ -283,6 +327,14 @@ export default function UserEditProfilePage() {
 
       if (selectedImageFile) {
         requestBody.set("profileImage", selectedImageFile);
+      }
+
+      if (selectedMedicalReportFile) {
+        requestBody.set("medicalReports", selectedMedicalReportFile);
+      }
+
+      if (selectedMedicalDocumentFile) {
+        requestBody.set("medicalDocuments", selectedMedicalDocumentFile);
       }
 
       const response = await fetch("/api/patient/profile", {
@@ -310,6 +362,10 @@ export default function UserEditProfilePage() {
       setProfile(updatedProfile);
       setFormData(nextFormData);
       setSelectedImageFile(null);
+      setSelectedMedicalReportFile(null);
+      setSelectedMedicalDocumentFile(null);
+      setMedicalReportLabel(getAttachmentLabel(updatedProfile.health.medicalReports));
+      setMedicalDocumentLabel(getAttachmentLabel(updatedProfile.health.medicalDocuments));
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       window.localStorage.removeItem("patient-profile-draft-saved-at");
       setNotice("Your profile has been updated successfully.");
@@ -352,6 +408,10 @@ export default function UserEditProfilePage() {
       setFormData(mappedProfile);
       setBloodTypeUnknown(!mappedProfile.bloodType);
       setSelectedImageFile(null);
+      setSelectedMedicalReportFile(null);
+      setSelectedMedicalDocumentFile(null);
+      setMedicalReportLabel(getAttachmentLabel(profile.health.medicalReports));
+      setMedicalDocumentLabel(getAttachmentLabel(profile.health.medicalDocuments));
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
     }
   };
@@ -635,8 +695,8 @@ export default function UserEditProfilePage() {
 
                     <section>
                       <SectionHeader
-                        title="Health notes"
-                        description="Keep the essentials visible for faster visits and clearer care handoffs."
+                        title="Health snapshot"
+                        description="Capture allergies, current medication, and attach reports or documents for easy review."
                       />
 
                       <div className="mt-5 space-y-4">
@@ -661,6 +721,38 @@ export default function UserEditProfilePage() {
                             placeholder="List current medications"
                           />
                         </FieldCard>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FieldCard label="Upload reports">
+                            <div className="space-y-3">
+                              <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                Choose report file
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  accept=".pdf,.doc,.docx,image/*"
+                                  onChange={handleMedicalReportUpload}
+                                />
+                              </label>
+                              <p className="text-sm text-slate-600">{medicalReportLabel}</p>
+                            </div>
+                          </FieldCard>
+
+                          <FieldCard label="Upload documents">
+                            <div className="space-y-3">
+                              <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">
+                                Choose document file
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  accept=".pdf,.doc,.docx,image/*"
+                                  onChange={handleMedicalDocumentUpload}
+                                />
+                              </label>
+                              <p className="text-sm text-slate-600">{medicalDocumentLabel}</p>
+                            </div>
+                          </FieldCard>
+                        </div>
 
                         <FieldCard label="Medical history">
                           <textarea

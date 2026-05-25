@@ -97,3 +97,32 @@ class PatientProfileViewTests(TestCase):
         self.profile.refresh_from_db()
         self.assertTrue(bool(self.profile.profile_picture))
         self.assertIn("/media/patient_profiles/", response.json()["patient"]["profileImage"])
+
+    def test_patient_can_upload_health_documents(self):
+        self.client.force_authenticate(user=self.user)
+        report_file = SimpleUploadedFile(
+            "report.pdf",
+            b"%PDF-1.4 fake report content",
+            content_type="application/pdf",
+        )
+        document_file = SimpleUploadedFile(
+            "doctor-note.docx",
+            b"PK\x03\x04 fake document content",
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+
+        response = self.client.patch(
+            "/api/patient/profile/",
+            {
+                "medicalReports": report_file,
+                "medicalDocuments": document_file,
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.profile.refresh_from_db()
+        self.assertTrue(bool(self.profile.medical_reports))
+        self.assertTrue(bool(self.profile.medical_documents))
+        self.assertIn("/media/patient_reports/", response.json()["health"]["medicalReports"])
+        self.assertIn("/media/patient_documents/", response.json()["health"]["medicalDocuments"])

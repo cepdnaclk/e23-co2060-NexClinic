@@ -63,6 +63,13 @@ class PatientProfileView(BasePatientAPIView):
         return request.build_absolute_uri(patient_profile.profile_picture.url)
 
     @staticmethod
+    def _build_file_url(request, file_field):
+        if not file_field:
+            return ""
+
+        return request.build_absolute_uri(file_field.url)
+
+    @staticmethod
     def _build_profile_response(request, user, patient_profile):
         full_name = user.email
         date_of_birth = ""
@@ -81,6 +88,8 @@ class PatientProfileView(BasePatientAPIView):
         emergency_contact_relation = ""
         insurance_provider = ""
         insurance_policy_number = ""
+        medical_reports = ""
+        medical_documents = ""
 
         if patient_profile:
             full_name = patient_profile.full_name or user.email
@@ -106,6 +115,12 @@ class PatientProfileView(BasePatientAPIView):
             )
             insurance_provider = patient_profile.insurance_provider or ""
             insurance_policy_number = patient_profile.insurance_policy_number or ""
+            medical_reports = PatientProfileView._build_file_url(
+                request, patient_profile.medical_reports
+            )
+            medical_documents = PatientProfileView._build_file_url(
+                request, patient_profile.medical_documents
+            )
 
         return {
             "patient": {
@@ -127,6 +142,8 @@ class PatientProfileView(BasePatientAPIView):
                 "allergies": allergies,
                 "medications": medications,
                 "medicalHistory": medical_history,
+                "medicalReports": medical_reports,
+                "medicalDocuments": medical_documents,
             },
             "emergencyContact": {
                 "name": emergency_contact_name,

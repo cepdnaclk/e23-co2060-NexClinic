@@ -179,6 +179,8 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
     insuranceProvider = serializers.CharField(max_length=255, required=False, allow_blank=True)
     insurancePolicyNumber = serializers.CharField(max_length=100, required=False, allow_blank=True)
     profileImage = serializers.ImageField(required=False)
+    medicalReports = serializers.FileField(required=False)
+    medicalDocuments = serializers.FileField(required=False)
 
     def validate(self, attrs):
         if not attrs:
@@ -216,6 +218,8 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
             "insuranceProvider": "insurance_provider",
             "insurancePolicyNumber": "insurance_policy_number",
             "profileImage": "profile_picture",
+            "medicalReports": "medical_reports",
+            "medicalDocuments": "medical_documents",
         }
 
         update_fields = []
