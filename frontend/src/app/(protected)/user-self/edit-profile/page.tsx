@@ -131,6 +131,7 @@ export default function UserEditProfilePage() {
   const [profile, setProfile] = useState<PatientProfileResponse | null>(null);
   const [formData, setFormData] = useState<Patient>(defaultFormData);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [bloodTypeUnknown, setBloodTypeUnknown] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -165,12 +166,16 @@ export default function UserEditProfilePage() {
         const draftRaw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
         if (draftRaw) {
           const draft = JSON.parse(draftRaw) as Patient;
+          const draftBloodTypeUnknown = !draft.bloodType;
           setFormData({
             ...mapProfileToForm(data),
             ...draft,
           });
+          setBloodTypeUnknown(draftBloodTypeUnknown);
         } else {
-          setFormData(mapProfileToForm(data));
+          const mappedProfile = mapProfileToForm(data);
+          setFormData(mappedProfile);
+          setBloodTypeUnknown(!mappedProfile.bloodType);
         }
       } catch (err) {
         setError(
@@ -228,6 +233,18 @@ export default function UserEditProfilePage() {
       }));
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleBloodTypeToggle = (checked: boolean) => {
+    setBloodTypeUnknown(checked);
+    setFormData((previous) =>
+      previous
+        ? {
+            ...previous,
+            bloodType: checked ? "" : previous.bloodType || "O+",
+          }
+        : previous,
+    );
   };
 
   const handleSaveDraft = (event: React.FormEvent<HTMLFormElement>) => {
@@ -331,7 +348,9 @@ export default function UserEditProfilePage() {
     setError("");
 
     if (profile) {
-      setFormData(mapProfileToForm(profile));
+      const mappedProfile = mapProfileToForm(profile);
+      setFormData(mappedProfile);
+      setBloodTypeUnknown(!mappedProfile.bloodType);
       setSelectedImageFile(null);
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
     }
@@ -517,7 +536,7 @@ export default function UserEditProfilePage() {
                             name="gender"
                             value={formData.gender}
                             onChange={handleChange}
-                            className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none focus:ring-0"
+                            className="w-full rounded-xl border border-emerald-100 bg-white/90 px-3 py-2 text-base text-slate-900 outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
                           >
                             <option value="male">Male</option>
                             <option value="female">Female</option>
@@ -526,13 +545,47 @@ export default function UserEditProfilePage() {
                         </FieldCard>
 
                         <FieldCard label="Blood type">
+                          <div className="space-y-3">
+                            <select
+                              name="bloodType"
+                              value={bloodTypeUnknown ? "" : formData.bloodType}
+                              onChange={(e) => {
+                                setBloodTypeUnknown(false);
+                                handleChange(e);
+                              }}
+                              disabled={bloodTypeUnknown}
+                              className="w-full rounded-xl border border-emerald-100 bg-white/90 px-3 py-2 text-base text-slate-900 outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                            >
+                              <option value="">Select blood type</option>
+                              <option value="O+">O+</option>
+                              <option value="O-">O-</option>
+                              <option value="A+">A+</option>
+                              <option value="A-">A-</option>
+                              <option value="B+">B+</option>
+                              <option value="B-">B-</option>
+                              <option value="AB+">AB+</option>
+                              <option value="AB-">AB-</option>
+                            </select>
+                            <label className="inline-flex items-center gap-3 text-sm font-medium text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={bloodTypeUnknown}
+                                onChange={(e) => handleBloodTypeToggle(e.target.checked)}
+                                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                              />
+                              I don&apos;t know my blood type
+                            </label>
+                          </div>
+                        </FieldCard>
+
+                        <FieldCard label="Address">
                           <input
                             type="text"
-                            name="bloodType"
-                            value={formData.bloodType}
+                            name="address"
+                            value={formData.address}
                             onChange={handleChange}
                             className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
-                            placeholder="O+, A-, etc."
+                            placeholder="123 Main Street"
                           />
                         </FieldCard>
                       </div>
@@ -545,17 +598,6 @@ export default function UserEditProfilePage() {
                       />
 
                       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <FieldCard label="Street address">
-                          <input
-                            type="text"
-                            name="address"
-                            value={formData.address}
-                            onChange={handleChange}
-                            className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
-                            placeholder="123 Main Street"
-                          />
-                        </FieldCard>
-
                         <FieldCard label="City">
                           <input
                             type="text"
