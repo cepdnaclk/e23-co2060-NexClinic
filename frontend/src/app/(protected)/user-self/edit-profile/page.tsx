@@ -65,8 +65,6 @@ const defaultFormData: Patient = {
   emergencyContactPhone: "",
   emergencyContactRelation: "",
   emergencyContactEmail: "",
-  insuranceProvider: "",
-  insurancePolicyNumber: "",
   profileImage: "/images/user.png",
   lastUpdated: new Date().toISOString().split("T")[0],
 };
@@ -97,8 +95,6 @@ function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
     emergencyContactPhone: profile.emergencyContact.phone || "",
     emergencyContactRelation: profile.emergencyContact.relation || "",
     emergencyContactEmail: profile.emergencyContact.email || "",
-    insuranceProvider: profile.insurance.provider || "",
-    insurancePolicyNumber: profile.insurance.policyNumber || "",
     profileImage: profile.patient.profileImage || defaultFormData.profileImage,
   };
 }
@@ -326,8 +322,6 @@ export default function UserEditProfilePage() {
         formData.emergencyContactRelation,
       );
       requestBody.set("emergencyContactEmail", formData.emergencyContactEmail);
-      requestBody.set("insuranceProvider", formData.insuranceProvider);
-      requestBody.set("insurancePolicyNumber", formData.insurancePolicyNumber);
 
       if (selectedImageFile) {
         requestBody.set("profileImage", selectedImageFile);
@@ -819,37 +813,6 @@ export default function UserEditProfilePage() {
                             onChange={handleChange}
                             className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
                             placeholder="contact@example.com"
-                          />
-                        </FieldCard>
-                      </div>
-                    </section>
-
-                    <section>
-                      <SectionHeader
-                        title="Insurance"
-                        description="Keep coverage details current so your records stay ready for appointments."
-                      />
-
-                      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <FieldCard label="Insurance provider">
-                          <input
-                            type="text"
-                            name="insuranceProvider"
-                            value={formData.insuranceProvider}
-                            onChange={handleChange}
-                            className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
-                            placeholder="Blue Cross"
-                          />
-                        </FieldCard>
-
-                        <FieldCard label="Policy number">
-                          <input
-                            type="text"
-                            name="insurancePolicyNumber"
-                            value={formData.insurancePolicyNumber}
-                            onChange={handleChange}
-                            className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
-                            placeholder="BC123456789"
                           />
                         </FieldCard>
                       </div>
