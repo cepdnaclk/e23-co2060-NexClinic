@@ -13,6 +13,7 @@ function DoctorRegistrationForm() {
     const [specializationOptions, setSpecializationOptions] = useState<string[]>([]);
     const [specializationLoading, setSpecializationLoading] = useState(true);
     const [specializationFetchError, setSpecializationFetchError] = useState(false);
+    const [gender, setGender] = useState("");
     const [licenseNumber, setLicenseNumber] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
@@ -89,6 +90,7 @@ function DoctorRegistrationForm() {
                 password,
                 password2,
                 specialization: matchedSpecialization,
+                gender,
                 license_number: licenseNumber,
                 phone,
                 full_name: fullName,
@@ -155,6 +157,19 @@ function DoctorRegistrationForm() {
                     minLength={10}
                     maxLength={12}
                 />
+                <select
+                    className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white"
+                    id="gender"
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    disabled={loading}
+                    required
+                >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
                 <input
                     className="shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     id="license-number"

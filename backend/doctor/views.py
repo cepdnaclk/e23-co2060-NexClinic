@@ -12,6 +12,7 @@ from rest_framework import status
 from .constants import DOCTOR_SPECIALIZATIONS
 from doctor.models import AppointmentAvailableSlot, DoctorOnlineAdviceAvailability, Appointment, DoctorProfile
 from hospital.models import Hospital, HospitalAdmin, DoctorHospitalVerification, SlotTemplate
+from users.models import CustomUser
 from .serializers import (
     AppointmentAvailableSlotSerializer,
     BulkAppointmentSlotCreateSerializer,
@@ -427,6 +428,13 @@ class DoctorDashboardView(APIView):
 class DoctorProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @staticmethod
+    def _build_profile_image_url(request, doctor_profile):
+        if not doctor_profile or not doctor_profile.profile_picture:
+            return ""
+
+        return request.build_absolute_uri(doctor_profile.profile_picture.url)
+
     def get(self, request):
         user = request.user
 
@@ -473,6 +481,7 @@ class DoctorProfileView(APIView):
                 "email": user.email,
                 "specialization": specialization,
                 "phone": phone,
+                "profileImage": self._build_profile_image_url(request, doctor_profile),
                 "licenseNumber": license_number,
                 "isVerified": is_verified,
             },
@@ -507,6 +516,19 @@ class DoctorProfileView(APIView):
             return Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
 
         payload = request.data if isinstance(request.data, dict) else {}
+        user_update_fields = []
+
+        if "email" in payload:
+            email = str(payload.get("email") or "").strip()
+            if not email:
+                return Response({"detail": "email cannot be blank."}, status=status.HTTP_400_BAD_REQUEST)
+
+            existing_user = CustomUser.objects.filter(email__iexact=email).exclude(id=user.id).exists()
+            if existing_user:
+                return Response({"detail": "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+            user.email = email
+            user_update_fields.append("email")
 
         field_map = {
             "fullName": "full_name",
@@ -567,8 +589,16 @@ class DoctorProfileView(APIView):
             doctor_profile.availability = bool(payload.get("availabilityForOnlineAdvice"))
             update_fields.append("availability")
 
+        profile_image = request.FILES.get("profileImage")
+        if profile_image is not None:
+            doctor_profile.profile_picture = profile_image
+            update_fields.append("profile_picture")
+
         if update_fields:
             doctor_profile.save(update_fields=sorted(set(update_fields)))
+
+        if user_update_fields:
+            user.save(update_fields=sorted(set(user_update_fields)))
 
         return self.get(request)
 

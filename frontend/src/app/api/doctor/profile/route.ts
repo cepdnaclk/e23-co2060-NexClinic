@@ -22,13 +22,23 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
+    const contentType = request.headers.get("content-type");
+    let body: BodyInit | null = null;
+    let forwardedContentType: string | null = "application/json";
+
+    if (contentType?.includes("multipart/form-data")) {
+      body = await request.formData();
+      forwardedContentType = null;
+    } else {
+      body = JSON.stringify(await request.json().catch(() => ({})));
+    }
 
     return await proxyBackendWithRefresh({
       request,
       endpoint: `${BACKEND_URL}/api/doctor/profile/`,
       method: "PATCH",
       body,
+      contentType: forwardedContentType,
       failureMessage: "Failed to update profile",
     });
   } catch (error) {

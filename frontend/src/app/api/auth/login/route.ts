@@ -3,9 +3,25 @@ import { applyAuthCookies } from "@/lib/serverAuthProxy";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
+async function readLoginPayload(request: NextRequest) {
+  const rawBody = await request.text();
+
+  if (!rawBody.trim()) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawBody) as { username?: string; password?: string };
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const payload = await readLoginPayload(request);
+    const username = payload?.username;
+    const password = payload?.password;
 
     if (!username || !password) {
       return NextResponse.json(
@@ -31,7 +47,9 @@ export async function POST(request: NextRequest) {
     );
 
     if (!backendResponse.ok) {
-      const errorData = await backendResponse.json();
+      const errorData = await backendResponse
+        .json()
+        .catch(() => null);
       return NextResponse.json(
         { error: errorData?.detail || "Login failed" },
         { status: backendResponse.status }

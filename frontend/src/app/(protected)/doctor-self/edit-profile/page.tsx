@@ -28,6 +28,7 @@ type DoctorProfileData = {
         email: string;
         specialization: string;
         phone: string;
+        profileImage: string;
     };
     profileDetails: {
         experience: string;
@@ -43,13 +44,15 @@ type DoctorProfileData = {
 const DRAFT_STORAGE_KEY = "DOCTOR_PROFILE_DRAFT";
 
 function mapProfileToForm(data: DoctorProfileData): DoctorFormData {
+    const experienceMatch = data.profileDetails.experience.match(/\d+/);
+
     return {
         fullName: data.doctor.fullName || "",
         preferredName: data.doctor.preferredName || "",
         email: data.doctor.email || "",
         phone: data.doctor.phone || "",
         specialization: data.doctor.specialization || "",
-        experience: data.profileDetails.experience || "",
+        experience: experienceMatch?.[0] || "",
         location: data.profileDetails.location || "",
         chatFee: String(data.profileDetails.chatFee || 0),
         appointmentFee: String(data.profileDetails.appointmentFee || 0),
@@ -95,6 +98,7 @@ export default function EditDoctorProfilePage() {
     const router = useRouter();
     const [formData, setFormData] = useState<DoctorFormData | null>(null);
     const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -123,6 +127,7 @@ export default function EditDoctorProfilePage() {
                 const data: DoctorProfileData = await response.json();
                 const formattedData = mapProfileToForm(data);
                 setFormData(formattedData);
+                setProfileImage(data.doctor.profileImage || null);
 
                 // Check for draft (support legacy draft as plain formData or new { formData, profileImage })
                 const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -172,6 +177,7 @@ export default function EditDoctorProfilePage() {
         if (!file) return;
         try {
             const dataUrl = await readFileAsDataUrl(file);
+            setSelectedImageFile(file);
             setProfileImage(dataUrl);
         } catch (e) {
             console.error("Failed to read image", e);
@@ -186,8 +192,74 @@ export default function EditDoctorProfilePage() {
         setTimeout(() => setSuccessMessage(""), 3000);
     };
 
+    const handleSaveProfile = async () => {
+        if (!formData) {
+            return;
+        }
+
+        setSaving(true);
+        setError("");
+        setSuccessMessage("");
+
+        try {
+            const requestBody = new FormData();
+            requestBody.set("fullName", formData.fullName);
+            requestBody.set("preferredName", formData.preferredName);
+            requestBody.set("email", formData.email);
+            requestBody.set("phone", formData.phone);
+            requestBody.set("specialization", formData.specialization);
+            requestBody.set(
+                "experienceYears",
+                String(Number.parseInt(formData.experience || "0", 10) || 0),
+            );
+            requestBody.set("location", formData.location);
+            requestBody.set(
+                "chatFee",
+                String(Number.parseFloat(formData.chatFee || "0") || 0),
+            );
+            requestBody.set(
+                "appointmentFee",
+                String(Number.parseFloat(formData.appointmentFee || "0") || 0),
+            );
+            requestBody.set("qualifications", formData.qualifications.join(", "));
+            requestBody.set("hospitals", formData.hospitals.join(", "));
+            requestBody.set("languages", formData.languages.join(", "));
+
+            if (selectedImageFile) {
+                requestBody.set("profileImage", selectedImageFile);
+            }
+
+            const response = await fetch("/api/doctor/profile", {
+                method: "PATCH",
+                body: requestBody,
+            });
+
+            if (response.status === 401) {
+                handleDoctorSessionExpired(router);
+                return;
+            }
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload?.error || "Failed to update profile");
+            }
+
+            const updatedProfile = payload as DoctorProfileData;
+            setFormData(mapProfileToForm(updatedProfile));
+            setProfileImage(updatedProfile.doctor.profileImage || null);
+            setSelectedImageFile(null);
+            localStorage.removeItem(DRAFT_STORAGE_KEY);
+            setSuccessMessage("Profile updated successfully!");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to update profile");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleReset = () => {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
+        setSelectedImageFile(null);
         setProfileImage(null);
         window.location.reload();
     };
@@ -269,7 +341,7 @@ export default function EditDoctorProfilePage() {
                                             onChange={(e) => handleImageChange(e.target.files?.[0])}
                                             className="mt-2"
                                         />
-                                        <p className="text-xs text-gray-500 mt-2">Upload a recent headshot. Preview saved in draft.</p>
+                                        <p className="text-xs text-gray-500 mt-2">Upload a recent headshot. Preview stays local until image upload support is added.</p>
                                     </div>
                                 </div>
                                 <FieldCard
@@ -422,22 +494,22 @@ export default function EditDoctorProfilePage() {
                                 <div className="flex gap-3">
                                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-xs font-bold">1</div>
                                     <div>
-                                        <p className="font-semibold text-gray-900">Save Your Draft</p>
-                                        <p className="text-gray-600 text-xs">Changes are saved locally first</p>
+                                        <p className="font-semibold text-gray-900">Save your profile</p>
+                                        <p className="text-gray-600 text-xs">Core details sync to the backend</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-3">
                                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-xs font-bold">2</div>
                                     <div>
-                                        <p className="font-semibold text-gray-900">Review Information</p>
-                                        <p className="text-gray-600 text-xs">Check the summary on the left</p>
+                                        <p className="font-semibold text-gray-900">Save a draft if needed</p>
+                                        <p className="text-gray-600 text-xs">Local draft keeps unfinished edits</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-3">
                                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white text-xs font-bold">3</div>
                                     <div>
-                                        <p className="font-semibold text-gray-900">Return to Profile</p>
-                                        <p className="text-gray-600 text-xs">Your data will be preserved</p>
+                                        <p className="font-semibold text-gray-900">Return to profile</p>
+                                        <p className="text-gray-600 text-xs">Reload to confirm your latest saved data</p>
                                     </div>
                                 </div>
                             </div>
@@ -446,12 +518,20 @@ export default function EditDoctorProfilePage() {
                         {/* Actions */}
                         <div className="space-y-3">
                             <GreenButton
-                                onClick={handleSaveDraft}
+                                onClick={() => {
+                                    void handleSaveProfile();
+                                }}
                                 disabled={saving}
                                 className="w-full rounded-full py-3 font-semibold shadow-[0_12px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.4)]"
                             >
-                                {saving ? "Saving..." : "Save Draft"}
+                                {saving ? "Saving..." : "Save Changes"}
                             </GreenButton>
+                            <BlackButton
+                                onClick={handleSaveDraft}
+                                className="w-full rounded-full py-3 font-semibold"
+                            >
+                                Save Draft
+                            </BlackButton>
                             <BlackButton
                                 onClick={handleReset}
                                 className="w-full rounded-full py-3 font-semibold"
