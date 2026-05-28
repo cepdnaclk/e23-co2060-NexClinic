@@ -3,10 +3,11 @@ from django.db import ProgrammingError
 
 from django.utils import timezone
 from datetime import timedelta
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import F
 
 from doctor.models import (
     Appointment,
@@ -182,8 +183,37 @@ class PatientProfileView(BasePatientAPIView):
             partial=True,
             context={"patient_profile": patient_profile},
         )
-        serializer.is_valid(raise_exception=True)
-        updated_profile = serializer.save()
+        # Debugging: log incoming request content type and data keys to trace 400 causes
+        try:
+            print("Patient profile PATCH content-type:", request.content_type)
+            # request.data may be an immutable dict; list keys for readability
+            try:
+                keys = list(request.data.keys()) if hasattr(request.data, 'keys') else []
+            except Exception:
+                keys = []
+            print("Patient profile PATCH data keys:", keys)
+            try:
+                file_keys = list(request.FILES.keys()) if hasattr(request, 'FILES') else []
+            except Exception:
+                file_keys = []
+            print("Patient profile PATCH file keys:", file_keys)
+        except Exception as _:
+            pass
+        try:
+            serializer.is_valid(raise_exception=True)
+        except serializers.ValidationError as ve:
+            # Log validation details for debugging and return them in response
+            try:
+                print("Patient profile update validation error:", ve.detail)
+            except Exception:
+                print("Patient profile update validation error (non-serializable)")
+            return Response(ve.detail, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            updated_profile = serializer.save()
+        except Exception as exc:
+            print("Patient profile update save error:", repr(exc))
+            return Response({"detail": "Internal server error while saving profile."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(
             self._build_profile_response(request, request.user, updated_profile),
@@ -207,6 +237,8 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
                 is_active=True,
             )
             .select_related("doctor", "doctor__user")
+            # Only include slots where the doctor is verified for the slot's hospital
+            .filter(doctor__verified_hospitals__id=F('hospital_id'))
             .order_by("date", "start_time")
         )
 
@@ -307,6 +339,14 @@ class PatientAppointmentsView(BasePatientAPIView):
                     {"detail": "Appointment slot not found."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
+
+            # Ensure the doctor is verified for the hospital where this slot is offered
+            try:
+                if not slot.doctor.verified_hospitals.filter(id=slot.hospital_id).exists():
+                    return Response({"detail": "Doctor is not verified for this hospital."}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception:
+                # If any unexpected error occurs, block booking as a safe default
+                return Response({"detail": "Doctor verification check failed."}, status=status.HTTP_400_BAD_REQUEST)
 
             if not slot.is_active:
                 return Response(

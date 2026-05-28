@@ -5,6 +5,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('doctor', '0016_remove_appointmentavailableslot_unique_doctor_appointment_slot_and_more'),
+        ('doctor', '0016_remove_doctorprofile_blood_type'),
     ]
 
     operations = [

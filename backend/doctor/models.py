@@ -6,21 +6,20 @@ class DoctorProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='doctor_profile')
     
     specialization = models.CharField(max_length=100)
-    gender = models.CharField(max_length=20, default="Other")
     license_number = models.CharField(max_length=50)
     phone = models.CharField(max_length=15)
     full_name = models.CharField(max_length=255, default="Doctor")
     preferred_name = models.CharField(max_length=100, default="Dr.")
     nic_number = models.CharField(max_length=20, default="")
     date_of_birth = models.DateField(null=True, blank=True)
-    gender = models.CharField(max_length=10, blank=True, default="")
-    address = models.CharField(max_length=255, blank=True, default="")
+    gender = models.CharField(max_length=20, default="Other")
+    address = models.TextField(blank=True, default="")
     is_verified = models.BooleanField(default=False)
     experience_years = models.IntegerField(default=1)
     profile_picture = models.ImageField(upload_to='doctor_profiles/', null=True, blank=True)
     location = models.CharField(max_length=255, default="Colombo, Sri Lanka")
     qualifications = models.TextField(default="MBBS, MD")
-    hospitals = models.CharField(max_length=255, default="")
+    verified_hospitals = models.ManyToManyField('hospital.Hospital', related_name='verified_doctors', blank=True)
     languages_spoken = models.CharField(max_length=255, default="English")
     chat_fee = models.DecimalField(max_digits=10, decimal_places=2, default=500.00)
     appointment_fee = models.DecimalField(max_digits=10, decimal_places=2, default=3500.00)
@@ -28,6 +27,7 @@ class DoctorProfile(models.Model):
     
     def __str__(self):
         return f"{self.preferred_name} ({self.specialization})"
+
 
 
 # NOTE: Old hospital-domain models below are deprecated and no longer actively used.

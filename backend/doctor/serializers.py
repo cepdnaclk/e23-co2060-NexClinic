@@ -423,9 +423,12 @@ class DoctorDirectoryPublicSerializer(serializers.ModelSerializer):
         return obj.profile_picture.url
     
     def get_hospitals(self, obj):
-        if not obj.hospitals:
+        # Return the list of hospital names the doctor is verified with
+        try:
+            hospitals_qs = obj.verified_hospitals.all()
+            return [h.name for h in hospitals_qs]
+        except Exception:
             return []
-        return [hospital.strip() for hospital in obj.hospitals.split(',') if hospital.strip()]
     
     def get_qualifications(self, obj):
         if not obj.qualifications:

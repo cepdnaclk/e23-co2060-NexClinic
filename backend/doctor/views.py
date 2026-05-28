@@ -303,11 +303,12 @@ class DoctorDirectoryView(APIView):
         if getattr(request.user, 'role', None) not in {'DOCTOR', 'PATIENT', 'ADMIN'}:
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
-        queryset = DoctorProfile.objects.select_related('user').filter(
-            user__role='DOCTOR',
-            user__is_active=True,
-            is_verified=True,
-        ).order_by('full_name', 'id')
+        queryset = (
+            DoctorProfile.objects.select_related('user')
+            .filter(user__role='DOCTOR', user__is_active=True, verified_hospitals__isnull=False)
+            .distinct()
+            .order_by('full_name', 'id')
+        )
         serializer = DoctorDirectoryPublicSerializer(queryset, many=True, context={'request': request})
         return Response({'doctors': serializer.data}, status=status.HTTP_200_OK)
 
@@ -455,9 +456,8 @@ class DoctorProfileView(APIView):
         gender = ""
         address = ""
         experience_years = 0
-        location = ""
         qualifications = ""
-        hospitals = ""
+        hospitals = []
         languages_spoken = ""
         chat_fee = 1000000.00
         appointment_fee = 2000000.00
@@ -483,7 +483,10 @@ class DoctorProfileView(APIView):
             experience_years = doctor_profile.experience_years
             location = doctor_profile.location
             qualifications = doctor_profile.qualifications
-            hospitals = doctor_profile.hospitals
+            try:
+                hospitals = [h.name for h in doctor_profile.verified_hospitals.all()]
+            except Exception:
+                hospitals = []
             languages_spoken = doctor_profile.languages_spoken
             chat_fee = float(doctor_profile.chat_fee)
             appointment_fee = float(doctor_profile.appointment_fee)
@@ -517,7 +520,7 @@ class DoctorProfileView(APIView):
                     "Friday, 11:00 AM - 2:00 PM",
                 ],
                 "qualifications": qualifications.split(",") if qualifications else ["MBBS", "MD (Cardiology)"],
-                "hospitals": hospitals.split(",") if hospitals else ["General Hospital"],
+                "hospitals": hospitals if hospitals else ["General Hospital"],
                 "languages": languages_spoken.split(",") if languages_spoken else ["Sinhala", "English"],
             },
         }
@@ -647,9 +650,6 @@ class DoctorProfileView(APIView):
 
         if update_fields:
             doctor_profile.save(update_fields=sorted(set(update_fields)))
-
-        if user_update_fields:
-            user.save(update_fields=sorted(set(user_update_fields)))
 
         return self.get(request)
 

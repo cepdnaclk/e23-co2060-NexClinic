@@ -29,7 +29,12 @@ async function readJsonSafe(response: Response): Promise<any> {
   try {
     return await response.json();
   } catch {
-    return null;
+    try {
+      const txt = await response.text();
+      return { raw: txt };
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -199,7 +204,7 @@ export async function proxyBackendWithRefresh({
           error:
             backendResponse.status === 401
               ? "Session expired. Please login again."
-              : payload?.detail || payload?.error || failureMessage,
+              : payload?.detail || payload?.error || payload?.raw || failureMessage,
         },
         { status: backendResponse.status }
       );
