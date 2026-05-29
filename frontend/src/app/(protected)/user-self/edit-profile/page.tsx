@@ -65,6 +65,8 @@ const defaultFormData: Patient = {
   emergencyContactPhone: "",
   emergencyContactRelation: "",
   emergencyContactEmail: "",
+  insuranceProvider: "",
+  insurancePolicyNumber: "",
   profileImage: "/images/user.png",
   lastUpdated: new Date().toISOString().split("T")[0],
 };

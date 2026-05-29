@@ -109,62 +109,6 @@ const DOCTOR_SPECIALIZATIONS = [
 
 const LANGUAGE_OPTIONS = ["Sinhala", "English", "Tamil", "Hindi", "Arabic", "French", "German"];
 
-const DISTRICT_HOSPITALS: Record<string, string[]> = {
-  Colombo: [
-    "National Hospital of Sri Lanka",
-    "Lady Ridgeway Hospital",
-    "Sri Jayewardenepura General Hospital",
-    "Durdans Hospital",
-    "Asiri Surgical Hospital",
-  ],
-  Gampaha: [
-    "Negombo General Hospital",
-    "Ragama Teaching Hospital",
-    "Base Hospital Gampaha",
-    "Nawaloka Hospitals - Negombo",
-  ],
-  Kalutara: [
-    "General Hospital Kalutara",
-    "Base Hospital Panadura",
-    "Teaching Hospital Horana",
-  ],
-  Kandy: [
-    "Teaching Hospital Kandy",
-    "Nawaloka Hospital Kandy",
-    "General Hospital Nawalapitiya",
-  ],
-  Galle: [
-    "Teaching Hospital Karapitiya",
-    "Base Hospital Balapitiya",
-    "General Hospital Galle",
-  ],
-  Matara: [
-    "Teaching Hospital Matara",
-    "Base Hospital Akuressa",
-    "General Hospital Tangalle",
-  ],
-  Jaffna: [
-    "Teaching Hospital Jaffna",
-    "Base Hospital Chavakachcheri",
-    "District General Hospital Kilinochchi",
-  ],
-};
-
-const DEFAULT_HOSPITALS = [
-  "National Hospital of Sri Lanka",
-  "General Hospital Kandy",
-  "Teaching Hospital Karapitiya",
-  "Teaching Hospital Jaffna",
-  "Base Hospital Kurunegala",
-];
-
-const ALL_HOSPITALS = Array.from(
-  new Set([
-    ...DEFAULT_HOSPITALS,
-    ...Object.values(DISTRICT_HOSPITALS).flat(),
-  ]),
-);
-
 const defaultFormData: DoctorFormData = {
   fullName: "",
   preferredName: "",
@@ -196,10 +140,6 @@ function splitCommaSeparated(value: string) {
 function extractExperienceYears(experience: string) {
   const match = experience.match(/\d+/);
   return match?.[0] || "";
-}
-
-function getHospitalsForLocation(location: string) {
-  return DISTRICT_HOSPITALS[location] || ALL_HOSPITALS;
 }
 
 function mapProfileToForm(data: DoctorProfileData): DoctorFormData {
@@ -400,6 +340,7 @@ export default function EditDoctorProfilePage() {
   const [profile, setProfile] = useState<DoctorProfileData | null>(null);
   const [formData, setFormData] = useState<DoctorFormData>(defaultFormData);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -485,11 +426,6 @@ export default function EditDoctorProfilePage() {
       .join("");
   }, [formData.fullName]);
 
-  const hospitalOptions = useMemo(() => {
-    const fromLocation = getHospitalsForLocation(formData.location);
-    return Array.from(new Set([...fromLocation, ...ALL_HOSPITALS, ...formData.hospitals]));
-  }, [formData.hospitals, formData.location]);
-
   const handleChange = (field: keyof DoctorFormData, value: string | string[] | boolean) => {
     setFormData((previous) => ({
       ...previous,
@@ -510,8 +446,15 @@ export default function EditDoctorProfilePage() {
         ...previous,
         profileImage: String(reader.result || ""),
       }));
+      setRemovePhoto(false);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = () => {
+    setSelectedImageFile(null);
+    setFormData((previous) => ({ ...previous, profileImage: "" }));
+    setRemovePhoto(true);
   };
 
   const handleSubmitProfile = async () => {
@@ -539,7 +482,6 @@ export default function EditDoctorProfilePage() {
       requestBody.set("chatFee", String(Number.parseFloat(formData.chatFee || "0") || 0));
       requestBody.set("appointmentFee", String(Number.parseFloat(formData.appointmentFee || "0") || 0));
       requestBody.set("qualifications", formData.qualifications.join(", "));
-      requestBody.set("hospitals", formData.hospitals.join(", "));
       requestBody.set("languages", formData.languages.join(", "));
       requestBody.set(
         "availabilityForOnlineAdvice",
@@ -548,6 +490,9 @@ export default function EditDoctorProfilePage() {
 
       if (selectedImageFile) {
         requestBody.set("profileImage", selectedImageFile);
+      }
+      if (removePhoto) {
+        requestBody.set("clearProfilePicture", "true");
       }
 
       const response = await fetch("/api/doctor/profile", {
@@ -571,6 +516,7 @@ export default function EditDoctorProfilePage() {
       setProfile(updatedProfile);
       setFormData(nextFormData);
       setSelectedImageFile(null);
+      setRemovePhoto(false);
       setDraftSavedAt(null);
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       window.localStorage.removeItem(DRAFT_SAVED_AT_KEY);
@@ -726,16 +672,25 @@ export default function EditDoctorProfilePage() {
                     <p className="mt-1 text-sm text-slate-600">
                       {formData.specialization || "Specialization not specified"}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    {/* <p className="mt-1 text-xs text-slate-500">
                       {getAttachmentLabel(formData.profileImage)}
-                    </p>
+                    </p> */}
                   </div>
                 </div>
 
-                <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
-                  Change photo
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                </label>
+                <div className="inline-flex items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                    Change photo
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition"
+                  >
+                    Remove photo
+                  </button>
+                </div>
               </div>
 
               <div className="mt-8 grid gap-6 2xl:grid-cols-2">
@@ -791,9 +746,25 @@ export default function EditDoctorProfilePage() {
                 </div>
 
                 <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur">
-                  <SectionHeader title="Hospitals and Coverage" description="Choose the hospitals where you are available to consult." />
+                  <SectionHeader title="Hospitals and Coverage" description="Hospital affiliation is managed through hospital verification workflows." />
                   <div className="mt-6 grid gap-4">
-                    <MultiSelectCard label="Hospitals" values={formData.hospitals} onChange={(value) => handleChange("hospitals", value)} options={hospitalOptions} helperText={formData.location ? `Suggested hospitals for ${formData.location}.` : "Choose from the curated hospital list."} />
+                    <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 text-sm text-amber-900">
+                      Changes to hospitals are not saved from this page. Hospital assignments update automatically after hospital admin verification.
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.hospitals.length > 0 ? (
+                        formData.hospitals.map((hospital) => (
+                          <span
+                            key={hospital}
+                            className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                          >
+                            {hospital}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-sm text-slate-500">No verified hospitals yet.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

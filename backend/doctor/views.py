@@ -547,9 +547,11 @@ class DoctorProfileView(APIView):
             "licenseNumber": "license_number",
             "location": "location",
             "qualifications": "qualifications",
-            "hospitals": "hospitals",
             "languages": "languages_spoken",
         }
+
+        # Hospitals are derived from verification records and synced into
+        # verified_hospitals via signals, so they are not written here.
 
         update_fields = []
 

@@ -133,7 +133,7 @@ function DoctorProfilePage() {
     const appointmentFee = profileData?.profileDetails.appointmentFee ?? 0;
     const schedule = profileData?.profileDetails.onlineAdviceSchedule ?? [];
     const qualifications = profileData?.profileDetails.qualifications ?? [];
-    const hospitals = profileData?.profileDetails.hospitals ?? [];
+    const verifiedHospitals = profileData?.profileDetails.hospitals ?? [];
     const languages = profileData?.profileDetails.languages ?? [];
     const licenseNumber = profileData?.doctor.licenseNumber || "Not specified";
     const email = profileData?.doctor.email || "Not available";
@@ -262,30 +262,54 @@ function DoctorProfilePage() {
 
                     <div title="Qualifications" className="flex flex-col my-2">
                         <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Qualifications:</p>
-                        <ul className="flex flex-col list-disc pl-6 gap-2">
-                            {qualifications.map((item) => (
-                                <li key={item} className="text-gray-700 dark:text-gray-300">{item}</li>
-                            ))}
-                        </ul>
+                        <div className="flex flex-wrap gap-2">
+                            {qualifications.length > 0 ? (
+                                qualifications.map((item) => (
+                                    <span
+                                        key={item}
+                                        className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                                    >
+                                        {item}
+                                    </span>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">No qualifications added yet.</p>
+                            )}
+                        </div>
                     </div>
 
 
-                    <div title="Currently-Practicing-Hospitals" className="flex flex-col my-2">
-                        <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Currently Practicing Hospitals:</p>
-                        <ul className="flex flex-col list-disc pl-6 gap-2">
-                            {hospitals.map((item) => (
-                                <li key={item} className="text-gray-700 dark:text-gray-300">{item}</li>
-                            ))}
-                        </ul>
+                    <div title="Verified-Hospitals" className="flex flex-col my-2">
+                        <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Verified Hospitals:</p>
+                        {verifiedHospitals.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                                {verifiedHospitals.map((item) => (
+                                    <span
+                                        key={item}
+                                        className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                                    >
+                                        {item}
+                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">No verified hospitals yet.</p>
+                        )}
                     </div>
 
                     <div title="Languages" className="flex flex-col my-2">
                         <p className="font-semibold text-gray-800 mb-2">Languages Spoken:</p>
-                        <ul className="flex flex-col list-disc pl-6 gap-2">
-                            {languages.map((item) => (
-                                <li key={item} className="text-gray-700">{item}</li>
-                            ))}
-                        </ul>
+                        <div className="flex flex-wrap gap-2">
+                            {languages.length > 0 ? (
+                                languages.map((item) => (
+                                    <span key={item} className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                        {item}
+                                    </span>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">No languages specified.</p>
+                            )}
+                        </div>
                     </div>
 
                 </div>
