@@ -164,7 +164,8 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     phone = serializers.CharField(max_length=15, required=False)
     dateOfBirth = serializers.DateField(required=False)
-    gender = serializers.ChoiceField(choices=["male", "female", "other"], required=False)
+    # Accept free-form input and validate/normalize in `validate_gender`
+    gender = serializers.CharField(required=False)
     address = serializers.CharField(max_length=100, required=False, allow_blank=True)
     city = serializers.CharField(max_length=100, required=False, allow_blank=True)
     postalCode = serializers.CharField(max_length=20, required=False, allow_blank=True)
@@ -176,14 +177,26 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
     emergencyContactName = serializers.CharField(max_length=255, required=False, allow_blank=True)
     emergencyContactPhone = serializers.CharField(max_length=20, required=False, allow_blank=True)
     emergencyContactRelation = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    emergencyContactEmail = serializers.EmailField(required=False, allow_blank=True)
     insuranceProvider = serializers.CharField(max_length=255, required=False, allow_blank=True)
     insurancePolicyNumber = serializers.CharField(max_length=100, required=False, allow_blank=True)
     profileImage = serializers.ImageField(required=False)
+    medicalReports = serializers.FileField(required=False)
+    medicalDocuments = serializers.FileField(required=False)
 
     def validate(self, attrs):
         if not attrs:
             raise serializers.ValidationError("At least one field must be provided for update.")
         return attrs
+
+    def validate_gender(self, value):
+        if not isinstance(value, str):
+            raise serializers.ValidationError("Invalid gender value.")
+        normalized = value.strip().lower()
+        allowed = {"male", "female", "other"}
+        if normalized not in allowed:
+            raise serializers.ValidationError("Invalid gender choice.")
+        return normalized
 
     def validate_email(self, value):
         patient_profile = self.context.get("patient_profile")
@@ -213,9 +226,12 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
             "emergencyContactName": "emergency_contact_name",
             "emergencyContactPhone": "emergency_contact_phone",
             "emergencyContactRelation": "emergency_contact_relation",
+            "emergencyContactEmail": "emergency_contact_email",
             "insuranceProvider": "insurance_provider",
             "insurancePolicyNumber": "insurance_policy_number",
             "profileImage": "profile_picture",
+            "medicalReports": "medical_reports",
+            "medicalDocuments": "medical_documents",
         }
 
         update_fields = []

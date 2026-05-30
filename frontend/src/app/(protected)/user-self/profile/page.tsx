@@ -27,6 +27,7 @@ type PatientProfileResponse = {
     name: string;
     phone: string;
     relation: string;
+    email: string;
   };
   insurance: {
     provider: string;
@@ -121,6 +122,7 @@ export default function UserProfile() {
   const emergencyPhone = profileData?.emergencyContact.phone || "Not specified";
   const emergencyRelation =
     profileData?.emergencyContact.relation || "Not specified";
+  const emergencyEmail = profileData?.emergencyContact.email || "Not specified";
   const insuranceProvider = profileData?.insurance.provider || "Not provided";
   const insurancePolicy = profileData?.insurance.policyNumber || "Not provided";
   const profileImage = profileData?.patient.profileImage?.trim()
@@ -248,6 +250,7 @@ export default function UserProfile() {
               </p>
               <p className="mt-2 text-sm text-slate-600">{emergencyRelation}</p>
               <p className="mt-1 text-sm text-slate-600">{emergencyPhone}</p>
+              <p className="mt-1 text-sm text-slate-600">{emergencyEmail}</p>
             </div>
 
             {/* <div className="rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-lg shadow-emerald-100/40">
@@ -276,25 +279,49 @@ export default function UserProfile() {
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
                 Allergies
               </p>
-              <p className="mt-3 text-base leading-7 text-slate-700">
-                {allergies}
-              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {allergies
+                  .split(/[,;]+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((a) => (
+                    <span key={a} className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
+                      {a}
+                    </span>
+                  ))}
+              </div>
             </div>
             <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
                 Current Medications
               </p>
-              <p className="mt-3 text-base leading-7 text-slate-700">
-                {medications}
-              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {medications
+                  .split(/[,;]+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((m) => (
+                    <span key={m} className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
+                      {m}
+                    </span>
+                  ))}
+              </div>
             </div>
             <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
                 Medical History
               </p>
-              <p className="mt-3 text-base leading-7 text-slate-700">
-                {medicalHistory}
-              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {medicalHistory
+                  .split(/[,;]+/)
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((h) => (
+                    <span key={h} className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
+                      {h}
+                    </span>
+                  ))}
+              </div>
             </div>
           </div>
         </section>

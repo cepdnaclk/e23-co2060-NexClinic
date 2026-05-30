@@ -3,10 +3,11 @@ from django.db import ProgrammingError
 
 from django.utils import timezone
 from datetime import timedelta
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import F
 
 from doctor.models import (
     Appointment,
@@ -63,6 +64,13 @@ class PatientProfileView(BasePatientAPIView):
         return request.build_absolute_uri(patient_profile.profile_picture.url)
 
     @staticmethod
+    def _build_file_url(request, file_field):
+        if not file_field:
+            return ""
+
+        return request.build_absolute_uri(file_field.url)
+
+    @staticmethod
     def _build_profile_response(request, user, patient_profile):
         full_name = user.email
         date_of_birth = ""
@@ -79,8 +87,11 @@ class PatientProfileView(BasePatientAPIView):
         emergency_contact_name = ""
         emergency_contact_phone = ""
         emergency_contact_relation = ""
+        emergency_contact_email = ""
         insurance_provider = ""
         insurance_policy_number = ""
+        medical_reports = ""
+        medical_documents = ""
 
         if patient_profile:
             full_name = patient_profile.full_name or user.email
@@ -104,8 +115,15 @@ class PatientProfileView(BasePatientAPIView):
             emergency_contact_relation = (
                 patient_profile.emergency_contact_relation or ""
             )
+            emergency_contact_email = patient_profile.emergency_contact_email or ""
             insurance_provider = patient_profile.insurance_provider or ""
             insurance_policy_number = patient_profile.insurance_policy_number or ""
+            medical_reports = PatientProfileView._build_file_url(
+                request, patient_profile.medical_reports
+            )
+            medical_documents = PatientProfileView._build_file_url(
+                request, patient_profile.medical_documents
+            )
 
         return {
             "patient": {
@@ -127,11 +145,14 @@ class PatientProfileView(BasePatientAPIView):
                 "allergies": allergies,
                 "medications": medications,
                 "medicalHistory": medical_history,
+                "medicalReports": medical_reports,
+                "medicalDocuments": medical_documents,
             },
             "emergencyContact": {
                 "name": emergency_contact_name,
                 "phone": emergency_contact_phone,
                 "relation": emergency_contact_relation,
+                "email": emergency_contact_email,
             },
             "insurance": {
                 "provider": insurance_provider,
@@ -162,8 +183,37 @@ class PatientProfileView(BasePatientAPIView):
             partial=True,
             context={"patient_profile": patient_profile},
         )
-        serializer.is_valid(raise_exception=True)
-        updated_profile = serializer.save()
+        # Debugging: log incoming request content type and data keys to trace 400 causes
+        try:
+            print("Patient profile PATCH content-type:", request.content_type)
+            # request.data may be an immutable dict; list keys for readability
+            try:
+                keys = list(request.data.keys()) if hasattr(request.data, 'keys') else []
+            except Exception:
+                keys = []
+            print("Patient profile PATCH data keys:", keys)
+            try:
+                file_keys = list(request.FILES.keys()) if hasattr(request, 'FILES') else []
+            except Exception:
+                file_keys = []
+            print("Patient profile PATCH file keys:", file_keys)
+        except Exception as _:
+            pass
+        try:
+            serializer.is_valid(raise_exception=True)
+        except serializers.ValidationError as ve:
+            # Log validation details for debugging and return them in response
+            try:
+                print("Patient profile update validation error:", ve.detail)
+            except Exception:
+                print("Patient profile update validation error (non-serializable)")
+            return Response(ve.detail, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            updated_profile = serializer.save()
+        except Exception as exc:
+            print("Patient profile update save error:", repr(exc))
+            return Response({"detail": "Internal server error while saving profile."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(
             self._build_profile_response(request, request.user, updated_profile),
@@ -187,6 +237,8 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
                 is_active=True,
             )
             .select_related("doctor", "doctor__user")
+            # Only include slots where the doctor is verified for the slot's hospital
+            .filter(doctor__verified_hospitals__id=F('hospital_id'))
             .order_by("date", "start_time")
         )
 
@@ -287,6 +339,14 @@ class PatientAppointmentsView(BasePatientAPIView):
                     {"detail": "Appointment slot not found."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
+
+            # Ensure the doctor is verified for the hospital where this slot is offered
+            try:
+                if not slot.doctor.verified_hospitals.filter(id=slot.hospital_id).exists():
+                    return Response({"detail": "Doctor is not verified for this hospital."}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception:
+                # If any unexpected error occurs, block booking as a safe default
+                return Response({"detail": "Doctor verification check failed."}, status=status.HTTP_400_BAD_REQUEST)
 
             if not slot.is_active:
                 return Response(

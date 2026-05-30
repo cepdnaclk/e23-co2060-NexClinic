@@ -1,8 +1,9 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from django.db import transaction
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -302,11 +303,12 @@ class DoctorDirectoryView(APIView):
         if getattr(request.user, 'role', None) not in {'DOCTOR', 'PATIENT', 'ADMIN'}:
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
-        queryset = DoctorProfile.objects.select_related('user').filter(
-            user__role='DOCTOR',
-            user__is_active=True,
-            is_verified=True,
-        ).order_by('full_name', 'id')
+        queryset = (
+            DoctorProfile.objects.select_related('user')
+            .filter(user__role='DOCTOR', user__is_active=True, verified_hospitals__isnull=False)
+            .distinct()
+            .order_by('full_name', 'id')
+        )
         serializer = DoctorDirectoryPublicSerializer(queryset, many=True, context={'request': request})
         return Response({'doctors': serializer.data}, status=status.HTTP_200_OK)
 
@@ -449,10 +451,13 @@ class DoctorProfileView(APIView):
         phone = ""
         license_number = ""
         is_verified = False
+        photo = ""
+        date_of_birth = ""
+        gender = ""
+        address = ""
         experience_years = 0
-        location = ""
         qualifications = ""
-        hospitals = ""
+        hospitals = []
         languages_spoken = ""
         chat_fee = 1000000.00
         appointment_fee = 2000000.00
@@ -465,10 +470,23 @@ class DoctorProfileView(APIView):
             phone = doctor_profile.phone or ""
             license_number = doctor_profile.license_number or ""
             is_verified = bool(doctor_profile.is_verified)
+            if doctor_profile.profile_picture:
+                request_obj = request if request else None
+                if request_obj:
+                    photo = request_obj.build_absolute_uri(doctor_profile.profile_picture.url)
+                else:
+                    photo = doctor_profile.profile_picture.url
+            if doctor_profile.date_of_birth:
+                date_of_birth = doctor_profile.date_of_birth.isoformat()
+            gender = doctor_profile.gender or ""
+            address = doctor_profile.address or ""
             experience_years = doctor_profile.experience_years
             location = doctor_profile.location
             qualifications = doctor_profile.qualifications
-            hospitals = doctor_profile.hospitals
+            try:
+                hospitals = [h.name for h in doctor_profile.verified_hospitals.all()]
+            except Exception:
+                hospitals = []
             languages_spoken = doctor_profile.languages_spoken
             chat_fee = float(doctor_profile.chat_fee)
             appointment_fee = float(doctor_profile.appointment_fee)
@@ -484,6 +502,10 @@ class DoctorProfileView(APIView):
                 "profileImage": self._build_profile_image_url(request, doctor_profile),
                 "licenseNumber": license_number,
                 "isVerified": is_verified,
+                "photo": photo,
+                "dateOfBirth": date_of_birth,
+                "gender": gender,
+                "address": address,
             },
             "profileDetails": {
                 "experience": f"{experience_years} years of experience",
@@ -498,7 +520,7 @@ class DoctorProfileView(APIView):
                     "Friday, 11:00 AM - 2:00 PM",
                 ],
                 "qualifications": qualifications.split(",") if qualifications else ["MBBS", "MD (Cardiology)"],
-                "hospitals": hospitals.split(",") if hospitals else ["General Hospital"],
+                "hospitals": hospitals if hospitals else ["General Hospital"],
                 "languages": languages_spoken.split(",") if languages_spoken else ["Sinhala", "English"],
             },
         }
@@ -516,19 +538,6 @@ class DoctorProfileView(APIView):
             return Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
 
         payload = request.data if isinstance(request.data, dict) else {}
-        user_update_fields = []
-
-        if "email" in payload:
-            email = str(payload.get("email") or "").strip()
-            if not email:
-                return Response({"detail": "email cannot be blank."}, status=status.HTTP_400_BAD_REQUEST)
-
-            existing_user = CustomUser.objects.filter(email__iexact=email).exclude(id=user.id).exists()
-            if existing_user:
-                return Response({"detail": "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
-
-            user.email = email
-            user_update_fields.append("email")
 
         field_map = {
             "fullName": "full_name",
@@ -538,16 +547,63 @@ class DoctorProfileView(APIView):
             "licenseNumber": "license_number",
             "location": "location",
             "qualifications": "qualifications",
-            "hospitals": "hospitals",
             "languages": "languages_spoken",
         }
 
+        # Hospitals are derived from verification records and synced into
+        # verified_hospitals via signals, so they are not written here.
+
         update_fields = []
+
+        if "email" in payload:
+            new_email = (payload.get("email") or "").strip().lower()
+            if not new_email:
+                return Response({"detail": "email cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+            User = get_user_model()
+            email_in_use = User.objects.exclude(pk=user.pk).filter(email__iexact=new_email).exists()
+            if email_in_use:
+                return Response({"detail": "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+            user.email = new_email
+            if hasattr(user, "username"):
+                user.username = new_email
+            user.save(update_fields=["email", "username"] if hasattr(user, "username") else ["email"])
+
+        if request.FILES.get("profilePicture"):
+            doctor_profile.profile_picture = request.FILES.get("profilePicture")
+            update_fields.append("profile_picture")
+
+        if str(payload.get("clearProfilePicture", "")).lower() in {"1", "true", "yes", "on"}:
+            doctor_profile.profile_picture = None
+            update_fields.append("profile_picture")
 
         for payload_key, model_field in field_map.items():
             if payload_key in payload:
                 setattr(doctor_profile, model_field, payload.get(payload_key) or "")
                 update_fields.append(model_field)
+
+        if "dateOfBirth" in payload:
+            raw_date = (payload.get("dateOfBirth") or "").strip()
+            if raw_date:
+                try:
+                    doctor_profile.date_of_birth = date.fromisoformat(raw_date)
+                except ValueError:
+                    return Response({"detail": "dateOfBirth must be a valid date in YYYY-MM-DD format."}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                doctor_profile.date_of_birth = None
+            update_fields.append("date_of_birth")
+
+        if "gender" in payload:
+            gender_value = (payload.get("gender") or "").strip()
+            if gender_value and gender_value not in {"Male", "Female"}:
+                return Response({"detail": "gender must be Male or Female."}, status=status.HTTP_400_BAD_REQUEST)
+            doctor_profile.gender = gender_value
+            update_fields.append("gender")
+
+        if "address" in payload:
+            doctor_profile.address = (payload.get("address") or "").strip()
+            update_fields.append("address")
 
         if "experienceYears" in payload:
             try:
@@ -596,9 +652,6 @@ class DoctorProfileView(APIView):
 
         if update_fields:
             doctor_profile.save(update_fields=sorted(set(update_fields)))
-
-        if user_update_fields:
-            user.save(update_fields=sorted(set(user_update_fields)))
 
         return self.get(request)
 

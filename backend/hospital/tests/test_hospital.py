@@ -351,6 +351,3 @@ class CeleryTaskTests(TestCase):
         generate_slots(1)
         slots = AppointmentAvailableSlot.objects.filter(hospital=hospital)
         self.assertTrue(slots.exists())
-from django.test import TestCase
-
-# Create your tests here.

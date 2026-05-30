@@ -26,12 +26,15 @@ type PatientProfileResponse = {
     bloodType: string;
     allergies: string;
     medications: string;
+    medicalReports: string;
+    medicalDocuments: string;
     medicalHistory: string;
   };
   emergencyContact: {
     name: string;
     phone: string;
     relation: string;
+    email: string;
   };
   insurance: {
     provider: string;
@@ -55,10 +58,13 @@ const defaultFormData: Patient = {
   bloodType: "",
   allergies: "",
   medications: "",
+  medicalReports: "",
+  medicalDocuments: "",
   medicalHistory: "",
   emergencyContactName: "",
   emergencyContactPhone: "",
   emergencyContactRelation: "",
+  emergencyContactEmail: "",
   insuranceProvider: "",
   insurancePolicyNumber: "",
   profileImage: "/images/user.png",
@@ -84,12 +90,13 @@ function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
     bloodType: profile.health.bloodType || "",
     allergies: profile.health.allergies || "",
     medications: profile.health.medications || "",
+    medicalReports: profile.health.medicalReports || "",
+    medicalDocuments: profile.health.medicalDocuments || "",
     medicalHistory: profile.health.medicalHistory || "",
     emergencyContactName: profile.emergencyContact.name || "",
     emergencyContactPhone: profile.emergencyContact.phone || "",
     emergencyContactRelation: profile.emergencyContact.relation || "",
-    insuranceProvider: profile.insurance.provider || "",
-    insurancePolicyNumber: profile.insurance.policyNumber || "",
+    emergencyContactEmail: profile.emergencyContact.email || "",
     profileImage: profile.patient.profileImage || defaultFormData.profileImage,
   };
 }
@@ -131,6 +138,11 @@ export default function UserEditProfilePage() {
   const [profile, setProfile] = useState<PatientProfileResponse | null>(null);
   const [formData, setFormData] = useState<Patient>(defaultFormData);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [selectedMedicalReportFile, setSelectedMedicalReportFile] = useState<File | null>(null);
+  const [selectedMedicalDocumentFile, setSelectedMedicalDocumentFile] = useState<File | null>(null);
+  const [bloodTypeUnknown, setBloodTypeUnknown] = useState(false);
+  const [medicalReportLabel, setMedicalReportLabel] = useState("No file selected");
+  const [medicalDocumentLabel, setMedicalDocumentLabel] = useState("No file selected");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -165,12 +177,16 @@ export default function UserEditProfilePage() {
         const draftRaw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
         if (draftRaw) {
           const draft = JSON.parse(draftRaw) as Patient;
+          const draftBloodTypeUnknown = !draft.bloodType;
           setFormData({
             ...mapProfileToForm(data),
             ...draft,
           });
+          setBloodTypeUnknown(draftBloodTypeUnknown);
         } else {
-          setFormData(mapProfileToForm(data));
+          const mappedProfile = mapProfileToForm(data);
+          setFormData(mappedProfile);
+          setBloodTypeUnknown(!mappedProfile.bloodType);
         }
       } catch (err) {
         setError(
@@ -189,6 +205,18 @@ export default function UserEditProfilePage() {
       ? formData.profileImage
       : "/images/user.png";
   }, [formData.profileImage]);
+
+  const getAttachmentLabel = (url: string) => {
+    if (!url.trim()) {
+      return "No file uploaded";
+    }
+
+    try {
+      return decodeURIComponent(url.split("/").pop() || "Uploaded file");
+    } catch {
+      return "Uploaded file";
+    }
+  };
 
   const initials = useMemo(() => {
     const parts = formData.name.trim().split(/\s+/).filter(Boolean);
@@ -230,6 +258,38 @@ export default function UserEditProfilePage() {
     reader.readAsDataURL(file);
   };
 
+  const handleMedicalReportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setSelectedMedicalReportFile(file);
+    setMedicalReportLabel(file.name);
+  };
+
+  const handleMedicalDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setSelectedMedicalDocumentFile(file);
+    setMedicalDocumentLabel(file.name);
+  };
+
+  const handleBloodTypeToggle = (checked: boolean) => {
+    setBloodTypeUnknown(checked);
+    setFormData((previous) =>
+      previous
+        ? {
+            ...previous,
+            bloodType: checked ? "" : previous.bloodType || "O+",
+          }
+        : previous,
+    );
+  };
+
   const handleSaveDraft = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void handleSubmitProfile();
@@ -254,6 +314,8 @@ export default function UserEditProfilePage() {
       requestBody.set("bloodType", formData.bloodType);
       requestBody.set("allergies", formData.allergies);
       requestBody.set("medications", formData.medications);
+      requestBody.set("medicalReports", formData.medicalReports);
+      requestBody.set("medicalDocuments", formData.medicalDocuments);
       requestBody.set("medicalHistory", formData.medicalHistory);
       requestBody.set("emergencyContactName", formData.emergencyContactName);
       requestBody.set("emergencyContactPhone", formData.emergencyContactPhone);
@@ -261,11 +323,18 @@ export default function UserEditProfilePage() {
         "emergencyContactRelation",
         formData.emergencyContactRelation,
       );
-      requestBody.set("insuranceProvider", formData.insuranceProvider);
-      requestBody.set("insurancePolicyNumber", formData.insurancePolicyNumber);
+      requestBody.set("emergencyContactEmail", formData.emergencyContactEmail);
 
       if (selectedImageFile) {
         requestBody.set("profileImage", selectedImageFile);
+      }
+
+      if (selectedMedicalReportFile) {
+        requestBody.set("medicalReports", selectedMedicalReportFile);
+      }
+
+      if (selectedMedicalDocumentFile) {
+        requestBody.set("medicalDocuments", selectedMedicalDocumentFile);
       }
 
       const response = await fetch("/api/patient/profile", {
@@ -293,6 +362,10 @@ export default function UserEditProfilePage() {
       setProfile(updatedProfile);
       setFormData(nextFormData);
       setSelectedImageFile(null);
+      setSelectedMedicalReportFile(null);
+      setSelectedMedicalDocumentFile(null);
+      setMedicalReportLabel(getAttachmentLabel(updatedProfile.health.medicalReports));
+      setMedicalDocumentLabel(getAttachmentLabel(updatedProfile.health.medicalDocuments));
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       window.localStorage.removeItem("patient-profile-draft-saved-at");
       setNotice("Your profile has been updated successfully.");
@@ -331,8 +404,14 @@ export default function UserEditProfilePage() {
     setError("");
 
     if (profile) {
-      setFormData(mapProfileToForm(profile));
+      const mappedProfile = mapProfileToForm(profile);
+      setFormData(mappedProfile);
+      setBloodTypeUnknown(!mappedProfile.bloodType);
       setSelectedImageFile(null);
+      setSelectedMedicalReportFile(null);
+      setSelectedMedicalDocumentFile(null);
+      setMedicalReportLabel(getAttachmentLabel(profile.health.medicalReports));
+      setMedicalDocumentLabel(getAttachmentLabel(profile.health.medicalDocuments));
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
     }
   };
@@ -517,7 +596,7 @@ export default function UserEditProfilePage() {
                             name="gender"
                             value={formData.gender}
                             onChange={handleChange}
-                            className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none focus:ring-0"
+                            className="w-full rounded-xl border border-emerald-100 bg-white/90 px-3 py-2 text-base text-slate-900 outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
                           >
                             <option value="male">Male</option>
                             <option value="female">Female</option>
@@ -526,13 +605,47 @@ export default function UserEditProfilePage() {
                         </FieldCard>
 
                         <FieldCard label="Blood type">
+                          <div className="space-y-3">
+                            <select
+                              name="bloodType"
+                              value={bloodTypeUnknown ? "" : formData.bloodType}
+                              onChange={(e) => {
+                                setBloodTypeUnknown(false);
+                                handleChange(e);
+                              }}
+                              disabled={bloodTypeUnknown}
+                              className="w-full rounded-xl border border-emerald-100 bg-white/90 px-3 py-2 text-base text-slate-900 outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                            >
+                              <option value="">Select blood type</option>
+                              <option value="O+">O+</option>
+                              <option value="O-">O-</option>
+                              <option value="A+">A+</option>
+                              <option value="A-">A-</option>
+                              <option value="B+">B+</option>
+                              <option value="B-">B-</option>
+                              <option value="AB+">AB+</option>
+                              <option value="AB-">AB-</option>
+                            </select>
+                            <label className="inline-flex items-center gap-3 text-sm font-medium text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={bloodTypeUnknown}
+                                onChange={(e) => handleBloodTypeToggle(e.target.checked)}
+                                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                              />
+                              I don&apos;t know my blood type
+                            </label>
+                          </div>
+                        </FieldCard>
+
+                        <FieldCard label="Address">
                           <input
                             type="text"
-                            name="bloodType"
-                            value={formData.bloodType}
+                            name="address"
+                            value={formData.address}
                             onChange={handleChange}
                             className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
-                            placeholder="O+, A-, etc."
+                            placeholder="123 Main Street"
                           />
                         </FieldCard>
                       </div>
@@ -545,17 +658,6 @@ export default function UserEditProfilePage() {
                       />
 
                       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <FieldCard label="Street address">
-                          <input
-                            type="text"
-                            name="address"
-                            value={formData.address}
-                            onChange={handleChange}
-                            className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
-                            placeholder="123 Main Street"
-                          />
-                        </FieldCard>
-
                         <FieldCard label="City">
                           <input
                             type="text"
@@ -593,8 +695,8 @@ export default function UserEditProfilePage() {
 
                     <section>
                       <SectionHeader
-                        title="Health notes"
-                        description="Keep the essentials visible for faster visits and clearer care handoffs."
+                        title="Health snapshot"
+                        description="Capture allergies, current medication, and attach reports or documents for easy review."
                       />
 
                       <div className="mt-5 space-y-4">
@@ -619,6 +721,38 @@ export default function UserEditProfilePage() {
                             placeholder="List current medications"
                           />
                         </FieldCard>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FieldCard label="Upload reports">
+                            <div className="space-y-3">
+                              <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                Choose report file
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  accept=".pdf,.doc,.docx,image/*"
+                                  onChange={handleMedicalReportUpload}
+                                />
+                              </label>
+                              <p className="text-sm text-slate-600">{medicalReportLabel}</p>
+                            </div>
+                          </FieldCard>
+
+                          <FieldCard label="Upload documents">
+                            <div className="space-y-3">
+                              <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">
+                                Choose document file
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  accept=".pdf,.doc,.docx,image/*"
+                                  onChange={handleMedicalDocumentUpload}
+                                />
+                              </label>
+                              <p className="text-sm text-slate-600">{medicalDocumentLabel}</p>
+                            </div>
+                          </FieldCard>
+                        </div>
 
                         <FieldCard label="Medical history">
                           <textarea
@@ -672,35 +806,15 @@ export default function UserEditProfilePage() {
                             placeholder="Spouse, sibling, parent"
                           />
                         </FieldCard>
-                      </div>
-                    </section>
 
-                    <section>
-                      <SectionHeader
-                        title="Insurance"
-                        description="Keep coverage details current so your records stay ready for appointments."
-                      />
-
-                      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <FieldCard label="Insurance provider">
+                        <FieldCard label="Contact email">
                           <input
-                            type="text"
-                            name="insuranceProvider"
-                            value={formData.insuranceProvider}
+                            type="email"
+                            name="emergencyContactEmail"
+                            value={formData.emergencyContactEmail}
                             onChange={handleChange}
                             className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
-                            placeholder="Blue Cross"
-                          />
-                        </FieldCard>
-
-                        <FieldCard label="Policy number">
-                          <input
-                            type="text"
-                            name="insurancePolicyNumber"
-                            value={formData.insurancePolicyNumber}
-                            onChange={handleChange}
-                            className="w-full border-0 bg-transparent p-0 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
-                            placeholder="BC123456789"
+                            placeholder="contact@example.com"
                           />
                         </FieldCard>
                       </div>
@@ -764,23 +878,7 @@ export default function UserEditProfilePage() {
               </div>
             </div> */}
 
-            <div className="rounded-[2rem] border border-emerald-100 bg-white/90 p-6 shadow-lg shadow-emerald-100/40">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">
-                How this works
-              </p>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-                <li>
-                  1. Review and update your details in a calm, grouped layout.
-                </li>
-                <li>
-                  2. Save changes to sync your profile details to the backend.
-                </li>
-                <li>
-                  3. Save a draft on this device if you want to pause before
-                  submitting.
-                </li>
-              </ul>
-            </div>
+            {/* "How this works" summary removed per request */}
 
             <div className="rounded-[2rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-lg shadow-emerald-100/40">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">

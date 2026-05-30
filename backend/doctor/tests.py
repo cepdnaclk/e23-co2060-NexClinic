@@ -59,6 +59,22 @@ class DoctorProfileViewTests(TestCase):
         self.assertEqual(float(self.profile.chat_fee), 2500.0)
         self.assertEqual(float(self.profile.appointment_fee), 5000.0)
 
+    def test_doctor_profile_update_ignores_hospitals_payload_without_crashing(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.patch(
+            "/api/doctor/profile/",
+            {
+                "fullName": "Doctor Updated",
+                "hospitals": ["General Hospital", "City Hospital"],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.full_name, "Doctor Updated")
+
     def test_doctor_profile_update_rejects_duplicate_email(self):
         CustomUser.objects.create_user(
             email="taken@example.com",
