@@ -24,6 +24,11 @@ function HospitalAdminLoginForm() {
                 role: "HOSPITAL_ADMIN"
             });
             const { token, refreshToken, user } = response.data;
+            if (!user || user.role !== "HOSPITAL_ADMIN") {
+                setError("You are not authorized to access the hospital admin portal.");
+                setLoading(false);
+                return;
+            }
             localStorage.setItem("authToken", token);
             localStorage.setItem("refreshToken", refreshToken);
             localStorage.setItem("userRole", "HOSPITAL_ADMIN");

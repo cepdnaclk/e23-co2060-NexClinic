@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     const payload = await readLoginPayload(request);
     const username = payload?.username;
     const password = payload?.password;
+    const role = payload?.role;
 
     if (!username || !password) {
       return NextResponse.json(
@@ -30,43 +31,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call Django backend patient login endpoint (default/normal user login)
-    // The CustomUser model uses email as USERNAME_FIELD
+    // Route to correct backend endpoint based on role
+    let loginEndpoint = "/api/users/login/";
+    if (role === "HOSPITAL_ADMIN") {
+      loginEndpoint = "/api/users/hospital-admin/login/";
+    } else if (role === "DOCTOR") {
+      loginEndpoint = "/api/users/doctor/login/";
+    }
+
     const backendResponse = await fetch(
-      `${BACKEND_URL}/api/users/login/`,
+      `${BACKEND_URL}${loginEndpoint}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: username, // Django expects email as the login field
+          email: username,
           password: password,
         }),
       }
     );
 
     if (!backendResponse.ok) {
-      const errorData = await backendResponse
-        .json()
-        .catch(() => null);
+      const errorData = await backendResponse.json().catch(() => null);
       return NextResponse.json(
-        { error: errorData?.detail || "Login failed" },
+        { error: errorData?.detail || errorData?.error || "Login failed" },
         { status: backendResponse.status }
       );
     }
 
     const tokenData = await backendResponse.json();
-    const role = tokenData.role || "PATIENT";
+    const userRole = tokenData.role || role || "PATIENT";
 
-    // Return the token and user info to the frontend
     const response = NextResponse.json(
       {
         token: tokenData.access,
         refreshToken: tokenData.refresh,
         user: {
           email: username,
-          role,
+          role: userRole,
         },
       },
       { status: 200 }
@@ -74,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     applyAuthCookies(response, {
       accessToken: tokenData.access,
-      role,
+      role: userRole,
       refreshToken: tokenData.refresh,
     });
 
@@ -87,4 +91,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
- 
