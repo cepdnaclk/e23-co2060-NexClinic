@@ -36,6 +36,18 @@ def doctor_verification_handler(sender, instance, created, **kwargs):
             data={'doctor_id': instance.doctor.id, 'reason': instance.rejection_reason},
             created_at=timezone.now(),
         )
+        # Sync DoctorProfile.verified_hospitals M2M so the doctor's verified hospitals
+        # reflect the current verification status for this hospital.
+        try:
+            doctor_profile = instance.doctor
+            if instance.status == DoctorHospitalVerification.Status.VERIFIED:
+                doctor_profile.verified_hospitals.add(instance.hospital)
+            else:
+                # For PENDING/REJECTED and other non-VERIFIED states remove association
+                doctor_profile.verified_hospitals.remove(instance.hospital)
+        except Exception:
+            # Best-effort sync; do not break the signal on errors
+            pass
     except Exception:
         return
 

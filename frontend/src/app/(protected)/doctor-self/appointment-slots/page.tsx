@@ -242,78 +242,7 @@ function DoctorAppointmentSlotsPage() {
           </div>
         </section>
 
-        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-bold text-emerald-700">Create New Slot</h2>
-              <p className="mt-1 text-sm text-slate-500">Define location and time range to publish one appointment window.</p>
-            </div>
-            <p className="rounded-full bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-              Next slot: {isLoading ? "..." : nextSlotSummary}
-            </p>
-          </div>
-          <div className="my-4 flex w-full border-t border-emerald-100"></div>
-
-          <form onSubmit={handleCreateSlot} className="grid grid-cols-1 items-end gap-3 md:grid-cols-5">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="slot-date" className="text-sm font-semibold text-slate-700">
-                Date
-              </label>
-              <input
-                id="slot-date"
-                type="date"
-                value={date}
-                min={new Date().toISOString().split("T")[0]}
-                onChange={(event) => setDate(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label htmlFor="slot-hospital" className="text-sm font-semibold text-slate-700">
-                Hospital
-              </label>
-              <input
-                id="slot-hospital"
-                type="text"
-                value={hospital}
-                onChange={(event) => setHospital(event.target.value)}
-                placeholder="e.g. NexClinic - Colombo"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label htmlFor="slot-start" className="text-sm font-semibold text-slate-700">
-                Start Time
-              </label>
-              <input
-                id="slot-start"
-                type="time"
-                value={startTime}
-                onChange={(event) => setStartTime(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label htmlFor="slot-end" className="text-sm font-semibold text-slate-700">
-                End Time
-              </label>
-              <input
-                id="slot-end"
-                type="time"
-                value={endTime}
-                onChange={(event) => setEndTime(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-              />
-            </div>
-
-            <GreenButton type="submit" disabled={isSubmitting} className="rounded-full px-5 py-3">
-              {isSubmitting ? "Saving..." : "Publish Slot"}
-            </GreenButton>
-          </form>
-        </section>
+        {/* Slot creation removed per request - keeping published slots display only */}
 
         <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
           <div className="mb-4 flex items-center justify-between gap-3">

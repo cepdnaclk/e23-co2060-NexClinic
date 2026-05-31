@@ -20,9 +20,12 @@ class PatientProfile(models.Model):
     emergency_contact_name = models.CharField(max_length=255, blank=True, default="")
     emergency_contact_phone = models.CharField(max_length=20, blank=True, default="")
     emergency_contact_relation = models.CharField(max_length=100, blank=True, default="")
+    emergency_contact_email = models.EmailField(blank=True, default="")
     insurance_provider = models.CharField(max_length=255, blank=True, default="")
     insurance_policy_number = models.CharField(max_length=100, blank=True, default="")
     profile_picture = models.ImageField(upload_to='patient_profiles/', null=True, blank=True)
+    medical_reports = models.FileField(upload_to='patient_reports/', null=True, blank=True)
+    medical_documents = models.FileField(upload_to='patient_documents/', null=True, blank=True)
 
     def __str__(self):
         return f"{self.full_name} ({self.user.email})"
