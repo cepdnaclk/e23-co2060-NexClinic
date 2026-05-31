@@ -13,6 +13,7 @@ from doctor.models import (
     Appointment,
     AppointmentAvailableSlot,
 )
+from chat.models import AdviceChatThread
 from hospital.models import Hospital
 
 from .serializers import (
@@ -125,6 +126,24 @@ class PatientProfileView(BasePatientAPIView):
                 request, patient_profile.medical_documents
             )
 
+        chat_threads = AdviceChatThread.objects.filter(patient=patient_profile).select_related("doctor") if patient_profile else AdviceChatThread.objects.none()
+        unread_chat_count = 0
+        recent_chat_threads = []
+        if patient_profile:
+            for thread in chat_threads.order_by("-last_message_at", "-started_at")[:5]:
+                unread_count = thread.messages.exclude(sender_user=user).filter(is_read=False).count()
+                unread_chat_count += unread_count
+                last_message = thread.messages.order_by("-sent_at", "-id").first()
+                recent_chat_threads.append(
+                    {
+                        "id": str(thread.id),
+                        "doctorName": thread.doctor.full_name or thread.doctor.preferred_name or "Doctor",
+                        "lastMessage": last_message.message_text if last_message else "",
+                        "unreadCount": unread_count,
+                        "time": thread.last_message_at.strftime("%b %d, %I:%M %p") if thread.last_message_at else thread.started_at.strftime("%b %d, %I:%M %p"),
+                    }
+                )
+
         return {
             "patient": {
                 "fullName": full_name,
@@ -157,6 +176,10 @@ class PatientProfileView(BasePatientAPIView):
             "insurance": {
                 "provider": insurance_provider,
                 "policyNumber": insurance_policy_number,
+            },
+            "chatSummary": {
+                "unreadChats": unread_chat_count,
+                "recentChats": recent_chat_threads,
             },
         }
 

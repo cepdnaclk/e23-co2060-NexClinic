@@ -236,7 +236,13 @@ export default function DoctorsDirectory() {
                   <div className="mt-5 flex flex-col gap-3">
                     {role === 'PATIENT' ? (
                       <>
-                        <GreenButton disabled={!doctor.availableForChat} className={`w-full ${!doctor.availableForChat ? 'opacity-60 cursor-not-allowed' : ''}`}>{doctor.availableForChat ? 'Chat Now' : 'Offline'}</GreenButton>
+                        <GreenButton
+                          onClick={() => router.push(`/user-self/chats?doctor=${doctor.id}`)}
+                          disabled={!doctor.availableForChat}
+                          className={`w-full ${!doctor.availableForChat ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        >
+                          {doctor.availableForChat ? 'Chat Now' : 'Offline'}
+                        </GreenButton>
                         <Link href={`/user-self/book-appointment?doctor=${doctor.id}`} className="w-full">
                           <BlackButton className="w-full">Book Appointment</BlackButton>
                         </Link>
