@@ -18,10 +18,9 @@ function HospitalAdminLoginForm() {
         setError("");
         setLoading(true);
         try {
-            const response = await axios.post("/api/auth/login", {
+            const response = await axios.post("/api/auth/hospital/login", {
                 username: email,
                 password,
-                role: "HOSPITAL_ADMIN"
             });
             const { token, refreshToken, user } = response.data;
             localStorage.setItem("authToken", token);

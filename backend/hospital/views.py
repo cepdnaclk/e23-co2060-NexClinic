@@ -1,14 +1,26 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
-from .models import ActivityLog, HospitalAdmin
-from .serializers import ActivityLogSerializer
+from .models import ActivityLog, Hospital, HospitalAdmin
+from .serializers import ActivityLogSerializer, HospitalSerializer
 from doctor.models import Appointment, AppointmentAvailableSlot
 from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
+
+
+class ActiveHospitalListView(APIView):
+	permission_classes = [AllowAny]
+
+	def get(self, request):
+		hospitals = (
+			Hospital.objects.filter(is_active=True)
+			.order_by('name')
+		)
+		serializer = HospitalSerializer(hospitals, many=True)
+		return Response(serializer.data)
 
 
 class ActivityLogListView(APIView):

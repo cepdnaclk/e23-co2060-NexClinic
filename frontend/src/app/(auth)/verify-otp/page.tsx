@@ -34,17 +34,40 @@ function VerifyOtpPageContent() {
         setLoading(true);
 
         try {
-            const response = await axios.post("/api/auth/verify-otp", {
-                email,
-                otp,
-            });
-            setSuccess(response.data?.message || "Account verified successfully.");
-            const nextPath = role === "doctor" ? "/doctor/login" : "/login";
+                const response = await axios.post("/api/auth/verify-otp", {
+                    email,
+                    otp,
+                });
 
-            // Redirect to the correct login page after successful verification
-            setTimeout(() => {
-                router.push(nextPath);
-            }, 2000);
+                setSuccess(response.data?.message || "Account verified successfully.");
+
+                // If backend issued tokens (possible when system admin had already verified this hospital admin),
+                // set cookies via server route and redirect to admin dashboard.
+                if (response.data?.access) {
+                    try {
+                        await axios.post('/api/auth/set-tokens', {
+                            access: response.data.access,
+                            refresh: response.data.refresh,
+                            role: response.data.role || 'HOSPITAL_ADMIN',
+                        });
+                        // Redirect to protected admin dashboard
+                        router.push('/admin');
+                        return;
+                    } catch (e) {
+                        // fallback to login
+                        console.error('Failed to set tokens', e);
+                    }
+                }
+
+                // Default: redirect to appropriate login or role-specific page
+                let nextPath = "/login";
+                if (role === "doctor") nextPath = "/doctor/login";
+                if (role && role.includes("hospital")) nextPath = "/hospital/login";
+
+                // Redirect to the correct login page after successful verification
+                setTimeout(() => {
+                    router.push(nextPath);
+                }, 1200);
         } catch (err: any) {
             setError(err.response?.data?.error || "Verification failed.");
         } finally {

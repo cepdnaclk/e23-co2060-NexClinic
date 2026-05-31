@@ -296,6 +296,13 @@ class HospitalAdminRegistrationSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(write_only=True)
     phone = serializers.CharField(write_only=True)
     hospital_id = serializers.IntegerField(write_only=True)
+    date_of_birth = serializers.DateField(write_only=True)
+    gender = serializers.CharField(write_only=True)
+    nic_number = serializers.CharField(write_only=True)
+    address = serializers.CharField(write_only=True)
+    employee_id = serializers.CharField(write_only=True)
+    designation = serializers.CharField(write_only=True)
+    date_of_joining = serializers.DateField(write_only=True)
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all())]
@@ -310,7 +317,11 @@ class HospitalAdminRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('full_name', 'phone', 'hospital_id', 'email', 'password', 'password2')
+        fields = (
+            'full_name', 'phone', 'hospital_id', 'date_of_birth', 'gender', 'nic_number',
+            'address', 'employee_id', 'designation', 'date_of_joining',
+            'email', 'password', 'password2'
+        )
 
     def validate_full_name(self, value):
         cleaned = value.strip()
@@ -320,6 +331,27 @@ class HospitalAdminRegistrationSerializer(serializers.ModelSerializer):
 
     def validate_phone(self, value):
         return _normalize_sl_phone(value)
+
+    def validate_date_of_birth(self, value):
+        return _validate_dob_range(value)
+
+    def validate_gender(self, value):
+        normalized = GENDER_LOOKUP.get((value or '').strip().lower())
+        if not normalized:
+            raise serializers.ValidationError('Gender must be Male, Female, or Other.')
+        return normalized
+
+    def validate_nic_number(self, value):
+        cleaned = (value or '').strip().upper()
+        if not SL_NIC_REGEX.match(cleaned):
+            raise serializers.ValidationError('Enter a valid Sri Lankan NIC number.')
+        return cleaned
+
+    def validate_address(self, value):
+        cleaned = value.strip()
+        if len(cleaned) < 5:
+            raise serializers.ValidationError('Address must be at least 5 characters long.')
+        return cleaned
 
     def validate_hospital_id(self, value):
         from hospital.models import Hospital
@@ -348,6 +380,13 @@ class HospitalAdminRegistrationSerializer(serializers.ModelSerializer):
             'full_name': validated_data.pop('full_name'),
             'phone': validated_data.pop('phone'),
             'hospital_id': hospital_id,
+            'date_of_birth': str(validated_data.pop('date_of_birth')),
+            'gender': validated_data.pop('gender'),
+            'nic_number': validated_data.pop('nic_number'),
+            'address': validated_data.pop('address'),
+            'employee_id': validated_data.pop('employee_id'),
+            'designation': validated_data.pop('designation'),
+            'date_of_joining': str(validated_data.pop('date_of_joining')),
         }
         
         # Generate and Send OTP
@@ -384,6 +423,10 @@ class HospitalAdminTokenObtainPairSerializer(TokenObtainPairSerializer):
         if getattr(self.user, 'role', None) != 'HOSPITAL_ADMIN':
             raise AuthenticationFailed('No hospital admin account found for this email.')
 
+        # Ensure the hospital admin profile is verified by system admins
+        admin_profile = getattr(self.user, 'hospital_admin_profile', None)
+        if not admin_profile or not getattr(admin_profile, 'is_verified', False):
+            raise AuthenticationFailed('Hospital admin account pending verification by system administrators.')
         # Get the admin's hospitals
         admin_roles = HospitalAdmin.objects.filter(
             user=self.user, is_active=True
