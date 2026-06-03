@@ -460,7 +460,7 @@ export default function ChatWorkspace({
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-3 text-xs text-slate-500">
                       <span>{formatTime(thread.last_message_at || thread.started_at)}</span>
-                      <span>{thread.thread_code}</span>
+                      {/* <span>{thread.thread_code}</span> */}
                     </div>
                   </button>
                 );
@@ -478,7 +478,8 @@ export default function ChatWorkspace({
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-700">Conversation</p>
                     <h2 className="mt-1 text-2xl font-bold text-slate-900">{getPeerName(selectedThread, role)}</h2>
                     <p className="mt-1 text-sm text-slate-600">
-                      Thread {selectedThread.thread_code} · {formatTime(selectedThread.last_message_at || selectedThread.started_at)}
+                      {/* Thread {selectedThread.thread_code} · {formatTime(selectedThread.last_message_at || selectedThread.started_at)} */}
+                      {formatTime(selectedThread.last_message_at || selectedThread.started_at)}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
