@@ -17,6 +17,7 @@ from .views import (
     DoctorAppointmentRescheduleView,
     DoctorAppointmentSlotsView,
     DoctorAppointmentSlotDetailView,
+    AdminAppointmentSlotGenerationView,
     DoctorOnlineAdviceSlotsView,
     DoctorOnlineAdviceSlotDetailView,
 )
@@ -40,5 +41,6 @@ urlpatterns = [
     path("admin/doctor-verifications/<int:verification_id>/action/", AdminDoctorVerificationActionView.as_view(), name="admin-doctor-verification-action"),
     path("admin/slot-templates/", AdminSlotTemplateListCreateView.as_view(), name="admin-slot-templates"),
     path("admin/slot-templates/<int:template_id>/", AdminSlotTemplateDetailView.as_view(), name="admin-slot-template-detail"),
+    path("admin/appointment-slots/generate/", AdminAppointmentSlotGenerationView.as_view(), name="admin-appointment-slot-generation"),
     path("admin/appointments/<int:appointment_id>/cancel/", AdminAppointmentCancelView.as_view(), name="admin-appointment-cancel"),
 ]
