@@ -119,11 +119,17 @@ class AdminAppointmentCancelSerializer(serializers.Serializer):
     reason = serializers.CharField(required=True, allow_blank=False)
 
 class AppointmentAvailableSlotSerializer(serializers.ModelSerializer):
+    hospital = serializers.SerializerMethodField()
     bookedCount = serializers.SerializerMethodField()
 
     class Meta:
         model = AppointmentAvailableSlot
         fields = ['id', 'date', 'day_of_week', 'hospital', 'start_time', 'end_time', 'bookedCount']
+
+    def get_hospital(self, obj):
+        if obj.hospital:
+            return obj.hospital.name if hasattr(obj.hospital, 'name') else str(obj.hospital)
+        return 'NexClinic'
 
     def get_bookedCount(self, obj):
         return obj.appointments.count()
@@ -449,7 +455,15 @@ class DoctorDirectoryPublicSerializer(serializers.ModelSerializer):
         return bool(obj.availability)
     
     def get_nextAvailable(self, obj):
-        next_slot = obj.available_slots.filter(date__gte=timezone.localdate()).order_by('date', 'start_time').first()
+        if hasattr(obj, '_prefetched_objects_cache') and 'available_slots' in obj._prefetched_objects_cache:
+            today = timezone.localdate()
+            slots = sorted(
+                [s for s in obj.available_slots.all() if s.date >= today],
+                key=lambda s: (s.date, s.start_time)
+            )
+            next_slot = slots[0] if slots else None
+        else:
+            next_slot = obj.available_slots.filter(date__gte=timezone.localdate()).order_by('date', 'start_time').first()
         if not next_slot:
             return 'Not available'
         return f"{next_slot.date.strftime('%Y-%m-%d')}, {next_slot.start_time.strftime('%I:%M %p')}"

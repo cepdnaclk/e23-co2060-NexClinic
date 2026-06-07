@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
       request,
       endpoint: `${BACKEND_URL}/api/doctor/appointment-slots/`,
       method: "POST",
-      body,
+      body: JSON.stringify(body),
+      contentType: "application/json",
       successStatus: 201,
       failureMessage: "Failed to create appointment slots",
     });

@@ -1,9 +1,6 @@
-"""Centralized activity log tuning settings.
+import os
 
-Keep these constants in code (not environment variables) for predictable behavior.
-"""
-
-ACTIVITY_LOG_ENABLED = True
+ACTIVITY_LOG_ENABLED = os.getenv("ACTIVITY_LOG_ENABLED", "True").strip().lower() in {"1", "true", "yes", "on"}
 ACTIVITY_LOG_LOG_ALL_VIEWS = False
 
 ACTIVITY_LOG_SENSITIVE_KEYS = {

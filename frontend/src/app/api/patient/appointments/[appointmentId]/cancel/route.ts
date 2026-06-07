@@ -12,11 +12,14 @@ type RouteParams = {
 export async function PATCH(request: NextRequest, context: RouteParams) {
   try {
     const { appointmentId } = await context.params;
+    const body = await request.json().catch(() => ({}));
 
     return await proxyBackendWithRefresh({
       request,
       endpoint: `${BACKEND_URL}/api/patient/appointments/${appointmentId}/cancel/`,
       method: "PATCH",
+      body: JSON.stringify(body),
+      contentType: "application/json",
       failureMessage: "Failed to cancel appointment",
     });
   } catch (error) {

@@ -129,6 +129,7 @@ if DATABASE_URL:
             "HOST": parsed_db_url.hostname,
             "PORT": db_port,
             "OPTIONS": {"sslmode": ssl_mode},
+            "CONN_MAX_AGE": int(os.getenv("DJANGO_CONN_MAX_AGE", "600")),
         }
     }
 else:

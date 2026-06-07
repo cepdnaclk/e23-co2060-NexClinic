@@ -32,7 +32,8 @@ export async function POST(request: NextRequest) {
       request,
       endpoint: `${BACKEND_URL}/api/patient/appointments/`,
       method: "POST",
-      body,
+      body: JSON.stringify(body),
+      contentType: "application/json",
       successStatus: 201,
       failureMessage: "Failed to book appointment",
     });

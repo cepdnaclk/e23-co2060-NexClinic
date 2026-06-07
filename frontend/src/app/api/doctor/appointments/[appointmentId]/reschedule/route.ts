@@ -18,7 +18,8 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
       request,
       endpoint: `${BACKEND_URL}/api/doctor/appointments/${appointmentId}/reschedule/`,
       method: "PATCH",
-      body,
+      body: JSON.stringify(body),
+      contentType: "application/json",
       failureMessage: "Failed to reschedule appointment",
     });
   } catch (error) {

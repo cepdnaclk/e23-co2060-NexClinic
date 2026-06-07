@@ -259,7 +259,7 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
                 date__lte=window_end,
                 is_active=True,
             )
-            .select_related("doctor", "doctor__user")
+            .select_related("doctor", "doctor__user", "hospital")
             # Only include slots where the doctor is verified for the slot's hospital
             .filter(doctor__verified_hospitals__id=F('hospital_id'))
             .order_by("date", "start_time")
@@ -321,7 +321,7 @@ class PatientAppointmentsView(BasePatientAPIView):
 
         queryset = (
             Appointment.objects.filter(patient=patient_profile)
-            .select_related("slot", "doctor", "doctor__user")
+            .select_related("slot", "slot__hospital", "doctor", "doctor__user")
             .order_by("-requested_at")
         )
 

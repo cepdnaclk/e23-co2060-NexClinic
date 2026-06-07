@@ -21,3 +21,23 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    return await proxyBackendWithRefresh({
+      request,
+      endpoint: `${BACKEND_URL}/api/doctor/admin/slot-templates/`,
+      method: "POST",
+      body: JSON.stringify(body),
+      contentType: "application/json",
+      failureMessage: "Failed to create slot template",
+    });
+  } catch (error) {
+    console.error("Hospital slot templates creation API error", error);
+    return NextResponse.json(
+      { error: "An error occurred while creating slot template" },
+      { status: 500 }
+    );
+  }
+}

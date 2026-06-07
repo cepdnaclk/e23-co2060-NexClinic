@@ -18,7 +18,8 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
       request,
       endpoint: `${BACKEND_URL}/api/doctor/appointment-slots/${slotId}/`,
       method: "PATCH",
-      body,
+      body: JSON.stringify(body),
+      contentType: "application/json",
       failureMessage: "Failed to update appointment slot",
     });
   } catch (error) {

@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 
 from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 
@@ -395,10 +396,17 @@ class DoctorDirectoryView(APIView):
         if getattr(request.user, 'role', None) not in {'DOCTOR', 'PATIENT', 'ADMIN'}:
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
+        verified_hospital_exists = DoctorHospitalVerification.objects.filter(
+            doctor_id=OuterRef('pk'),
+            status=DoctorHospitalVerification.Status.VERIFIED,
+            hospital__is_active=True,
+        )
+
         queryset = (
             DoctorProfile.objects.select_related('user')
-            .filter(user__role='DOCTOR', user__is_active=True, verified_hospitals__isnull=False)
-            .distinct()
+            .prefetch_related('verified_hospitals', 'available_slots')
+            .annotate(has_verified_hospital=Exists(verified_hospital_exists))
+            .filter(user__role='DOCTOR', user__is_active=True, has_verified_hospital=True)
             .order_by('full_name', 'id')
         )
         serializer = DoctorDirectoryPublicSerializer(queryset, many=True, context={'request': request})
@@ -413,12 +421,24 @@ class DoctorDirectoryDetailView(APIView):
         if role not in {'DOCTOR', 'PATIENT', 'ADMIN'}:
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
-        doctor = DoctorProfile.objects.select_related('user').filter(
-            id=doctor_id,
-            user__role='DOCTOR',
-            user__is_active=True,
-            is_verified=True,
-        ).first()
+        verified_hospital_exists = DoctorHospitalVerification.objects.filter(
+            doctor_id=OuterRef('pk'),
+            status=DoctorHospitalVerification.Status.VERIFIED,
+            hospital__is_active=True,
+        )
+
+        doctor = (
+            DoctorProfile.objects.select_related('user')
+            .prefetch_related('verified_hospitals', 'available_slots')
+            .annotate(has_verified_hospital=Exists(verified_hospital_exists))
+            .filter(
+                id=doctor_id,
+                user__role='DOCTOR',
+                user__is_active=True,
+                has_verified_hospital=True,
+            )
+            .first()
+        )
         if not doctor:
             return Response({'detail': 'Doctor not found.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -926,7 +946,7 @@ class DoctorAppointmentSlotsView(VerifiedDoctorAPIView):
         if error_response:
             return error_response
 
-        slots = AppointmentAvailableSlot.objects.filter(doctor=doctor_profile).order_by('date', 'start_time')
+        slots = AppointmentAvailableSlot.objects.filter(doctor=doctor_profile).select_related('hospital').order_by('date', 'start_time')
         data = AppointmentAvailableSlotSerializer(slots, many=True).data
 
         return Response({'slots': data}, status=status.HTTP_200_OK)
