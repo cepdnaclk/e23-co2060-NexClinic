@@ -2,7 +2,7 @@
 
 import HospitalAdminLoginForm from '@/components/hospital/HospitalAdminLoginForm';
 
-export default function HospitalLoginPage() {
+function HospitalAdminLogin() {
     return (
         <div className="relative flex flex-col w-screen h-screen items-center">
             <div title="row-1" className="relative gap-6 mt-8 h-full w-screen">
@@ -24,3 +24,5 @@ export default function HospitalLoginPage() {
         </div>
     );
 }
+
+export default HospitalAdminLogin;
