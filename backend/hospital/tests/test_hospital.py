@@ -330,6 +330,51 @@ class SlotGenerationTests(TestCase):
         self.assertEqual(slot.end_time, time(14, 30))
 
 
+class AdminAppointmentSlotGenerationApiTests(TestCase):
+    def test_hospital_admin_can_generate_slots_from_templates(self):
+        admin_user = CustomUser.objects.create_user(
+            email='slotadmin@test.com',
+            password='pass',
+            role=CustomUser.Role.HOSPITAL_ADMIN,
+        )
+        doctor_user = CustomUser.objects.create_user(
+            email='slotdoctor@test.com',
+            password='pass',
+            role=CustomUser.Role.DOCTOR,
+        )
+        doctor = DoctorProfile.objects.create(
+            user=doctor_user,
+            specialization='Slot',
+            license_number='SLOT-API',
+            phone='8888',
+            full_name='Dr Slot API',
+        )
+        hospital = Hospital.objects.create(name='API Slot Hospital')
+        HospitalAdmin.objects.create(user=admin_user, hospital=hospital)
+
+        today = timezone.now().date()
+        SlotTemplate.objects.create(
+            doctor=doctor,
+            hospital=hospital,
+            day_of_week=today.weekday(),
+            start_time=time(16, 0),
+            end_time=time(16, 30),
+            created_by=admin_user,
+        )
+
+        client = APIClient()
+        client.force_authenticate(user=admin_user)
+
+        response = client.post(
+            '/api/doctor/admin/appointment-slots/generate/',
+            {'hospital': hospital.id, 'days': 1},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(AppointmentAvailableSlot.objects.filter(hospital=hospital).exists())
+
+
 class CeleryTaskTests(TestCase):
     """Test Celery task wrapper."""
     def test_generate_slots_task_function(self):

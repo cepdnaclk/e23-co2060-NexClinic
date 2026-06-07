@@ -64,7 +64,7 @@ class HospitalAdminAPIView(APIView):
 
     @staticmethod
     def _is_admin(user):
-        return getattr(user, "role", None) == "ADMIN"
+        return getattr(user, "role", None) in {"ADMIN", "HOSPITAL_ADMIN"}
 
     def _get_admin_role(self, user, hospital_id=None):
         if not self._is_admin(user):
@@ -289,6 +289,97 @@ class AdminAppointmentCancelView(HospitalAdminAPIView):
 
         payload = DoctorAppointmentSerializer(appointment).data
         return Response({'message': 'Appointment cancelled successfully.', 'appointment': payload}, status=status.HTTP_200_OK)
+
+
+class AdminAppointmentSlotGenerationView(HospitalAdminAPIView):
+    def post(self, request):
+        hospital_id = request.data.get("hospital") or request.query_params.get("hospital_id")
+        if not hospital_id:
+            return Response({"detail": "hospital is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        admin_role, error_response = self._get_admin_role(request.user, hospital_id=hospital_id)
+        if error_response:
+            return error_response
+
+        try:
+            days = int(request.data.get("days", 14))
+        except (TypeError, ValueError):
+            return Response({"detail": "days must be a valid integer."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if days < 1:
+            return Response({"detail": "days must be at least 1."}, status=status.HTTP_400_BAD_REQUEST)
+
+        doctor_id = request.data.get("doctor_id")
+        skip_duplicates_raw = request.data.get("skip_duplicates", True)
+        if isinstance(skip_duplicates_raw, str):
+            skip_duplicates = skip_duplicates_raw.strip().lower() in {"1", "true", "yes", "on"}
+        else:
+            skip_duplicates = bool(skip_duplicates_raw)
+
+        templates = SlotTemplate.objects.filter(is_active=True, hospital_id=admin_role.hospital_id)
+        if doctor_id:
+            templates = templates.filter(doctor_id=doctor_id)
+
+        templates = templates.select_related("doctor", "hospital", "created_by")
+        if not templates.exists():
+            return Response({"detail": "No active slot templates found for this hospital."}, status=status.HTTP_400_BAD_REQUEST)
+
+        today = timezone.localdate()
+        end_date = today + timedelta(days=days - 1)
+
+        created_count = 0
+        skipped_count = 0
+        created_slot_ids = []
+
+        with transaction.atomic():
+            for template in templates:
+                current_date = today
+                while current_date <= end_date:
+                    if current_date.weekday() != template.day_of_week:
+                        current_date += timedelta(days=1)
+                        continue
+
+                    slot_start = timezone.make_aware(datetime.combine(current_date, template.start_time))
+                    slot_end = timezone.make_aware(datetime.combine(current_date, template.end_time))
+
+                    existing_slot = AppointmentAvailableSlot.objects.filter(
+                        doctor=template.doctor,
+                        hospital=template.hospital,
+                        date_start=slot_start,
+                        date_end=slot_end,
+                    ).first()
+
+                    if existing_slot and skip_duplicates:
+                        skipped_count += 1
+                    else:
+                        slot = AppointmentAvailableSlot.objects.create(
+                            doctor=template.doctor,
+                            hospital=template.hospital,
+                            date=slot_start.date(),
+                            date_start=slot_start,
+                            date_end=slot_end,
+                            start_time=template.start_time,
+                            end_time=template.end_time,
+                            slot_template=template,
+                            patient_limit=template.default_patient_limit,
+                            booked_count=0,
+                            created_by=template.created_by or request.user,
+                            is_active=True,
+                        )
+                        created_count += 1
+                        created_slot_ids.append(slot.id)
+
+                    current_date += timedelta(days=1)
+
+        return Response(
+            {
+                "message": f"{created_count} appointment slots created successfully.",
+                "created_count": created_count,
+                "skipped_count": skipped_count,
+                "created_slot_ids": created_slot_ids,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 class DoctorSpecializationsView(APIView):
     permission_classes = [AllowAny]
