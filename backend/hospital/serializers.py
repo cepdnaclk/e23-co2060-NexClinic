@@ -1,5 +1,19 @@
 from rest_framework import serializers
-from .models import ActivityLog
+from .models import ActivityLog, Hospital
+
+
+class HospitalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hospital
+        fields = (
+            'id',
+            'name',
+            'address',
+            'contact_numbers',
+            'email',
+            'is_active',
+        )
+        read_only_fields = fields
 
 class ActivityLogSerializer(serializers.ModelSerializer):
     user_email = serializers.SerializerMethodField()

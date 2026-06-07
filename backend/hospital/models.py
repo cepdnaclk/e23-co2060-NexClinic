@@ -36,6 +36,31 @@ class HospitalAdmin(models.Model):
         return f"{self.user} @ {self.hospital}"
 
 
+class HospitalAdminProfile(models.Model):
+    """Stores profile details for hospital admin users. Similar to PatientProfile/DoctorProfile.
+    System admins must verify this profile (`is_verified=True`) before the admin can operate.
+    """
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='hospital_admin_profile'
+    )
+
+    full_name = models.CharField(max_length=255)
+    date_of_birth = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=20, default='Other')
+    nic_number = models.CharField(max_length=20, blank=True, default='')
+    phone = models.CharField(max_length=20, blank=True, default='')
+    address = models.TextField(blank=True, default='')
+    employee_id = models.CharField(max_length=100, blank=True, default='')
+    designation = models.CharField(max_length=100, blank=True, default='')
+    date_of_joining = models.DateField(null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.full_name} ({self.user.email})"
+
+
 class DoctorHospitalVerification(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
