@@ -85,7 +85,7 @@ export default function DoctorChatsPage() {
       <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-cyan-200/20 blur-3xl" aria-hidden="true" />
 
       <div className="relative mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
-        <section className="overflow-hidden rounded-[2.5rem] border border-emerald-100/70 bg-white/80 shadow-[0_24px_80px_rgba(16,185,129,0.12)] backdrop-blur">
+        <section className="overflow-hidden rounded-[2.5rem] border border-emerald-100/70 bg-white/80 shadow-[0_24px_80px_rgba(16,185,129,0.12)] backdrop-blur mb-4">
           <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="relative p-6 sm:p-8 lg:p-10">
               <div className="absolute right-0 top-0 h-44 w-44 translate-x-1/3 -translate-y-1/3 rounded-full bg-emerald-100/60 blur-3xl" aria-hidden="true" />
@@ -152,11 +152,11 @@ export default function DoctorChatsPage() {
           </div>
         </section>
 
-        <div className="mt-6 rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+        {/* <div className="mt-6 rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
           <p className="text-sm leading-6 text-slate-600">
             Your chat inbox is tied to the same backend thread list used by the dashboard, so unread counts and message history stay in sync.
           </p>
-        </div>
+        </div> */}
 
         <ChatWorkspace
           role="DOCTOR"

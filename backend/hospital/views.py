@@ -1,55 +1,26 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
-from .models import ActivityLog, HospitalAdmin
-from .serializers import ActivityLogSerializer
+from .models import ActivityLog, Hospital, HospitalAdmin
+from .serializers import ActivityLogSerializer, HospitalSerializer
 from doctor.models import Appointment, AppointmentAvailableSlot
 from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
 
 
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from doctor.models import DoctorProfile
-from hospital.models import HospitalAdmin, DoctorHospitalVerification
+class ActiveHospitalListView(APIView):
+	permission_classes = [AllowAny]
 
-class AvailableDoctorsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        # Get the hospital admin role for the current user
-        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
-        if not admin_role:
-            return Response({"detail": "You are not a hospital admin."}, status=403)
-        hospital = admin_role.hospital
-
-        # Get all verified doctors in the system
-        all_doctors = DoctorProfile.objects.select_related("user").filter(user__is_active=True, is_verified=True)
-
-        # Get all doctors already verified for this hospital
-        verified_doctor_ids = set(
-            DoctorHospitalVerification.objects.filter(
-                hospital=hospital,
-                status=DoctorHospitalVerification.Status.VERIFIED
-            ).values_list("doctor_id", flat=True)
-        )
-
-        doctors = [
-            {
-                "id": doc.id,
-                "full_name": doc.full_name,
-                "email": doc.user.email,
-                "is_added": doc.id in verified_doctor_ids,
-            }
-            for doc in all_doctors
-        ]
-        return Response({"doctors": doctors})
-    
-
+	def get(self, request):
+		hospitals = (
+			Hospital.objects.filter(is_active=True)
+			.order_by('name')
+		)
+		serializer = HospitalSerializer(hospitals, many=True)
+		return Response(serializer.data)
 
 
 class ActivityLogListView(APIView):

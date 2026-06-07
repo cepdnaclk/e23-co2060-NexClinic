@@ -67,6 +67,7 @@ from django.utils import timezone
 from django.db import transaction
 from patient.models import PatientProfile
 from doctor.models import DoctorProfile
+from hospital.models import HospitalAdmin, HospitalAdminProfile
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -159,10 +160,78 @@ class VerifyOTPView(APIView):
                         logger.exception('Failed to send admin notification for doctor registration: %s', user.email)
 
                 transaction.on_commit(send_doctor_notification)
+            elif pending_user.role == 'HOSPITAL_ADMIN':
+                # Create hospital admin profile and a disabled HospitalAdmin link (requires system admin verification)
+                from datetime import date as _date
+
+                pdata = dict(pending_user.profile_data)
+                # parse dates if present (expecting ISO date strings)
+                dob = None
+                doj = None
+                try:
+                    if pdata.get('date_of_birth'):
+                        dob = _date.fromisoformat(pdata.get('date_of_birth'))
+                except Exception:
+                    dob = None
+                try:
+                    if pdata.get('date_of_joining'):
+                        doj = _date.fromisoformat(pdata.get('date_of_joining'))
+                except Exception:
+                    doj = None
+
+                HospitalAdminProfile.objects.create(
+                    user=user,
+                    full_name=pdata.get('full_name', ''),
+                    date_of_birth=dob,
+                    gender=pdata.get('gender', 'Other'),
+                    nic_number=pdata.get('nic_number', ''),
+                    phone=pdata.get('phone', ''),
+                    address=pdata.get('address', ''),
+                    employee_id=pdata.get('employee_id', ''),
+                    designation=pdata.get('designation', ''),
+                    date_of_joining=doj,
+                    is_verified=False,
+                )
+
+                # Create inactive HospitalAdmin role if hospital_id provided
+                hid = pdata.get('hospital_id')
+                if hid:
+                    try:
+                        HospitalAdmin.objects.create(user=user, hospital_id=hid, is_active=False)
+                    except Exception:
+                        # don't fail verification due to hospital linkage issues
+                        logger.exception('Failed to create HospitalAdmin link for %s (hospital_id=%s)', user.email, hid)
+
+                def send_hospital_admin_notification():
+                    try:
+                        send_admin_notification_email(user.email, pdata.get('full_name', 'Hospital Admin'))
+                    except Exception:
+                        logger.exception('Failed to send admin notification for hospital admin registration: %s', user.email)
+
+                transaction.on_commit(send_hospital_admin_notification)
             
             pending_user.delete()
 
-        return Response({'message': 'Account verified successfully'}, status=status.HTTP_200_OK)
+        # If the newly created user is a hospital admin and already verified/active,
+        # issue JWT tokens so they can be redirected straight to the admin dashboard.
+        response_data = {'message': 'Account verified successfully'}
+
+        if pending_user.role == 'HOSPITAL_ADMIN':
+            try:
+                admin_profile = HospitalAdminProfile.objects.filter(user=user).first()
+                active_admin_link = HospitalAdmin.objects.filter(user=user, is_active=True).exists()
+
+                if admin_profile and admin_profile.is_verified and active_admin_link:
+                    refresh = RefreshToken.for_user(user)
+                    response_data.update({
+                        'access': str(refresh.access_token),
+                        'refresh': str(refresh),
+                        'role': 'HOSPITAL_ADMIN',
+                    })
+            except Exception:
+                logger.exception('Failed while attempting to issue tokens after verification for %s', user.email)
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 class ResendOTPView(APIView):
     permission_classes = [AllowAny]
