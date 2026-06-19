@@ -35,77 +35,77 @@ class DoctorProfile(models.Model):
 # These models are kept for backwards compatibility with existing database schema
 # and will be cleaned up in a future migration.
 
-class Hospital(models.Model):
-    """Deprecated: Use hospital.Hospital instead"""
-    name = models.CharField(max_length=255, unique=True)
-    address = models.TextField(blank=True, default="")
-    contact_numbers = models.CharField(max_length=255, blank=True, default="")
-    email = models.EmailField(blank=True, default="")
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+# class Hospital(models.Model):
+#     """Deprecated: Use hospital.Hospital instead"""
+#     name = models.CharField(max_length=255, unique=True)
+#     address = models.TextField(blank=True, default="")
+#     contact_numbers = models.CharField(max_length=255, blank=True, default="")
+#     email = models.EmailField(blank=True, default="")
+#     is_active = models.BooleanField(default=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.name
-
-
-class HospitalAdmin(models.Model):
-    """Deprecated: Use hospital.HospitalAdmin instead"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='hospital_admin_roles_old')
-    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='admins_old')
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'hospital')
-
-    def __str__(self):
-        return f"{self.user} @ {self.hospital}"
+#     def __str__(self):
+#         return self.name
 
 
-class DoctorHospitalVerification(models.Model):
-    """Deprecated: Use hospital.DoctorHospitalVerification instead"""
-    class Status(models.TextChoices):
-        PENDING = "PENDING", "Pending"
-        VERIFIED = "VERIFIED", "Verified"
-        REJECTED = "REJECTED", "Rejected"
+# class HospitalAdmin(models.Model):
+#     """Deprecated: Use hospital.HospitalAdmin instead"""
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='hospital_admin_roles_old')
+#     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='admins_old')
+#     is_active = models.BooleanField(default=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    doctor = models.ForeignKey('DoctorProfile', on_delete=models.CASCADE, related_name='hospital_verifications_old')
-    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='doctor_verifications_old')
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
-    verified_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='verifications_done_old')
-    verified_at = models.DateTimeField(null=True, blank=True)
-    rejection_reason = models.TextField(blank=True, default="")
-    created_at = models.DateTimeField(auto_now_add=True)
+#     class Meta:
+#         unique_together = ('user', 'hospital')
 
-    class Meta:
-        unique_together = ('doctor', 'hospital')
-
-    def __str__(self):
-        return f"{self.doctor} - {self.hospital} ({self.status})"
+#     def __str__(self):
+#         return f"{self.user} @ {self.hospital}"
 
 
-class SlotTemplate(models.Model):
-    """Deprecated: Use hospital.SlotTemplate instead"""
-    doctor = models.ForeignKey('DoctorProfile', on_delete=models.CASCADE, related_name='slot_templates_old')
-    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='slot_templates_old')
-    day_of_week = models.IntegerField(help_text="0=Monday .. 6=Sunday")
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    slot_duration_minutes = models.PositiveIntegerField(default=30)
-    default_patient_limit = models.PositiveIntegerField(default=1)
-    is_active = models.BooleanField(default=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='created_slot_templates_old')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+# class DoctorHospitalVerification(models.Model):
+#     """Deprecated: Use hospital.DoctorHospitalVerification instead"""
+#     class Status(models.TextChoices):
+#         PENDING = "PENDING", "Pending"
+#         VERIFIED = "VERIFIED", "Verified"
+#         REJECTED = "REJECTED", "Rejected"
 
-    class Meta:
-        indexes = [
-            models.Index(fields=['doctor', 'hospital', 'day_of_week']),
-        ]
+#     doctor = models.ForeignKey('DoctorProfile', on_delete=models.CASCADE, related_name='hospital_verifications_old')
+#     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='doctor_verifications_old')
+#     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+#     verified_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='verifications_done_old')
+#     verified_at = models.DateTimeField(null=True, blank=True)
+#     rejection_reason = models.TextField(blank=True, default="")
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Template: {self.doctor} @ {self.hospital} on {self.day_of_week} {self.start_time}-{self.end_time}"
+#     class Meta:
+#         unique_together = ('doctor', 'hospital')
+
+#     def __str__(self):
+#         return f"{self.doctor} - {self.hospital} ({self.status})"
+
+
+# class SlotTemplate(models.Model):
+#     """Deprecated: Use hospital.SlotTemplate instead"""
+#     doctor = models.ForeignKey('DoctorProfile', on_delete=models.CASCADE, related_name='slot_templates_old')
+#     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='slot_templates_old')
+#     day_of_week = models.IntegerField(help_text="0=Monday .. 6=Sunday")
+#     start_time = models.TimeField()
+#     end_time = models.TimeField()
+#     slot_duration_minutes = models.PositiveIntegerField(default=30)
+#     default_patient_limit = models.PositiveIntegerField(default=1)
+#     is_active = models.BooleanField(default=True)
+#     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='created_slot_templates_old')
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     class Meta:
+#         indexes = [
+#             models.Index(fields=['doctor', 'hospital', 'day_of_week']),
+#         ]
+
+#     def __str__(self):
+#         return f"Template: {self.doctor} @ {self.hospital} on {self.day_of_week} {self.start_time}-{self.end_time}"
 
 
 class DoctorAppointmentAvailability(models.Model):
