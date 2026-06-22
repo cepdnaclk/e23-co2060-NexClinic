@@ -20,6 +20,7 @@ from .views import (
     AdminAppointmentSlotGenerationView,
     DoctorOnlineAdviceSlotsView,
     DoctorOnlineAdviceSlotDetailView,
+    DoctorRequestHospitalLinkView,
 )
 
 urlpatterns = [
@@ -36,6 +37,7 @@ urlpatterns = [
     path("appointment-slots/<int:slot_id>/", DoctorAppointmentSlotDetailView.as_view(), name="doctor-appointment-slot-detail"),
     path("online-advice-slots/", DoctorOnlineAdviceSlotsView.as_view(), name="doctor-online-advice-slots"),
     path("online-advice-slots/<int:slot_id>/", DoctorOnlineAdviceSlotDetailView.as_view(), name="doctor-online-advice-slot-detail"),
+    path("hospital-requests/", DoctorRequestHospitalLinkView.as_view(), name="doctor-hospital-requests"),
     path("admin/hospitals/", AdminHospitalListView.as_view(), name="admin-hospitals"),
     path("admin/doctor-verifications/", AdminDoctorVerificationListView.as_view(), name="admin-doctor-verifications"),
     path("admin/doctor-verifications/<int:verification_id>/action/", AdminDoctorVerificationActionView.as_view(), name="admin-doctor-verification-action"),

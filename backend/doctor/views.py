@@ -1167,3 +1167,80 @@ class DoctorOnlineAdviceSlotDetailView(VerifiedDoctorAPIView):
         slot.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class DoctorRequestHospitalLinkView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if getattr(request.user, 'role', None) != 'DOCTOR':
+            return Response({"detail": "User is not a doctor."}, status=status.HTTP_403_FORBIDDEN)
+        
+        doctor = DoctorProfile.objects.filter(user=request.user).first()
+        if not doctor:
+            return Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        queryset = DoctorHospitalVerification.objects.filter(doctor=doctor).select_related(
+            "hospital", "verified_by"
+        ).order_by("-created_at")
+
+        serializer = DoctorHospitalVerificationSerializer(queryset, many=True)
+        return Response({"verifications": serializer.data}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        if getattr(request.user, 'role', None) != 'DOCTOR':
+            return Response({"detail": "User is not a doctor."}, status=status.HTTP_403_FORBIDDEN)
+        
+        doctor = DoctorProfile.objects.filter(user=request.user).first()
+        if not doctor:
+            return Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        hospital_id = request.data.get("hospital_id")
+        if not hospital_id:
+            return Response({"detail": "hospital_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        hospital = Hospital.objects.filter(id=hospital_id, is_active=True).first()
+        if not hospital:
+            return Response({"detail": "Active hospital not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        from hospital.models import ActivityLog
+
+        # Check existing verifications
+        verification = DoctorHospitalVerification.objects.filter(doctor=doctor, hospital=hospital).first()
+        if verification:
+            if verification.status == DoctorHospitalVerification.Status.VERIFIED:
+                return Response({"detail": "You are already verified/affiliated with this hospital."}, status=status.HTTP_400_BAD_REQUEST)
+            elif verification.status == DoctorHospitalVerification.Status.PENDING:
+                return Response({"detail": "A link request is already pending with this hospital."}, status=status.HTTP_400_BAD_REQUEST)
+            elif verification.status == DoctorHospitalVerification.Status.REJECTED:
+                # Reset to pending on re-request
+                verification.status = DoctorHospitalVerification.Status.PENDING
+                verification.rejection_reason = ""
+                verification.verified_by = None
+                verification.verified_at = None
+                verification.created_at = timezone.now()
+                verification.save()
+            else:
+                # Other status? Force set to pending
+                verification.status = DoctorHospitalVerification.Status.PENDING
+                verification.save()
+        else:
+            verification = DoctorHospitalVerification.objects.create(
+                doctor=doctor,
+                hospital=hospital,
+                status=DoctorHospitalVerification.Status.PENDING
+            )
+
+        # Log activity
+        ActivityLog.objects.create(
+            user=request.user,
+            hospital=hospital,
+            action="doctor_requested_affiliation",
+            model_name="DoctorHospitalVerification",
+            object_id=str(verification.id),
+            data={"doctor_id": doctor.id},
+            created_at=timezone.now()
+        )
+
+        serializer = DoctorHospitalVerificationSerializer(verification)
+        return Response({"verification": serializer.data}, status=status.HTTP_201_CREATED)
+

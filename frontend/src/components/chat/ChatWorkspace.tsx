@@ -14,6 +14,8 @@ type ChatThread = {
   status: "OPEN" | "CLOSED" | string;
   started_at: string;
   last_message_at: string | null;
+  expires_at: string | null;
+  price_paid: string;
   doctorName?: string;
   patientName?: string;
   unreadCount: number;
@@ -26,6 +28,7 @@ type ChatMessage = {
   sender_user: string;
   sender_role: Role;
   message_text: string;
+  attachment: string | null;
   is_read: boolean;
   sent_at: string;
 };
@@ -81,19 +84,48 @@ export default function ChatWorkspace({
   const [selectedThreadId, setSelectedThreadId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [composer, setComposer] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [loadingThreads, setLoadingThreads] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState("");
   const [initialThreadsLoaded, setInitialThreadsLoaded] = useState(false);
+  const [wsStatus, setWsStatus] = useState<"Connecting..." | "Connected" | "Disconnected">("Disconnected");
   const hasAutoOpenedDoctorRef = useRef(false);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   const selectedThread = useMemo(
     () => threads.find((thread) => thread.id === selectedThreadId) || null,
     [selectedThreadId, threads],
   );
+
+  const [timeLeft, setTimeLeft] = useState<string>("");
+  const isExpired = useMemo(() => {
+    if (!selectedThread?.expires_at) return false;
+    return new Date(selectedThread.expires_at).getTime() < Date.now();
+  }, [selectedThread?.expires_at, timeLeft]); // depend on timeLeft to re-evaluate every minute
+
+  useEffect(() => {
+    if (!selectedThread?.expires_at) {
+      setTimeLeft("");
+      return;
+    }
+    const updateTimeLeft = () => {
+      const diff = new Date(selectedThread.expires_at!).getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeLeft("Expired");
+      } else {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        setTimeLeft(`${hours}h ${minutes}m left`);
+      }
+    };
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 60000);
+    return () => clearInterval(interval);
+  }, [selectedThread?.expires_at]);
 
   const filteredThreads = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -185,10 +217,21 @@ export default function ChatWorkspace({
 
   const openOrCreatePatientThread = useCallback(async (doctorId: string) => {
     try {
+      const slotsResponse = await fetch(`/api/chat/slots/doctor/${doctorId}`);
+      if (!slotsResponse.ok) throw new Error("Failed to fetch doctor slots");
+      const slotsPayload = await slotsResponse.json().catch(() => ({}));
+      const slots = slotsPayload?.slots || [];
+      
+      if (slots.length === 0) {
+         throw new Error("This doctor has no available chat slots set by the hospital admin.");
+      }
+      
+      const slotId = slots[0].id;
+
       const response = await fetch("/api/chat/threads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ doctor_id: Number(doctorId) }),
+        body: JSON.stringify({ chat_slot_id: Number(slotId) }),
       });
 
       if (response.status === 401 || response.status === 403) {
@@ -218,7 +261,10 @@ export default function ChatWorkspace({
   }, [onSessionExpired, role, onPatientChatUnavailable, loadThreads]);
 
   const sendMessage = async () => {
-    if (!selectedThreadId || !composer.trim() || selectedThread?.status === "CLOSED") {
+    if (!selectedThreadId || selectedThread?.status === "CLOSED" || isExpired) {
+      return;
+    }
+    if (!composer.trim() && !attachmentFile) {
       return;
     }
 
@@ -226,24 +272,52 @@ export default function ChatWorkspace({
     setError("");
 
     try {
-      const response = await fetch(`/api/chat/threads/${selectedThreadId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message_text: composer.trim() }),
-      });
+      if (attachmentFile) {
+        const formData = new FormData();
+        formData.append("attachment", attachmentFile);
+        formData.append("message_text", composer.trim());
 
-      if (response.status === 401 || response.status === 403) {
-        onSessionExpired();
-        return;
+        const response = await fetch(`/api/chat/threads/${selectedThreadId}/messages/upload/`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          onSessionExpired();
+          return;
+        }
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || payload?.detail || "Failed to send attachment");
+        }
+
+        setComposer("");
+        setAttachmentFile(null);
+        await Promise.all([loadMessages(selectedThreadId), loadThreads(true)]);
+      } else if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ message_text: composer.trim() }));
+        setComposer("");
+      } else {
+        const response = await fetch(`/api/chat/threads/${selectedThreadId}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message_text: composer.trim() }),
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          onSessionExpired();
+          return;
+        }
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || payload?.detail || "Failed to send message");
+        }
+
+        setComposer("");
+        await Promise.all([loadMessages(selectedThreadId), loadThreads(true)]);
       }
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.error || payload?.detail || "Failed to send message");
-      }
-
-      setComposer("");
-      await Promise.all([loadMessages(selectedThreadId), loadThreads(true)]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send message");
     } finally {
@@ -325,6 +399,50 @@ export default function ChatWorkspace({
     void openOrCreatePatientThread(defaultDoctorId);
   }, [defaultDoctorId, initialThreadsLoaded, role, openOrCreatePatientThread]);
 
+  // WebSocket Connection
+  useEffect(() => {
+    if (!selectedThreadId) return;
+
+    setWsStatus("Connecting...");
+    
+    // Fallback URL assumes typical local dev environment
+    const backendUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
+    const wsUrl = `${backendUrl}/ws/chat/${selectedThreadId}/`;
+
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      setWsStatus("Connected");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.message) {
+          setMessages((prev) => [...prev, data.message]);
+          // Refresh thread list to update unread counts and last message preview
+          loadThreads(true);
+        }
+      } catch (err) {
+        console.error("Failed to parse WebSocket message", err);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      setWsStatus("Disconnected");
+    };
+
+    ws.onclose = () => {
+      setWsStatus("Disconnected");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [selectedThreadId, loadThreads]);
+
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -383,6 +501,13 @@ export default function ChatWorkspace({
           <div className="hidden rounded-2xl border border-violet-100 bg-violet-50/80 p-4 xl:block">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Status</p>
             <p className="mt-2 text-2xl font-bold text-slate-900">{selectedThread?.status || "Idle"}</p>
+          </div>
+          <div className="hidden rounded-2xl border border-amber-100 bg-amber-50/80 p-4 xl:block">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Connection</p>
+            <div className="mt-2 flex items-center gap-2">
+              <span className={`h-3 w-3 rounded-full ${wsStatus === 'Connected' ? 'bg-green-500 animate-pulse' : wsStatus === 'Connecting...' ? 'bg-yellow-500 animate-bounce' : 'bg-red-500'}`}></span>
+              <p className="text-xl font-bold text-slate-900">{wsStatus}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -530,6 +655,17 @@ export default function ChatWorkspace({
                           }`}
                         >
                           <p className="whitespace-pre-wrap text-sm leading-6">{message.message_text}</p>
+                          {message.attachment && (
+                            <div className="mt-2">
+                              {message.attachment.match(/\.(jpeg|jpg|gif|png)$/) ? (
+                                <img src={message.attachment} alt="attachment" className="max-w-full rounded-xl max-h-60 object-cover" />
+                              ) : (
+                                <a href={message.attachment} target="_blank" rel="noreferrer" className="underline font-semibold text-xs">
+                                  View Attachment
+                                </a>
+                              )}
+                            </div>
+                          )}
                           <p className={`mt-2 text-[11px] ${isOwnMessage ? "text-emerald-50" : "text-slate-500"}`}>
                             {formatTime(message.sent_at)}
                             {isOwnMessage ? " · You" : role === "DOCTOR" ? " · Patient" : " · Doctor"}
@@ -560,16 +696,40 @@ export default function ChatWorkspace({
                   <p className="text-xs text-slate-500">
                     {selectedThread.status === "CLOSED"
                       ? "Closed threads cannot receive new messages until reopened."
+                      : isExpired 
+                      ? "This consultation ticket has expired."
                       : "Press send when you are ready."}
                   </p>
-                  <GreenButton
-                    onClick={() => void sendMessage()}
-                    disabled={sending || selectedThread.status === "CLOSED" || !composer.trim()}
-                    className="rounded-full px-6 py-3"
-                  >
-                    {sending ? "Sending..." : "Send message"}
-                  </GreenButton>
+                  
+                  <div className="flex items-center gap-3">
+                    {timeLeft && selectedThread.status === "OPEN" && !isExpired && (
+                      <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">{timeLeft}</span>
+                    )}
+                    <label className={`flex items-center justify-center w-10 h-10 rounded-full transition cursor-pointer ${attachmentFile ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'} ${isExpired || selectedThread.status === "CLOSED" ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        disabled={isExpired || selectedThread.status === "CLOSED"}
+                        onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+                      />
+                      📎
+                    </label>
+                    
+                    <GreenButton
+                      onClick={() => void sendMessage()}
+                      disabled={sending || selectedThread.status === "CLOSED" || isExpired || (!composer.trim() && !attachmentFile)}
+                      className="rounded-full px-6 py-3"
+                    >
+                      {sending ? "Sending..." : "Send message"}
+                    </GreenButton>
+                  </div>
                 </div>
+                {attachmentFile && (
+                  <div className="mt-2 text-xs text-emerald-600 font-semibold">
+                    Attached: {attachmentFile.name} 
+                    <button onClick={() => setAttachmentFile(null)} className="ml-2 text-rose-500 hover:underline">Remove</button>
+                  </div>
+                )}
               </div>
             </>
           ) : (

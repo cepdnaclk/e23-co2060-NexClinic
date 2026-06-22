@@ -1,7 +1,12 @@
 from rest_framework import serializers
 
-from .models import AdviceChatMessage, AdviceChatThread
+from .models import AdviceChatMessage, AdviceChatThread, DoctorChatSlot
 
+
+class DoctorChatSlotSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = DoctorChatSlot
+		fields = '__all__'
 
 class AdviceChatThreadSerializer(serializers.ModelSerializer):
 	doctorName = serializers.SerializerMethodField()
@@ -17,6 +22,8 @@ class AdviceChatThreadSerializer(serializers.ModelSerializer):
 			"status",
 			"started_at",
 			"last_message_at",
+			"expires_at",
+			"price_paid",
 			"doctorName",
 			"patientName",
 			"unreadCount",
@@ -44,11 +51,11 @@ class AdviceChatThreadSerializer(serializers.ModelSerializer):
 
 
 class AdviceChatThreadCreateSerializer(serializers.Serializer):
-	doctor_id = serializers.IntegerField()
+	chat_slot_id = serializers.IntegerField()
 
-	def validate_doctor_id(self, value):
+	def validate_chat_slot_id(self, value):
 		if value <= 0:
-			raise serializers.ValidationError("doctor_id must be a positive integer.")
+			raise serializers.ValidationError("chat_slot_id must be a positive integer.")
 		return value
 
 
@@ -61,6 +68,7 @@ class AdviceChatMessageSerializer(serializers.ModelSerializer):
 			"sender_user",
 			"sender_role",
 			"message_text",
+			"attachment",
 			"is_read",
 			"sent_at",
 		]

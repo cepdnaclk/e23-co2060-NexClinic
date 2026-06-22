@@ -52,10 +52,29 @@ class HospitalAdminSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'userEmail', 'hospitalName']
 
 
+class DoctorVerificationProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DoctorProfile
+        fields = [
+            'id',
+            'full_name',
+            'preferred_name',
+            'nic_number',
+            'phone',
+            'license_number',
+            'specialization',
+            'gender',
+            'experience_years',
+            'qualifications',
+            'address',
+        ]
+
+
 class DoctorHospitalVerificationSerializer(serializers.ModelSerializer):
     doctorName = serializers.CharField(source='doctor.full_name', read_only=True)
     hospitalName = serializers.CharField(source='hospital.name', read_only=True)
     verifiedByEmail = serializers.CharField(source='verified_by.email', read_only=True)
+    doctorDetails = DoctorVerificationProfileSerializer(source='doctor', read_only=True)
 
     class Meta:
         model = DoctorHospitalVerification
@@ -63,6 +82,7 @@ class DoctorHospitalVerificationSerializer(serializers.ModelSerializer):
             'id',
             'doctor',
             'doctorName',
+            'doctorDetails',
             'hospital',
             'hospitalName',
             'status',

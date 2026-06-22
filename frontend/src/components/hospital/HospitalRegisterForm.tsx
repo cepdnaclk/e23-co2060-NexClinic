@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import BlackButton from "@/components/buttons/BlackButton";
 import axios from "axios";
 
 type HospitalOption = {
@@ -16,7 +15,7 @@ type HospitalOption = {
 const SL_NIC_REGEX = /^(?:\d{9}[VvXx]|\d{12})$/;
 const SL_PHONE_REGEX = /^(?:\+94|0)?7\d{8}$/;
 
-function HospitalRegisterForm() {
+export default function HospitalRegisterForm() {
   const [fullName, setFullName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("Male");
@@ -109,8 +108,7 @@ function HospitalRegisterForm() {
         password2,
       };
 
-      const resp = await axios.post('/api/auth/hospital/register', payload);
-      // Redirect to verify OTP with role param
+      await axios.post('/api/auth/hospital/register', payload);
       router.push(`/verify-otp?email=${encodeURIComponent(email)}&role=hospital`);
     } catch (err: any) {
       setError(err.response?.data?.error || err.response?.data?.detail || 'Registration failed.');
@@ -120,53 +118,234 @@ function HospitalRegisterForm() {
   };
 
   return (
-    <div className="flex flex-col w-[400px] gap-4 p-6 bg-white items-center justify-center rounded-xl shadow-md">
-      <div className="mb-4 items-center text-2xl font-bold">
-        <p>Hospital Admin Registration</p>
-      </div>
-      <form className="flex flex-col gap-3 w-full" onSubmit={handleSubmit}>
-        <input placeholder="Full name" value={fullName} onChange={e=>setFullName(e.target.value)} required className="shadow rounded-lg p-2" />
-        <div className="flex gap-2">
-          <input type="date" value={dateOfBirth} onChange={e=>setDateOfBirth(e.target.value)} required className="shadow rounded-lg p-2" />
-          <select value={gender} onChange={e=>setGender(e.target.value)} className="shadow rounded-lg p-2">
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
-          </select>
+    <div className="w-full bg-white/95 border border-slate-100 rounded-3xl shadow-xl p-6 sm:p-8 backdrop-blur-md">
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        
+        {/* Section 1: Personal Information */}
+        <div>
+          <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
+            Personal Details
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Full Name</label>
+              <input
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Date of Birth</label>
+              <input
+                type="date"
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Gender</label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              >
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">NIC Number</label>
+              <input
+                placeholder="Enter National ID"
+                value={nic}
+                onChange={(e) => setNic(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Phone Number</label>
+              <input
+                placeholder="e.g. 0771234567"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Residential Address</label>
+              <input
+                placeholder="Enter your home address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+          </div>
         </div>
-        <input placeholder="National ID (NIC)" value={nic} onChange={e=>setNic(e.target.value)} required className="shadow rounded-lg p-2" />
-        <input type="email" placeholder="Official email" value={email} onChange={e=>setEmail(e.target.value)} required className="shadow rounded-lg p-2" />
-        <input placeholder="Phone" value={phone} onChange={e=>setPhone(e.target.value)} required className="shadow rounded-lg p-2" />
-        <input placeholder="Residential address" value={address} onChange={e=>setAddress(e.target.value)} required className="shadow rounded-lg p-2" />
-        <div className="flex gap-2">
-          <input placeholder="Employee ID" value={employeeId} onChange={e=>setEmployeeId(e.target.value)} required className="shadow rounded-lg p-2 flex-1" />
-          <input placeholder="Designation" value={designation} onChange={e=>setDesignation(e.target.value)} required className="shadow rounded-lg p-2 flex-1" />
+
+        {/* Section 2: Hospital Association */}
+        <div>
+          <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
+            Employment Details
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Employee ID</label>
+              <input
+                placeholder="Enter work ID"
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Designation</label>
+              <input
+                placeholder="e.g. Operations Manager"
+                value={designation}
+                onChange={(e) => setDesignation(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Date of Joining</label>
+              <input
+                type="date"
+                value={dateOfJoining}
+                onChange={(e) => setDateOfJoining(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Select Hospital</label>
+              <select
+                value={hospitalId}
+                onChange={(e) => setHospitalId(e.target.value)}
+                required
+                disabled={loading || hospitalLoading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              >
+                <option value="">{hospitalLoading ? "Loading hospitals..." : "Select hospital"}</option>
+                {hospitals.map((hospital) => (
+                  <option key={hospital.id} value={hospital.id}>
+                    {hospital.name}
+                  </option>
+                ))}
+              </select>
+              {hospitalFetchError && <p className="text-xs text-red-500 mt-1">{hospitalFetchError}</p>}
+            </div>
+          </div>
         </div>
-        <input type="date" placeholder="Date of joining" value={dateOfJoining} onChange={e=>setDateOfJoining(e.target.value)} required className="shadow rounded-lg p-2" />
-        <select
-          value={hospitalId}
-          onChange={e=>setHospitalId(e.target.value)}
-          required
-          disabled={hospitalLoading}
-          className="shadow rounded-lg p-2 bg-white"
-        >
-          <option value="">{hospitalLoading ? "Loading hospitals..." : "Select hospital"}</option>
-          {hospitals.map((hospital) => (
-            <option key={hospital.id} value={hospital.id}>
-              {hospital.name}
-            </option>
-          ))}
-        </select>
-        {hospitalFetchError && <p className="text-xs text-red-500">{hospitalFetchError}</p>}
-        <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required className="shadow rounded-lg p-2" />
-        <input type="password" placeholder="Confirm password" value={password2} onChange={e=>setPassword2(e.target.value)} required className="shadow rounded-lg p-2" />
-        {error && <p className="text-sm text-red-500">{error}</p>}
-        <BlackButton type="submit" disabled={loading} className="w-full py-2 rounded-lg">
-          <span className="text-white font-bold">{loading ? 'Registering...' : 'Register'}</span>
-        </BlackButton>
+
+        {/* Section 3: Credentials */}
+        <div>
+          <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
+            Account Credentials
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Official Email Address</label>
+              <input
+                type="email"
+                placeholder="Enter official email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Password</label>
+              <input
+                type="password"
+                placeholder="At least 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Confirm Password</label>
+              <input
+                type="password"
+                placeholder="Re-enter password"
+                value={password2}
+                onChange={(e) => setPassword2(e.target.value)}
+                required
+                disabled={loading}
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              />
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-600 font-medium">
+            {error}
+          </div>
+        )}
+
+        {/* Buttons */}
+        <div className="flex gap-4 border-t border-slate-100 pt-6">
+          <button
+            type="button"
+            onClick={() => router.push("/hospital/login")}
+            disabled={loading}
+            className="flex-1 rounded-xl border border-slate-200 hover:bg-slate-50 py-3 text-sm font-semibold text-slate-600 transition-all active:scale-[0.99] disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-[2] flex justify-center items-center rounded-xl bg-emerald-600 hover:bg-emerald-700 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl active:scale-[0.99] disabled:opacity-50"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Registering...
+              </span>
+            ) : (
+              "Submit Application"
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );
 }
-
-export default HospitalRegisterForm;

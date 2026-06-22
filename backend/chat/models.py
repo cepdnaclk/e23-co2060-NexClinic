@@ -3,6 +3,17 @@ from django.db import models
 
 from doctor.models import DoctorProfile
 from patient.models import PatientProfile
+from hospital.models import Hospital
+
+class DoctorChatSlot(models.Model):
+	doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name="chat_slots")
+	hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name="chat_slots")
+	duration_minutes = models.IntegerField(default=1440)
+	price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+	is_active = models.BooleanField(default=True)
+
+	def __str__(self):
+		return f"{self.doctor} - {self.duration_minutes}m for ${self.price}"
 
 
 class AdviceChatThread(models.Model):
@@ -16,6 +27,8 @@ class AdviceChatThread(models.Model):
 	status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
 	started_at = models.DateTimeField(auto_now_add=True)
 	last_message_at = models.DateTimeField(null=True, blank=True)
+	expires_at = models.DateTimeField(null=True, blank=True)
+	price_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
 	class Meta:
 		constraints = [
@@ -45,6 +58,7 @@ class AdviceChatMessage(models.Model):
 	sender_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_chat_messages")
 	sender_role = models.CharField(max_length=20, choices=SenderRole.choices)
 	message_text = models.TextField()
+	attachment = models.FileField(upload_to="chat_attachments/", null=True, blank=True)
 	is_read = models.BooleanField(default=False)
 	sent_at = models.DateTimeField(auto_now_add=True)
 

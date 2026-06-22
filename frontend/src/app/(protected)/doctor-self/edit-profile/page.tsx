@@ -54,6 +54,26 @@ type DoctorProfileData = {
   };
 };
 
+type ActiveHospital = {
+  id: number;
+  name: string;
+  is_active: boolean;
+};
+
+type VerificationRequest = {
+  id: number;
+  doctor: number;
+  doctorName: string;
+  hospital: number;
+  hospitalName: string;
+  status: "PENDING" | "VERIFIED" | "REJECTED";
+  verified_by: number | null;
+  verifiedByEmail: string | null;
+  verified_at: string | null;
+  rejection_reason?: string;
+  created_at: string;
+};
+
 const DRAFT_STORAGE_KEY = "doctor-profile-draft";
 const DRAFT_SAVED_AT_KEY = "doctor-profile-draft-saved-at";
 
@@ -347,6 +367,105 @@ export default function EditDoctorProfilePage() {
   const [notice, setNotice] = useState("");
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
 
+  const [activeHospitals, setActiveHospitals] = useState<ActiveHospital[]>([]);
+  const [hospitalRequests, setHospitalRequests] = useState<VerificationRequest[]>([]);
+  const [selectedHospitalId, setSelectedHospitalId] = useState<string>("");
+  const [requestsLoading, setRequestsLoading] = useState<boolean>(true);
+  const [requesting, setRequesting] = useState<boolean>(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText?: string;
+    isDanger?: boolean;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const triggerConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    confirmText = "Confirm",
+    isDanger = false
+  ) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      },
+      confirmText,
+      isDanger,
+    });
+  };
+
+  const fetchHospitalsAndRequests = async () => {
+    setRequestsLoading(true);
+    try {
+      const [hospRes, reqRes] = await Promise.all([
+        fetch("/api/hospital/active", { method: "GET", cache: "no-store" }),
+        fetch("/api/doctor/hospital-requests", { method: "GET", cache: "no-store" }),
+      ]);
+
+      if (hospRes.ok) {
+        const hospData = await hospRes.json();
+        setActiveHospitals(hospData || []);
+      }
+      if (reqRes.ok) {
+        const reqData = await reqRes.json();
+        setHospitalRequests(reqData.verifications || []);
+      }
+    } catch (err) {
+      console.error("Failed to load hospitals/requests", err);
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
+  const handleRequestAffiliation = async (hospitalId: number) => {
+    setRequesting(true);
+    setNotice("");
+    setError("");
+    try {
+      const response = await fetch("/api/doctor/hospital-requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ hospital_id: hospitalId }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || data.error || "Failed to submit request");
+      }
+
+      setNotice("Hospital affiliation request submitted successfully.");
+      setSelectedHospitalId("");
+      await fetchHospitalsAndRequests();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit request");
+    } finally {
+      setRequesting(false);
+    }
+  };
+
+  const confirmRequestAffiliation = (hospitalId: number, hospitalName: string) => {
+    triggerConfirm(
+      "Confirm Affiliation Request",
+      `Are you sure you want to request affiliation with ${hospitalName}?`,
+      () => { void handleRequestAffiliation(hospitalId); },
+      "Submit Request"
+    );
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       setLoading(true);
@@ -409,6 +528,7 @@ export default function EditDoctorProfilePage() {
     };
 
     loadProfile();
+    fetchHospitalsAndRequests();
   }, [router]);
 
   const profileImage = useMemo(() => {
@@ -425,6 +545,15 @@ export default function EditDoctorProfilePage() {
       .map((part) => part[0]?.toUpperCase() || "")
       .join("");
   }, [formData.fullName]);
+
+  const availableHospitals = useMemo(() => {
+    return activeHospitals.filter((hospital) => {
+      const hasPendingOrVerified = hospitalRequests.some(
+        (req) => req.hospital === hospital.id && (req.status === "PENDING" || req.status === "VERIFIED")
+      );
+      return !hasPendingOrVerified;
+    });
+  }, [activeHospitals, hospitalRequests]);
 
   const handleChange = (field: keyof DoctorFormData, value: string | string[] | boolean) => {
     setFormData((previous) => ({
@@ -746,23 +875,88 @@ export default function EditDoctorProfilePage() {
                 </div>
 
                 <div className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)] backdrop-blur">
-                  <SectionHeader title="Hospitals and Coverage" description="Hospital affiliation is managed through hospital verification workflows." />
-                  <div className="mt-6 grid gap-4">
-                    <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 text-sm text-amber-900">
-                      Changes to hospitals are not saved from this page. Hospital assignments update automatically after hospital admin verification.
+                  <SectionHeader title="Hospitals and Coverage" description="Request affiliation to active hospitals to configure your practice location and scheduling." />
+                  <div className="mt-6 space-y-6">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-slate-800">Request Affiliation</label>
+                      <div className="flex gap-2">
+                        <select
+                          value={selectedHospitalId}
+                          onChange={(e) => setSelectedHospitalId(e.target.value)}
+                          className="flex-1 rounded-2xl border border-white/80 bg-white/85 px-4 py-3 text-slate-900 shadow-sm shadow-emerald-100/10 focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                        >
+                          <option value="">Select an active hospital...</option>
+                          {availableHospitals.map((hospital) => (
+                            <option key={hospital.id} value={hospital.id}>
+                              {hospital.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          disabled={!selectedHospitalId || requesting}
+                          onClick={() => {
+                            const selected = activeHospitals.find(h => String(h.id) === selectedHospitalId);
+                            if (selected) {
+                              confirmRequestAffiliation(selected.id, selected.name);
+                            }
+                          }}
+                          className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/10 transition hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600"
+                        >
+                          {requesting ? "Submitting..." : "Send Request"}
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.hospitals.length > 0 ? (
-                        formData.hospitals.map((hospital) => (
-                          <span
-                            key={hospital}
-                            className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
-                          >
-                            {hospital}
-                          </span>
-                        ))
+
+                    <div className="border-t border-slate-100 pt-6">
+                      <h4 className="text-sm font-semibold text-slate-800 mb-3">Your Affiliations & Requests</h4>
+                      {requestsLoading ? (
+                        <p className="text-sm text-slate-500">Loading requests...</p>
                       ) : (
-                        <p className="text-sm text-slate-500">No verified hospitals yet.</p>
+                        <div className="space-y-3">
+                          {hospitalRequests.map((req) => (
+                            <div key={req.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/50 gap-3">
+                              <div className="space-y-1">
+                                <p className="font-semibold text-slate-800">{req.hospitalName}</p>
+                                <p className="text-xs text-slate-500">Requested on: {new Date(req.created_at).toLocaleDateString()}</p>
+                                {req.status === "REJECTED" && req.rejection_reason && (
+                                  <div className="text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-lg p-2 mt-1">
+                                    <strong>Rejection Reason:</strong> {req.rejection_reason}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 self-start sm:self-auto">
+                                {req.status === "VERIFIED" && (
+                                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                                    Verified
+                                  </span>
+                                )}
+                                {req.status === "PENDING" && (
+                                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                                    Pending Approval
+                                  </span>
+                                )}
+                                {req.status === "REJECTED" && (
+                                  <>
+                                    <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-200">
+                                      Rejected
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => confirmRequestAffiliation(req.hospital, req.hospitalName)}
+                                      className="px-3 py-1 text-xs font-bold rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition"
+                                    >
+                                      Re-Request
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {hospitalRequests.length === 0 && (
+                            <p className="text-sm text-slate-500 text-center py-4">No requests or affiliations found.</p>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -872,6 +1066,35 @@ export default function EditDoctorProfilePage() {
           </aside>
         </form>
       </div>
+
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 border border-slate-100 text-center">
+            <h3 className="text-lg font-bold text-slate-900">{confirmModal.title}</h3>
+            <p className="text-sm text-slate-500 mt-3 leading-relaxed">{confirmModal.message}</p>
+
+            <div className="flex gap-3 justify-center pt-5 border-t border-slate-50 mt-6">
+              <button
+                type="button"
+                onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+                className="flex-1 px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 text-slate-650 hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className={`flex-1 px-4 py-2 text-xs font-semibold rounded-xl text-white shadow-sm hover:shadow transition-all ${confirmModal.isDanger
+                    ? "bg-rose-600 hover:bg-rose-700 shadow-rose-500/10"
+                    : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10"
+                  }`}
+              >
+                {confirmModal.confirmText || "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

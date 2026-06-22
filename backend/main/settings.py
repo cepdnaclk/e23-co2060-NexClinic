@@ -59,6 +59,7 @@ ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", ["*"])
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -72,6 +73,7 @@ INSTALLED_APPS = [
     "doctor",
     "hospital",
     "chat",
+    "channels",
 ]
 
 AUTH_USER_MODEL = 'users.CustomUser'
@@ -107,6 +109,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "main.wsgi.application"
+ASGI_APPLICATION = "main.asgi.application"
 
 
 # Database
@@ -169,10 +172,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Media files
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -303,6 +308,18 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
+# Channels configuration
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        # Uncomment the following to use Redis once you have Redis running:
+        # "BACKEND": "channels_redis.core.RedisChannelLayer",
+        # "CONFIG": {
+        #     "hosts": [os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0').replace('/0', '/1')],
+        # },
+    }
+}
+
 # Schedule: weekly regeneration of slots (run every Monday at 02:00)
 from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
@@ -312,3 +329,9 @@ CELERY_BEAT_SCHEDULE = {
         'args': (),
     },
 }
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+

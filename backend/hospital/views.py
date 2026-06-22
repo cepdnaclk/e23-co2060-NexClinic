@@ -104,3 +104,135 @@ class ReportsView(APIView):
 			'filled_slots': filled_slots,
 		}
 		return Response(data)
+
+class ManageHospitalDoctorView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+        hospital = admin_role.hospital
+
+        doctor_id = request.data.get("doctor_id")
+        action = request.data.get("action")
+
+        if not doctor_id or action not in ["add", "remove"]:
+            return Response({"detail": "Invalid doctor_id or action. Action must be 'add' or 'remove'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        doctor = get_object_or_404(DoctorProfile, id=doctor_id)
+
+        if action == "add":
+            verification, created = DoctorHospitalVerification.objects.get_or_create(
+                doctor=doctor,
+                hospital=hospital,
+                defaults={
+                    "status": DoctorHospitalVerification.Status.VERIFIED,
+                    "verified_by": request.user,
+                    "verified_at": timezone.now()
+                }
+            )
+            if not created and verification.status != DoctorHospitalVerification.Status.VERIFIED:
+                verification.status = DoctorHospitalVerification.Status.VERIFIED
+                verification.verified_by = request.user
+                verification.verified_at = timezone.now()
+                verification.save()
+            
+            doctor.verified_hospitals.add(hospital)
+            return Response({"detail": "Doctor added successfully."}, status=status.HTTP_200_OK)
+
+        elif action == "remove":
+            verification = DoctorHospitalVerification.objects.filter(doctor=doctor, hospital=hospital).first()
+            verification_id_str = str(verification.id) if verification else ""
+
+            DoctorHospitalVerification.objects.filter(doctor=doctor, hospital=hospital).delete()
+            doctor.verified_hospitals.remove(hospital)
+
+            ActivityLog.objects.create(
+                user=request.user,
+                hospital=hospital,
+                action="doctor_delinked_by_admin",
+                model_name="DoctorProfile",
+                object_id=str(doctor.id),
+                data={"doctor_email": doctor.user.email, "verification_id": verification_id_str},
+                created_at=timezone.now()
+            )
+            return Response({"detail": "Doctor removed successfully."}, status=status.HTTP_200_OK)
+
+
+class CreateHospitalDoctorView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+        hospital = admin_role.hospital
+
+        from .serializers import HospitalAdminCreateDoctorSerializer
+        from django.db import transaction
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+
+        serializer = HospitalAdminCreateDoctorSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        email = data['email']
+        password = data['password']
+
+        with transaction.atomic():
+            # Create user
+            user = User.objects.create_user(
+                email=email,
+                password=password,
+                role='DOCTOR'
+            )
+            user.is_active = True
+            user.save()
+
+            # Create profile
+            doctor_profile = DoctorProfile.objects.create(
+                user=user,
+                specialization=data['specialization'],
+                license_number=data['license_number'],
+                phone=data['phone'],
+                full_name=data['full_name'],
+                preferred_name=data['preferred_name'],
+                nic_number=data['nic_number'],
+                gender=data.get('gender', 'Other'),
+                is_verified=True  # System verified automatically when created by hospital admin
+            )
+
+            # Link/Verify for this hospital
+            verification = DoctorHospitalVerification.objects.create(
+                doctor=doctor_profile,
+                hospital=hospital,
+                status=DoctorHospitalVerification.Status.VERIFIED,
+                verified_by=request.user,
+                verified_at=timezone.now()
+            )
+            doctor_profile.verified_hospitals.add(hospital)
+
+            # Create an ActivityLog entry for audit
+            ActivityLog.objects.create(
+                user=request.user,
+                hospital=hospital,
+                action='doctor_created_by_admin',
+                model_name='DoctorProfile',
+                object_id=str(doctor_profile.id),
+                data={'doctor_email': email},
+                created_at=timezone.now()
+            )
+
+        return Response({
+            "detail": "Doctor account created successfully.",
+            "doctor": {
+                "id": doctor_profile.id,
+                "full_name": doctor_profile.full_name,
+                "email": user.email,
+                "is_added": True
+            }
+        }, status=status.HTTP_201_CREATED)
+

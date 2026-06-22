@@ -11,12 +11,16 @@ from rest_framework.views import APIView
 from doctor.models import DoctorProfile
 from patient.models import PatientProfile
 
-from .models import AdviceChatMessage, AdviceChatThread
+from django.utils import timezone
+from datetime import timedelta
+
+from .models import AdviceChatMessage, AdviceChatThread, DoctorChatSlot
 from .serializers import (
 	AdviceChatMessageCreateSerializer,
 	AdviceChatMessageSerializer,
 	AdviceChatThreadCreateSerializer,
 	AdviceChatThreadSerializer,
+	DoctorChatSlotSerializer,
 )
 
 
@@ -110,14 +114,15 @@ class AdviceChatThreadListCreateView(BaseChatAPIView):
 		doctor_profile, error_response = self._get_doctor_profile_or_response(request.user)
 		patient_profile, patient_error = self._get_patient_profile_or_response(request.user)
 
-		doctor_id = serializer.validated_data["doctor_id"]
+		chat_slot_id = serializer.validated_data["chat_slot_id"]
 		if doctor_profile is None and patient_profile is None:
 			return error_response or patient_error or Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
 		try:
-			target_doctor = DoctorProfile.objects.select_related("user").get(id=doctor_id)
-		except DoctorProfile.DoesNotExist:
-			return Response({"detail": "Doctor not found."}, status=status.HTTP_404_NOT_FOUND)
+			chat_slot = DoctorChatSlot.objects.get(id=chat_slot_id, is_active=True)
+			target_doctor = chat_slot.doctor
+		except DoctorChatSlot.DoesNotExist:
+			return Response({"detail": "Chat slot not found or inactive."}, status=status.HTTP_404_NOT_FOUND)
 
 		if request.user.role == "PATIENT":
 			active_patient = patient_profile
@@ -131,10 +136,6 @@ class AdviceChatThreadListCreateView(BaseChatAPIView):
 						{"detail": "This doctor is currently offline for chats."},
 						status=status.HTTP_409_CONFLICT,
 					)
-
-			if existing_thread:
-				output = AdviceChatThreadSerializer(existing_thread, context={"request": request})
-				return Response({"thread": output.data}, status=status.HTTP_200_OK)
 		elif request.user.role == "DOCTOR":
 			active_patient_id = request.data.get("patient_id")
 			if not active_patient_id:
@@ -147,19 +148,32 @@ class AdviceChatThreadListCreateView(BaseChatAPIView):
 			return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
 		thread_code = f"CHAT{uuid.uuid4().hex[:12].upper()}"
+		expires_at = timezone.now() + timedelta(minutes=chat_slot.duration_minutes)
 
 		try:
 			with transaction.atomic():
+				# We allow reusing the same thread between doctor and patient, but we update the expiration and price.
 				thread, created = AdviceChatThread.objects.get_or_create(
 					doctor=target_doctor,
 					patient=active_patient,
-					defaults={"thread_code": thread_code},
+					defaults={
+						"thread_code": thread_code,
+						"expires_at": expires_at,
+						"price_paid": chat_slot.price,
+						"status": AdviceChatThread.Status.OPEN
+					},
 				)
-				if not created and thread.status == AdviceChatThread.Status.CLOSED:
+				if not created:
+					thread.expires_at = expires_at
+					thread.price_paid = chat_slot.price
 					thread.status = AdviceChatThread.Status.OPEN
-					thread.save(update_fields=["status"])
+					thread.save(update_fields=["expires_at", "price_paid", "status"])
 		except IntegrityError:
 			thread = AdviceChatThread.objects.get(doctor=target_doctor, patient=active_patient)
+			thread.expires_at = expires_at
+			thread.price_paid = chat_slot.price
+			thread.status = AdviceChatThread.Status.OPEN
+			thread.save(update_fields=["expires_at", "price_paid", "status"])
 
 		output = AdviceChatThreadSerializer(thread, context={"request": request})
 		return Response({"thread": output.data}, status=status.HTTP_200_OK)
@@ -215,3 +229,46 @@ class AdviceChatThreadStatusView(BaseChatAPIView):
 
 		output = AdviceChatThreadSerializer(thread, context={"request": request})
 		return Response({"thread": output.data}, status=status.HTTP_200_OK)
+
+class DoctorChatSlotListView(BaseChatAPIView):
+	def get(self, request, doctor_id):
+		slots = DoctorChatSlot.objects.filter(doctor_id=doctor_id, is_active=True)
+		serializer = DoctorChatSlotSerializer(slots, many=True)
+		return Response({"slots": serializer.data}, status=status.HTTP_200_OK)
+
+from rest_framework.parsers import MultiPartParser, FormParser
+
+class AdviceChatMessageUploadView(BaseChatAPIView):
+	parser_classes = (MultiPartParser, FormParser)
+
+	def post(self, request, thread_id):
+		thread, error_response = self._get_thread_for_user_or_response(request, thread_id)
+		if error_response:
+			return error_response
+
+		# Check expiration
+		if thread.status == AdviceChatThread.Status.CLOSED or (thread.expires_at and timezone.now() > thread.expires_at):
+			if thread.status != AdviceChatThread.Status.CLOSED:
+				thread.status = AdviceChatThread.Status.CLOSED
+				thread.save(update_fields=["status"])
+			return Response({"detail": "Chat is closed or expired."}, status=status.HTTP_403_FORBIDDEN)
+
+		file_obj = request.FILES.get('attachment')
+		if not file_obj:
+			return Response({"detail": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+
+		message_text = request.data.get('message_text', '')
+
+		message = AdviceChatMessage.objects.create(
+			thread=thread,
+			sender_user=request.user,
+			sender_role=request.user.role,
+			message_text=message_text,
+			attachment=file_obj,
+			is_read=False,
+		)
+		thread.last_message_at = message.sent_at
+		thread.save(update_fields=["last_message_at"])
+
+		output = AdviceChatMessageSerializer(message)
+		return Response({"message": output.data}, status=status.HTTP_201_CREATED)

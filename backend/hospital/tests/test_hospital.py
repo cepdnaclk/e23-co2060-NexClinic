@@ -352,7 +352,7 @@ class AdminAppointmentSlotGenerationApiTests(TestCase):
         hospital = Hospital.objects.create(name='API Slot Hospital')
         HospitalAdmin.objects.create(user=admin_user, hospital=hospital)
 
-        today = timezone.now().date()
+        today = timezone.localdate()
         SlotTemplate.objects.create(
             doctor=doctor,
             hospital=hospital,
@@ -396,3 +396,101 @@ class CeleryTaskTests(TestCase):
         generate_slots(1)
         slots = AppointmentAvailableSlot.objects.filter(hospital=hospital)
         self.assertTrue(slots.exists())
+
+
+class CreateHospitalDoctorApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.hospital = Hospital.objects.create(name='Create Doc Hospital')
+        self.admin_user = CustomUser.objects.create_user(
+            email='admin_creator@test.com',
+            password='ComplexPassword123!',
+            role=CustomUser.Role.HOSPITAL_ADMIN,
+        )
+        HospitalAdmin.objects.create(user=self.admin_user, hospital=self.hospital, is_active=True)
+        self.other_user = CustomUser.objects.create_user(
+            email='other_pat@test.com',
+            password='ComplexPassword123!',
+            role=CustomUser.Role.PATIENT,
+        )
+
+    def test_admin_can_create_doctor(self):
+        self.client.force_authenticate(user=self.admin_user)
+        payload = {
+            'email': 'new_doctor@test.com',
+            'password': 'ComplexPassword123!',
+            'password2': 'ComplexPassword123!',
+            'full_name': 'Dr. John Doe',
+            'preferred_name': 'Dr. John',
+            'nic_number': '199512345678',
+            'gender': 'Male',
+            'license_number': 'MC/12345',
+            'specialization': 'Cardiology',
+            'phone': '0771234567',
+        }
+        response = self.client.post('/api/hospital/create-doctor/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json()['doctor']['email'], 'new_doctor@test.com')
+
+        # Check DB structures
+        user = CustomUser.objects.get(email='new_doctor@test.com')
+        self.assertEqual(user.role, 'DOCTOR')
+        self.assertTrue(user.is_active)
+
+        profile = user.doctor_profile
+        self.assertTrue(profile.is_verified)
+        self.assertEqual(profile.specialization, 'Cardiology')
+        self.assertTrue(profile.verified_hospitals.filter(id=self.hospital.id).exists())
+
+        verification = DoctorHospitalVerification.objects.filter(doctor=profile, hospital=self.hospital).first()
+        self.assertIsNotNone(verification)
+        self.assertEqual(verification.status, DoctorHospitalVerification.Status.VERIFIED)
+        self.assertEqual(verification.verified_by, self.admin_user)
+
+        activity_log = ActivityLog.objects.filter(action='doctor_created_by_admin', user=self.admin_user).exists()
+        self.assertTrue(activity_log)
+
+    def test_non_admin_cannot_create_doctor(self):
+        self.client.force_authenticate(user=self.other_user)
+        payload = {
+            'email': 'new_doctor_fail@test.com',
+            'password': 'ComplexPassword123!',
+            'password2': 'ComplexPassword123!',
+            'full_name': 'Dr. John Doe',
+            'preferred_name': 'Dr. John',
+            'nic_number': '199512345678',
+            'gender': 'Male',
+            'license_number': 'MC/12345',
+            'specialization': 'Cardiology',
+            'phone': '0771234567',
+        }
+        response = self.client.post('/api/hospital/create-doctor/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_validation_errors(self):
+        self.client.force_authenticate(user=self.admin_user)
+        
+        # Mismatching passwords
+        payload = {
+            'email': 'mismatch@test.com',
+            'password': 'ComplexPassword123!',
+            'password2': 'WrongPassword123!',
+            'full_name': 'Dr. John Doe',
+            'preferred_name': 'Dr. John',
+            'nic_number': '199512345678',
+            'gender': 'Male',
+            'license_number': 'MC/12345',
+            'specialization': 'Cardiology',
+            'phone': '0771234567',
+        }
+        response = self.client.post('/api/hospital/create-doctor/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.json())
+
+        # Invalid NIC
+        payload['password2'] = 'ComplexPassword123!'
+        payload['nic_number'] = 'invalid_nic'
+        response = self.client.post('/api/hospital/create-doctor/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('nic_number', response.json())
+
