@@ -46,19 +46,19 @@ export default function HospitalAdminProfilePage() {
     <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-300">
       {/* Profile Header Card */}
       <div className="rounded-3xl border border-white/80 bg-white/95 p-6 sm:p-8 shadow-sm backdrop-blur relative overflow-hidden">
-        <div className="absolute right-0 top-0 h-40 w-40 translate-x-1/4 -translate-y-1/4 rounded-full bg-blue-100/50 blur-3xl" />
+        <div className="absolute right-0 top-0 h-40 w-40 translate-x-1/4 -translate-y-1/4 rounded-full bg-emerald-100/50 blur-3xl" />
         
         <div className="relative flex flex-col sm:flex-row items-center gap-6">
           {/* Avatar Icon */}
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-blue-600 text-white text-2xl font-bold shadow-lg shadow-blue-500/20">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-emerald-600 text-white text-2xl font-bold shadow-lg shadow-emerald-500/20">
             {initials}
           </div>
 
           <div className="text-center sm:text-left min-w-0 flex-1">
             <h1 className="text-2xl font-extrabold text-slate-900 truncate">{displayName}</h1>
-            <p className="text-sm font-semibold text-blue-600 mt-1 uppercase tracking-wider">{adminInfo?.designation || "Operations Admin"}</p>
+            <p className="text-sm font-semibold text-emerald-600 mt-1 uppercase tracking-wider">{adminInfo?.designation || "Operations Admin"}</p>
             <div className="mt-3 flex flex-wrap justify-center sm:justify-start gap-2">
-              <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-700/10">
+              <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-700/10">
                 Hospital Role: Admin
               </span>
               <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-700/10">
@@ -135,7 +135,7 @@ export default function HospitalAdminProfilePage() {
               {adminInfo?.hospitals && adminInfo.hospitals.length > 0 ? (
                 adminInfo.hospitals.map((hosp) => (
                   <div key={hosp.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>

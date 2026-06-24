@@ -16,6 +16,8 @@ def get_user_from_token(token_key):
         return User.objects.get(id=user_id)
     except (TokenError, InvalidToken, User.DoesNotExist):
         return AnonymousUser()
+    except Exception:
+        return AnonymousUser()
 
 class JWTAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):

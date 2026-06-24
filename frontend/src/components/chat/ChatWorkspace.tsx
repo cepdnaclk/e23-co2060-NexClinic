@@ -96,6 +96,21 @@ export default function ChatWorkspace({
   const messageEndRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
+  const selectedThreadIdRef = useRef(selectedThreadId);
+  useEffect(() => {
+    selectedThreadIdRef.current = selectedThreadId;
+  }, [selectedThreadId]);
+
+  const onSessionExpiredRef = useRef(onSessionExpired);
+  useEffect(() => {
+    onSessionExpiredRef.current = onSessionExpired;
+  }, [onSessionExpired]);
+
+  const onPatientChatUnavailableRef = useRef(onPatientChatUnavailable);
+  useEffect(() => {
+    onPatientChatUnavailableRef.current = onPatientChatUnavailable;
+  }, [onPatientChatUnavailable]);
+
   const selectedThread = useMemo(
     () => threads.find((thread) => thread.id === selectedThreadId) || null,
     [selectedThreadId, threads],
@@ -159,7 +174,7 @@ export default function ChatWorkspace({
       });
 
       if (response.status === 401 || response.status === 403) {
-        onSessionExpired();
+        onSessionExpiredRef.current?.();
         return;
       }
 
@@ -172,11 +187,12 @@ export default function ChatWorkspace({
       setThreads(nextThreads);
       setInitialThreadsLoaded(true);
 
+      const currentSelectedId = selectedThreadIdRef.current;
       if (!preserveSelected) {
         setSelectedThreadId(nextThreads[0]?.id || "");
-      } else if (selectedThreadId && !nextThreads.some((thread) => thread.id === selectedThreadId)) {
+      } else if (currentSelectedId && !nextThreads.some((thread) => thread.id === currentSelectedId)) {
         setSelectedThreadId(nextThreads[0]?.id || "");
-      } else if (!selectedThreadId && nextThreads.length > 0) {
+      } else if (!currentSelectedId && nextThreads.length > 0) {
         setSelectedThreadId(nextThreads[0].id);
       }
     } catch (err) {
@@ -184,7 +200,7 @@ export default function ChatWorkspace({
     } finally {
       setLoadingThreads(false);
     }
-  }, [onSessionExpired, selectedThreadId]);
+  }, []);
 
   const loadMessages = useCallback(async (threadId: string) => {
     setLoadingMessages(true);
@@ -197,7 +213,7 @@ export default function ChatWorkspace({
       });
 
       if (response.status === 401 || response.status === 403) {
-        onSessionExpired();
+        onSessionExpiredRef.current?.();
         return;
       }
 
@@ -213,7 +229,7 @@ export default function ChatWorkspace({
     } finally {
       setLoadingMessages(false);
     }
-  }, [onSessionExpired]);
+  }, []);
 
   const openOrCreatePatientThread = useCallback(async (doctorId: string) => {
     try {
@@ -235,14 +251,14 @@ export default function ChatWorkspace({
       });
 
       if (response.status === 401 || response.status === 403) {
-        onSessionExpired();
+        onSessionExpiredRef.current?.();
         return;
       }
 
       const payload = await response.json().catch(() => ({}));
       if (response.status === 409 && role === "PATIENT") {
         const message = payload?.detail || "This doctor is currently offline for chats.";
-        onPatientChatUnavailable?.(message);
+        onPatientChatUnavailableRef.current?.(message);
         throw new Error(message);
       }
 
@@ -258,7 +274,7 @@ export default function ChatWorkspace({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to open chat");
     }
-  }, [onSessionExpired, role, onPatientChatUnavailable, loadThreads]);
+  }, [role, loadThreads]);
 
   const sendMessage = async () => {
     if (!selectedThreadId || selectedThread?.status === "CLOSED" || isExpired) {
@@ -405,9 +421,10 @@ export default function ChatWorkspace({
 
     setWsStatus("Connecting...");
     
-    // Fallback URL assumes typical local dev environment
+    // Retrieve authToken from localStorage to authenticate the WebSocket request
+    const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
     const backendUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
-    const wsUrl = `${backendUrl}/ws/chat/${selectedThreadId}/`;
+    const wsUrl = `${backendUrl}/ws/chat/${selectedThreadId}/${token ? `?token=${encodeURIComponent(token)}` : ""}`;
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;

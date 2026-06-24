@@ -123,7 +123,7 @@ export default function HospitalRegisterForm() {
         
         {/* Section 1: Personal Information */}
         <div>
-          <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
+          <h3 className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
             Personal Details
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -135,7 +135,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setFullName(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
             
@@ -147,7 +147,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setDateOfBirth(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
 
@@ -157,7 +157,7 @@ export default function HospitalRegisterForm() {
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               >
                 <option>Male</option>
                 <option>Female</option>
@@ -173,7 +173,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setNic(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
 
@@ -185,7 +185,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setPhone(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
 
@@ -197,7 +197,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setAddress(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function HospitalRegisterForm() {
 
         {/* Section 2: Hospital Association */}
         <div>
-          <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
+          <h3 className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
             Employment Details
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -217,7 +217,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setEmployeeId(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
 
@@ -229,7 +229,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setDesignation(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
 
@@ -241,7 +241,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setDateOfJoining(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
 
@@ -252,7 +252,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setHospitalId(e.target.value)}
                 required
                 disabled={loading || hospitalLoading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               >
                 <option value="">{hospitalLoading ? "Loading hospitals..." : "Select hospital"}</option>
                 {hospitals.map((hospital) => (
@@ -268,7 +268,7 @@ export default function HospitalRegisterForm() {
 
         {/* Section 3: Credentials */}
         <div>
-          <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
+          <h3 className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
             Account Credentials
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -281,7 +281,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
 
@@ -294,7 +294,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
 
@@ -307,7 +307,7 @@ export default function HospitalRegisterForm() {
                 onChange={(e) => setPassword2(e.target.value)}
                 required
                 disabled={loading}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
               />
             </div>
           </div>

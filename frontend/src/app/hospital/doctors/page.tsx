@@ -448,14 +448,14 @@ export default function ManageDoctorsPage() {
                 placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
               />
             </div>
 
             {/* Actions */}
             <button
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:shadow-lg active:scale-[0.98]"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -480,7 +480,7 @@ export default function ManageDoctorsPage() {
           <button
             onClick={() => setActiveTab("affiliated")}
             className={`px-4 py-2 text-sm font-bold rounded-xl transition-colors ${activeTab === "affiliated"
-                ? "bg-blue-50 text-blue-600"
+                ? "bg-emerald-50 text-emerald-600"
                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
               }`}
           >
@@ -490,7 +490,7 @@ export default function ManageDoctorsPage() {
           <button
             onClick={() => setActiveTab("pending")}
             className={`px-4 py-2 text-sm font-bold rounded-xl transition-colors relative ${activeTab === "pending"
-                ? "bg-blue-50 text-blue-600"
+                ? "bg-emerald-50 text-emerald-600"
                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
               }`}
           >
@@ -512,7 +512,7 @@ export default function ManageDoctorsPage() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 rounded-3xl border border-dashed border-slate-200 bg-white/50 backdrop-blur">
-          <div className="h-8 w-8 animate-spin rounded-full border-3 border-blue-600 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent" />
           <span className="mt-3 text-sm text-slate-500">Retrieving affiliated doctor records...</span>
         </div>
       ) : activeTab === "affiliated" ? (
@@ -528,12 +528,12 @@ export default function ManageDoctorsPage() {
               <div
                 key={`${doctor.id}-${doctor.email}`}
                 className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 rounded-3xl border bg-white shadow-sm transition-all duration-200 ${doctor.is_added
-                    ? 'border-blue-100/80 bg-gradient-to-br from-white to-blue-50/30'
-                    : 'border-slate-100 hover:border-blue-100/50 hover:shadow-md'
+                    ? 'border-emerald-100/80 bg-gradient-to-br from-white to-emerald-50/30'
+                    : 'border-slate-100 hover:border-emerald-100/50 hover:shadow-md'
                   }`}
               >
                 <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold shadow-inner ${doctor.is_added ? 'bg-blue-100/80 text-blue-700' : 'bg-slate-100 text-slate-600'
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold shadow-inner ${doctor.is_added ? 'bg-emerald-100/80 text-emerald-700' : 'bg-slate-100 text-slate-600'
                     }`}>
                     {getInitials(doctor.full_name)}
                   </div>
@@ -541,14 +541,14 @@ export default function ManageDoctorsPage() {
                     <div className="font-bold text-slate-900 flex flex-wrap items-center gap-2">
                       <span className="truncate">{doctor.full_name}</span>
                       {doctor.is_added && (
-                        <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-700/10">
                           Affiliated
                         </span>
                       )}
                     </div>
                     <div className="text-xs text-slate-500 mt-1 truncate">{doctor.email}</div>
                     {doctor.specialization && (
-                      <div className="text-xs text-blue-600 font-semibold mt-1 bg-blue-50/50 px-2 py-0.5 rounded-md inline-block">
+                      <div className="text-xs text-emerald-600 font-semibold mt-1 bg-emerald-50/50 px-2 py-0.5 rounded-md inline-block">
                         {doctor.specialization}
                       </div>
                     )}
@@ -560,7 +560,7 @@ export default function ManageDoctorsPage() {
                   onClick={() => handleAddRemove(doctor.id, doctor.is_added, doctor.full_name)}
                   className={`w-full sm:w-auto px-4 py-2.5 text-xs font-semibold rounded-xl transition-all ${doctor.is_added
                       ? 'bg-slate-50 border border-slate-200 text-red-600 hover:bg-red-55 hover:border-red-200'
-                      : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/10 hover:shadow-lg'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/10 hover:shadow-lg'
                     } ${submittingId === doctor.id ? 'opacity-50 cursor-not-allowed' : ''} active:scale-[0.98]`}
                 >
                   {submittingId === doctor.id ? "Working..." : doctor.is_added ? "Delink Account" : "Add to Hospital"}
@@ -573,7 +573,7 @@ export default function ManageDoctorsPage() {
         /* Tab 2: Pending Registration Requests from Doctors */
         requestsLoading ? (
           <div className="flex justify-center items-center py-16">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
             <span className="ml-3 text-slate-500 text-sm">Loading pending link requests...</span>
           </div>
         ) : pendingRequests.length === 0 ? (
@@ -670,7 +670,7 @@ export default function ManageDoctorsPage() {
                   <input
                     type="text"
                     required
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50/50 ${formErrors.full_name ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:border-blue-500'}`}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 ${formErrors.full_name ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:border-emerald-500'}`}
                     value={formData.full_name}
                     onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                   />
@@ -683,7 +683,7 @@ export default function ManageDoctorsPage() {
                   <input
                     type="text"
                     required
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50/50 ${formErrors.preferred_name ? 'border-red-500 focus:ring-red-500' : 'border-slate-200'}`}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 ${formErrors.preferred_name ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:border-emerald-500'}`}
                     value={formData.preferred_name}
                     onChange={(e) => setFormData({ ...formData, preferred_name: e.target.value })}
                   />
@@ -696,7 +696,7 @@ export default function ManageDoctorsPage() {
                   <input
                     type="email"
                     required
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50/50 ${formErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-200'}`}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 ${formErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:border-emerald-500'}`}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
@@ -710,7 +710,7 @@ export default function ManageDoctorsPage() {
                     type="text"
                     required
                     placeholder="e.g. 0771234567"
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50/50 ${formErrors.phone ? 'border-red-500 focus:ring-red-500' : 'border-slate-200'}`}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 ${formErrors.phone ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:border-emerald-500'}`}
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   />
@@ -723,7 +723,7 @@ export default function ManageDoctorsPage() {
                   <input
                     type="text"
                     required
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50/50 ${formErrors.nic_number ? 'border-red-500 focus:ring-red-500' : 'border-slate-200'}`}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 ${formErrors.nic_number ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:border-emerald-500'}`}
                     value={formData.nic_number}
                     onChange={(e) => setFormData({ ...formData, nic_number: e.target.value })}
                   />
@@ -737,7 +737,7 @@ export default function ManageDoctorsPage() {
                     type="text"
                     required
                     placeholder="e.g. MC/12345"
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50/50 ${formErrors.license_number ? 'border-red-500 focus:ring-red-500' : 'border-slate-200'}`}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 ${formErrors.license_number ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:border-emerald-500'}`}
                     value={formData.license_number}
                     onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
                   />
@@ -748,7 +748,7 @@ export default function ManageDoctorsPage() {
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Specialization</label>
                   <select
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50/50 text-slate-800"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 text-slate-800 focus:border-emerald-500"
                     value={formData.specialization}
                     onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
                   >
@@ -764,7 +764,7 @@ export default function ManageDoctorsPage() {
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Gender</label>
                   <select
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50/50 text-slate-800"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 text-slate-800 focus:border-emerald-500"
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                   >
@@ -780,7 +780,7 @@ export default function ManageDoctorsPage() {
                   <input
                     type="password"
                     required
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50/50 ${formErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-slate-200'}`}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 ${formErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:border-emerald-500'}`}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
@@ -793,7 +793,7 @@ export default function ManageDoctorsPage() {
                   <input
                     type="password"
                     required
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-slate-50/50 ${formErrors.password2 ? 'border-red-500 focus:ring-red-500' : 'border-slate-200'}`}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 ${formErrors.password2 ? 'border-red-500 focus:ring-red-500' : 'border-slate-200'}`}
                     value={formData.password2}
                     onChange={(e) => setFormData({ ...formData, password2: e.target.value })}
                   />
@@ -814,7 +814,7 @@ export default function ManageDoctorsPage() {
                 <button
                   type="submit"
                   disabled={formSubmitting}
-                  className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/15 transition-all hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/15 transition-all hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
                 >
                   {formSubmitting ? "Creating..." : "Create Account"}
                 </button>
@@ -846,12 +846,12 @@ export default function ManageDoctorsPage() {
             <div className="space-y-6">
               {/* Doctor Quick Summary */}
               <div className="flex items-center gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold bg-blue-100 text-blue-700">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold bg-emerald-100 text-emerald-700">
                   {getInitials(inspectingRequest.doctorName)}
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900">{inspectingRequest.doctorDetails?.full_name || inspectingRequest.doctorName}</h3>
-                  <p className="text-sm font-semibold text-blue-600 mt-0.5">{inspectingRequest.doctorDetails?.specialization || "General Practitioner"}</p>
+                  <p className="text-sm font-semibold text-emerald-600 mt-0.5">{inspectingRequest.doctorDetails?.specialization || "General Practitioner"}</p>
                 </div>
               </div>
 
@@ -938,8 +938,8 @@ export default function ManageDoctorsPage() {
                 type="button"
                 onClick={confirmModal.onConfirm}
                 className={`flex-1 px-4 py-2 text-xs font-semibold rounded-xl text-white shadow-sm hover:shadow transition-all ${confirmModal.isDanger
-                    ? "bg-red-600 hover:bg-red-700 shadow-red-500/10"
-                    : "bg-blue-600 hover:bg-blue-700 shadow-blue-500/10"
+                    ? "bg-rose-600 hover:bg-rose-700 shadow-rose-500/10"
+                    : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10"
                   }`}
               >
                 {confirmModal.confirmText || "Confirm"}
@@ -962,7 +962,7 @@ export default function ManageDoctorsPage() {
                 <textarea
                   required
                   placeholder="e.g. SLMC license registration could not be verified on the portal"
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-sm text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   rows={4}
                   value={rejectionModal.reason}
                   onChange={(e) => setRejectionModal((prev) => ({ ...prev, reason: e.target.value }))}

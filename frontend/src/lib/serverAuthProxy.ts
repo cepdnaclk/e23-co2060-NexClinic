@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24;
+
+// Cookie lifetime matches the refresh token lifetime (default 3 min for dev, 2h for prod)
+// The cookie must outlive the JWT so that refresh calls can still be made.
+const REFRESH_COOKIE_MAX_AGE_SECONDS =
+  (parseInt(process.env.JWT_REFRESH_TOKEN_LIFETIME_MINUTES || "120") * 60);
+const ACCESS_COOKIE_MAX_AGE_SECONDS =
+  (parseInt(process.env.JWT_ACCESS_TOKEN_LIFETIME_MINUTES || "20") * 60);
 
 const baseCookieOptions = {
   httpOnly: true,
@@ -45,41 +51,58 @@ function isTokenError(payload: any): boolean {
     message.includes("given token not valid") ||
     message.includes("token is invalid") ||
     message.includes("token is expired") ||
-    message.includes("token has expired")
+    message.includes("token has expired") ||
+    message.includes("no active account")
   );
 }
 
-async function refreshAccessToken(request: NextRequest): Promise<RefreshedTokens | null> {
-  const refreshToken = request.cookies.get("refreshToken")?.value;
+// In-process deduplication: if multiple requests come in simultaneously with the
+// same refresh token, only one actual refresh call is made; others wait for that result.
+// Note: this only helps within a single Node.js process instance. With BLACKLIST_AFTER_ROTATION=False
+// on the backend, multiple simultaneous refresh calls with the same token are all safe.
+const activeRefreshes = new Map<string, Promise<RefreshedTokens | null>>();
 
-  if (!refreshToken) {
-    return null;
+async function refreshAccessToken(refreshToken: string): Promise<RefreshedTokens | null> {
+  const existingPromise = activeRefreshes.get(refreshToken);
+  if (existingPromise) {
+    return existingPromise;
   }
 
-  const refreshResponse = await fetch(`${BACKEND_URL}/api/users/token/refresh/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ refresh: refreshToken }),
-    cache: "no-store",
-  });
+  const refreshPromise = (async () => {
+    try {
+      const refreshResponse = await fetch(`${BACKEND_URL}/api/users/token/refresh/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refresh: refreshToken }),
+        cache: "no-store",
+      });
 
-  if (!refreshResponse.ok) {
-    return null;
-  }
+      if (!refreshResponse.ok) {
+        return null;
+      }
 
-  const refreshPayload = await readJsonSafe(refreshResponse);
-  const accessToken = refreshPayload?.access;
+      const refreshPayload = await readJsonSafe(refreshResponse);
+      const accessToken = refreshPayload?.access;
 
-  if (!accessToken) {
-    return null;
-  }
+      if (!accessToken) {
+        return null;
+      }
 
-  return {
-    accessToken,
-    refreshToken: refreshPayload?.refresh,
-  };
+      return {
+        accessToken,
+        refreshToken: refreshPayload?.refresh || refreshToken,
+      };
+    } catch {
+      return null;
+    } finally {
+      activeRefreshes.delete(refreshToken);
+    }
+  })();
+
+  activeRefreshes.set(refreshToken, refreshPromise);
+  return refreshPromise;
 }
 
 export function applyAuthCookies(
@@ -92,20 +115,20 @@ export function applyAuthCookies(
 ) {
   response.cookies.set("authToken", options.accessToken, {
     ...baseCookieOptions,
-    maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+    maxAge: ACCESS_COOKIE_MAX_AGE_SECONDS,
   });
 
   if (options.role) {
     response.cookies.set("userRole", options.role, {
       ...baseCookieOptions,
-      maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+      maxAge: REFRESH_COOKIE_MAX_AGE_SECONDS,
     });
   }
 
   if (options.refreshToken) {
     response.cookies.set("refreshToken", options.refreshToken, {
       ...baseCookieOptions,
-      maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+      maxAge: REFRESH_COOKIE_MAX_AGE_SECONDS,
     });
   }
 }
@@ -127,6 +150,15 @@ export function clearAuthCookies(response: NextResponse) {
   });
 }
 
+function buildSessionExpiredResponse(): NextResponse {
+  const res = NextResponse.json(
+    { error: "Session expired. Please login again." },
+    { status: 401 }
+  );
+  clearAuthCookies(res);
+  return res;
+}
+
 export async function proxyBackendWithRefresh({
   request,
   endpoint,
@@ -136,15 +168,25 @@ export async function proxyBackendWithRefresh({
   failureMessage,
   successStatus,
 }: ProxyWithRefreshOptions): Promise<NextResponse> {
-  const authToken = request.cookies.get("authToken")?.value;
+  let authToken = request.cookies.get("authToken")?.value;
+  const refreshToken = request.cookies.get("refreshToken")?.value;
+
+  // If the access token cookie has expired (or is missing) but we still have
+  // a refresh token, attempt a proactive refresh before even calling the backend.
+  if (!authToken && refreshToken) {
+    const proactiveRefresh = await refreshAccessToken(refreshToken);
+    if (proactiveRefresh?.accessToken) {
+      authToken = proactiveRefresh.accessToken;
+      // We'll apply these cookies to the final response below.
+    } else {
+      // Refresh token is also expired or invalid — force login.
+      return buildSessionExpiredResponse();
+    }
+  }
 
   if (!authToken) {
-    const unauthorizedResponse = NextResponse.json(
-      { error: "Session expired. Please login again." },
-      { status: 401 }
-    );
-    clearAuthCookies(unauthorizedResponse);
-    return unauthorizedResponse;
+    // No access token and no refresh token — user is not logged in.
+    return buildSessionExpiredResponse();
   }
 
   const callBackend = (token: string) => {
@@ -167,32 +209,28 @@ export async function proxyBackendWithRefresh({
   let backendResponse = await callBackend(authToken);
   let refreshedTokens: RefreshedTokens | null = null;
 
-  if (backendResponse.status === 401) {
-    refreshedTokens = await refreshAccessToken(request);
+  // Access token was rejected — try to refresh.
+  if (backendResponse.status === 401 && refreshToken) {
+    refreshedTokens = await refreshAccessToken(refreshToken);
 
     if (refreshedTokens?.accessToken) {
       backendResponse = await callBackend(refreshedTokens.accessToken);
     }
 
+    // If still 401 after refresh, session is truly expired.
     if (backendResponse.status === 401) {
-      const unauthorizedResponse = NextResponse.json(
-        { error: "Session expired. Please login again." },
-        { status: 401 }
-      );
-      clearAuthCookies(unauthorizedResponse);
-      return unauthorizedResponse;
+      return buildSessionExpiredResponse();
     }
+  } else if (backendResponse.status === 401) {
+    // 401 and no refresh token — force login.
+    return buildSessionExpiredResponse();
   }
 
   const payload = await readJsonSafe(backendResponse);
 
+  // Catch token errors that don't always come back as 401.
   if (!backendResponse.ok && isTokenError(payload)) {
-    const unauthorizedResponse = NextResponse.json(
-      { error: "Session expired. Please login again." },
-      { status: 401 }
-    );
-    clearAuthCookies(unauthorizedResponse);
-    return unauthorizedResponse;
+    return buildSessionExpiredResponse();
   }
 
   const response = backendResponse.ok
@@ -202,22 +240,21 @@ export async function proxyBackendWithRefresh({
     : NextResponse.json(
         {
           error:
-            backendResponse.status === 401
-              ? "Session expired. Please login again."
-              : payload?.detail || payload?.error || payload?.raw || failureMessage,
+            payload?.detail || payload?.error || payload?.raw || failureMessage,
         },
         { status: backendResponse.status }
       );
 
-  if (backendResponse.status === 401) {
-    clearAuthCookies(response);
-  }
-
+  // If tokens were refreshed (either proactively or reactively), update cookies
+  // and expose the new access token so the client can sync localStorage.
   if (refreshedTokens?.accessToken) {
     applyAuthCookies(response, {
       accessToken: refreshedTokens.accessToken,
       refreshToken: refreshedTokens.refreshToken,
     });
+    // Allow the browser to read this header via SessionSyncProvider.
+    response.headers.set("X-Auth-Token", refreshedTokens.accessToken);
+    response.headers.set("Access-Control-Expose-Headers", "X-Auth-Token");
   }
 
   return response;

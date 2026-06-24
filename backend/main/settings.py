@@ -132,7 +132,7 @@ if DATABASE_URL:
             "HOST": parsed_db_url.hostname,
             "PORT": db_port,
             "OPTIONS": {"sslmode": ssl_mode},
-            "CONN_MAX_AGE": int(os.getenv("DJANGO_CONN_MAX_AGE", "600")),
+            "CONN_MAX_AGE": int(os.getenv("DJANGO_CONN_MAX_AGE") or os.getenv("CONN_MAX_AGE") or "0"),
         }
     }
 else:
@@ -204,15 +204,20 @@ from datetime import timedelta
 
 # JWT Token Lifetime Configuration (in minutes and hours, read from .env)
 JWT_ACCESS_TOKEN_LIFETIME_MINUTES = int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', '5'))
-JWT_REFRESH_TOKEN_LIFETIME_HOURS = int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_HOURS', '2'))
+JWT_REFRESH_TOKEN_LIFETIME_MINUTES = int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_MINUTES', '10'))
+# JWT_REFRESH_TOKEN_LIFETIME_HOURS = int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_HOURS', '2'))
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=JWT_ACCESS_TOKEN_LIFETIME_MINUTES),
-    'REFRESH_TOKEN_LIFETIME': timedelta(hours=JWT_REFRESH_TOKEN_LIFETIME_HOURS),
-    # 'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
-    # 'REFRESH_TOKEN_LIFETIME': timedelta(minutes=3),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=JWT_REFRESH_TOKEN_LIFETIME_MINUTES),
+    # ROTATE_REFRESH_TOKENS: issue a new refresh token on every refresh call (good practice).
+    # BLACKLIST_AFTER_ROTATION is intentionally FALSE to avoid race conditions:
+    # When multiple parallel requests all hold the same expired access token, they each
+    # try to refresh. With blacklisting ON, the second request's refresh would be
+    # rejected (blacklisted) even though the session is still valid. Keeping it OFF
+    # means all parallel refresh attempts succeed safely.
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
+    'BLACKLIST_AFTER_ROTATION': False,
     'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
@@ -220,7 +225,7 @@ SIMPLE_JWT = {
     'AUDIENCE': None,
     'ISSUER': None,
     'JWK_URL': None,
-    'LEEWAY': 0,
+    'LEEWAY': timedelta(seconds=10),  # tolerate minor clock skew
     'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
@@ -230,8 +235,6 @@ SIMPLE_JWT = {
     'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
     'JTI_CLAIM': 'jti',
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    # 'SLIDING_TOKEN_LIFETIME': timedelta(minutes=JWT_ACCESS_TOKEN_LIFETIME_MINUTES),
-    # 'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(hours=JWT_REFRESH_TOKEN_LIFETIME_HOURS),
 }
 
 # OTP security controls

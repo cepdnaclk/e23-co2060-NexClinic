@@ -56,21 +56,21 @@ export default function HospitalAdminLoginForm() {
   };
 
   return (
-    <div className="w-full bg-white/95 border border-slate-100 rounded-3xl shadow-xl p-8 backdrop-blur-md">
+    <div className="w-full bg-white/95 border border-slate-100 dark:bg-slate-900/95 dark:border-slate-800 rounded-3xl shadow-xl p-8 backdrop-blur-md">
       <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-slate-800">Welcome Back</h2>
-        <p className="text-sm text-slate-500 mt-1">Please sign in to manage your hospital</p>
+        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Welcome Back</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Please sign in to your admin account</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         {/* Email Field */}
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2" htmlFor="email">
+          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2" htmlFor="username">
             Email Address
           </label>
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
               </svg>
             </div>
@@ -82,19 +82,19 @@ export default function HospitalAdminLoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               required
-              className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
             />
           </div>
         </div>
 
         {/* Password Field */}
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2" htmlFor="password">
+          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2" htmlFor="password">
             Password
           </label>
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
@@ -106,13 +106,13 @@ export default function HospitalAdminLoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               required
-              className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
+              className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50"
             />
           </div>
         </div>
 
         {error && (
-          <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-xs text-red-600 font-medium">
+          <div className="rounded-xl border border-red-100 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 p-3 text-xs text-red-600 dark:text-red-400 font-medium">
             {error}
           </div>
         )}
@@ -120,7 +120,7 @@ export default function HospitalAdminLoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex justify-center items-center rounded-xl bg-blue-600 hover:bg-blue-700 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl active:scale-[0.99] disabled:opacity-50"
+          className="w-full flex justify-center items-center rounded-xl bg-emerald-600 hover:bg-emerald-700 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl active:scale-[0.99] disabled:opacity-50"
         >
           {loading ? (
             <span className="flex items-center gap-2">
@@ -133,16 +133,16 @@ export default function HospitalAdminLoginForm() {
         </button>
       </form>
 
-      <div className="mt-6 border-t border-slate-100 pt-4 flex flex-col gap-2 text-center text-xs text-slate-500">
+      <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 flex flex-col gap-2 text-center text-xs text-slate-500 dark:text-slate-400">
         <p>
           Forgot password?{" "}
-          <a href="/reset-password" className="font-semibold text-blue-600 hover:underline">
+          <a href="/reset-password" className="font-semibold text-emerald-600 hover:underline">
             Reset here
           </a>
         </p>
         <p>
           Need to register your hospital?{" "}
-          <a href="/hospital/contact" className="font-semibold text-blue-600 hover:underline">
+          <a href="/hospital/contact" className="font-semibold text-emerald-600 hover:underline">
             Contact us
           </a>
         </p>

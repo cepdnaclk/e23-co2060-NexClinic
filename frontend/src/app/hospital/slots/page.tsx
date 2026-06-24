@@ -294,7 +294,7 @@ const HospitalSlotsPage = () => {
           <div className="w-full md:w-auto min-w-[280px]">
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Hospital Branch</label>
             <select
-              className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+              className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
               value={selectedHospitalId}
               onChange={(event) => setSelectedHospitalId(event.target.value)}
               disabled={hospitalsLoading || hospitals.length === 0}
@@ -352,7 +352,7 @@ const HospitalSlotsPage = () => {
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Doctor</label>
               <select
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={formState.doctor}
                 onChange={(event) => setFormState((current) => ({ ...current, doctor: event.target.value }))}
                 required
@@ -369,7 +369,7 @@ const HospitalSlotsPage = () => {
             <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Day of the Week</label>
               <select
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={formState.day_of_week}
                 onChange={(event) => setFormState((current) => ({ ...current, day_of_week: event.target.value }))}
                 required
@@ -386,7 +386,7 @@ const HospitalSlotsPage = () => {
                 type="number"
                 min={5}
                 step={5}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={formState.slot_duration_minutes}
                 onChange={(event) => setFormState((current) => ({ ...current, slot_duration_minutes: event.target.value }))}
                 required
@@ -397,7 +397,7 @@ const HospitalSlotsPage = () => {
               <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Start Time</label>
               <input
                 type="time"
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={formState.start_time}
                 onChange={(event) => setFormState((current) => ({ ...current, start_time: event.target.value }))}
                 required
@@ -408,7 +408,7 @@ const HospitalSlotsPage = () => {
               <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">End Time</label>
               <input
                 type="time"
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={formState.end_time}
                 onChange={(event) => setFormState((current) => ({ ...current, end_time: event.target.value }))}
                 required
@@ -421,7 +421,7 @@ const HospitalSlotsPage = () => {
                 type="number"
                 min={1}
                 step={1}
-                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 value={formState.default_patient_limit}
                 onChange={(event) => setFormState((current) => ({ ...current, default_patient_limit: event.target.value }))}
                 required
@@ -432,7 +432,7 @@ const HospitalSlotsPage = () => {
               <input
                 type="checkbox"
                 id="is_active"
-                className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                className="h-4.5 w-4.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
                 checked={formState.is_active}
                 onChange={(event) => setFormState((current) => ({ ...current, is_active: event.target.checked }))}
               />
@@ -445,7 +445,7 @@ const HospitalSlotsPage = () => {
               <button
                 type="submit"
                 disabled={saving || hospitalsLoading || !selectedHospitalId || verifiedDoctors.length === 0}
-                className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/15 transition-all hover:shadow-lg disabled:opacity-50"
+                className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/15 transition-all hover:shadow-lg disabled:opacity-50"
               >
                 {saving ? "Saving..." : editingTemplateId ? "Update Template" : "Create Template"}
               </button>
@@ -475,7 +475,7 @@ const HospitalSlotsPage = () => {
                   type="number"
                   min={1}
                   step={1}
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   value={generationDays}
                   onChange={(event) => setGenerationDays(event.target.value)}
                 />
@@ -484,7 +484,7 @@ const HospitalSlotsPage = () => {
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Doctor Filter</label>
                 <select
-                  className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="block w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   value={generationDoctorId}
                   onChange={(event) => setGenerationDoctorId(event.target.value)}
                 >
@@ -501,7 +501,7 @@ const HospitalSlotsPage = () => {
                 <input
                   type="checkbox"
                   id="skip_duplicates"
-                  className="h-4.5 w-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20"
+                  className="h-4.5 w-4.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
                   checked={skipDuplicates}
                   onChange={(event) => setSkipDuplicates(event.target.checked)}
                 />

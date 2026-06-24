@@ -16,8 +16,8 @@ export default function HospitalRegisterPage() {
       </div>
 
       {/* Decorative Radial Lights */}
-      <div className="absolute -left-48 top-1/3 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-3xl z-0" aria-hidden="true" />
-      <div className="absolute -right-48 bottom-1/3 h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-3xl z-0" aria-hidden="true" />
+      <div className="absolute -left-48 top-1/3 h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-3xl z-0" aria-hidden="true" />
+      <div className="absolute -right-48 bottom-1/3 h-[500px] w-[500px] rounded-full bg-teal-500/10 blur-3xl z-0" aria-hidden="true" />
 
       {/* Register Card Panel */}
       <div className="relative z-10 w-full max-w-3xl animate-in fade-in zoom-in-95 duration-300">
