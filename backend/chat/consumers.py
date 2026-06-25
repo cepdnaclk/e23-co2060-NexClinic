@@ -48,14 +48,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message_data = await self.create_message(message_text)
 
         if message_data:
-            # Send message to room group
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'chat_message',
-                    'message': message_data
-                }
-            )
+            if "error" in message_data:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': message_data["error"]
+                }))
+            else:
+                # Send message to room group
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'chat_message',
+                        'message': message_data
+                    }
+                )
 
     # Receive message from room group
     async def chat_message(self, event):

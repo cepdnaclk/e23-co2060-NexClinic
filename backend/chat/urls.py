@@ -5,7 +5,8 @@ from .views import (
     AdviceChatThreadListCreateView,
     AdviceChatThreadStatusView,
     DoctorChatSlotListView,
-    AdviceChatMessageUploadView
+    AdviceChatMessageUploadView,
+    ChatCryptoKeysView
 )
 
 urlpatterns = [
@@ -14,4 +15,5 @@ urlpatterns = [
 	path("threads/<int:thread_id>/messages/upload/", AdviceChatMessageUploadView.as_view(), name="chat-message-upload"),
 	path("threads/<int:thread_id>/status/", AdviceChatThreadStatusView.as_view(), name="chat-thread-status"),
 	path("slots/doctor/<int:doctor_id>/", DoctorChatSlotListView.as_view(), name="doctor-chat-slots"),
+	path("keys/me/", ChatCryptoKeysView.as_view(), name="chat-crypto-keys"),
 ]

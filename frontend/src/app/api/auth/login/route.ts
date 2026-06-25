@@ -11,7 +11,7 @@ async function readLoginPayload(request: NextRequest) {
   }
 
   try {
-    return JSON.parse(rawBody) as { username?: string; password?: string };
+    return JSON.parse(rawBody) as { username?: string; password?: string; role?: string };
   } catch {
     return null;
   }

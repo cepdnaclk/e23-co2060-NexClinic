@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
+import { getOrGenerateKeyPair, loadKeysFromServer, exportPrivateKey, exportPublicKey, encryptMessage, decryptMessage, importPublicKey } from "@/lib/e2ee";
 
 type Role = "PATIENT" | "DOCTOR";
 
@@ -18,6 +19,8 @@ type ChatThread = {
   price_paid: string;
   doctorName?: string;
   patientName?: string;
+  doctorPublicKey?: string;
+  patientPublicKey?: string;
   unreadCount: number;
   lastMessage: string;
 };
@@ -91,10 +94,57 @@ export default function ChatWorkspace({
   const [actionBusy, setActionBusy] = useState(false);
   const [error, setError] = useState("");
   const [initialThreadsLoaded, setInitialThreadsLoaded] = useState(false);
+  const [cryptoKeys, setCryptoKeys] = useState<{ publicKey: CryptoKey; privateKey: CryptoKey } | null>(null);
+  const cryptoKeysRef = useRef(cryptoKeys);
   const [wsStatus, setWsStatus] = useState<"Connecting..." | "Connected" | "Disconnected">("Disconnected");
   const hasAutoOpenedDoctorRef = useRef(false);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    cryptoKeysRef.current = cryptoKeys;
+  }, [cryptoKeys]);
+
+  useEffect(() => {
+    async function initKeys() {
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch("/api/chat/keys/me/", {
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        if (response.ok) {
+          const data = await response.json();
+          await loadKeysFromServer(data.public_key, data.private_key);
+        }
+      } catch (err) {
+        // Keys endpoint not available — continue with local key generation
+      }
+
+      const keys = await getOrGenerateKeyPair();
+      if (!keys) {
+        // Crypto not available (SSR or non-secure context) — E2EE will be disabled
+        return;
+      }
+      setCryptoKeys(keys);
+
+      try {
+        const pubStr = await exportPublicKey(keys.publicKey);
+        const privStr = await exportPrivateKey(keys.privateKey);
+        const token = localStorage.getItem("authToken");
+        await fetch("/api/chat/keys/me/", {
+          method: "POST",
+          headers: {
+             "Content-Type": "application/json",
+             ...(token ? { "Authorization": `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ public_key: pubStr, private_key: privStr })
+        });
+      } catch (err) {
+        // Key sync to server failed — keys are still stored locally
+      }
+    }
+    initKeys();
+  }, []);
 
   const selectedThreadIdRef = useRef(selectedThreadId);
   useEffect(() => {
@@ -184,6 +234,15 @@ export default function ChatWorkspace({
       }
 
       const nextThreads: ChatThread[] = Array.isArray(payload?.threads) ? (payload.threads as ChatThread[]) : [];
+      
+      if (cryptoKeysRef.current) {
+        for (const thread of nextThreads) {
+           if (thread.lastMessage) {
+              thread.lastMessage = await decryptMessage(thread.lastMessage, cryptoKeysRef.current.privateKey);
+           }
+        }
+      }
+
       setThreads(nextThreads);
       setInitialThreadsLoaded(true);
 
@@ -222,7 +281,14 @@ export default function ChatWorkspace({
         throw new Error(payload?.error || payload?.detail || "Failed to load messages");
       }
 
-      setMessages(Array.isArray(payload?.messages) ? payload.messages : []);
+      let loadedMessages = Array.isArray(payload?.messages) ? payload.messages : [];
+      if (cryptoKeysRef.current) {
+          loadedMessages = await Promise.all(loadedMessages.map(async (msg: any) => {
+              const decryptedText = await decryptMessage(msg.message_text, cryptoKeysRef.current!.privateKey);
+              return { ...msg, message_text: decryptedText };
+          }));
+      }
+      setMessages(loadedMessages);
     } catch (err) {
       setMessages([]);
       setError(err instanceof Error ? err.message : "Failed to load messages");
@@ -284,6 +350,22 @@ export default function ChatWorkspace({
       return;
     }
 
+    let finalMessageText = composer.trim();
+    const recipientPubKeyString = role === "DOCTOR" ? selectedThread?.patientPublicKey : selectedThread?.doctorPublicKey;
+
+    if (cryptoKeys && recipientPubKeyString) {
+      try {
+        const recipientPubKey = await importPublicKey(recipientPubKeyString);
+        finalMessageText = await encryptMessage(finalMessageText, cryptoKeys.publicKey, recipientPubKey);
+      } catch (err) {
+          setError("Failed to encrypt message. The recipient might not have E2EE initialized yet.");
+          return;
+      }
+    } else if (cryptoKeys && !recipientPubKeyString) {
+        setError("Cannot send message: Recipient has not initialized End-to-End Encryption yet.");
+        return;
+    }
+
     setSending(true);
     setError("");
 
@@ -291,7 +373,7 @@ export default function ChatWorkspace({
       if (attachmentFile) {
         const formData = new FormData();
         formData.append("attachment", attachmentFile);
-        formData.append("message_text", composer.trim());
+        formData.append("message_text", finalMessageText);
 
         const response = await fetch(`/api/chat/threads/${selectedThreadId}/messages/upload/`, {
           method: "POST",
@@ -312,13 +394,13 @@ export default function ChatWorkspace({
         setAttachmentFile(null);
         await Promise.all([loadMessages(selectedThreadId), loadThreads(true)]);
       } else if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ message_text: composer.trim() }));
+        wsRef.current.send(JSON.stringify({ message_text: finalMessageText }));
         setComposer("");
       } else {
         const response = await fetch(`/api/chat/threads/${selectedThreadId}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message_text: composer.trim() }),
+          body: JSON.stringify({ message_text: finalMessageText }),
         });
 
         if (response.status === 401 || response.status === 403) {
@@ -391,8 +473,10 @@ export default function ChatWorkspace({
   }, [router, pathname, role, defaultDoctorId]);
 
   useEffect(() => {
-    void loadThreads(false);
-  }, [loadThreads]);
+    if (cryptoKeys) {
+      void loadThreads(false);
+    }
+  }, [loadThreads, cryptoKeys]);
 
   useEffect(() => {
     const initialThreadId = searchParams.get("thread") || "";
@@ -433,11 +517,19 @@ export default function ChatWorkspace({
       setWsStatus("Connected");
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
+        if (data.type === 'error') {
+            setError(data.message);
+            return;
+        }
         if (data.message) {
-          setMessages((prev) => [...prev, data.message]);
+          const msg = data.message;
+          if (cryptoKeysRef.current) {
+              msg.message_text = await decryptMessage(msg.message_text, cryptoKeysRef.current.privateKey);
+          }
+          setMessages((prev) => [...prev, msg]);
           // Refresh thread list to update unread counts and last message preview
           loadThreads(true);
         }

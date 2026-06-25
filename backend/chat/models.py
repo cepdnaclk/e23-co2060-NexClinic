@@ -72,3 +72,13 @@ class AdviceChatMessage(models.Model):
 
 	def __str__(self):
 		return f"{self.sender_role} @ {self.sent_at:%Y-%m-%d %H:%M}"
+
+
+class ChatCryptoKeys(models.Model):
+	user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_crypto_keys")
+	public_key = models.TextField(help_text="RSA Public Key in SPKI/JWK format")
+	private_key = models.TextField(help_text="RSA Private Key in PKCS8/JWK format (encrypted or plaintext depending on server-trust model)")
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return f"Crypto Keys for {self.user.email}"

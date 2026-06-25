@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import AdviceChatMessage, AdviceChatThread, DoctorChatSlot
+from .models import AdviceChatMessage, AdviceChatThread, DoctorChatSlot, ChatCryptoKeys
 
 
 class DoctorChatSlotSerializer(serializers.ModelSerializer):
@@ -13,6 +13,8 @@ class AdviceChatThreadSerializer(serializers.ModelSerializer):
 	patientName = serializers.SerializerMethodField()
 	unreadCount = serializers.SerializerMethodField()
 	lastMessage = serializers.SerializerMethodField()
+	doctorPublicKey = serializers.SerializerMethodField()
+	patientPublicKey = serializers.SerializerMethodField()
 
 	class Meta:
 		model = AdviceChatThread
@@ -28,6 +30,8 @@ class AdviceChatThreadSerializer(serializers.ModelSerializer):
 			"patientName",
 			"unreadCount",
 			"lastMessage",
+			"doctorPublicKey",
+			"patientPublicKey",
 		]
 
 	def get_doctorName(self, obj):
@@ -48,6 +52,18 @@ class AdviceChatThreadSerializer(serializers.ModelSerializer):
 		if not last_message:
 			return ""
 		return last_message.message_text
+
+	def get_doctorPublicKey(self, obj):
+		try:
+			return obj.doctor.user.chat_crypto_keys.public_key
+		except Exception:
+			return None
+
+	def get_patientPublicKey(self, obj):
+		try:
+			return obj.patient.user.chat_crypto_keys.public_key
+		except Exception:
+			return None
 
 
 class AdviceChatThreadCreateSerializer(serializers.Serializer):
@@ -85,3 +101,9 @@ class AdviceChatMessageCreateSerializer(serializers.Serializer):
 		if len(cleaned) > 4000:
 			raise serializers.ValidationError("message_text is too long.")
 		return cleaned
+
+
+class ChatCryptoKeysSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = ChatCryptoKeys
+		fields = ["public_key", "private_key"]

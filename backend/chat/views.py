@@ -14,14 +14,16 @@ from patient.models import PatientProfile
 from django.utils import timezone
 from datetime import timedelta
 
-from .models import AdviceChatMessage, AdviceChatThread, DoctorChatSlot
 from .serializers import (
 	AdviceChatMessageCreateSerializer,
 	AdviceChatMessageSerializer,
 	AdviceChatThreadCreateSerializer,
 	AdviceChatThreadSerializer,
 	DoctorChatSlotSerializer,
+	ChatCryptoKeysSerializer,
 )
+
+from .models import AdviceChatMessage, AdviceChatThread, DoctorChatSlot, ChatCryptoKeys
 
 
 class BaseChatAPIView(APIView):
@@ -272,3 +274,26 @@ class AdviceChatMessageUploadView(BaseChatAPIView):
 
 		output = AdviceChatMessageSerializer(message)
 		return Response({"message": output.data}, status=status.HTTP_201_CREATED)
+
+class ChatCryptoKeysView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request):
+		try:
+			keys = request.user.chat_crypto_keys
+			serializer = ChatCryptoKeysSerializer(keys)
+			return Response(serializer.data, status=status.HTTP_200_OK)
+		except Exception:
+			return Response({"detail": "Crypto keys not found."}, status=status.HTTP_404_NOT_FOUND)
+
+	def post(self, request):
+		try:
+			keys = request.user.chat_crypto_keys
+			serializer = ChatCryptoKeysSerializer(keys, data=request.data)
+		except Exception:
+			serializer = ChatCryptoKeysSerializer(data=request.data)
+		
+		if serializer.is_valid():
+			serializer.save(user=request.user)
+			return Response(serializer.data, status=status.HTTP_200_OK)
+		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
