@@ -191,15 +191,6 @@ export default function UserDashboardNavbar() {
                                 My Profile
                             </Link>
                             <Link
-                                href="/user-self/prescriptions"
-                                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/user-self/prescriptions")
-                                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold"
-                                    : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
-                                    }`}
-                            >
-                                Prescriptions
-                            </Link>
-                            <Link
                                 href="/doctors"
                                 className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/doctors")
                                     ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold"
@@ -289,15 +280,6 @@ export default function UserDashboardNavbar() {
                                 }`}
                         >
                             My Profile
-                        </Link>
-                        <Link
-                            href="/user-self/prescriptions"
-                            className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/user-self/prescriptions")
-                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold"
-                                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                                }`}
-                        >
-                            Prescriptions
                         </Link>
                         <Link
                             href="/doctors"
