@@ -11,7 +11,7 @@ async function readLoginPayload(request: NextRequest) {
   }
 
   try {
-    return JSON.parse(rawBody) as { username?: string; password?: string };
+    return JSON.parse(rawBody) as { username?: string; password?: string, role?: string };
   } catch {
     return null;
   }
@@ -62,6 +62,17 @@ export async function POST(request: NextRequest) {
     }
 
     const tokenData = await backendResponse.json();
+
+    if (tokenData.otp_required) {
+      return NextResponse.json(
+        {
+          otp_required: true,
+          email: tokenData.email,
+        },
+        { status: 200 }
+      );
+    }
+
     const userRole = tokenData.role || role || "PATIENT";
 
     const response = NextResponse.json(

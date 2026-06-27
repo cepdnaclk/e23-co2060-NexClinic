@@ -12,6 +12,38 @@ from .serializers import (
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import logging
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.encoding import force_str, force_bytes
+from .models import PendingUser, UserOTP
+from .utils import generate_otp, hash_otp, send_otp_email, send_admin_notification_email, verify_otp
+
+from django.utils import timezone
+from django.db import transaction
+from patient.models import PatientProfile
+from doctor.models import DoctorProfile
+from hospital.models import HospitalAdmin, HospitalAdminProfile
+
+User = get_user_model()
+logger = logging.getLogger(__name__)
+
+OTP_MAX_FAILED_ATTEMPTS = getattr(settings, 'OTP_MAX_FAILED_ATTEMPTS', 5)
+OTP_LOCKOUT_MINUTES = getattr(settings, 'OTP_LOCKOUT_MINUTES', 15)
+OTP_RESEND_COOLDOWN_SECONDS = getattr(settings, 'OTP_RESEND_COOLDOWN_SECONDS', 60)
+GENERIC_VERIFY_ERROR = 'Invalid or expired OTP.'
+GENERIC_RESEND_MESSAGE = 'If the account is eligible, a new OTP has been sent.'
+GENERIC_PASSWORD_RESET_MESSAGE = 'If an account with that email exists, a password reset link has been sent.'
+
 class PatientRegisterView(generics.CreateAPIView):
     serializer_class = PatientRegistrationSerializer
     permission_classes = [AllowAny]
@@ -30,10 +62,199 @@ class HospitalAdminRegisterView(generics.CreateAPIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'auth_register'
 
-class PatientLoginView(TokenObtainPairView):
-    serializer_class = PatientTokenObtainPairSerializer
+class PatientLoginView(APIView):
+    """
+    Initiates 2FA login for patients by verifying password first, 
+    then generating and sending an OTP to the patient's email.
+    """
+    permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'auth_login'
+
+    def post(self, request, *args, **kwargs):
+        if not isinstance(request.data, dict):
+            return Response({'error': 'Invalid data format. Expected JSON object.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        if not email or not password:
+            return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        from django.contrib.auth import authenticate
+        user = authenticate(request, username=email, password=password)
+        
+        if not user:
+            return Response({'error': 'Incorrect email or password.'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        if user.role != 'PATIENT':
+            return Response({'error': 'No patient account found for this email.'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        if not user.is_active:
+            return Response({'error': 'Your account is inactive.'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        # Get or create UserOTP record
+        user_otp, created = UserOTP.objects.get_or_create(user=user)
+        
+        # Check lockout
+        if user_otp.otp_locked_until and user_otp.otp_locked_until > timezone.now():
+            diff = user_otp.otp_locked_until - timezone.now()
+            minutes = int(diff.total_seconds() / 60) + 1
+            return Response({'error': f'Too many failed attempts. Locked out for {minutes} minutes.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+            
+        # Check resend cooldown
+        otp_cooldown = getattr(settings, 'OTP_RESEND_COOLDOWN_SECONDS', 60)
+        if user_otp.otp_last_sent_at:
+            next_allowed = user_otp.otp_last_sent_at + timezone.timedelta(seconds=otp_cooldown)
+            if next_allowed > timezone.now():
+                diff_sec = int((next_allowed - timezone.now()).total_seconds())
+                return Response({'error': f'Please wait {diff_sec} seconds before requesting another OTP.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+                
+        # Generate new OTP
+        otp_code = generate_otp()
+        user_otp.otp_code_hash = hash_otp(otp_code)
+        user_otp.otp_last_sent_at = timezone.now()
+        
+        otp_expiration = getattr(settings, 'OTP_EXPIRATION_MINUTES', 10)
+        user_otp.expires_at = timezone.now() + timezone.timedelta(minutes=otp_expiration)
+        user_otp.save()
+        
+        try:
+            send_otp_email(user.email, otp_code)
+            logger.info('patient_login.otp_sent email=%s', user.email)
+        except Exception as e:
+            logger.error('patient_login.otp_email_failed email=%s error=%s', user.email, str(e))
+            return Response({'error': 'Unable to send OTP email. Please try again later.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+        return Response({'otp_required': True, 'email': user.email}, status=status.HTTP_200_OK)
+
+
+class LoginVerifyOTPView(APIView):
+    """
+    Verifies the email OTP submitted by a patient during login.
+    On success, clears verification state and issues JWT access & refresh tokens.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_verify_otp'
+
+    def post(self, request, *args, **kwargs):
+        if not isinstance(request.data, dict):
+            return Response({'error': 'Invalid data format. Expected JSON object.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        email = request.data.get('email')
+        otp_code = request.data.get('otp')
+        
+        if not email or not otp_code:
+            return Response({'error': 'Email and OTP are required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        user = User.objects.filter(email=email).first()
+        if not user or user.role != 'PATIENT':
+            return Response({'error': 'No patient account found for this email.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            user_otp = UserOTP.objects.get(user=user)
+        except UserOTP.DoesNotExist:
+            return Response({'error': 'No active OTP verification session found. Please login again.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Check lockout
+        if user_otp.otp_locked_until and user_otp.otp_locked_until > timezone.now():
+            return Response({'error': 'Too many invalid attempts. Please try again later.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+            
+        # Check expiration
+        if not user_otp.expires_at or user_otp.expires_at < timezone.now():
+            return Response({'error': 'OTP has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Verify OTP
+        otp_is_valid = verify_otp(otp_code, user_otp.otp_code_hash)
+        
+        if not otp_is_valid:
+            user_otp.otp_failed_attempts += 1
+            max_attempts = getattr(settings, 'OTP_MAX_FAILED_ATTEMPTS', 5)
+            lockout_min = getattr(settings, 'OTP_LOCKOUT_MINUTES', 15)
+            
+            if user_otp.otp_failed_attempts >= max_attempts:
+                user_otp.otp_locked_until = timezone.now() + timezone.timedelta(minutes=lockout_min)
+                user_otp.otp_failed_attempts = 0
+                user_otp.save(update_fields=['otp_failed_attempts', 'otp_locked_until'])
+                return Response({'error': f'Too many failed attempts. Locked out for {lockout_min} minutes.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+                
+            user_otp.save(update_fields=['otp_failed_attempts'])
+            return Response({'error': 'Invalid OTP code.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Success: Reset OTP and issue tokens
+        user_otp.otp_code_hash = ""
+        user_otp.otp_failed_attempts = 0
+        user_otp.otp_locked_until = None
+        user_otp.expires_at = None
+        user_otp.save()
+        
+        # Issue access and refresh tokens
+        refresh = RefreshToken.for_user(user)
+        
+        logger.info('patient_login.otp_verified email=%s', user.email)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'role': 'PATIENT',
+            'email': user.email,
+        }, status=status.HTTP_200_OK)
+
+
+class LoginResendOTPView(APIView):
+    """
+    Resends login verification OTP to a patient user. Enforces the resend cooldown.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_resend_otp'
+
+    def post(self, request, *args, **kwargs):
+        if not isinstance(request.data, dict):
+            return Response({'error': 'Invalid data format. Expected JSON object.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        user = User.objects.filter(email=email).first()
+        if not user or user.role != 'PATIENT':
+            return Response({'error': 'No patient account found for this email.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            user_otp = UserOTP.objects.get(user=user)
+        except UserOTP.DoesNotExist:
+            return Response({'error': 'No active OTP verification session found. Please login again.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Check lockout
+        if user_otp.otp_locked_until and user_otp.otp_locked_until > timezone.now():
+            return Response({'error': 'Too many invalid attempts. Please try again later.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+            
+        # Check resend cooldown
+        otp_cooldown = getattr(settings, 'OTP_RESEND_COOLDOWN_SECONDS', 60)
+        if user_otp.otp_last_sent_at:
+            next_allowed = user_otp.otp_last_sent_at + timezone.timedelta(seconds=otp_cooldown)
+            if next_allowed > timezone.now():
+                diff_sec = int((next_allowed - timezone.now()).total_seconds())
+                return Response({'error': f'Please wait {diff_sec} seconds before requesting another OTP.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+                
+        # Generate new OTP
+        otp_code = generate_otp()
+        user_otp.otp_code_hash = hash_otp(otp_code)
+        user_otp.otp_last_sent_at = timezone.now()
+        
+        otp_expiration = getattr(settings, 'OTP_EXPIRATION_MINUTES', 10)
+        user_otp.expires_at = timezone.now() + timezone.timedelta(minutes=otp_expiration)
+        user_otp.save()
+        
+        try:
+            send_otp_email(user.email, otp_code)
+            logger.info('patient_login.otp_resent email=%s', user.email)
+        except Exception as e:
+            logger.error('patient_login.otp_resend_failed email=%s error=%s', user.email, str(e))
+            return Response({'error': 'Unable to send OTP email. Please try again later.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+        return Response({'message': 'A new OTP has been sent to your email.'}, status=status.HTTP_200_OK)
 
 
 class DoctorLoginView(TokenObtainPairView):
@@ -46,38 +267,7 @@ class HospitalAdminLoginView(TokenObtainPairView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'auth_login'
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-import logging
-from django.conf import settings
-from django.shortcuts import get_object_or_404
-from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.utils.encoding import force_str, force_bytes
-from .models import PendingUser
-from .utils import generate_otp, hash_otp, send_otp_email, send_admin_notification_email, verify_otp
 
-
-from django.utils import timezone
-from django.db import transaction
-from patient.models import PatientProfile
-from doctor.models import DoctorProfile
-from hospital.models import HospitalAdmin, HospitalAdminProfile
-
-User = get_user_model()
-logger = logging.getLogger(__name__)
-
-OTP_MAX_FAILED_ATTEMPTS = getattr(settings, 'OTP_MAX_FAILED_ATTEMPTS', 5)
-OTP_LOCKOUT_MINUTES = getattr(settings, 'OTP_LOCKOUT_MINUTES', 15)
-OTP_RESEND_COOLDOWN_SECONDS = getattr(settings, 'OTP_RESEND_COOLDOWN_SECONDS', 60)
-GENERIC_VERIFY_ERROR = 'Invalid or expired OTP.'
-GENERIC_RESEND_MESSAGE = 'If the account is eligible, a new OTP has been sent.'
-GENERIC_PASSWORD_RESET_MESSAGE = 'If an account with that email exists, a password reset link has been sent.'
 
 
 def _get_client_ip(request):

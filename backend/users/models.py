@@ -59,6 +59,22 @@ class PendingUser(models.Model):
         return f"Pending registration for {self.email}"
 
 
+class UserOTP(models.Model):
+    """
+    Stores OTP (2FA) credentials, failed attempts, and lockouts specifically
+    for active users logging in. This is separate from registration (PendingUser).
+    """
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='otp_auth')
+    otp_code_hash = models.CharField(max_length=128, blank=True, default="")
+    otp_failed_attempts = models.PositiveSmallIntegerField(default=0)
+    otp_locked_until = models.DateTimeField(null=True, blank=True)
+    otp_last_sent_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"OTP for {self.user.email}"
+
+
 class UserActivityLog(models.Model):
     class ActionType(models.TextChoices):
         CREATE = "CREATE", "Create"
