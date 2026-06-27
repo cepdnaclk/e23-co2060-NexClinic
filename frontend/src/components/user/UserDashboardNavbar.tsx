@@ -17,7 +17,7 @@ export default function UserDashboardNavbar() {
         setIsMobileMenuOpen(false);
     }, [pathname]);
 
-    const isActive = (href: string) => pathname === href;
+    const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
     const verifyPatientSession = async (): Promise<boolean> => {
         if (isSessionCheckInFlight.current) {
