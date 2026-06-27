@@ -27,3 +27,25 @@ export async function GET(request: NextRequest, context: RouteParams) {
     );
   }
 }
+
+export async function PATCH(request: NextRequest, context: RouteParams) {
+  try {
+    const { patientId } = await context.params;
+    const body = JSON.stringify(await request.json().catch(() => ({})));
+
+    return await proxyBackendWithRefresh({
+      request,
+      endpoint: `${BACKEND_URL}/api/doctor/patients/${patientId}/profile/`,
+      method: "PATCH",
+      body,
+      contentType: "application/json",
+      failureMessage: "Failed to update patient profile",
+    });
+  } catch (error) {
+    console.error("Doctor patient profile update API error", error);
+    return NextResponse.json(
+      { error: "An error occurred while updating patient profile" },
+      { status: 500 },
+    );
+  }
+}

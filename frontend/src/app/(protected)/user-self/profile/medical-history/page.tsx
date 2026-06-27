@@ -17,6 +17,8 @@ type PatientProfileResponse = {
     allergies: string;
     medications: string;
     medicalHistory: string;
+    comments: string;
+    prescriptions: string;
     medicalReports: string;
     medicalDocuments: string;
   };
@@ -79,12 +81,13 @@ export default function PatientMedicalHistoryPage() {
   const allergies = profileData?.health.allergies || "None reported";
   const medications = profileData?.health.medications || "None reported";
   const medicalHistory = profileData?.health.medicalHistory || "None reported";
+  const comments = profileData?.health.comments || "No clinical comments have been recorded yet.";
+  const prescriptions = profileData?.health.prescriptions || "No prescriptions have been recorded yet.";
   const medicalReports = profileData?.health.medicalReports || "";
   const medicalDocuments = profileData?.health.medicalDocuments || "";
 
   const historyItems = splitNotes(medicalHistory);
   const allergyItems = splitNotes(allergies);
-  const medicationItems = splitNotes(medications);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white pb-8">
@@ -135,7 +138,7 @@ export default function PatientMedicalHistoryPage() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900">
-                    History Overview
+                    Clinical Summary
                   </h2>
                   <p className="mt-1 text-sm text-slate-600">
                     Patient: {patientName} · {patientEmail}
@@ -169,7 +172,7 @@ export default function PatientMedicalHistoryPage() {
               <div className="mt-6 space-y-5">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Medical History Notes
+                    Observations
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {historyItems.length ? (
@@ -191,6 +194,24 @@ export default function PatientMedicalHistoryPage() {
 
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                    Comments
+                  </p>
+                  <div className="mt-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-7 text-slate-700">
+                    <p className="font-semibold text-slate-900">{comments}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                    Prescriptions
+                  </p>
+                  <div className="mt-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-7 text-slate-700">
+                    <p className="font-semibold text-slate-900">{prescriptions}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
                     Allergies
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -199,28 +220,6 @@ export default function PatientMedicalHistoryPage() {
                         <span
                           key={item}
                           className="rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 ring-1 ring-amber-100"
-                        >
-                          {item}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200">
-                        None reported
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Current Medications
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {medicationItems.length ? (
-                      medicationItems.map((item) => (
-                        <span
-                          key={item}
-                          className="rounded-full bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 ring-1 ring-sky-100"
                         >
                           {item}
                         </span>

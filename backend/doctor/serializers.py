@@ -366,6 +366,12 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
     def get_currentMedications(self, obj):
         return ['Not available']
 
+    def get_comments(self, obj):
+        return getattr(obj, 'doctor_comments', '') or ''
+
+    def get_prescriptions(self, obj):
+        return getattr(obj, 'prescriptions', '') or ''
+
     def get_lastVisit(self, obj):
         doctor_profile = self.context.get('doctor_profile')
 
@@ -378,6 +384,32 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
             return 'Not available'
 
         return appointment.slot.date.isoformat()
+
+
+class DoctorPatientProfileUpdateSerializer(serializers.Serializer):
+    comments = serializers.CharField(required=False, allow_blank=True)
+    prescriptions = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError('At least one field must be provided for update.')
+        return attrs
+
+    def update(self, instance, validated_data):
+        update_fields = []
+
+        if 'comments' in validated_data:
+            instance.doctor_comments = validated_data['comments']
+            update_fields.append('doctor_comments')
+
+        if 'prescriptions' in validated_data:
+            instance.prescriptions = validated_data['prescriptions']
+            update_fields.append('prescriptions')
+
+        if update_fields:
+            instance.save(update_fields=sorted(set(update_fields)))
+
+        return instance
 
 
 class DoctorAppointmentActionSerializer(serializers.Serializer):
