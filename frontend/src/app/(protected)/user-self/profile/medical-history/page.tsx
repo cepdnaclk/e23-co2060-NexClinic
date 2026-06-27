@@ -197,7 +197,7 @@ export default function PatientMedicalHistoryPage() {
                     Comments
                   </p>
                   <div className="mt-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-7 text-slate-700">
-                    <p className="font-semibold text-slate-900">{comments}</p>
+                    <p className="font-semibold text-slate-900 whitespace-pre-line">{comments}</p>
                   </div>
                 </div>
 
@@ -206,7 +206,7 @@ export default function PatientMedicalHistoryPage() {
                     Prescriptions
                   </p>
                   <div className="mt-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-7 text-slate-700">
-                    <p className="font-semibold text-slate-900">{prescriptions}</p>
+                    <p className="font-semibold text-slate-900 whitespace-pre-line">{prescriptions}</p>
                   </div>
                 </div>
 

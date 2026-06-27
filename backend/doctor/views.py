@@ -851,6 +851,7 @@ class DoctorPatientProfileView(VerifiedDoctorAPIView):
 
         serializer = DoctorPatientProfileUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        serializer.context.update({'doctor_profile': doctor_profile, 'appointment': appointment})
         serializer.update(appointment.patient, serializer.validated_data)
 
         response_serializer = DoctorPatientProfileSerializer(
