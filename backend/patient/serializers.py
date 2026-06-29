@@ -4,7 +4,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from doctor.models import Appointment, AppointmentAvailableSlot
-from patient.models import PatientProfile
+from patient.models import PatientMedicalRecord, PatientProfile
 from users.models import CustomUser
 
 
@@ -22,17 +22,17 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = [
-            'id',
-            'slotId',
-            'doctorId',
-            'doctorName',
-            'hospital',
-            'date',
-            'time',
-            'reason',
-            'status',
-            'requestedAt',
-            'category',
+            "id",
+            "slotId",
+            "doctorId",
+            "doctorName",
+            "hospital",
+            "date",
+            "time",
+            "reason",
+            "status",
+            "requestedAt",
+            "category",
         ]
 
     def get_slotId(self, obj):
@@ -47,51 +47,57 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
         if obj.doctor and obj.doctor.preferred_name:
             return obj.doctor.preferred_name
 
-        doctor_user = getattr(obj.doctor, 'user', None)
+        doctor_user = getattr(obj.doctor, "user", None)
         if doctor_user:
             return doctor_user.email
 
-        return 'Doctor'
+        return "Doctor"
 
     def get_hospital(self, obj):
         if obj.slot and obj.slot.hospital:
-            return obj.slot.hospital.name if hasattr(obj.slot.hospital, 'name') else str(obj.slot.hospital)
-        return obj.doctor.location or 'NexClinic'
+            return (
+                obj.slot.hospital.name
+                if hasattr(obj.slot.hospital, "name")
+                else str(obj.slot.hospital)
+            )
+        return obj.doctor.location or "NexClinic"
 
     def get_date(self, obj):
         return obj.slot.date.isoformat()
 
     def get_time(self, obj):
-        return obj.slot.start_time.strftime('%H:%M')
+        return obj.slot.start_time.strftime("%H:%M")
 
     def get_status(self, obj):
         mapping = {
-            Appointment.Status.PENDING: 'Pending',
-            Appointment.Status.ACCEPTED: 'Confirmed',
-            Appointment.Status.REJECTED: 'Rejected',
-            Appointment.Status.COMPLETED: 'Completed',
-            Appointment.Status.CANCELLED: 'Cancelled',
+            Appointment.Status.PENDING: "Pending",
+            Appointment.Status.ACCEPTED: "Confirmed",
+            Appointment.Status.REJECTED: "Rejected",
+            Appointment.Status.COMPLETED: "Completed",
+            Appointment.Status.CANCELLED: "Cancelled",
         }
         return mapping.get(obj.status, obj.status)
 
     def get_requestedAt(self, obj):
-        return timezone.localtime(obj.requested_at).strftime('%Y-%m-%d %H:%M')
+        return timezone.localtime(obj.requested_at).strftime("%Y-%m-%d %H:%M")
 
     def get_category(self, obj):
         if obj.status == Appointment.Status.PENDING:
-            return 'request'
+            return "request"
 
         if obj.status == Appointment.Status.ACCEPTED:
             naive_dt = datetime.combine(obj.slot.date, obj.slot.start_time)
-            appointment_dt = timezone.make_aware(naive_dt, timezone.get_current_timezone())
-            return 'upcoming' if appointment_dt >= timezone.now() else 'previous'
+            appointment_dt = timezone.make_aware(
+                naive_dt, timezone.get_current_timezone()
+            )
+            return "upcoming" if appointment_dt >= timezone.now() else "previous"
 
-        return 'previous'
+        return "previous"
 
 
 class PatientAppointmentCreateSerializer(serializers.Serializer):
     slot_id = serializers.IntegerField(min_value=1)
-    reason = serializers.CharField(required=False, allow_blank=True, default='')
+    reason = serializers.CharField(required=False, allow_blank=True, default="")
 
 
 class PatientAvailableSlotSerializer(serializers.ModelSerializer):
@@ -108,16 +114,16 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppointmentAvailableSlot
         fields = [
-            'id',
-            'doctorId',
-            'doctorName',
-            'hospital',
-            'date',
-            'time',
-            'bookedCount',
-            'patientLimit',
-            'remainingCount',
-            'isFull',
+            "id",
+            "doctorId",
+            "doctorName",
+            "hospital",
+            "date",
+            "time",
+            "bookedCount",
+            "patientLimit",
+            "remainingCount",
+            "isFull",
         ]
 
     def get_doctorId(self, obj):
@@ -128,33 +134,50 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
             return obj.doctor.full_name
         if obj.doctor and obj.doctor.preferred_name:
             return obj.doctor.preferred_name
-        doctor_user = getattr(obj.doctor, 'user', None)
-        return doctor_user.email if doctor_user else 'Doctor'
+        doctor_user = getattr(obj.doctor, "user", None)
+        return doctor_user.email if doctor_user else "Doctor"
 
     def get_hospital(self, obj):
         if obj.hospital:
-            return obj.hospital.name if hasattr(obj.hospital, 'name') else str(obj.hospital)
-        return obj.doctor.location or 'NexClinic'
+            return (
+                obj.hospital.name
+                if hasattr(obj.hospital, "name")
+                else str(obj.hospital)
+            )
+        return obj.doctor.location or "NexClinic"
 
     def get_date(self, obj):
         return obj.date.isoformat()
 
     def get_time(self, obj):
-        return obj.start_time.strftime('%H:%M')
+        return obj.start_time.strftime("%H:%M")
 
     def get_bookedCount(self, obj):
-        return obj.booked_count if obj.booked_count is not None else obj.appointments.count()
+        return (
+            obj.booked_count
+            if obj.booked_count is not None
+            else obj.appointments.count()
+        )
 
     def get_patientLimit(self, obj):
         return obj.patient_limit
 
     def get_remainingCount(self, obj):
-        booked = obj.booked_count if obj.booked_count is not None else obj.appointments.count()
+        booked = (
+            obj.booked_count
+            if obj.booked_count is not None
+            else obj.appointments.count()
+        )
         return max(obj.patient_limit - booked, 0)
 
     def get_isFull(self, obj):
-        booked = obj.booked_count if obj.booked_count is not None else obj.appointments.count()
+        booked = (
+            obj.booked_count
+            if obj.booked_count is not None
+            else obj.appointments.count()
+        )
         return booked >= obj.patient_limit
+
 
 class PatientAppointmentCancelSerializer(serializers.Serializer):
     reason = serializers.CharField(required=True, allow_blank=True)
@@ -176,19 +199,31 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
     allergies = serializers.CharField(required=False, allow_blank=True)
     medications = serializers.CharField(required=False, allow_blank=True)
     medicalHistory = serializers.CharField(required=False, allow_blank=True)
-    emergencyContactName = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    emergencyContactPhone = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    emergencyContactRelation = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    emergencyContactName = serializers.CharField(
+        max_length=255, required=False, allow_blank=True
+    )
+    emergencyContactPhone = serializers.CharField(
+        max_length=20, required=False, allow_blank=True
+    )
+    emergencyContactRelation = serializers.CharField(
+        max_length=100, required=False, allow_blank=True
+    )
     emergencyContactEmail = serializers.EmailField(required=False, allow_blank=True)
-    insuranceProvider = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    insurancePolicyNumber = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    insuranceProvider = serializers.CharField(
+        max_length=255, required=False, allow_blank=True
+    )
+    insurancePolicyNumber = serializers.CharField(
+        max_length=100, required=False, allow_blank=True
+    )
     profileImage = serializers.ImageField(required=False)
     medicalReports = serializers.FileField(required=False)
     medicalDocuments = serializers.FileField(required=False)
 
     def validate(self, attrs):
         if not attrs:
-            raise serializers.ValidationError("At least one field must be provided for update.")
+            raise serializers.ValidationError(
+                "At least one field must be provided for update."
+            )
         return attrs
 
     def validate_gender(self, value):
@@ -250,6 +285,69 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
             instance.save(update_fields=sorted(set(update_fields)))
 
         return instance
+
+
+class PatientMedicalRecordSerializer(serializers.ModelSerializer):
+    appointmentId = serializers.SerializerMethodField()
+    doctorName = serializers.SerializerMethodField()
+    hospitalName = serializers.SerializerMethodField()
+    createdAt = serializers.SerializerMethodField()
+    updatedAt = serializers.SerializerMethodField()
+    followUpDate = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PatientMedicalRecord
+        fields = [
+            "id",
+            "appointmentId",
+            "visit_date",
+            "doctorName",
+            "hospitalName",
+            "observations",
+            "diagnosis",
+            "comments",
+            "prescriptions",
+            "recommended_tests",
+            "followUpDate",
+            "follow_up_notes",
+            "createdAt",
+            "updatedAt",
+        ]
+
+    def get_appointmentId(self, obj):
+        return str(obj.appointment_id) if obj.appointment_id else ""
+
+    def get_doctorName(self, obj):
+        return obj.doctor_name or (obj.doctor.full_name if obj.doctor else "Doctor")
+
+    def get_hospitalName(self, obj):
+        return obj.hospital_name or "NexClinic"
+
+    def get_createdAt(self, obj):
+        return timezone.localtime(obj.created_at).strftime("%Y-%m-%d %H:%M")
+
+    def get_updatedAt(self, obj):
+        return timezone.localtime(obj.updated_at).strftime("%Y-%m-%d %H:%M")
+
+    def get_followUpDate(self, obj):
+        return obj.follow_up_date.isoformat() if obj.follow_up_date else ""
+
+
+class PatientMedicalRecordUpsertSerializer(serializers.Serializer):
+    observations = serializers.CharField(required=False, allow_blank=True)
+    diagnosis = serializers.CharField(required=False, allow_blank=True)
+    comments = serializers.CharField(required=False, allow_blank=True)
+    prescriptions = serializers.CharField(required=False, allow_blank=True)
+    recommendedTests = serializers.CharField(required=False, allow_blank=True)
+    followUpDate = serializers.DateField(required=False)
+    followUpNotes = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError(
+                "At least one medical record field must be provided."
+            )
+        return attrs
 
 
 def is_slot_in_past(slot_obj):

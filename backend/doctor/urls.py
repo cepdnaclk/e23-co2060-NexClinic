@@ -13,6 +13,7 @@ from .views import (
     DoctorProfileView,
     DoctorAppointmentsView,
     DoctorPatientProfileView,
+    DoctorAppointmentMedicalRecordView,
     DoctorAppointmentActionView,
     DoctorAppointmentRescheduleView,
     DoctorAppointmentSlotsView,
@@ -24,25 +25,94 @@ from .views import (
 )
 
 urlpatterns = [
-    path("specializations/", DoctorSpecializationsView.as_view(), name="doctor-specializations"),
+    path(
+        "specializations/",
+        DoctorSpecializationsView.as_view(),
+        name="doctor-specializations",
+    ),
     path("directory/", DoctorDirectoryView.as_view(), name="doctor-directory"),
-    path("directory/<int:doctor_id>/", DoctorDirectoryDetailView.as_view(), name="doctor-directory-detail"),
+    path(
+        "directory/<int:doctor_id>/",
+        DoctorDirectoryDetailView.as_view(),
+        name="doctor-directory-detail",
+    ),
     path("dashboard/", DoctorDashboardView.as_view(), name="doctor-dashboard"),
     path("profile/", DoctorProfileView.as_view(), name="doctor-profile"),
     path("appointments/", DoctorAppointmentsView.as_view(), name="doctor-appointments"),
-    path("patients/<int:patient_id>/profile/", DoctorPatientProfileView.as_view(), name="doctor-patient-profile"),
-    path("appointments/<int:appointment_id>/action/", DoctorAppointmentActionView.as_view(), name="doctor-appointment-action"),
-    path("appointments/<int:appointment_id>/reschedule/", DoctorAppointmentRescheduleView.as_view(), name="doctor-appointment-reschedule"),
-    path("appointment-slots/", DoctorAppointmentSlotsView.as_view(), name="doctor-appointment-slots"),
-    path("appointment-slots/<int:slot_id>/", DoctorAppointmentSlotDetailView.as_view(), name="doctor-appointment-slot-detail"),
-    path("online-advice-slots/", DoctorOnlineAdviceSlotsView.as_view(), name="doctor-online-advice-slots"),
-    path("online-advice-slots/<int:slot_id>/", DoctorOnlineAdviceSlotDetailView.as_view(), name="doctor-online-advice-slot-detail"),
-    path("hospital-requests/", DoctorRequestHospitalLinkView.as_view(), name="doctor-hospital-requests"),
+    path(
+        "patients/<int:patient_id>/profile/",
+        DoctorPatientProfileView.as_view(),
+        name="doctor-patient-profile",
+    ),
+    path(
+        "appointments/<int:appointment_id>/medical-record/",
+        DoctorAppointmentMedicalRecordView.as_view(),
+        name="doctor-appointment-medical-record",
+    ),
+    path(
+        "appointments/<int:appointment_id>/action/",
+        DoctorAppointmentActionView.as_view(),
+        name="doctor-appointment-action",
+    ),
+    path(
+        "appointments/<int:appointment_id>/reschedule/",
+        DoctorAppointmentRescheduleView.as_view(),
+        name="doctor-appointment-reschedule",
+    ),
+    path(
+        "appointment-slots/",
+        DoctorAppointmentSlotsView.as_view(),
+        name="doctor-appointment-slots",
+    ),
+    path(
+        "appointment-slots/<int:slot_id>/",
+        DoctorAppointmentSlotDetailView.as_view(),
+        name="doctor-appointment-slot-detail",
+    ),
+    path(
+        "online-advice-slots/",
+        DoctorOnlineAdviceSlotsView.as_view(),
+        name="doctor-online-advice-slots",
+    ),
+    path(
+        "online-advice-slots/<int:slot_id>/",
+        DoctorOnlineAdviceSlotDetailView.as_view(),
+        name="doctor-online-advice-slot-detail",
+    ),
+    path(
+        "hospital-requests/",
+        DoctorRequestHospitalLinkView.as_view(),
+        name="doctor-hospital-requests",
+    ),
     path("admin/hospitals/", AdminHospitalListView.as_view(), name="admin-hospitals"),
-    path("admin/doctor-verifications/", AdminDoctorVerificationListView.as_view(), name="admin-doctor-verifications"),
-    path("admin/doctor-verifications/<int:verification_id>/action/", AdminDoctorVerificationActionView.as_view(), name="admin-doctor-verification-action"),
-    path("admin/slot-templates/", AdminSlotTemplateListCreateView.as_view(), name="admin-slot-templates"),
-    path("admin/slot-templates/<int:template_id>/", AdminSlotTemplateDetailView.as_view(), name="admin-slot-template-detail"),
-    path("admin/appointment-slots/generate/", AdminAppointmentSlotGenerationView.as_view(), name="admin-appointment-slot-generation"),
-    path("admin/appointments/<int:appointment_id>/cancel/", AdminAppointmentCancelView.as_view(), name="admin-appointment-cancel"),
+    path(
+        "admin/doctor-verifications/",
+        AdminDoctorVerificationListView.as_view(),
+        name="admin-doctor-verifications",
+    ),
+    path(
+        "admin/doctor-verifications/<int:verification_id>/action/",
+        AdminDoctorVerificationActionView.as_view(),
+        name="admin-doctor-verification-action",
+    ),
+    path(
+        "admin/slot-templates/",
+        AdminSlotTemplateListCreateView.as_view(),
+        name="admin-slot-templates",
+    ),
+    path(
+        "admin/slot-templates/<int:template_id>/",
+        AdminSlotTemplateDetailView.as_view(),
+        name="admin-slot-template-detail",
+    ),
+    path(
+        "admin/appointment-slots/generate/",
+        AdminAppointmentSlotGenerationView.as_view(),
+        name="admin-appointment-slot-generation",
+    ),
+    path(
+        "admin/appointments/<int:appointment_id>/cancel/",
+        AdminAppointmentCancelView.as_view(),
+        name="admin-appointment-cancel",
+    ),
 ]

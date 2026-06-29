@@ -13,8 +13,19 @@ from rest_framework import status
 
 from chat.models import AdviceChatThread
 from .constants import DOCTOR_SPECIALIZATIONS
-from doctor.models import AppointmentAvailableSlot, DoctorOnlineAdviceAvailability, Appointment, DoctorProfile
-from hospital.models import Hospital, HospitalAdmin, DoctorHospitalVerification, SlotTemplate
+from doctor.models import (
+    AppointmentAvailableSlot,
+    DoctorOnlineAdviceAvailability,
+    Appointment,
+    DoctorProfile,
+)
+from patient.models import PatientMedicalRecord
+from hospital.models import (
+    Hospital,
+    HospitalAdmin,
+    DoctorHospitalVerification,
+    SlotTemplate,
+)
 from users.models import CustomUser
 from .serializers import (
     AppointmentAvailableSlotSerializer,
@@ -36,6 +47,11 @@ from .serializers import (
     DoctorHospitalVerificationSerializer,
     SlotTemplateSerializer,
 )
+from patient.serializers import (
+    PatientMedicalRecordSerializer,
+    PatientMedicalRecordUpsertSerializer,
+)
+
 
 class VerifiedDoctorAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -46,11 +62,16 @@ class VerifiedDoctorAPIView(APIView):
 
     def _get_verified_doctor_profile_or_response(self, user):
         if not self._is_doctor(user):
-            return None, Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+            return None, Response(
+                {"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN
+            )
 
         doctor_profile = getattr(user, "doctor_profile", None)
         if not doctor_profile:
-            return None, Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
+            return None, Response(
+                {"detail": "Doctor profile not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if not doctor_profile.is_verified:
             return None, Response(
@@ -70,18 +91,26 @@ class HospitalAdminAPIView(APIView):
 
     def _get_admin_role(self, user, hospital_id=None):
         if not self._is_admin(user):
-            return None, Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+            return None, Response(
+                {"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN
+            )
 
-        queryset = HospitalAdmin.objects.filter(user=user, is_active=True).select_related("hospital")
+        queryset = HospitalAdmin.objects.filter(
+            user=user, is_active=True
+        ).select_related("hospital")
 
         if hospital_id is not None:
             queryset = queryset.filter(hospital_id=hospital_id)
 
         admin_role = queryset.first()
         if not admin_role:
-            return None, Response({"detail": "Hospital admin not found."}, status=status.HTTP_404_NOT_FOUND)
+            return None, Response(
+                {"detail": "Hospital admin not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         return admin_role, None
+
 
 class AdminHospitalListView(HospitalAdminAPIView):
     def get(self, request):
@@ -95,28 +124,38 @@ class AdminHospitalListView(HospitalAdminAPIView):
         )
         serializer = HospitalAdminSerializer(hospitals, many=True)
         return Response({"hospitals": serializer.data}, status=status.HTTP_200_OK)
-    
+
 
 class AdminDoctorVerificationListView(HospitalAdminAPIView):
     def get(self, request):
         hospital_id = request.query_params.get("hospital_id")
         if not hospital_id:
-            return Response({"detail": "hospital_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "hospital_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        admin_role, error_response = self._get_admin_role(request.user, hospital_id=hospital_id)
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=hospital_id
+        )
         if error_response:
             return error_response
 
-        queryset = DoctorHospitalVerification.objects.filter(hospital=admin_role.hospital).select_related(
-            "doctor", "doctor__user", "hospital", "verified_by"
-        ).order_by("-created_at")
+        queryset = (
+            DoctorHospitalVerification.objects.filter(hospital=admin_role.hospital)
+            .select_related("doctor", "doctor__user", "hospital", "verified_by")
+            .order_by("-created_at")
+        )
 
         status_filter = request.query_params.get("status")
         if status_filter:
             normalized = status_filter.strip().upper()
             valid = {choice[0] for choice in DoctorHospitalVerification.Status.choices}
             if normalized not in valid:
-                return Response({"detail": "Invalid status filter."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "Invalid status filter."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             queryset = queryset.filter(status=normalized)
 
         serializer = DoctorHospitalVerificationSerializer(queryset, many=True)
@@ -125,11 +164,20 @@ class AdminDoctorVerificationListView(HospitalAdminAPIView):
 
 class AdminDoctorVerificationActionView(HospitalAdminAPIView):
     def patch(self, request, verification_id):
-        verification = DoctorHospitalVerification.objects.select_related("hospital").filter(id=verification_id).first()
+        verification = (
+            DoctorHospitalVerification.objects.select_related("hospital")
+            .filter(id=verification_id)
+            .first()
+        )
         if not verification:
-            return Response({"detail": "Verification record not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Verification record not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        admin_role, error_response = self._get_admin_role(request.user, hospital_id=verification.hospital_id)
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=verification.hospital_id
+        )
         if error_response:
             return error_response
 
@@ -137,7 +185,10 @@ class AdminDoctorVerificationActionView(HospitalAdminAPIView):
         reason = str(request.data.get("rejection_reason", "")).strip()
 
         if action not in {"verify", "reject"}:
-            return Response({"detail": "action must be either 'verify' or 'reject'."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "action must be either 'verify' or 'reject'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if action == "verify":
             verification.status = DoctorHospitalVerification.Status.VERIFIED
@@ -146,13 +197,18 @@ class AdminDoctorVerificationActionView(HospitalAdminAPIView):
             verification.verified_at = timezone.now()
         else:
             if not reason:
-                return Response({"detail": "rejection_reason is required when rejecting."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "rejection_reason is required when rejecting."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             verification.status = DoctorHospitalVerification.Status.REJECTED
             verification.rejection_reason = reason
             verification.verified_by = request.user
             verification.verified_at = timezone.now()
 
-        verification.save(update_fields=["status", "rejection_reason", "verified_by", "verified_at"])
+        verification.save(
+            update_fields=["status", "rejection_reason", "verified_by", "verified_at"]
+        )
         serializer = DoctorHospitalVerificationSerializer(verification)
         return Response({"verification": serializer.data}, status=status.HTTP_200_OK)
 
@@ -161,15 +217,22 @@ class AdminSlotTemplateListCreateView(HospitalAdminAPIView):
     def get(self, request):
         hospital_id = request.query_params.get("hospital_id")
         if not hospital_id:
-            return Response({"detail": "hospital_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "hospital_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        admin_role, error_response = self._get_admin_role(request.user, hospital_id=hospital_id)
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=hospital_id
+        )
         if error_response:
             return error_response
 
-        queryset = SlotTemplate.objects.filter(hospital=admin_role.hospital).select_related(
-            "doctor", "hospital", "created_by"
-        ).order_by("day_of_week", "start_time")
+        queryset = (
+            SlotTemplate.objects.filter(hospital=admin_role.hospital)
+            .select_related("doctor", "hospital", "created_by")
+            .order_by("day_of_week", "start_time")
+        )
 
         serializer = SlotTemplateSerializer(queryset, many=True)
         return Response({"templates": serializer.data}, status=status.HTTP_200_OK)
@@ -177,9 +240,13 @@ class AdminSlotTemplateListCreateView(HospitalAdminAPIView):
     def post(self, request):
         hospital_id = request.data.get("hospital")
         if not hospital_id:
-            return Response({"detail": "hospital is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "hospital is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        admin_role, error_response = self._get_admin_role(request.user, hospital_id=hospital_id)
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=hospital_id
+        )
         if error_response:
             return error_response
 
@@ -190,28 +257,39 @@ class AdminSlotTemplateListCreateView(HospitalAdminAPIView):
         is_verified = DoctorHospitalVerification.objects.filter(
             doctor_id=doctor_id,
             hospital_id=admin_role.hospital_id,
-            status=DoctorHospitalVerification.Status.VERIFIED
+            status=DoctorHospitalVerification.Status.VERIFIED,
         ).exists()
 
         if not is_verified:
             return Response(
                 {"detail": "Doctor is not verified for this hospital."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         with transaction.atomic():
             template = serializer.save(created_by=request.user)
 
-        return Response({"template": SlotTemplateSerializer(template).data}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"template": SlotTemplateSerializer(template).data},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class AdminSlotTemplateDetailView(HospitalAdminAPIView):
     def patch(self, request, template_id):
-        template = SlotTemplate.objects.select_related("hospital").filter(id=template_id).first()
+        template = (
+            SlotTemplate.objects.select_related("hospital")
+            .filter(id=template_id)
+            .first()
+        )
         if not template:
-            return Response({"detail": "Slot template not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Slot template not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
-        admin_role, error_response = self._get_admin_role(request.user, hospital_id=template.hospital_id)
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=template.hospital_id
+        )
         if error_response:
             return error_response
 
@@ -223,23 +301,34 @@ class AdminSlotTemplateDetailView(HospitalAdminAPIView):
             is_verified = DoctorHospitalVerification.objects.filter(
                 doctor_id=doctor_id,
                 hospital_id=template.hospital_id,
-                status=DoctorHospitalVerification.Status.VERIFIED
+                status=DoctorHospitalVerification.Status.VERIFIED,
             ).exists()
             if not is_verified:
                 return Response(
                     {"detail": "Doctor is not verified for this hospital."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         updated_template = serializer.save()
-        return Response({"template": SlotTemplateSerializer(updated_template).data}, status=status.HTTP_200_OK)
+        return Response(
+            {"template": SlotTemplateSerializer(updated_template).data},
+            status=status.HTTP_200_OK,
+        )
 
     def delete(self, request, template_id):
-        template = SlotTemplate.objects.select_related("hospital").filter(id=template_id).first()
+        template = (
+            SlotTemplate.objects.select_related("hospital")
+            .filter(id=template_id)
+            .first()
+        )
         if not template:
-            return Response({"detail": "Slot template not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Slot template not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
-        admin_role, error_response = self._get_admin_role(request.user, hospital_id=template.hospital_id)
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=template.hospital_id
+        )
         if error_response:
             return error_response
 
@@ -250,9 +339,15 @@ class AdminSlotTemplateDetailView(HospitalAdminAPIView):
 
 class AdminAppointmentCancelView(HospitalAdminAPIView):
     def patch(self, request, appointment_id):
-        appointment = Appointment.objects.select_related('slot', 'doctor', 'slot__hospital').filter(id=appointment_id).first()
+        appointment = (
+            Appointment.objects.select_related("slot", "doctor", "slot__hospital")
+            .filter(id=appointment_id)
+            .first()
+        )
         if not appointment:
-            return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Appointment not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         hospital = None
         if appointment.hospital_id:
@@ -261,70 +356,117 @@ class AdminAppointmentCancelView(HospitalAdminAPIView):
             hospital = Hospital.objects.filter(name=appointment.slot.hospital).first()
 
         if not hospital:
-            return Response({'detail': 'Appointment hospital could not be determined.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Appointment hospital could not be determined."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        admin_role, error_response = self._get_admin_role(request.user, hospital_id=hospital.id)
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=hospital.id
+        )
 
         if error_response:
             return error_response
 
         if appointment.status == Appointment.Status.CANCELLED:
-            return Response({'detail': 'Appointment is already cancelled.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Appointment is already cancelled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         serializer = AdminAppointmentCancelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        reason = serializer.validated_data['reason']
+        reason = serializer.validated_data["reason"]
 
         with transaction.atomic():
-            locked_slot = AppointmentAvailableSlot.objects.select_for_update().filter(id=appointment.slot_id).first()
+            locked_slot = (
+                AppointmentAvailableSlot.objects.select_for_update()
+                .filter(id=appointment.slot_id)
+                .first()
+            )
 
             appointment.status = Appointment.Status.CANCELLED
-            appointment.cancelled_by = 'ADMIN'
+            appointment.cancelled_by = "ADMIN"
             appointment.cancellation_reason = reason
             appointment.cancelled_at = timezone.now()
-            appointment.save(update_fields=['status', 'cancelled_by', 'cancellation_reason', 'cancelled_at', 'updated_at'])
+            appointment.save(
+                update_fields=[
+                    "status",
+                    "cancelled_by",
+                    "cancellation_reason",
+                    "cancelled_at",
+                    "updated_at",
+                ]
+            )
 
             if locked_slot and locked_slot.booked_count > 0:
                 locked_slot.booked_count -= 1
-                locked_slot.remaining_count = max(locked_slot.patient_limit - locked_slot.booked_count, 0)
-                locked_slot.save(update_fields=['booked_count', 'remaining_count'])
+                locked_slot.remaining_count = max(
+                    locked_slot.patient_limit - locked_slot.booked_count, 0
+                )
+                locked_slot.save(update_fields=["booked_count", "remaining_count"])
 
         payload = DoctorAppointmentSerializer(appointment).data
-        return Response({'message': 'Appointment cancelled successfully.', 'appointment': payload}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Appointment cancelled successfully.", "appointment": payload},
+            status=status.HTTP_200_OK,
+        )
 
 
 class AdminAppointmentSlotGenerationView(HospitalAdminAPIView):
     def post(self, request):
-        hospital_id = request.data.get("hospital") or request.query_params.get("hospital_id")
+        hospital_id = request.data.get("hospital") or request.query_params.get(
+            "hospital_id"
+        )
         if not hospital_id:
-            return Response({"detail": "hospital is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "hospital is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        admin_role, error_response = self._get_admin_role(request.user, hospital_id=hospital_id)
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=hospital_id
+        )
         if error_response:
             return error_response
 
         try:
             days = int(request.data.get("days", 14))
         except (TypeError, ValueError):
-            return Response({"detail": "days must be a valid integer."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "days must be a valid integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if days < 1:
-            return Response({"detail": "days must be at least 1."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "days must be at least 1."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         doctor_id = request.data.get("doctor_id")
         skip_duplicates_raw = request.data.get("skip_duplicates", True)
         if isinstance(skip_duplicates_raw, str):
-            skip_duplicates = skip_duplicates_raw.strip().lower() in {"1", "true", "yes", "on"}
+            skip_duplicates = skip_duplicates_raw.strip().lower() in {
+                "1",
+                "true",
+                "yes",
+                "on",
+            }
         else:
             skip_duplicates = bool(skip_duplicates_raw)
 
-        templates = SlotTemplate.objects.filter(is_active=True, hospital_id=admin_role.hospital_id)
+        templates = SlotTemplate.objects.filter(
+            is_active=True, hospital_id=admin_role.hospital_id
+        )
         if doctor_id:
             templates = templates.filter(doctor_id=doctor_id)
 
         templates = templates.select_related("doctor", "hospital", "created_by")
         if not templates.exists():
-            return Response({"detail": "No active slot templates found for this hospital."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "No active slot templates found for this hospital."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         today = timezone.localdate()
         end_date = today + timedelta(days=days - 1)
@@ -341,8 +483,12 @@ class AdminAppointmentSlotGenerationView(HospitalAdminAPIView):
                         current_date += timedelta(days=1)
                         continue
 
-                    slot_start = timezone.make_aware(datetime.combine(current_date, template.start_time))
-                    slot_end = timezone.make_aware(datetime.combine(current_date, template.end_time))
+                    slot_start = timezone.make_aware(
+                        datetime.combine(current_date, template.start_time)
+                    )
+                    slot_end = timezone.make_aware(
+                        datetime.combine(current_date, template.end_time)
+                    )
 
                     existing_slot = AppointmentAvailableSlot.objects.filter(
                         doctor=template.doctor,
@@ -383,70 +529,83 @@ class AdminAppointmentSlotGenerationView(HospitalAdminAPIView):
             status=status.HTTP_201_CREATED,
         )
 
+
 class DoctorSpecializationsView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        return Response({"specializations": DOCTOR_SPECIALIZATIONS}, status=status.HTTP_200_OK)
+        return Response(
+            {"specializations": DOCTOR_SPECIALIZATIONS}, status=status.HTTP_200_OK
+        )
 
 
 class DoctorDirectoryView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if getattr(request.user, 'role', None) not in {'DOCTOR', 'PATIENT', 'ADMIN'}:
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        if getattr(request.user, "role", None) not in {"DOCTOR", "PATIENT", "ADMIN"}:
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
         verified_hospital_exists = DoctorHospitalVerification.objects.filter(
-            doctor_id=OuterRef('pk'),
+            doctor_id=OuterRef("pk"),
             status=DoctorHospitalVerification.Status.VERIFIED,
             hospital__is_active=True,
         )
 
         queryset = (
-            DoctorProfile.objects.select_related('user')
-            .prefetch_related('verified_hospitals', 'available_slots')
+            DoctorProfile.objects.select_related("user")
+            .prefetch_related("verified_hospitals", "available_slots")
             .annotate(has_verified_hospital=Exists(verified_hospital_exists))
-            .filter(user__role='DOCTOR', user__is_active=True, has_verified_hospital=True)
-            .order_by('full_name', 'id')
+            .filter(
+                user__role="DOCTOR", user__is_active=True, has_verified_hospital=True
+            )
+            .order_by("full_name", "id")
         )
-        serializer = DoctorDirectoryPublicSerializer(queryset, many=True, context={'request': request})
-        return Response({'doctors': serializer.data}, status=status.HTTP_200_OK)
+        serializer = DoctorDirectoryPublicSerializer(
+            queryset, many=True, context={"request": request}
+        )
+        return Response({"doctors": serializer.data}, status=status.HTTP_200_OK)
 
 
 class DoctorDirectoryDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, doctor_id):
-        role = getattr(request.user, 'role', None)
-        if role not in {'DOCTOR', 'PATIENT', 'ADMIN'}:
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        role = getattr(request.user, "role", None)
+        if role not in {"DOCTOR", "PATIENT", "ADMIN"}:
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
         verified_hospital_exists = DoctorHospitalVerification.objects.filter(
-            doctor_id=OuterRef('pk'),
+            doctor_id=OuterRef("pk"),
             status=DoctorHospitalVerification.Status.VERIFIED,
             hospital__is_active=True,
         )
 
         doctor = (
-            DoctorProfile.objects.select_related('user')
-            .prefetch_related('verified_hospitals', 'available_slots')
+            DoctorProfile.objects.select_related("user")
+            .prefetch_related("verified_hospitals", "available_slots")
             .annotate(has_verified_hospital=Exists(verified_hospital_exists))
             .filter(
                 id=doctor_id,
-                user__role='DOCTOR',
+                user__role="DOCTOR",
                 user__is_active=True,
                 has_verified_hospital=True,
             )
             .first()
         )
         if not doctor:
-            return Response({'detail': 'Doctor not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Doctor not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
-        can_view_private_contact = role in {'PATIENT', 'ADMIN'}
-        serializer_class = DoctorDirectoryDetailSerializer if can_view_private_contact else DoctorDirectoryPublicSerializer
-        serializer = serializer_class(doctor, context={'request': request})
-        return Response({'doctor': serializer.data}, status=status.HTTP_200_OK)
+        can_view_private_contact = role in {"PATIENT", "ADMIN"}
+        serializer_class = (
+            DoctorDirectoryDetailSerializer
+            if can_view_private_contact
+            else DoctorDirectoryPublicSerializer
+        )
+        serializer = serializer_class(doctor, context={"request": request})
+        return Response({"doctor": serializer.data}, status=status.HTTP_200_OK)
 
 
 class DoctorDashboardView(APIView):
@@ -463,16 +622,22 @@ class DoctorDashboardView(APIView):
         specialization = "General"
 
         if doctor_profile:
-            display_name = doctor_profile.full_name or doctor_profile.preferred_name or user.email
+            display_name = (
+                doctor_profile.full_name or doctor_profile.preferred_name or user.email
+            )
             specialization = doctor_profile.specialization or "General"
 
         today = timezone.localdate()
         current_year = today.year
         current_month = today.month
 
-        appointment_queryset = Appointment.objects.filter(doctor=doctor_profile).select_related(
-            "slot", "patient"
-        ) if doctor_profile else Appointment.objects.none()
+        appointment_queryset = (
+            Appointment.objects.filter(doctor=doctor_profile).select_related(
+                "slot", "patient"
+            )
+            if doctor_profile
+            else Appointment.objects.none()
+        )
 
         today_appointments = appointment_queryset.filter(
             slot__date=today,
@@ -485,7 +650,9 @@ class DoctorDashboardView(APIView):
             slot__date__month=current_month,
         ).count()
 
-        appointment_fee = float(doctor_profile.appointment_fee) if doctor_profile else 0.0
+        appointment_fee = (
+            float(doctor_profile.appointment_fee) if doctor_profile else 0.0
+        )
         month_earnings = int(month_completed_count * appointment_fee)
 
         upcoming_queryset = appointment_queryset.filter(
@@ -503,8 +670,16 @@ class DoctorDashboardView(APIView):
             else:
                 date_label = slot_date.strftime("%b %d, %Y")
 
-            status_label = "Confirmed" if appointment.status == Appointment.Status.ACCEPTED else "Pending"
-            start_time = datetime.combine(slot_date, appointment.slot.start_time).strftime("%I:%M %p").lstrip("0")
+            status_label = (
+                "Confirmed"
+                if appointment.status == Appointment.Status.ACCEPTED
+                else "Pending"
+            )
+            start_time = (
+                datetime.combine(slot_date, appointment.slot.start_time)
+                .strftime("%I:%M %p")
+                .lstrip("0")
+            )
 
             upcoming_appointments.append(
                 {
@@ -528,7 +703,9 @@ class DoctorDashboardView(APIView):
         recent_chats = []
         unread_chat_count = 0
         for thread in recent_chat_threads:
-            unread_count = thread.messages.exclude(sender_user=user).filter(is_read=False).count()
+            unread_count = (
+                thread.messages.exclude(sender_user=user).filter(is_read=False).count()
+            )
             unread_chat_count += unread_count
             last_message = thread.messages.order_by("-sent_at", "-id").first()
             recent_chats.append(
@@ -537,7 +714,11 @@ class DoctorDashboardView(APIView):
                     "patientName": thread.patient.full_name,
                     "lastMessage": last_message.message_text if last_message else "",
                     "unreadCount": unread_count,
-                    "time": thread.last_message_at.strftime("%b %d, %I:%M %p") if thread.last_message_at else thread.started_at.strftime("%b %d, %I:%M %p"),
+                    "time": (
+                        thread.last_message_at.strftime("%b %d, %I:%M %p")
+                        if thread.last_message_at
+                        else thread.started_at.strftime("%b %d, %I:%M %p")
+                    ),
                 }
             )
 
@@ -551,7 +732,13 @@ class DoctorDashboardView(APIView):
                 "todayAppointments": today_appointments,
                 "unreadChats": 0,
                 "monthEarnings": month_earnings,
-                "onlineAdviceSessions": DoctorOnlineAdviceAvailability.objects.filter(doctor=doctor_profile).count() if doctor_profile else 0,
+                "onlineAdviceSessions": (
+                    DoctorOnlineAdviceAvailability.objects.filter(
+                        doctor=doctor_profile
+                    ).count()
+                    if doctor_profile
+                    else 0
+                ),
             },
             "upcomingAppointments": upcoming_appointments,
             "recentChats": recent_chats,
@@ -606,7 +793,9 @@ class DoctorProfileView(APIView):
             if doctor_profile.profile_picture:
                 request_obj = request if request else None
                 if request_obj:
-                    photo = request_obj.build_absolute_uri(doctor_profile.profile_picture.url)
+                    photo = request_obj.build_absolute_uri(
+                        doctor_profile.profile_picture.url
+                    )
                 else:
                     photo = doctor_profile.profile_picture.url
             if doctor_profile.date_of_birth:
@@ -652,9 +841,17 @@ class DoctorProfileView(APIView):
                     "Thursday, 3:00 PM - 6:00 PM",
                     "Friday, 11:00 AM - 2:00 PM",
                 ],
-                "qualifications": qualifications.split(",") if qualifications else ["MBBS", "MD (Cardiology)"],
+                "qualifications": (
+                    qualifications.split(",")
+                    if qualifications
+                    else ["MBBS", "MD (Cardiology)"]
+                ),
                 "hospitals": hospitals if hospitals else ["General Hospital"],
-                "languages": languages_spoken.split(",") if languages_spoken else ["Sinhala", "English"],
+                "languages": (
+                    languages_spoken.split(",")
+                    if languages_spoken
+                    else ["Sinhala", "English"]
+                ),
             },
         }
 
@@ -668,7 +865,10 @@ class DoctorProfileView(APIView):
 
         doctor_profile = getattr(user, "doctor_profile", None)
         if not doctor_profile:
-            return Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Doctor profile not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         payload = request.data if isinstance(request.data, dict) else {}
 
@@ -691,23 +891,42 @@ class DoctorProfileView(APIView):
         if "email" in payload:
             new_email = (payload.get("email") or "").strip().lower()
             if not new_email:
-                return Response({"detail": "email cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "email cannot be empty."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             User = get_user_model()
-            email_in_use = User.objects.exclude(pk=user.pk).filter(email__iexact=new_email).exists()
+            email_in_use = (
+                User.objects.exclude(pk=user.pk)
+                .filter(email__iexact=new_email)
+                .exists()
+            )
             if email_in_use:
-                return Response({"detail": "A user with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "A user with this email already exists."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             user.email = new_email
             if hasattr(user, "username"):
                 user.username = new_email
-            user.save(update_fields=["email", "username"] if hasattr(user, "username") else ["email"])
+            user.save(
+                update_fields=(
+                    ["email", "username"] if hasattr(user, "username") else ["email"]
+                )
+            )
 
         if request.FILES.get("profilePicture"):
             doctor_profile.profile_picture = request.FILES.get("profilePicture")
             update_fields.append("profile_picture")
 
-        if str(payload.get("clearProfilePicture", "")).lower() in {"1", "true", "yes", "on"}:
+        if str(payload.get("clearProfilePicture", "")).lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
             doctor_profile.profile_picture = None
             update_fields.append("profile_picture")
 
@@ -722,7 +941,12 @@ class DoctorProfileView(APIView):
                 try:
                     doctor_profile.date_of_birth = date.fromisoformat(raw_date)
                 except ValueError:
-                    return Response({"detail": "dateOfBirth must be a valid date in YYYY-MM-DD format."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {
+                            "detail": "dateOfBirth must be a valid date in YYYY-MM-DD format."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
             else:
                 doctor_profile.date_of_birth = None
             update_fields.append("date_of_birth")
@@ -730,7 +954,10 @@ class DoctorProfileView(APIView):
         if "gender" in payload:
             gender_value = (payload.get("gender") or "").strip()
             if gender_value and gender_value not in {"Male", "Female"}:
-                return Response({"detail": "gender must be Male or Female."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "gender must be Male or Female."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             doctor_profile.gender = gender_value
             update_fields.append("gender")
 
@@ -742,10 +969,16 @@ class DoctorProfileView(APIView):
             try:
                 experience_years = int(payload.get("experienceYears"))
             except (TypeError, ValueError):
-                return Response({"detail": "experienceYears must be a valid integer."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "experienceYears must be a valid integer."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             if experience_years < 0:
-                return Response({"detail": "experienceYears cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "experienceYears cannot be negative."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             doctor_profile.experience_years = experience_years
             update_fields.append("experience_years")
@@ -754,10 +987,16 @@ class DoctorProfileView(APIView):
             try:
                 chat_fee = float(payload.get("chatFee"))
             except (TypeError, ValueError):
-                return Response({"detail": "chatFee must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "chatFee must be a valid number."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             if chat_fee < 0:
-                return Response({"detail": "chatFee cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "chatFee cannot be negative."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             doctor_profile.chat_fee = chat_fee
             update_fields.append("chat_fee")
@@ -766,16 +1005,24 @@ class DoctorProfileView(APIView):
             try:
                 appointment_fee = float(payload.get("appointmentFee"))
             except (TypeError, ValueError):
-                return Response({"detail": "appointmentFee must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "appointmentFee must be a valid number."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             if appointment_fee < 0:
-                return Response({"detail": "appointmentFee cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "appointmentFee cannot be negative."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             doctor_profile.appointment_fee = appointment_fee
             update_fields.append("appointment_fee")
 
         if "availabilityForOnlineAdvice" in payload:
-            doctor_profile.availability = bool(payload.get("availabilityForOnlineAdvice"))
+            doctor_profile.availability = bool(
+                payload.get("availabilityForOnlineAdvice")
+            )
             update_fields.append("availability")
 
         profile_image = request.FILES.get("profileImage")
@@ -793,72 +1040,247 @@ class DoctorAppointmentsView(VerifiedDoctorAPIView):
 
     def get(self, request):
         user = request.user
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
         if error_response:
             return error_response
 
-        queryset = Appointment.objects.filter(doctor=doctor_profile).select_related(
-            'slot', 'patient', 'patient__user', 'doctor'
-        ).order_by('-requested_at')
+        queryset = (
+            Appointment.objects.filter(doctor=doctor_profile)
+            .select_related("slot", "patient", "patient__user", "doctor")
+            .order_by("-requested_at")
+        )
 
-        status_filter = request.query_params.get('status')
+        status_filter = request.query_params.get("status")
         if status_filter:
             normalized = status_filter.strip().upper()
             valid_statuses = {choice[0] for choice in Appointment.Status.choices}
             if normalized not in valid_statuses:
-                return Response({'detail': 'Invalid status filter.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "Invalid status filter."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             queryset = queryset.filter(status=normalized)
 
         data = DoctorAppointmentSerializer(queryset, many=True).data
-        return Response({'appointments': data}, status=status.HTTP_200_OK)
+        return Response({"appointments": data}, status=status.HTTP_200_OK)
 
 
 class DoctorPatientProfileView(VerifiedDoctorAPIView):
 
     def get(self, request, patient_id):
         user = request.user
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
         if error_response:
             return error_response
 
-        appointment = Appointment.objects.filter(
-            doctor=doctor_profile,
-            patient_id=patient_id,
-        ).select_related('patient', 'patient__user').first()
+        appointment = (
+            Appointment.objects.filter(
+                doctor=doctor_profile,
+                patient_id=patient_id,
+            )
+            .select_related("patient", "patient__user")
+            .first()
+        )
 
         if not appointment or not appointment.patient:
-            return Response({'detail': 'Patient not found for this doctor.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Patient not found for this doctor."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = DoctorPatientProfileSerializer(
             appointment.patient,
-            context={'doctor_profile': doctor_profile},
+            context={"doctor_profile": doctor_profile},
         )
-        return Response({'patient': serializer.data}, status=status.HTTP_200_OK)
+        return Response({"patient": serializer.data}, status=status.HTTP_200_OK)
 
-    def patch(self, request, patient_id):
-        user = request.user
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+
+class DoctorAppointmentMedicalRecordView(VerifiedDoctorAPIView):
+
+    @staticmethod
+    def _build_snapshot_name(doctor_profile):
+        return doctor_profile.full_name or doctor_profile.preferred_name or "Doctor"
+
+    @staticmethod
+    def _build_snapshot_hospital(appointment):
+        if appointment.hospital and hasattr(appointment.hospital, "name"):
+            return appointment.hospital.name
+        if (
+            appointment.slot
+            and appointment.slot.hospital
+            and hasattr(appointment.slot.hospital, "name")
+        ):
+            return appointment.slot.hospital.name
+        return appointment.doctor.location or "NexClinic"
+
+    def _get_appointment(self, request, appointment_id):
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            request.user
+        )
+        if error_response:
+            return None, None, error_response
+
+        appointment = (
+            Appointment.objects.filter(
+                id=appointment_id,
+                doctor=doctor_profile,
+            )
+            .select_related(
+                "slot",
+                "slot__hospital",
+                "patient",
+                "patient__user",
+                "doctor",
+                "hospital",
+            )
+            .first()
+        )
+
+        if not appointment:
+            return (
+                doctor_profile,
+                None,
+                Response(
+                    {"detail": "Appointment not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                ),
+            )
+
+        return doctor_profile, appointment, None
+
+    def get(self, request, appointment_id):
+        doctor_profile, appointment, error_response = self._get_appointment(
+            request, appointment_id
+        )
         if error_response:
             return error_response
 
-        appointment = Appointment.objects.filter(
-            doctor=doctor_profile,
-            patient_id=patient_id,
-        ).select_related('patient', 'patient__user').first()
+        record = (
+            PatientMedicalRecord.objects.filter(appointment=appointment)
+            .select_related("patient", "doctor")
+            .first()
+        )
+        if not record:
+            return Response(
+                {"medicalRecord": None, "appointmentId": str(appointment.id)},
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {
+                "medicalRecord": PatientMedicalRecordSerializer(record).data,
+                "appointmentId": str(appointment.id),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request, appointment_id):
+        doctor_profile, appointment, error_response = self._get_appointment(
+            request, appointment_id
+        )
+        if error_response:
+            return error_response
+
+        if appointment.status not in {
+            Appointment.Status.ACCEPTED,
+            Appointment.Status.COMPLETED,
+        }:
+            return Response(
+                {
+                    "detail": "Medical records can only be created for accepted or completed appointments."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = PatientMedicalRecordUpsertSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        snapshot_doctor_name = self._build_snapshot_name(doctor_profile)
+        snapshot_hospital_name = self._build_snapshot_hospital(appointment)
+        follow_up_date = serializer.validated_data.get("followUpDate")
+
+        defaults = {
+            "patient": appointment.patient,
+            "doctor": doctor_profile,
+            "visit_date": appointment.slot.date,
+            "hospital_name": snapshot_hospital_name,
+            "doctor_name": snapshot_doctor_name,
+            "observations": serializer.validated_data.get("observations", ""),
+            "diagnosis": serializer.validated_data.get("diagnosis", ""),
+            "comments": serializer.validated_data.get("comments", ""),
+            "prescriptions": serializer.validated_data.get("prescriptions", ""),
+            "recommended_tests": serializer.validated_data.get("recommendedTests", ""),
+            "follow_up_date": follow_up_date,
+            "follow_up_notes": serializer.validated_data.get("followUpNotes", ""),
+        }
+
+        record, created = PatientMedicalRecord.objects.get_or_create(
+            appointment=appointment, defaults=defaults
+        )
+        if not created:
+            record.patient = appointment.patient
+            record.doctor = doctor_profile
+            record.visit_date = appointment.slot.date
+            record.hospital_name = snapshot_hospital_name
+            record.doctor_name = snapshot_doctor_name
+            record.observations = defaults["observations"]
+            record.diagnosis = defaults["diagnosis"]
+            record.comments = defaults["comments"]
+            record.prescriptions = defaults["prescriptions"]
+            record.recommended_tests = defaults["recommended_tests"]
+            record.follow_up_date = follow_up_date
+            record.follow_up_notes = defaults["follow_up_notes"]
+            record.save()
+
+        return Response(
+            {
+                "message": "Medical record saved successfully.",
+                "medicalRecord": PatientMedicalRecordSerializer(record).data,
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+    def patch(self, request, patient_id):
+        user = request.user
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
+        if error_response:
+            return error_response
+
+        appointment = (
+            Appointment.objects.filter(
+                doctor=doctor_profile,
+                patient_id=patient_id,
+            )
+            .select_related("patient", "patient__user")
+            .first()
+        )
 
         if not appointment or not appointment.patient:
-            return Response({'detail': 'Patient not found for this doctor.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Patient not found for this doctor."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = DoctorPatientProfileUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.context.update({'doctor_profile': doctor_profile, 'appointment': appointment})
+        serializer.context.update(
+            {"doctor_profile": doctor_profile, "appointment": appointment}
+        )
         serializer.update(appointment.patient, serializer.validated_data)
 
         response_serializer = DoctorPatientProfileSerializer(
             appointment.patient,
-            context={'doctor_profile': doctor_profile},
+            context={"doctor_profile": doctor_profile},
         )
-        return Response({'patient': response_serializer.data}, status=status.HTTP_200_OK)
+        return Response(
+            {"patient": response_serializer.data}, status=status.HTTP_200_OK
+        )
 
 
 class DoctorAppointmentActionView(VerifiedDoctorAPIView):
@@ -866,98 +1288,138 @@ class DoctorAppointmentActionView(VerifiedDoctorAPIView):
     def patch(self, request, appointment_id):
         user = request.user
 
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
-        
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
+
         if error_response:
             return error_response
 
-        appointment = Appointment.objects.filter(
-            id=appointment_id,
-            doctor=doctor_profile,
-        ).select_related('slot', 'patient', 'patient__user', 'doctor').first()
+        appointment = (
+            Appointment.objects.filter(
+                id=appointment_id,
+                doctor=doctor_profile,
+            )
+            .select_related("slot", "patient", "patient__user", "doctor")
+            .first()
+        )
 
         if not appointment:
-            return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Appointment not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = DoctorAppointmentActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        action = serializer.validated_data['action']
+        action = serializer.validated_data["action"]
 
         transition_rules = {
-            'complete': {
-                'allowed': {Appointment.Status.ACCEPTED},
-                'target': Appointment.Status.COMPLETED,
-                'message': 'Appointment marked as completed.',
+            "complete": {
+                "allowed": {Appointment.Status.ACCEPTED},
+                "target": Appointment.Status.COMPLETED,
+                "message": "Appointment marked as completed.",
             },
         }
 
         rule = transition_rules[action]
-        if appointment.status not in rule['allowed']:
+        if appointment.status not in rule["allowed"]:
             return Response(
-                {'detail': f"Cannot '{action}' an appointment in {appointment.status} state."},
+                {
+                    "detail": f"Cannot '{action}' an appointment in {appointment.status} state."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        appointment.status = rule['target']
-        appointment.save(update_fields=['status', 'updated_at'])
+        appointment.status = rule["target"]
+        appointment.save(update_fields=["status", "updated_at"])
 
         payload = DoctorAppointmentSerializer(appointment).data
-        return Response({'message': rule['message'], 'appointment': payload}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": rule["message"], "appointment": payload},
+            status=status.HTTP_200_OK,
+        )
 
 
 class DoctorAppointmentRescheduleView(VerifiedDoctorAPIView):
 
     def patch(self, request, appointment_id):
         user = request.user
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
         if error_response:
             return error_response
-        
-        appointment = Appointment.objects.filter(
-            id=appointment_id,
-            doctor=doctor_profile,
-        ).select_related('slot', 'patient', 'patient__user', 'doctor').first()
+
+        appointment = (
+            Appointment.objects.filter(
+                id=appointment_id,
+                doctor=doctor_profile,
+            )
+            .select_related("slot", "patient", "patient__user", "doctor")
+            .first()
+        )
 
         if not appointment:
-            return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-        if appointment.status in {Appointment.Status.REJECTED, Appointment.Status.COMPLETED, Appointment.Status.CANCELLED}:
             return Response(
-                {'detail': f"Cannot reschedule an appointment in {appointment.status} state."},
+                {"detail": "Appointment not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if appointment.status in {
+            Appointment.Status.REJECTED,
+            Appointment.Status.COMPLETED,
+            Appointment.Status.CANCELLED,
+        }:
+            return Response(
+                {
+                    "detail": f"Cannot reschedule an appointment in {appointment.status} state."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = DoctorAppointmentRescheduleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        date_value = serializer.validated_data['date']
-        start_time = serializer.validated_data['start_time']
+        date_value = serializer.validated_data["date"]
+        start_time = serializer.validated_data["start_time"]
 
-        target_slot = AppointmentAvailableSlot.objects.filter(
-            doctor=doctor_profile,
-            date=date_value,
-            start_time=start_time,
-        ).order_by('end_time').first()
+        target_slot = (
+            AppointmentAvailableSlot.objects.filter(
+                doctor=doctor_profile,
+                date=date_value,
+                start_time=start_time,
+            )
+            .order_by("end_time")
+            .first()
+        )
 
         if not target_slot:
             return Response(
-                {'detail': 'No available slot found for the selected date and time.'},
+                {"detail": "No available slot found for the selected date and time."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if target_slot.id == appointment.slot_id:
             payload = DoctorAppointmentSerializer(appointment).data
             return Response(
-                {'message': 'Appointment already uses the selected slot.', 'appointment': payload},
+                {
+                    "message": "Appointment already uses the selected slot.",
+                    "appointment": payload,
+                },
                 status=status.HTTP_200_OK,
             )
 
         appointment.slot = target_slot
-        appointment.save(update_fields=['slot', 'updated_at'])
+        appointment.save(update_fields=["slot", "updated_at"])
 
         payload = DoctorAppointmentSerializer(appointment).data
-        return Response({'message': 'Appointment rescheduled successfully.', 'appointment': payload}, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "message": "Appointment rescheduled successfully.",
+                "appointment": payload,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class DoctorAppointmentSlotsView(VerifiedDoctorAPIView):
@@ -968,19 +1430,27 @@ class DoctorAppointmentSlotsView(VerifiedDoctorAPIView):
 
     def get(self, request):
         user = request.user
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
         if error_response:
             return error_response
 
-        slots = AppointmentAvailableSlot.objects.filter(doctor=doctor_profile).select_related('hospital').order_by('date', 'start_time')
+        slots = (
+            AppointmentAvailableSlot.objects.filter(doctor=doctor_profile)
+            .select_related("hospital")
+            .order_by("date", "start_time")
+        )
         data = AppointmentAvailableSlotSerializer(slots, many=True).data
 
-        return Response({'slots': data}, status=status.HTTP_200_OK)
+        return Response({"slots": data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         return Response(
-            {'detail': 'Doctors cannot create appointment slots. Contact hospital admin.'},
-            status=status.HTTP_403_FORBIDDEN
+            {
+                "detail": "Doctors cannot create appointment slots. Contact hospital admin."
+            },
+            status=status.HTTP_403_FORBIDDEN,
         )
 
 
@@ -992,40 +1462,53 @@ class DoctorAppointmentSlotDetailView(VerifiedDoctorAPIView):
 
     def patch(self, request, slot_id):
         user = request.user
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
         if error_response:
             return error_response
 
-        slot = AppointmentAvailableSlot.objects.filter(id=slot_id, doctor=doctor_profile).first()
+        slot = AppointmentAvailableSlot.objects.filter(
+            id=slot_id, doctor=doctor_profile
+        ).first()
         if not slot:
-            return Response({'detail': 'Appointment slot not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Appointment slot not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = AppointmentSlotUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        patient_limit = serializer.validated_data.get('patient_limit', slot.patient_limit)
+        patient_limit = serializer.validated_data.get(
+            "patient_limit", slot.patient_limit
+        )
 
         if patient_limit < slot.booked_count:
             return Response(
-                {'detail': 'patient_limit cannot be less than the number of already booked patients.'},
+                {
+                    "detail": "patient_limit cannot be less than the number of already booked patients."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         slot.patient_limit = patient_limit
         slot.remaining_count = max(slot.patient_limit - slot.booked_count, 0)
-        slot.save(update_fields=['patient_limit', 'remaining_count'])
+        slot.save(update_fields=["patient_limit", "remaining_count"])
 
         return Response(
             {
-                'message': 'Appointment slot patient limit updated successfully.',
-                'slot': AppointmentAvailableSlotSerializer(slot).data,
+                "message": "Appointment slot patient limit updated successfully.",
+                "slot": AppointmentAvailableSlotSerializer(slot).data,
             },
             status=status.HTTP_200_OK,
         )
 
     def delete(self, request, slot_id):
         return Response(
-            {'detail': 'Doctors cannot delete appointment slots. Contact hospital admin.'},
+            {
+                "detail": "Doctors cannot delete appointment slots. Contact hospital admin."
+            },
             status=status.HTTP_403_FORBIDDEN,
         )
 
@@ -1038,43 +1521,51 @@ class DoctorOnlineAdviceSlotsView(VerifiedDoctorAPIView):
 
     def get(self, request):
         user = request.user
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
         if error_response:
             return error_response
-    
-        slots = DoctorOnlineAdviceAvailability.objects.filter(doctor=doctor_profile).order_by('day_of_week', 'start_time')
+
+        slots = DoctorOnlineAdviceAvailability.objects.filter(
+            doctor=doctor_profile
+        ).order_by("day_of_week", "start_time")
         data = OnlineAdviceAvailabilitySerializer(slots, many=True).data
 
-        return Response({'slots': data}, status=status.HTTP_200_OK)
+        return Response({"slots": data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         user = request.user
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
         if error_response:
             return error_response
-        
+
         serializer = BulkOnlineAdviceSlotCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        requested_slots = serializer.validated_data['slots']
-        days = {slot['day_of_week'] for slot in requested_slots}
+        requested_slots = serializer.validated_data["slots"]
+        days = {slot["day_of_week"] for slot in requested_slots}
 
         existing_slots = DoctorOnlineAdviceAvailability.objects.filter(
             doctor=doctor_profile,
             day_of_week__in=days,
-        ).order_by('day_of_week', 'start_time')
+        ).order_by("day_of_week", "start_time")
 
         intervals_by_day = defaultdict(list)
         for existing in existing_slots:
-            intervals_by_day[existing.day_of_week].append((existing.start_time, existing.end_time))
+            intervals_by_day[existing.day_of_week].append(
+                (existing.start_time, existing.end_time)
+            )
 
         objects_to_create = []
         conflicts = []
 
         for idx, slot in enumerate(requested_slots):
-            day_of_week = slot['day_of_week']
-            start_time = slot['start_time']
-            end_time = slot['end_time']
+            day_of_week = slot["day_of_week"]
+            start_time = slot["start_time"]
+            end_time = slot["end_time"]
 
             has_overlap = any(
                 self._overlaps(start_time, end_time, existing_start, existing_end)
@@ -1084,11 +1575,11 @@ class DoctorOnlineAdviceSlotsView(VerifiedDoctorAPIView):
             if has_overlap:
                 conflicts.append(
                     {
-                        'index': idx,
-                        'day_of_week': day_of_week,
-                        'start_time': start_time.strftime('%H:%M:%S'),
-                        'end_time': end_time.strftime('%H:%M:%S'),
-                        'error': 'Overlaps with an existing online advice slot.',
+                        "index": idx,
+                        "day_of_week": day_of_week,
+                        "start_time": start_time.strftime("%H:%M:%S"),
+                        "end_time": end_time.strftime("%H:%M:%S"),
+                        "error": "Overlaps with an existing online advice slot.",
                     }
                 )
                 continue
@@ -1105,7 +1596,7 @@ class DoctorOnlineAdviceSlotsView(VerifiedDoctorAPIView):
 
         if conflicts:
             return Response(
-                {'detail': 'Some slots could not be created.', 'conflicts': conflicts},
+                {"detail": "Some slots could not be created.", "conflicts": conflicts},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1114,8 +1605,8 @@ class DoctorOnlineAdviceSlotsView(VerifiedDoctorAPIView):
 
         return Response(
             {
-                'message': f'{len(created)} online advice slots created successfully.',
-                'slots': created_data,
+                "message": f"{len(created)} online advice slots created successfully.",
+                "slots": created_data,
             },
             status=status.HTTP_201_CREATED,
         )
@@ -1130,24 +1621,31 @@ class DoctorOnlineAdviceSlotDetailView(VerifiedDoctorAPIView):
     def patch(self, request, slot_id):
         user = request.user
 
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
         if error_response:
             return error_response
 
-        slot = DoctorOnlineAdviceAvailability.objects.filter(id=slot_id, doctor=doctor_profile).first()
+        slot = DoctorOnlineAdviceAvailability.objects.filter(
+            id=slot_id, doctor=doctor_profile
+        ).first()
         if not slot:
-            return Response({'detail': 'Online advice slot not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Online advice slot not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = OnlineAdviceSlotUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        day_of_week = serializer.validated_data.get('day_of_week', slot.day_of_week)
-        start_time = serializer.validated_data.get('start_time', slot.start_time)
-        end_time = serializer.validated_data.get('end_time', slot.end_time)
+        day_of_week = serializer.validated_data.get("day_of_week", slot.day_of_week)
+        start_time = serializer.validated_data.get("start_time", slot.start_time)
+        end_time = serializer.validated_data.get("end_time", slot.end_time)
 
         if start_time >= end_time:
             return Response(
-                {'detail': 'start_time must be before end_time.'},
+                {"detail": "start_time must be before end_time."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1162,33 +1660,42 @@ class DoctorOnlineAdviceSlotDetailView(VerifiedDoctorAPIView):
         )
         if has_overlap:
             return Response(
-                {'detail': 'Updated slot overlaps with an existing online advice slot.'},
+                {
+                    "detail": "Updated slot overlaps with an existing online advice slot."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         slot.day_of_week = day_of_week
         slot.start_time = start_time
         slot.end_time = end_time
-        slot.save(update_fields=['day_of_week', 'start_time', 'end_time'])
+        slot.save(update_fields=["day_of_week", "start_time", "end_time"])
 
         return Response(
             {
-                'message': 'Online advice slot updated successfully.',
-                'slot': OnlineAdviceAvailabilitySerializer(slot).data,
+                "message": "Online advice slot updated successfully.",
+                "slot": OnlineAdviceAvailabilitySerializer(slot).data,
             },
             status=status.HTTP_200_OK,
         )
 
     def delete(self, request, slot_id):
-        
+
         user = request.user
-        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(
+            user
+        )
         if error_response:
             return error_response
 
-        slot = DoctorOnlineAdviceAvailability.objects.filter(id=slot_id, doctor=doctor_profile).first()
+        slot = DoctorOnlineAdviceAvailability.objects.filter(
+            id=slot_id, doctor=doctor_profile
+        ).first()
         if not slot:
-            return Response({'detail': 'Online advice slot not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Online advice slot not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         slot.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1198,45 +1705,73 @@ class DoctorRequestHospitalLinkView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if getattr(request.user, 'role', None) != 'DOCTOR':
-            return Response({"detail": "User is not a doctor."}, status=status.HTTP_403_FORBIDDEN)
-        
+        if getattr(request.user, "role", None) != "DOCTOR":
+            return Response(
+                {"detail": "User is not a doctor."}, status=status.HTTP_403_FORBIDDEN
+            )
+
         doctor = DoctorProfile.objects.filter(user=request.user).first()
         if not doctor:
-            return Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Doctor profile not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        queryset = DoctorHospitalVerification.objects.filter(doctor=doctor).select_related(
-            "hospital", "verified_by"
-        ).order_by("-created_at")
+        queryset = (
+            DoctorHospitalVerification.objects.filter(doctor=doctor)
+            .select_related("hospital", "verified_by")
+            .order_by("-created_at")
+        )
 
         serializer = DoctorHospitalVerificationSerializer(queryset, many=True)
         return Response({"verifications": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
-        if getattr(request.user, 'role', None) != 'DOCTOR':
-            return Response({"detail": "User is not a doctor."}, status=status.HTTP_403_FORBIDDEN)
-        
+        if getattr(request.user, "role", None) != "DOCTOR":
+            return Response(
+                {"detail": "User is not a doctor."}, status=status.HTTP_403_FORBIDDEN
+            )
+
         doctor = DoctorProfile.objects.filter(user=request.user).first()
         if not doctor:
-            return Response({"detail": "Doctor profile not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Doctor profile not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         hospital_id = request.data.get("hospital_id")
         if not hospital_id:
-            return Response({"detail": "hospital_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "hospital_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         hospital = Hospital.objects.filter(id=hospital_id, is_active=True).first()
         if not hospital:
-            return Response({"detail": "Active hospital not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Active hospital not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         from hospital.models import ActivityLog
 
         # Check existing verifications
-        verification = DoctorHospitalVerification.objects.filter(doctor=doctor, hospital=hospital).first()
+        verification = DoctorHospitalVerification.objects.filter(
+            doctor=doctor, hospital=hospital
+        ).first()
         if verification:
             if verification.status == DoctorHospitalVerification.Status.VERIFIED:
-                return Response({"detail": "You are already verified/affiliated with this hospital."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {
+                        "detail": "You are already verified/affiliated with this hospital."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             elif verification.status == DoctorHospitalVerification.Status.PENDING:
-                return Response({"detail": "A link request is already pending with this hospital."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "A link request is already pending with this hospital."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             elif verification.status == DoctorHospitalVerification.Status.REJECTED:
                 # Reset to pending on re-request
                 verification.status = DoctorHospitalVerification.Status.PENDING
@@ -1253,7 +1788,7 @@ class DoctorRequestHospitalLinkView(APIView):
             verification = DoctorHospitalVerification.objects.create(
                 doctor=doctor,
                 hospital=hospital,
-                status=DoctorHospitalVerification.Status.PENDING
+                status=DoctorHospitalVerification.Status.PENDING,
             )
 
         # Log activity
@@ -1264,9 +1799,10 @@ class DoctorRequestHospitalLinkView(APIView):
             model_name="DoctorHospitalVerification",
             object_id=str(verification.id),
             data={"doctor_id": doctor.id},
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
 
         serializer = DoctorHospitalVerificationSerializer(verification)
-        return Response({"verification": serializer.data}, status=status.HTTP_201_CREATED)
-
+        return Response(
+            {"verification": serializer.data}, status=status.HTTP_201_CREATED
+        )

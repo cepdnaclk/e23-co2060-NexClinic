@@ -21,6 +21,21 @@ type PatientProfileResponse = {
     prescriptions: string;
     medicalReports: string;
     medicalDocuments: string;
+    medicalRecords: Array<{
+      id: string;
+      visit_date: string;
+      doctorName: string;
+      hospitalName: string;
+      observations: string;
+      diagnosis: string;
+      comments: string;
+      prescriptions: string;
+      recommended_tests: string;
+      followUpDate: string;
+      follow_up_notes: string;
+      createdAt: string;
+      updatedAt: string;
+    }>;
   };
 };
 
@@ -81,10 +96,15 @@ export default function PatientMedicalHistoryPage() {
   const allergies = profileData?.health.allergies || "None reported";
   const medications = profileData?.health.medications || "None reported";
   const medicalHistory = profileData?.health.medicalHistory || "None reported";
-  const comments = profileData?.health.comments || "No clinical comments have been recorded yet.";
-  const prescriptions = profileData?.health.prescriptions || "No prescriptions have been recorded yet.";
+  const comments =
+    profileData?.health.comments ||
+    "No clinical comments have been recorded yet.";
+  const prescriptions =
+    profileData?.health.prescriptions ||
+    "No prescriptions have been recorded yet.";
   const medicalReports = profileData?.health.medicalReports || "";
   const medicalDocuments = profileData?.health.medicalDocuments || "";
+  const medicalRecords = profileData?.health.medicalRecords || [];
 
   const historyItems = splitNotes(medicalHistory);
   const allergyItems = splitNotes(allergies);
@@ -145,7 +165,8 @@ export default function PatientMedicalHistoryPage() {
                   </p>
                 </div>
                 <p className="text-sm font-semibold text-emerald-700">
-                  {historyItems.length} recorded item{historyItems.length === 1 ? "" : "s"}
+                  {historyItems.length} recorded item
+                  {historyItems.length === 1 ? "" : "s"}
                 </p>
               </div>
 
@@ -197,7 +218,9 @@ export default function PatientMedicalHistoryPage() {
                     Comments
                   </p>
                   <div className="mt-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-7 text-slate-700">
-                    <p className="font-semibold text-slate-900 whitespace-pre-line">{comments}</p>
+                    <p className="font-semibold text-slate-900 whitespace-pre-line">
+                      {comments}
+                    </p>
                   </div>
                 </div>
 
@@ -206,7 +229,9 @@ export default function PatientMedicalHistoryPage() {
                     Prescriptions
                   </p>
                   <div className="mt-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-7 text-slate-700">
-                    <p className="font-semibold text-slate-900 whitespace-pre-line">{prescriptions}</p>
+                    <p className="font-semibold text-slate-900 whitespace-pre-line">
+                      {prescriptions}
+                    </p>
                   </div>
                 </div>
 
@@ -227,6 +252,94 @@ export default function PatientMedicalHistoryPage() {
                     ) : (
                       <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200">
                         None reported
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                    Medical Record Timeline
+                  </p>
+                  <div className="mt-3 space-y-3">
+                    {medicalRecords.length ? (
+                      medicalRecords.map((record) => (
+                        <div
+                          key={record.id}
+                          className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-sm font-bold text-slate-900">
+                              {record.visit_date}
+                            </p>
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                              {record.doctorName}
+                            </p>
+                          </div>
+                          <p className="mt-1 text-sm text-slate-600">
+                            {record.hospitalName}
+                          </p>
+                          {record.observations && (
+                            <p className="mt-3 text-sm leading-6 text-slate-700">
+                              <span className="font-semibold text-slate-900">
+                                Observations:
+                              </span>{" "}
+                              {record.observations}
+                            </p>
+                          )}
+                          {record.diagnosis && (
+                            <p className="mt-2 text-sm leading-6 text-slate-700">
+                              <span className="font-semibold text-slate-900">
+                                Diagnosis:
+                              </span>{" "}
+                              {record.diagnosis}
+                            </p>
+                          )}
+                          {record.comments && (
+                            <p className="mt-2 text-sm leading-6 text-slate-700">
+                              <span className="font-semibold text-slate-900">
+                                Comments:
+                              </span>{" "}
+                              {record.comments}
+                            </p>
+                          )}
+                          {record.prescriptions && (
+                            <p className="mt-2 text-sm leading-6 text-slate-700">
+                              <span className="font-semibold text-slate-900">
+                                Prescriptions:
+                              </span>{" "}
+                              {record.prescriptions}
+                            </p>
+                          )}
+                          {record.recommended_tests && (
+                            <p className="mt-2 text-sm leading-6 text-slate-700">
+                              <span className="font-semibold text-slate-900">
+                                Recommended Tests:
+                              </span>{" "}
+                              {record.recommended_tests}
+                            </p>
+                          )}
+                          {record.followUpDate && (
+                            <p className="mt-2 text-sm leading-6 text-slate-700">
+                              <span className="font-semibold text-slate-900">
+                                Follow-up:
+                              </span>{" "}
+                              {record.followUpDate}
+                            </p>
+                          )}
+                          {record.follow_up_notes && (
+                            <p className="mt-2 text-sm leading-6 text-slate-700">
+                              <span className="font-semibold text-slate-900">
+                                Follow-up Notes:
+                              </span>{" "}
+                              {record.follow_up_notes}
+                            </p>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200">
+                        No saved medical records yet
                       </span>
                     )}
                   </div>
@@ -261,7 +374,9 @@ export default function PatientMedicalHistoryPage() {
                         Open report
                       </a>
                     ) : (
-                      <p className="mt-1 text-sm text-slate-900">Not provided</p>
+                      <p className="mt-1 text-sm text-slate-900">
+                        Not provided
+                      </p>
                     )}
                   </div>
                   <div>
@@ -276,7 +391,9 @@ export default function PatientMedicalHistoryPage() {
                         Open document
                       </a>
                     ) : (
-                      <p className="mt-1 text-sm text-slate-900">Not provided</p>
+                      <p className="mt-1 text-sm text-slate-900">
+                        Not provided
+                      </p>
                     )}
                   </div>
                 </div>

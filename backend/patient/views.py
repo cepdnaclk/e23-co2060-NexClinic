@@ -21,6 +21,7 @@ from .serializers import (
     PatientAppointmentCreateSerializer,
     PatientAvailableSlotSerializer,
     PatientAppointmentCancelSerializer,
+    PatientMedicalRecordSerializer,
     PatientProfileUpdateSerializer,
     is_slot_in_past,
 )
@@ -87,6 +88,7 @@ class PatientProfileView(BasePatientAPIView):
         medical_history = ""
         doctor_comments = ""
         prescriptions = ""
+        medical_records = []
         emergency_contact_name = ""
         emergency_contact_phone = ""
         emergency_contact_relation = ""
@@ -115,6 +117,15 @@ class PatientProfileView(BasePatientAPIView):
             medical_history = patient_profile.medical_history or ""
             doctor_comments = patient_profile.doctor_comments or ""
             prescriptions = patient_profile.prescriptions or ""
+            records_queryset = patient_profile.medical_records.select_related(
+                "doctor",
+                "appointment",
+                "appointment__slot",
+                "appointment__slot__hospital",
+            ).order_by("-visit_date", "-created_at")
+            medical_records = PatientMedicalRecordSerializer(
+                records_queryset, many=True
+            ).data
             emergency_contact_name = patient_profile.emergency_contact_name or ""
             emergency_contact_phone = patient_profile.emergency_contact_phone or ""
             emergency_contact_relation = (
@@ -130,21 +141,39 @@ class PatientProfileView(BasePatientAPIView):
                 request, patient_profile.medical_documents
             )
 
-        chat_threads = AdviceChatThread.objects.filter(patient=patient_profile).select_related("doctor") if patient_profile else AdviceChatThread.objects.none()
+        chat_threads = (
+            AdviceChatThread.objects.filter(patient=patient_profile).select_related(
+                "doctor"
+            )
+            if patient_profile
+            else AdviceChatThread.objects.none()
+        )
         unread_chat_count = 0
         recent_chat_threads = []
         if patient_profile:
             for thread in chat_threads.order_by("-last_message_at", "-started_at")[:5]:
-                unread_count = thread.messages.exclude(sender_user=user).filter(is_read=False).count()
+                unread_count = (
+                    thread.messages.exclude(sender_user=user)
+                    .filter(is_read=False)
+                    .count()
+                )
                 unread_chat_count += unread_count
                 last_message = thread.messages.order_by("-sent_at", "-id").first()
                 recent_chat_threads.append(
                     {
                         "id": str(thread.id),
-                        "doctorName": thread.doctor.full_name or thread.doctor.preferred_name or "Doctor",
-                        "lastMessage": last_message.message_text if last_message else "",
+                        "doctorName": thread.doctor.full_name
+                        or thread.doctor.preferred_name
+                        or "Doctor",
+                        "lastMessage": (
+                            last_message.message_text if last_message else ""
+                        ),
                         "unreadCount": unread_count,
-                        "time": thread.last_message_at.strftime("%b %d, %I:%M %p") if thread.last_message_at else thread.started_at.strftime("%b %d, %I:%M %p"),
+                        "time": (
+                            thread.last_message_at.strftime("%b %d, %I:%M %p")
+                            if thread.last_message_at
+                            else thread.started_at.strftime("%b %d, %I:%M %p")
+                        ),
                     }
                 )
 
@@ -170,6 +199,7 @@ class PatientProfileView(BasePatientAPIView):
                 "medicalHistory": medical_history,
                 "comments": doctor_comments,
                 "prescriptions": prescriptions,
+                "medicalRecords": medical_records,
                 "medicalReports": medical_reports,
                 "medicalDocuments": medical_documents,
             },
@@ -217,12 +247,16 @@ class PatientProfileView(BasePatientAPIView):
             print("Patient profile PATCH content-type:", request.content_type)
             # request.data may be an immutable dict; list keys for readability
             try:
-                keys = list(request.data.keys()) if hasattr(request.data, 'keys') else []
+                keys = (
+                    list(request.data.keys()) if hasattr(request.data, "keys") else []
+                )
             except Exception:
                 keys = []
             print("Patient profile PATCH data keys:", keys)
             try:
-                file_keys = list(request.FILES.keys()) if hasattr(request, 'FILES') else []
+                file_keys = (
+                    list(request.FILES.keys()) if hasattr(request, "FILES") else []
+                )
             except Exception:
                 file_keys = []
             print("Patient profile PATCH file keys:", file_keys)
@@ -242,7 +276,10 @@ class PatientProfileView(BasePatientAPIView):
             updated_profile = serializer.save()
         except Exception as exc:
             print("Patient profile update save error:", repr(exc))
-            return Response({"detail": "Internal server error while saving profile."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"detail": "Internal server error while saving profile."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         return Response(
             self._build_profile_response(request, request.user, updated_profile),
@@ -267,7 +304,7 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
             )
             .select_related("doctor", "doctor__user", "hospital")
             # Only include slots where the doctor is verified for the slot's hospital
-            .filter(doctor__verified_hospitals__id=F('hospital_id'))
+            .filter(doctor__verified_hospitals__id=F("hospital_id"))
             .order_by("date", "start_time")
         )
 
@@ -371,11 +408,19 @@ class PatientAppointmentsView(BasePatientAPIView):
 
             # Ensure the doctor is verified for the hospital where this slot is offered
             try:
-                if not slot.doctor.verified_hospitals.filter(id=slot.hospital_id).exists():
-                    return Response({"detail": "Doctor is not verified for this hospital."}, status=status.HTTP_400_BAD_REQUEST)
+                if not slot.doctor.verified_hospitals.filter(
+                    id=slot.hospital_id
+                ).exists():
+                    return Response(
+                        {"detail": "Doctor is not verified for this hospital."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
             except Exception:
                 # If any unexpected error occurs, block booking as a safe default
-                return Response({"detail": "Doctor verification check failed."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "Doctor verification check failed."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             if not slot.is_active:
                 return Response(

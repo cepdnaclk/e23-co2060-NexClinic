@@ -55,6 +55,24 @@ type PatientProfile = {
   comments: string;
   prescriptions: string;
   lastVisit: string;
+  medicalRecords: MedicalRecord[];
+};
+
+type MedicalRecord = {
+  id: string;
+  appointmentId: string;
+  visit_date: string;
+  doctorName: string;
+  hospitalName: string;
+  observations: string;
+  diagnosis: string;
+  comments: string;
+  prescriptions: string;
+  recommended_tests: string;
+  followUpDate: string;
+  follow_up_notes: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 type ApiPatientProfile = {
@@ -71,6 +89,17 @@ type ApiPatientProfile = {
   comments?: string;
   prescriptions?: string;
   lastVisit?: string;
+  medicalRecords?: MedicalRecord[];
+};
+
+type MedicalRecordDraft = {
+  observations: string;
+  diagnosis: string;
+  comments: string;
+  prescriptions: string;
+  recommendedTests: string;
+  followUpDate: string;
+  followUpNotes: string;
 };
 
 const statusFilters: AppointmentStatusFilter[] = ["All", "Pending", "Accepted", "Rejected", "Completed", "Cancelled"];
@@ -144,11 +173,23 @@ function DoctorAppointmentsPage() {
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<PatientProfile | null>(null);
   const [patientNotesDraft, setPatientNotesDraft] = useState({ comments: "", prescriptions: "" });
+  const [medicalRecordTarget, setMedicalRecordTarget] = useState<AppointmentItem | null>(null);
+  const [medicalRecordDraft, setMedicalRecordDraft] = useState<MedicalRecordDraft>({
+    observations: "",
+    diagnosis: "",
+    comments: "",
+    prescriptions: "",
+    recommendedTests: "",
+    followUpDate: "",
+    followUpNotes: "",
+  });
   const [toastMessage, setToastMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(true);
   const [isLoadingPatientProfile, setIsLoadingPatientProfile] = useState(false);
   const [isSavingPatientNotes, setIsSavingPatientNotes] = useState(false);
+  const [isLoadingMedicalRecord, setIsLoadingMedicalRecord] = useState(false);
+  const [isSavingMedicalRecord, setIsSavingMedicalRecord] = useState(false);
   const [updatingAppointmentIds, setUpdatingAppointmentIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>("All");
@@ -348,6 +389,7 @@ function DoctorAppointmentsPage() {
       comments: "",
       prescriptions: "",
       lastVisit: "Not available",
+      medicalRecords: [],
     };
 
     setSelectedPatient(fallbackProfile);
@@ -386,12 +428,128 @@ function DoctorAppointmentsPage() {
         comments: apiProfile.comments?.trim() || "",
         prescriptions: apiProfile.prescriptions?.trim() || "",
         lastVisit: apiProfile.lastVisit?.trim() || "Not available",
+        medicalRecords: Array.isArray(apiProfile.medicalRecords) ? apiProfile.medicalRecords : [],
       };
 
       setSelectedPatient(profileFromApi);
       setPatientNotesDraft({ comments: profileFromApi.comments, prescriptions: profileFromApi.prescriptions });
     } finally {
       setIsLoadingPatientProfile(false);
+    }
+  };
+
+  const openMedicalRecord = async (appointment: AppointmentItem) => {
+    setMedicalRecordTarget(appointment);
+    setMedicalRecordDraft({
+      observations: "",
+      diagnosis: "",
+      comments: "",
+      prescriptions: "",
+      recommendedTests: "",
+      followUpDate: "",
+      followUpNotes: "",
+    });
+    setIsLoadingMedicalRecord(true);
+
+    try {
+      const response = await fetch(`/api/doctor/appointments/${appointment.id}/medical-record`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (response.status === 401) {
+        handleDoctorSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.detail || "Failed to load medical record");
+      }
+
+      const record = payload?.medicalRecord as MedicalRecord | null;
+      if (record) {
+        setMedicalRecordDraft({
+          observations: record.observations || "",
+          diagnosis: record.diagnosis || "",
+          comments: record.comments || "",
+          prescriptions: record.prescriptions || "",
+          recommendedTests: record.recommended_tests || "",
+          followUpDate: record.followUpDate || "",
+          followUpNotes: record.follow_up_notes || "",
+        });
+      }
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : "Failed to load medical record.");
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } finally {
+      setIsLoadingMedicalRecord(false);
+    }
+  };
+
+  const closeMedicalRecord = () => {
+    setMedicalRecordTarget(null);
+    setMedicalRecordDraft({
+      observations: "",
+      diagnosis: "",
+      comments: "",
+      prescriptions: "",
+      recommendedTests: "",
+      followUpDate: "",
+      followUpNotes: "",
+    });
+    setIsLoadingMedicalRecord(false);
+    setIsSavingMedicalRecord(false);
+  };
+
+  const saveMedicalRecord = async () => {
+    if (!medicalRecordTarget) {
+      return;
+    }
+
+    setIsSavingMedicalRecord(true);
+
+    try {
+      const response = await fetch(`/api/doctor/appointments/${medicalRecordTarget.id}/medical-record`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          observations: medicalRecordDraft.observations,
+          diagnosis: medicalRecordDraft.diagnosis,
+          comments: medicalRecordDraft.comments,
+          prescriptions: medicalRecordDraft.prescriptions,
+          recommendedTests: medicalRecordDraft.recommendedTests,
+          followUpDate: medicalRecordDraft.followUpDate || undefined,
+          followUpNotes: medicalRecordDraft.followUpNotes,
+        }),
+      });
+
+      if (response.status === 401) {
+        handleDoctorSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.detail || "Failed to save medical record");
+      }
+
+      setToastMessage(payload?.message || "Medical record saved successfully.");
+      window.setTimeout(() => setToastMessage(""), 2200);
+      closeMedicalRecord();
+
+      if (selectedPatient && selectedPatient.patientId === medicalRecordTarget.patientId) {
+        void openPatientProfile(medicalRecordTarget.patientId);
+      }
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : "Failed to save medical record.");
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } finally {
+      setIsSavingMedicalRecord(false);
     }
   };
 
@@ -855,6 +1013,11 @@ function DoctorAppointmentsPage() {
                         {reminderSentIds.includes(appointment.id) ? "Reminder Sent" : "Send Reminder"}
                       </WhiteButton>
                     )}
+                    {(appointment.status === "Accepted" || appointment.status === "Completed") && (
+                      <WhiteButton className="px-4 py-2" onClick={() => void openMedicalRecord(appointment)}>
+                        Medical Record
+                      </WhiteButton>
+                    )}
                     <WhiteButton className="px-4 py-2" onClick={() => void openPatientProfile(appointment.patientId)}>
                       View Patient Profile
                     </WhiteButton>
@@ -898,9 +1061,14 @@ function DoctorAppointmentsPage() {
                   </p>
                   <p className="mt-1 text-sm text-slate-500">{appointment.location}</p>
                   <div className="mt-3">
+                    <div className="flex flex-wrap gap-2">
+                      <WhiteButton className="px-4 py-2" onClick={() => void openMedicalRecord(appointment)}>
+                        Medical Record
+                      </WhiteButton>
                     <WhiteButton className="px-4 py-2" onClick={() => void openPatientProfile(appointment.patientId)}>
                       View Patient Profile
                     </WhiteButton>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -947,10 +1115,174 @@ function DoctorAppointmentsPage() {
 
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                 <h4 className="font-semibold text-amber-800">Medical Records</h4>
-                <p className="mt-2 text-amber-700">
-                  Medical records module is not implemented yet. This section is ready to connect once backend records APIs are available.
+                {selectedPatient.medicalRecords.length === 0 ? (
+                  <p className="mt-2 text-amber-700">
+                    No medical records have been saved yet for this patient.
+                  </p>
+                ) : (
+                  <div className="mt-3 space-y-3">
+                    {selectedPatient.medicalRecords.map((record) => (
+                      <div key={record.id} className="rounded-xl border border-amber-200 bg-white p-3 text-sm text-slate-700">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="font-semibold text-slate-900">{record.visit_date}</p>
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-700">{record.doctorName}</p>
+                        </div>
+                        <p className="mt-1 text-slate-600">{record.hospitalName}</p>
+                        {record.observations && <p className="mt-2"><span className="font-semibold text-slate-900">Observations:</span> {record.observations}</p>}
+                        {record.diagnosis && <p className="mt-1"><span className="font-semibold text-slate-900">Diagnosis:</span> {record.diagnosis}</p>}
+                        {record.prescriptions && <p className="mt-1"><span className="font-semibold text-slate-900">Prescriptions:</span> {record.prescriptions}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {medicalRecordTarget && (
+        <div className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-900/55 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-3xl rounded-[2rem] border border-white/80 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">Medical Record</h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  {medicalRecordTarget.patientName} • {medicalRecordTarget.date} • {medicalRecordTarget.location}
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={closeMedicalRecord}
+                className="text-slate-500 hover:text-slate-800"
+                aria-label="Close medical record dialog"
+              >
+                x
+              </button>
+            </div>
+
+            {isLoadingMedicalRecord ? (
+              <p className="mt-5 text-sm text-slate-500">Loading existing record...</p>
+            ) : (
+              <div className="mt-5 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+                <div className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700">Observations</label>
+                      <textarea
+                        value={medicalRecordDraft.observations}
+                        onChange={(event) => setMedicalRecordDraft((prev) => ({ ...prev, observations: event.target.value }))}
+                        rows={4}
+                        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
+                        placeholder="Observed symptoms, exam findings, and other notes"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700">Diagnosis / Assessment</label>
+                      <textarea
+                        value={medicalRecordDraft.diagnosis}
+                        onChange={(event) => setMedicalRecordDraft((prev) => ({ ...prev, diagnosis: event.target.value }))}
+                        rows={4}
+                        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
+                        placeholder="Working diagnosis, clinical assessment, or plan"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700">Comments</label>
+                      <textarea
+                        value={medicalRecordDraft.comments}
+                        onChange={(event) => setMedicalRecordDraft((prev) => ({ ...prev, comments: event.target.value }))}
+                        rows={4}
+                        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
+                        placeholder="Doctor comments, warnings, or clinical remarks"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700">Prescriptions</label>
+                      <textarea
+                        value={medicalRecordDraft.prescriptions}
+                        onChange={(event) => setMedicalRecordDraft((prev) => ({ ...prev, prescriptions: event.target.value }))}
+                        rows={4}
+                        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
+                        placeholder="Medicines, dosage, and usage instructions"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700">Recommended Tests</label>
+                      <textarea
+                        value={medicalRecordDraft.recommendedTests}
+                        onChange={(event) => setMedicalRecordDraft((prev) => ({ ...prev, recommendedTests: event.target.value }))}
+                        rows={3}
+                        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
+                        placeholder="Lab work, scans, or referrals"
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700">Follow-up Date</label>
+                        <input
+                          type="date"
+                          value={medicalRecordDraft.followUpDate}
+                          onChange={(event) => setMedicalRecordDraft((prev) => ({ ...prev, followUpDate: event.target.value }))}
+                          className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700">Follow-up Notes</label>
+                        <textarea
+                          value={medicalRecordDraft.followUpNotes}
+                          onChange={(event) => setMedicalRecordDraft((prev) => ({ ...prev, followUpNotes: event.target.value }))}
+                          rows={3}
+                          className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
+                          placeholder="Review instructions, red flags, or next steps"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <aside className="space-y-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Context</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-900">{medicalRecordTarget.patientName}</p>
+                    <p className="mt-1 text-sm text-slate-600">{medicalRecordTarget.date} • {medicalRecordTarget.time}</p>
+                    <p className="mt-1 text-sm text-slate-600">{medicalRecordTarget.location}</p>
+                    <p className="mt-1 text-sm text-slate-600">Reason: {medicalRecordTarget.reason}</p>
+                  </div>
+
+                  <div className="rounded-2xl border border-emerald-100 bg-white p-4">
+                    <p className="text-sm font-semibold text-slate-900">What to capture</p>
+                    <ul className="mt-2 space-y-2 text-sm text-slate-600">
+                      <li>Observed symptoms and examination notes</li>
+                      <li>Assessment or diagnosis</li>
+                      <li>Prescribed medicines and usage instructions</li>
+                      <li>Recommended tests or referrals</li>
+                      <li>Follow-up date and next-step guidance</li>
+                    </ul>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <WhiteButton className="px-4 py-2" onClick={() => void openPatientProfile(medicalRecordTarget.patientId)}>
+                      View Patient Profile
+                    </WhiteButton>
+                  </div>
+                </aside>
+              </div>
+            )}
+
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <WhiteButton disabled={isSavingMedicalRecord} onClick={closeMedicalRecord}>
+                Cancel
+              </WhiteButton>
+              <GreenButton disabled={isSavingMedicalRecord} onClick={() => void saveMedicalRecord()}>
+                {isSavingMedicalRecord ? "Saving..." : "Save Medical Record"}
+              </GreenButton>
             </div>
           </div>
         </div>
