@@ -946,21 +946,21 @@ export default function UserEditProfilePage() {
                     <div className="flex flex-col gap-3 sm:flex-row">
                       <BlackButton
                         type="button"
-                        className="w-full rounded-full px-6 py-3 sm:w-auto"
+                        className="w-full rounded-full px-4 py-2 text-sm sm:w-auto"
                         onClick={handleSaveDraftOnly}
                       >
                         Save Draft
                       </BlackButton>
                       <BlackButton
                         type="button"
-                        className="w-full rounded-full px-6 py-3 sm:w-auto"
+                        className="w-full rounded-full px-4 py-2 text-sm sm:w-auto"
                         onClick={handleReset}
                       >
                         Reset
                       </BlackButton>
                       <GreenButton
                         type="submit"
-                        className="w-full rounded-full px-6 py-3 sm:w-auto"
+                        className="w-full rounded-full px-4 py-2 text-sm sm:w-auto"
                         disabled={saving}
                       >
                         {saving ? "Saving..." : "Save Changes"}
