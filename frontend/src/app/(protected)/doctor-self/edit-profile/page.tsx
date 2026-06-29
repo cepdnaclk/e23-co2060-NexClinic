@@ -708,6 +708,26 @@ export default function EditDoctorProfilePage() {
   const joinedQualifications = formData.qualifications.join(", ");
   const joinedLanguages = formData.languages.join(", ");
   const joinedHospitals = formData.hospitals.join(", ");
+  const profileCompletion = Math.round(
+    (
+      [
+        formData.fullName,
+        formData.email,
+        formData.phone,
+        formData.licenseNumber,
+        formData.dateOfBirth,
+        formData.gender,
+        formData.address,
+        formData.specialization,
+        formData.experienceYears,
+        formData.location,
+        formData.chatFee,
+        formData.appointmentFee,
+        joinedQualifications,
+        joinedLanguages,
+      ].filter((value) => value.trim().length > 0).length / 14
+    ) * 100,
+  );
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(20,184,166,0.14),_transparent_24%),linear-gradient(180deg,#eefbf6_0%,#f7fcfa_45%,#ffffff_100%)] pb-10">
@@ -724,17 +744,72 @@ export default function EditDoctorProfilePage() {
         <div className="relative mb-8 overflow-hidden rounded-[2.5rem] border border-emerald-200/40 bg-[url('/images/doctor-login-bg.png')] bg-cover bg-center bg-no-repeat shadow-[0_20px_60px_rgba(16,185,129,0.15)]">
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/90 via-emerald-500/85 to-teal-600/85 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-emerald-900/10" />
-          <div className="relative px-5 py-10 sm:px-8 sm:py-14 lg:px-10 lg:py-16">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-white backdrop-blur-sm">
-              <span className="h-2 w-2 rounded-full bg-white" />
-              DOCTOR PROFILE EDITOR
+          <div className="relative grid gap-6 px-5 py-10 sm:px-8 sm:py-14 lg:grid-cols-[1.15fr_0.85fr] lg:px-10 lg:py-16">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-white backdrop-blur-sm">
+                <span className="h-2 w-2 rounded-full bg-white" />
+                DOCTOR PROFILE EDITOR
+              </div>
+              <h1 className="mt-4 max-w-2xl text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                Shape your profile into a cleaner, more polished practice page
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-white/95 sm:text-lg">
+                Update identity, consultation fees, availability, and practice details in one focused workspace.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-2">
+                <StatusPill tone="slate">Secure draft workspace</StatusPill>
+                <StatusPill tone="emerald">Profile completion {profileCompletion}%</StatusPill>
+                <StatusPill tone="teal">Backend sync enabled</StatusPill>
+                {draftSavedAt ? <StatusPill tone="slate">Draft saved locally</StatusPill> : null}
+              </div>
             </div>
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-5xl">
-              Update your professional profile with confidence
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/95 sm:text-lg">
-              Keep your identity, practice details, fees, and availability organized in a calm workspace.
-            </p>
+
+            <div className="rounded-[2rem] border border-white/20 bg-white/12 p-5 text-white shadow-2xl shadow-emerald-900/10 backdrop-blur-md">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
+                Editing progress
+              </p>
+              <div className="mt-4 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-4xl font-bold leading-none">{profileCompletion}%</p>
+                  <p className="mt-2 text-sm text-white/80">Profile completeness</p>
+                </div>
+                <div className="rounded-2xl border border-white/20 bg-white/12 px-3 py-2 text-right backdrop-blur-sm">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-white/70">
+                    Draft status
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    {draftSavedAt ? "Saved on this device" : "No draft saved"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/20">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-white via-emerald-100 to-teal-100 transition-all duration-500"
+                  style={{ width: `${profileCompletion}%` }}
+                />
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm">
+                  <p className="text-xs uppercase tracking-[0.22em] text-white/65">Name</p>
+                  <p className="mt-2 break-words font-semibold text-white">{formData.fullName || "Not set yet"}</p>
+                </div>
+                <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm">
+                  <p className="text-xs uppercase tracking-[0.22em] text-white/65">Specialization</p>
+                  <p className="mt-2 break-words font-semibold text-white">{formData.specialization || "Not set"}</p>
+                </div>
+                <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm">
+                  <p className="text-xs uppercase tracking-[0.22em] text-white/65">Fees</p>
+                  <p className="mt-2 font-semibold text-white">{formData.chatFee || "0"} / {formData.appointmentFee || "0"}</p>
+                </div>
+                <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm">
+                  <p className="text-xs uppercase tracking-[0.22em] text-white/65">Availability</p>
+                  <p className="mt-2 font-semibold text-white">{formData.availabilityForOnlineAdvice ? "Online advice on" : "Online advice off"}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -773,49 +848,53 @@ export default function EditDoctorProfilePage() {
               </div>
 
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-[1.75rem] bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-1 shadow-xl shadow-emerald-200/40">
+                <div className="flex items-center gap-5 rounded-[2rem] border border-emerald-100/80 bg-gradient-to-br from-white via-emerald-50/90 to-teal-50/80 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+                  <div className="relative shrink-0 rounded-[1.75rem] bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-[3px] shadow-xl shadow-emerald-200/40">
                     <div className="relative overflow-hidden rounded-[1.5rem] bg-white p-1">
                       <Image
                         src={profileImage}
                         alt="Doctor profile preview"
-                        width={120}
-                        height={120}
-                        className="h-[120px] w-[120px] rounded-[1.25rem] object-cover"
+                        width={144}
+                        height={144}
+                        className="h-[144px] w-[144px] rounded-[1.25rem] object-cover"
                       />
                       {!profileImage.startsWith("data:") && !profileImage.trim() ? (
-                        <div className="absolute inset-0 flex items-center justify-center rounded-[1.25rem] bg-emerald-600 text-3xl font-bold text-white">
+                        <div className="absolute inset-0 flex items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-700 text-4xl font-bold text-white">
                           {initials}
                         </div>
                       ) : null}
+                      <div className="absolute left-3 top-3 rounded-full border border-white/30 bg-white/20 px-2.5 py-1 text-[11px] font-semibold tracking-[0.18em] text-white backdrop-blur-sm">
+                        PROFILE
+                      </div>
                     </div>
                   </div>
 
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
                       Profile photo
                     </p>
-                    <h2 className="mt-1 text-2xl font-bold text-slate-900">
+                    <h2 className="mt-1 break-words text-2xl font-bold text-slate-900">
                       {formData.fullName || "Your name"}
                     </h2>
                     <p className="mt-1 text-sm text-slate-600">
                       {formData.specialization || "Specialization not specified"}
                     </p>
-                    {/* <p className="mt-1 text-xs text-slate-500">
-                      {getAttachmentLabel(formData.profileImage)}
-                    </p> */}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <StatusPill tone="emerald">Featured avatar</StatusPill>
+                      <StatusPill tone="teal">Patient-facing</StatusPill>
+                    </div>
                   </div>
                 </div>
 
-                <div className="inline-flex items-center gap-3">
-                  <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                <div className="inline-flex flex-wrap items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50">
                     Change photo
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
                   <button
                     type="button"
                     onClick={handleRemovePhoto}
-                    className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition"
+                    className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
                   >
                     Remove photo
                   </button>
@@ -1053,13 +1132,13 @@ export default function EditDoctorProfilePage() {
             </div>
 
             <div className="space-y-3">
-              <GreenButton onClick={() => { void handleSubmitProfile(); }} disabled={saving} className="w-full rounded-full py-3 font-semibold shadow-[0_12px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.4)]">
+              <GreenButton onClick={() => { void handleSubmitProfile(); }} disabled={saving} className="w-full rounded-full px-4 py-2.5 text-sm font-semibold shadow-[0_12px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.4)]">
                 {saving ? "Saving..." : "Save Changes"}
               </GreenButton>
-              <BlackButton onClick={handleSaveDraft} className="w-full rounded-full py-3 font-semibold">
+              <BlackButton onClick={handleSaveDraft} className="w-full rounded-full px-4 py-2.5 text-sm font-semibold">
                 Save Draft
               </BlackButton>
-              <BlackButton onClick={handleReset} className="w-full rounded-full py-3 font-semibold">
+              <BlackButton onClick={handleReset} className="w-full rounded-full px-4 py-2.5 text-sm font-semibold">
                 Reset Changes
               </BlackButton>
             </div>
