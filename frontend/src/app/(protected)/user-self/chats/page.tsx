@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import ChatWorkspace from "@/components/chat/ChatWorkspace";
@@ -25,7 +25,7 @@ type AppointmentsPayload = {
   appointments?: DashboardAppointment[];
 };
 
-export default function UserChatsPage() {
+function UserChatsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [profile, setProfile] = useState<PatientProfilePayload | null>(null);
@@ -182,5 +182,17 @@ export default function UserChatsPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function UserChatsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#eef8f4] to-white text-slate-500">
+        Loading chats...
+      </div>
+    }>
+      <UserChatsPageContent />
+    </Suspense>
   );
 }

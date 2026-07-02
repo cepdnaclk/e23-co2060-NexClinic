@@ -1,11 +1,11 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import GreenButton from "../../../components/buttons/GreenButton";
 import axios from "axios";
 
-function ResetPasswordPage() {
+function ResetPasswordPageContent() {
 
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -240,4 +240,14 @@ function ResetPasswordPage() {
     );
 }
 
-export default ResetPasswordPage;
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-500">
+                Loading...
+            </div>
+        }>
+            <ResetPasswordPageContent />
+        </Suspense>
+    );
+}
