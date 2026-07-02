@@ -129,6 +129,15 @@ const DOCTOR_SPECIALIZATIONS = [
 
 const LANGUAGE_OPTIONS = ["Sinhala", "English", "Tamil", "Hindi", "Arabic", "French", "German"];
 
+const AVATAR_GRADIENTS = [
+  ["#059669", "#0f766e"],
+  ["#0f766e", "#14b8a6"],
+  ["#2563eb", "#0ea5e9"],
+  ["#7c3aed", "#db2777"],
+  ["#ea580c", "#f59e0b"],
+  ["#1d4ed8", "#4338ca"],
+];
+
 const defaultFormData: DoctorFormData = {
   fullName: "",
   preferredName: "",
@@ -361,6 +370,7 @@ export default function EditDoctorProfilePage() {
   const [formData, setFormData] = useState<DoctorFormData>(defaultFormData);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [removePhoto, setRemovePhoto] = useState(false);
+  const [creatingAvatar, setCreatingAvatar] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -546,6 +556,24 @@ export default function EditDoctorProfilePage() {
       .join("");
   }, [formData.fullName]);
 
+  const avatarSeed = useMemo(() => {
+    const basis = `${formData.fullName}|${formData.preferredName}|${formData.specialization}|${formData.email}`.trim();
+    if (!basis) {
+      return 0;
+    }
+
+    let hash = 0;
+    for (let index = 0; index < basis.length; index += 1) {
+      hash = (hash * 31 + basis.charCodeAt(index)) >>> 0;
+    }
+
+    return hash;
+  }, [formData.email, formData.fullName, formData.preferredName, formData.specialization]);
+
+  const avatarPalette = useMemo(() => {
+    return AVATAR_GRADIENTS[avatarSeed % AVATAR_GRADIENTS.length] || AVATAR_GRADIENTS[0];
+  }, [avatarSeed]);
+
   const availableHospitals = useMemo(() => {
     return activeHospitals.filter((hospital) => {
       const hasPendingOrVerified = hospitalRequests.some(
@@ -578,6 +606,92 @@ export default function EditDoctorProfilePage() {
       setRemovePhoto(false);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCreateAvatar = async () => {
+    if (creatingAvatar) {
+      return;
+    }
+
+    setCreatingAvatar(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1024;
+      canvas.height = 1024;
+
+      const context = canvas.getContext("2d");
+      if (!context) {
+        throw new Error("Avatar creation is not supported in this browser.");
+      }
+
+      const [startColor, endColor] = avatarPalette;
+      const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, startColor);
+      gradient.addColorStop(1, endColor);
+
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      context.globalAlpha = 0.12;
+      context.fillStyle = "#ffffff";
+      context.beginPath();
+      context.arc(760, 220, 220, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.arc(250, 830, 180, 0, Math.PI * 2);
+      context.fill();
+      context.globalAlpha = 1;
+
+      context.fillStyle = "rgba(255, 255, 255, 0.16)";
+      context.fillRect(120, 120, 784, 784);
+
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillStyle = "#ffffff";
+      context.font = "bold 260px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      context.fillText(initials || "D", canvas.width / 2, canvas.height / 2 - 14);
+
+      context.font = "600 54px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      context.globalAlpha = 0.88;
+      context.fillText(formData.fullName.trim() || "Doctor", canvas.width / 2, canvas.height / 2 + 190);
+      context.globalAlpha = 1;
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((result) => {
+          if (!result) {
+            reject(new Error("Could not create avatar image."));
+            return;
+          }
+
+          resolve(result);
+        }, "image/png");
+      });
+
+      const avatarFile = new File([
+        blob,
+      ], `${(formData.fullName || "doctor").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "doctor"}-avatar.png`, {
+        type: "image/png",
+      });
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImageFile(avatarFile);
+        setFormData((previous) => ({
+          ...previous,
+          profileImage: String(reader.result || ""),
+        }));
+        setRemovePhoto(false);
+        setNotice("Avatar created. Save your profile to upload it.");
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create avatar.");
+    } finally {
+      setCreatingAvatar(false);
+    }
   };
 
   const handleRemovePhoto = () => {
@@ -891,6 +1005,14 @@ export default function EditDoctorProfilePage() {
                     Change photo
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => { void handleCreateAvatar(); }}
+                    disabled={creatingAvatar}
+                    className="inline-flex items-center justify-center rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {creatingAvatar ? "Creating avatar..." : "Create avatar"}
+                  </button>
                   <button
                     type="button"
                     onClick={handleRemovePhoto}
