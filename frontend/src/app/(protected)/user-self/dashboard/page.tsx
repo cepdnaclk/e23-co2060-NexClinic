@@ -103,7 +103,9 @@ export default function UserDashboard() {
           .json()
           .catch(() => ({}))) as AppointmentsPayload;
 
-        if (!profileResponse.ok) {
+        const profileMissing = profileResponse.status === 404;
+
+        if (!profileResponse.ok && !profileMissing) {
           throw new Error("Failed to load patient profile");
         }
 
@@ -111,7 +113,7 @@ export default function UserDashboard() {
           throw new Error("Failed to load appointments");
         }
 
-        const patient = profilePayload.patient || {};
+        const patient = profileMissing ? {} : profilePayload.patient || {};
         setFullName(patient.fullName || "");
         setEmail(patient.email || "");
         setProfileImage(patient.profileImage || undefined);
