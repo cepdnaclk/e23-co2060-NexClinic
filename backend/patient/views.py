@@ -34,7 +34,7 @@ class BasePatientAPIView(APIView):
     def _is_patient(user):
         return getattr(user, "role", None) == "PATIENT"
 
-    def _get_patient_profile_or_response(self, request):
+    def _get_patient_profile_or_response(self, request, allow_missing_profile=False):
         if not self._is_patient(request.user):
             return None, Response(
                 {"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN
@@ -49,6 +49,8 @@ class BasePatientAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         if not patient_profile:
+            if allow_missing_profile:
+                return None, None
             return None, Response(
                 {"detail": "Patient profile not found."},
                 status=status.HTTP_404_NOT_FOUND,
@@ -225,7 +227,9 @@ class PatientProfileView(BasePatientAPIView):
         if not self._is_patient(user):
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
-        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        patient_profile, error_response = self._get_patient_profile_or_response(
+            request, allow_missing_profile=True
+        )
         if error_response:
             return error_response
 
@@ -289,9 +293,14 @@ class PatientProfileView(BasePatientAPIView):
 
 class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
     def get(self, request):
-        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        patient_profile, error_response = self._get_patient_profile_or_response(
+            request, allow_missing_profile=True
+        )
         if error_response:
             return error_response
+
+        if not patient_profile:
+            return Response({"appointments": []}, status=status.HTTP_200_OK)
 
         today = timezone.localdate()
         window_end = today + timedelta(days=13)
@@ -358,9 +367,14 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
 
 class PatientAppointmentsView(BasePatientAPIView):
     def get(self, request):
-        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        patient_profile, error_response = self._get_patient_profile_or_response(
+            request, allow_missing_profile=True
+        )
         if error_response:
             return error_response
+
+        if not patient_profile:
+            return Response({"appointments": []}, status=status.HTTP_200_OK)
 
         queryset = (
             Appointment.objects.filter(patient=patient_profile)

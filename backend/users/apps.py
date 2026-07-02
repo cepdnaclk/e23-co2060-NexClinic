@@ -6,4 +6,6 @@ class UsersConfig(AppConfig):
     name = "users"
 
     def ready(self):
-        import users.signals
+        # Signals are loaded explicitly only where safe; patient profile
+        # creation is handled by the registration flow that has full data.
+        pass
