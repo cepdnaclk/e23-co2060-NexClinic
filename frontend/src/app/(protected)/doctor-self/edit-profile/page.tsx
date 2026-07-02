@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import BlackButton from "@/components/buttons/BlackButton";
@@ -596,9 +595,9 @@ export default function EditDoctorProfilePage() {
       return;
     }
 
+    setSelectedImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => {
-      setSelectedImageFile(file);
       setFormData((previous) => ({
         ...previous,
         profileImage: String(reader.result || ""),
@@ -676,9 +675,10 @@ export default function EditDoctorProfilePage() {
         type: "image/png",
       });
 
+      setSelectedImageFile(avatarFile);
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setSelectedImageFile(avatarFile);
         setFormData((previous) => ({
           ...previous,
           profileImage: String(reader.result || ""),
@@ -965,11 +965,9 @@ export default function EditDoctorProfilePage() {
                 <div className="flex items-center gap-5 rounded-[2rem] border border-emerald-100/80 bg-gradient-to-br from-white via-emerald-50/90 to-teal-50/80 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
                   <div className="relative shrink-0 rounded-[1.75rem] bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-[3px] shadow-xl shadow-emerald-200/40">
                     <div className="relative overflow-hidden rounded-[1.5rem] bg-white p-1">
-                      <Image
+                      <img
                         src={profileImage}
                         alt="Doctor profile preview"
-                        width={144}
-                        height={144}
                         className="h-[144px] w-[144px] rounded-[1.25rem] object-cover"
                       />
                       {!profileImage.startsWith("data:") && !profileImage.trim() ? (
@@ -1174,7 +1172,7 @@ export default function EditDoctorProfilePage() {
                 <h3 className="text-lg font-black text-slate-900">Profile Summary</h3>
                 <div className="flex items-center gap-3">
                   <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-slate-100">
-                    <Image src={profileImage} alt="Profile preview" width={56} height={56} className="h-full w-full object-cover" />
+                    <img src={profileImage} alt="Profile preview" className="h-full w-full object-cover" />
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-[0.18em] text-emerald-700">Doctor</p>

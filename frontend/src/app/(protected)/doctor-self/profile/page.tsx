@@ -139,6 +139,7 @@ function DoctorProfilePage() {
     const email = profileData?.doctor.email || "Not available";
     const phone = profileData?.doctor.phone || "Not available";
     const isVerified = profileData?.doctor.isVerified ?? false;
+    const profileImage = profileData?.doctor.profileImage || profileData?.doctor.photo || "/images/doctor-profile-default.png";
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.24),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(34,197,94,0.16),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(22,163,74,0.12),_transparent_24%),linear-gradient(180deg,#eafbf2_0%,#f7fdf8_40%,#ffffff_100%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.08),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(34,197,94,0.06),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(22,163,74,0.05),_transparent_24%),linear-gradient(180deg,#1a1a1a_0%,#252525_40%,#1f1f1f_100%)]">
@@ -156,7 +157,7 @@ function DoctorProfilePage() {
                 <div title="left-column" className="relative z-10 flex flex-col sm:flex-row gap-6 items-center xl:gap-8">
                     <div className="relative rounded-[2rem] bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-[4px] shadow-[0_18px_45px_rgba(16,185,129,0.26)] dark:shadow-black/40">
                         <div className="relative overflow-hidden rounded-[1.75rem] bg-white p-1">
-                            <img src="https://img.freepik.com/free-photo/portrait-smiling-male-doctor-with-stethoscope_171337-1532.jpg" alt="Doctor Profile" className="w-28 h-28 sm:w-40 sm:h-40 rounded-[1.5rem] object-cover" />
+                            <img src={profileImage} alt="Doctor Profile" className="w-28 h-28 sm:w-40 sm:h-40 rounded-[1.5rem] object-cover" />
                             <div className="absolute left-3 top-3 rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-bold tracking-[0.22em] text-emerald-700 backdrop-blur-sm">
                                 PROFILE
                             </div>
