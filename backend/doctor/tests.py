@@ -110,3 +110,25 @@ class DoctorProfileViewTests(TestCase):
         self.profile.refresh_from_db()
         self.assertTrue(bool(self.profile.profile_picture))
         self.assertIn("/media/doctor_profiles/", response.json()["doctor"]["profileImage"])
+
+    def test_doctor_can_update_profile_details_with_multipart_payload(self):
+        self.client.force_authenticate(user=self.user)
+        image = SimpleUploadedFile(
+            "doctor-updated.jpg",
+            SMALL_GIF,
+            content_type="image/gif",
+        )
+
+        response = self.client.patch(
+            "/api/doctor/profile/",
+            {
+                "fullName": "Doctor Multipart",
+                "profileImage": image,
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.full_name, "Doctor Multipart")
+        self.assertTrue(bool(self.profile.profile_picture))
