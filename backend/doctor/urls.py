@@ -5,6 +5,9 @@ from .views import (
     AdminDoctorVerificationActionView,
     AdminSlotTemplateListCreateView,
     AdminSlotTemplateDetailView,
+    AdminApplySlotTemplatesView,
+    AdminSlotTemplateAssignmentListView,
+    AdminSlotTemplateAssignmentDetailView,
     AdminAppointmentCancelView,
     DoctorSpecializationsView,
     DoctorDirectoryView,
@@ -104,6 +107,21 @@ urlpatterns = [
         "admin/slot-templates/<int:template_id>/",
         AdminSlotTemplateDetailView.as_view(),
         name="admin-slot-template-detail",
+    ),
+    path(
+        "admin/slot-templates/apply/",
+        AdminApplySlotTemplatesView.as_view(),
+        name="admin-slot-templates-apply",
+    ),
+    path(
+        "admin/slot-template-assignments/",
+        AdminSlotTemplateAssignmentListView.as_view(),
+        name="admin-slot-template-assignments",
+    ),
+    path(
+        "admin/slot-template-assignments/<int:assignment_id>/",
+        AdminSlotTemplateAssignmentDetailView.as_view(),
+        name="admin-slot-template-assignment-detail",
     ),
     path(
         "admin/appointment-slots/generate/",

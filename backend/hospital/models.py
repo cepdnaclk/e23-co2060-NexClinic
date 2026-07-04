@@ -103,7 +103,9 @@ class DoctorHospitalVerification(models.Model):
 class SlotTemplate(models.Model):
     doctor = models.ForeignKey(
         "doctor.DoctorProfile",
-        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
         related_name="hospital_app_slot_templates",
     )
     hospital = models.ForeignKey(
@@ -117,6 +119,7 @@ class SlotTemplate(models.Model):
     slot_duration_minutes = models.PositiveIntegerField(default=30)
     default_patient_limit = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -134,6 +137,45 @@ class SlotTemplate(models.Model):
 
     def __str__(self):
         return f"Template: {self.doctor} @ {self.hospital} on {self.day_of_week} {self.start_time}-{self.end_time}"
+
+
+class DoctorSlotTemplateAssignment(models.Model):
+    doctor = models.ForeignKey(
+        "doctor.DoctorProfile",
+        on_delete=models.CASCADE,
+        related_name="template_assignments",
+    )
+    hospital = models.ForeignKey(
+        Hospital,
+        on_delete=models.CASCADE,
+        related_name="doctor_template_assignments",
+    )
+    slot_template = models.ForeignKey(
+        SlotTemplate,
+        on_delete=models.CASCADE,
+        related_name="assignments",
+    )
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_template_assignments",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["doctor", "hospital"]),
+        ]
+
+    def __str__(self):
+        return f"Assignment: {self.doctor} - {self.slot_template} ({self.start_date} to {self.end_date})"
+
 
 
 class ActivityLog(models.Model):

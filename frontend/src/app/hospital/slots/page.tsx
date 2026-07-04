@@ -9,12 +9,16 @@ import {
   fetchSlotTemplates,
   generateSlots,
   updateSlotTemplate,
+  applySlotTemplates,
+  fetchSlotTemplateAssignments,
+  deleteSlotTemplateAssignment,
   type HospitalAdminItem,
   type DoctorVerificationItem,
   type SlotTemplateItem,
+  type DoctorSlotTemplateAssignmentItem,
 } from "@/lib/api/hospitalSlots";
 
-const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 type SlotTemplateFormState = {
   doctor: string;
@@ -28,7 +32,7 @@ type SlotTemplateFormState = {
 
 const initialFormState: SlotTemplateFormState = {
   doctor: "",
-  day_of_week: "1",
+  day_of_week: "0",
   start_time: "09:00",
   end_time: "09:30",
   slot_duration_minutes: "30",
@@ -53,6 +57,22 @@ const HospitalSlotsPage = () => {
   const [generationDoctorId, setGenerationDoctorId] = useState("");
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const [error, setError] = useState("");
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"templates" | "assignments">("templates");
+
+  // Assignment states
+  const [assignments, setAssignments] = useState<DoctorSlotTemplateAssignmentItem[]>([]);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(false);
+  const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
+  const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
+  const [timeframeType, setTimeframeType] = useState("1_week");
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  });
+  const [endDate, setEndDate] = useState("");
+  const [applying, setApplying] = useState(false);
 
   const selectedHospital = useMemo(
     () => hospitals.find((hospital) => String(hospital.hospital ?? hospital.id ?? "") === selectedHospitalId),
@@ -278,6 +298,88 @@ const HospitalSlotsPage = () => {
       setActionError(err instanceof Error ? err.message : String(err));
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const refreshAssignments = async () => {
+    if (!selectedHospitalId) return;
+    setAssignmentsLoading(true);
+    try {
+      const payload = await fetchSlotTemplateAssignments(selectedHospitalId);
+      setAssignments(payload.assignments || []);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAssignmentsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "assignments") {
+      void refreshAssignments();
+    }
+  }, [selectedHospitalId, activeTab]);
+
+  const handleApplyTemplates = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedTemplates.length === 0) {
+      setActionError("Please select at least one weekly template.");
+      return;
+    }
+    if (selectedDoctors.length === 0) {
+      setActionError("Please select at least one doctor.");
+      return;
+    }
+    setApplying(true);
+    setActionError("");
+    setActionMessage("");
+    try {
+      const payload: Record<string, unknown> = {
+        hospital: Number(selectedHospitalId),
+        template_ids: selectedTemplates.map(Number),
+        doctor_ids: selectedDoctors.map(Number),
+        timeframe_type: timeframeType,
+        start_date: startDate,
+      };
+      if (timeframeType === "custom") {
+        if (!endDate) {
+          setActionError("End date is required for custom timeframe.");
+          setApplying(false);
+          return;
+        }
+        payload.end_date = endDate;
+      }
+      const res = await applySlotTemplates(payload);
+      setActionMessage(
+        `Templates applied successfully! Created ${res.created_slots} slots, skipped ${res.skipped_slots} duplicates.`
+      );
+      setSelectedTemplates([]);
+      setSelectedDoctors([]);
+      void refreshAssignments();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleRevokeAssignment = async (assignmentId: string | number) => {
+    if (!window.confirm("Revoke this assignment? This will delete all future unbooked slots associated with it.")) {
+      return;
+    }
+    setSaving(true);
+    setActionError("");
+    setActionMessage("");
+    try {
+      const res = await deleteSlotTemplateAssignment(assignmentId);
+      setActionMessage(
+        `Assignment revoked successfully. Deleted ${res.deleted_slots_count} future unbooked slots.`
+      );
+      void refreshAssignments();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
     }
   };
 

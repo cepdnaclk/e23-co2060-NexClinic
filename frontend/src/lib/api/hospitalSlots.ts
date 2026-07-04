@@ -120,3 +120,73 @@ export async function generateSlots(payload: Record<string, unknown>): Promise<S
   }
   return res.json();
 }
+
+export interface DoctorSlotTemplateAssignmentItem {
+  id: number | string;
+  doctor: number | string;
+  doctorName?: string;
+  doctor_preferred_name?: string;
+  hospital: number | string;
+  hospitalName?: string;
+  slot_template: number | string;
+  slot_template_detail?: SlotTemplateItem;
+  templateDetails?: {
+    id: number | string;
+    day_of_week?: number;
+    day_name?: string;
+    start_time?: string;
+    end_time?: string;
+    slot_duration_minutes?: number;
+    default_patient_limit?: number;
+  };
+  start_date: string;
+  end_date: string;
+  is_active?: boolean;
+  created_at?: string;
+  status?: string;
+}
+
+export async function applySlotTemplates(payload: Record<string, unknown>): Promise<{
+  detail: string;
+  created_slots: number;
+  skipped_slots: number;
+  assignments: DoctorSlotTemplateAssignmentItem[];
+}> {
+  const res = await fetch("/api/hospital/slot-templates/apply", {
+    method: "POST",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || data?.detail || "Failed to apply slot templates");
+  }
+  return res.json();
+}
+
+export async function fetchSlotTemplateAssignments(hospitalId: string): Promise<{ assignments: DoctorSlotTemplateAssignmentItem[] }> {
+  const params = new URLSearchParams({ hospital_id: hospitalId });
+  const res = await fetch(`/api/hospital/slot-template-assignments?${params.toString()}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const payload = await res.json().catch(() => ({}));
+    throw new Error(payload?.error || payload?.detail || "Failed to fetch slot template assignments");
+  }
+  return res.json();
+}
+
+export async function deleteSlotTemplateAssignment(assignmentId: string | number): Promise<{ detail: string; deleted_slots_count: number }> {
+  const res = await fetch(`/api/hospital/slot-template-assignments/${assignmentId}`, {
+    method: "DELETE",
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || data?.detail || "Failed to revoke slot template assignment");
+  }
+  return res.json();
+}
+

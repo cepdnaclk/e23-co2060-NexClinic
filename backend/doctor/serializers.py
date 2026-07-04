@@ -13,6 +13,7 @@ from hospital.models import (
     HospitalAdmin,
     DoctorHospitalVerification,
     SlotTemplate,
+    DoctorSlotTemplateAssignment,
 )
 from patient.serializers import PatientMedicalRecordSerializer
 
@@ -116,7 +117,7 @@ class DoctorHospitalVerificationSerializer(serializers.ModelSerializer):
 
 
 class SlotTemplateSerializer(serializers.ModelSerializer):
-    doctorName = serializers.CharField(source="doctor.full_name", read_only=True)
+    doctorName = serializers.SerializerMethodField(read_only=True)
     hospitalName = serializers.CharField(source="hospital.name", read_only=True)
 
     class Meta:
@@ -146,6 +147,64 @@ class SlotTemplateSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+        extra_kwargs = {
+            "doctor": {"required": False, "allow_null": True},
+        }
+
+    def get_doctorName(self, obj):
+        return obj.doctor.full_name if obj.doctor else "Generic"
+
+
+class DoctorSlotTemplateAssignmentSerializer(serializers.ModelSerializer):
+    doctorName = serializers.CharField(source="doctor.full_name", read_only=True)
+    hospitalName = serializers.CharField(source="hospital.name", read_only=True)
+    templateDetails = serializers.SerializerMethodField(read_only=True)
+    status = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = DoctorSlotTemplateAssignment
+        fields = [
+            "id",
+            "doctor",
+            "doctorName",
+            "hospital",
+            "hospitalName",
+            "slot_template",
+            "templateDetails",
+            "start_date",
+            "end_date",
+            "is_active",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def get_templateDetails(self, obj):
+        t = obj.slot_template
+        if not t:
+            return None
+        day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        day_name = day_names[t.day_of_week] if 0 <= t.day_of_week < 7 else f"Day {t.day_of_week}"
+        return {
+            "id": t.id,
+            "day_of_week": t.day_of_week,
+            "day_name": day_name,
+            "start_time": t.start_time.strftime("%H:%M") if t.start_time else "",
+            "end_time": t.end_time.strftime("%H:%M") if t.end_time else "",
+            "slot_duration_minutes": t.slot_duration_minutes,
+            "default_patient_limit": t.default_patient_limit,
+        }
+
+    def get_status(self, obj):
+        today = timezone.localdate()
+        if not obj.is_active:
+            return "Inactive"
+        if obj.end_date < today:
+            return "Expired"
+        if obj.start_date > today:
+            return "Upcoming"
+        return "Active"
 
 
 class AdminAppointmentCancelSerializer(serializers.Serializer):

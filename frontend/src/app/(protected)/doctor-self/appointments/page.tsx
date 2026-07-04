@@ -269,8 +269,8 @@ function DoctorAppointmentsPage() {
 
         const normalized = Array.isArray(payload?.appointments)
           ? payload.appointments.map((appointment: ApiAppointment) =>
-              normalizeAppointment(appointment),
-            )
+            normalizeAppointment(appointment),
+          )
           : [];
 
         setAppointments(normalized);
@@ -391,8 +391,8 @@ function DoctorAppointmentsPage() {
       if (!response.ok) {
         throw new Error(
           payload?.error ||
-            payload?.detail ||
-            "Failed to update appointment status",
+          payload?.detail ||
+          "Failed to update appointment status",
         );
       }
 
@@ -528,12 +528,12 @@ function DoctorAppointmentsPage() {
             : ["Not available"],
         conditions:
           Array.isArray(apiProfile.conditions) &&
-          apiProfile.conditions.length > 0
+            apiProfile.conditions.length > 0
             ? apiProfile.conditions
             : ["Not available"],
         currentMedications:
           Array.isArray(apiProfile.currentMedications) &&
-          apiProfile.currentMedications.length > 0
+            apiProfile.currentMedications.length > 0
             ? apiProfile.currentMedications
             : ["Not available"],
         comments: apiProfile.comments?.trim() || "",
@@ -734,9 +734,9 @@ function DoctorAppointmentsPage() {
       setSelectedPatient((prev) =>
         prev
           ? {
-              ...prev,
-              ...updatedNotes,
-            }
+            ...prev,
+            ...updatedNotes,
+          }
           : prev,
       );
       setPatientNotesDraft(updatedNotes);
@@ -851,8 +851,8 @@ function DoctorAppointmentsPage() {
       if (!response.ok) {
         throw new Error(
           payload?.error ||
-            payload?.detail ||
-            "Failed to reschedule appointment",
+          payload?.detail ||
+          "Failed to reschedule appointment",
         );
       }
 
@@ -870,7 +870,7 @@ function DoctorAppointmentsPage() {
 
       setToastMessage(
         payload?.message ||
-          `Appointment ${rescheduleTarget.id} was rescheduled.`,
+        `Appointment ${rescheduleTarget.id} was rescheduled.`,
       );
       setRescheduleTarget(null);
       setRescheduleDate("");
@@ -949,7 +949,7 @@ function DoctorAppointmentsPage() {
                   Advice chats are managed separately from this page in the
                   Chats section.
                 </p>
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 space-y-4">
+                {/* <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 space-y-4">
                   <h4 className="font-semibold text-emerald-800">
                     Doctor Update
                   </h4>
@@ -997,7 +997,7 @@ function DoctorAppointmentsPage() {
                   <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
                     {toastMessage}
                   </p>
-                </div>
+                </div> */}
 
                 <div className="mt-7 flex flex-wrap gap-3">
                   <Link href="/doctor-self/appointment-slots">
@@ -1281,11 +1281,10 @@ function DoctorAppointmentsPage() {
                       </p>
                     </div>
                     <span
-                      className={`w-max rounded-full px-3 py-1 text-xs font-semibold ${
-                        appointment.status === "Accepted"
+                      className={`w-max rounded-full px-3 py-1 text-xs font-semibold ${appointment.status === "Accepted"
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-amber-100 text-amber-700"
-                      }`}
+                        }`}
                     >
                       {appointment.status}
                     </span>
@@ -1368,13 +1367,13 @@ function DoctorAppointmentsPage() {
                     )}
                     {(appointment.status === "Accepted" ||
                       appointment.status === "Completed") && (
-                      <WhiteButton
-                        className="px-4 py-2"
-                        onClick={() => void openMedicalRecord(appointment)}
-                      >
-                        Medical Record
-                      </WhiteButton>
-                    )}
+                        <WhiteButton
+                          className="px-4 py-2"
+                          onClick={() => void openMedicalRecord(appointment)}
+                        >
+                          Medical Record
+                        </WhiteButton>
+                      )}
                     <WhiteButton
                       className="px-4 py-2"
                       onClick={() =>
@@ -1420,11 +1419,10 @@ function DoctorAppointmentsPage() {
                       </p>
                     </div>
                     <span
-                      className={`w-max rounded-full px-3 py-1 text-xs font-semibold ${
-                        appointment.status === "Completed"
+                      className={`w-max rounded-full px-3 py-1 text-xs font-semibold ${appointment.status === "Completed"
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-slate-200 text-slate-700"
-                      }`}
+                        }`}
                     >
                       {appointment.status}
                     </span>

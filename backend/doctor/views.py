@@ -25,6 +25,7 @@ from hospital.models import (
     HospitalAdmin,
     DoctorHospitalVerification,
     SlotTemplate,
+    DoctorSlotTemplateAssignment,
 )
 from users.models import CustomUser
 from .serializers import (
@@ -46,6 +47,7 @@ from .serializers import (
     HospitalAdminSerializer,
     DoctorHospitalVerificationSerializer,
     SlotTemplateSerializer,
+    DoctorSlotTemplateAssignmentSerializer,
 )
 from patient.serializers import (
     PatientMedicalRecordSerializer,
@@ -229,7 +231,7 @@ class AdminSlotTemplateListCreateView(HospitalAdminAPIView):
             return error_response
 
         queryset = (
-            SlotTemplate.objects.filter(hospital=admin_role.hospital)
+            SlotTemplate.objects.filter(hospital=admin_role.hospital, is_deleted=False)
             .select_related("doctor", "hospital", "created_by")
             .order_by("day_of_week", "start_time")
         )
@@ -253,18 +255,20 @@ class AdminSlotTemplateListCreateView(HospitalAdminAPIView):
         serializer = SlotTemplateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        doctor_id = serializer.validated_data["doctor"].id
-        is_verified = DoctorHospitalVerification.objects.filter(
-            doctor_id=doctor_id,
-            hospital_id=admin_role.hospital_id,
-            status=DoctorHospitalVerification.Status.VERIFIED,
-        ).exists()
+        doctor = serializer.validated_data.get("doctor")
+        if doctor:
+            doctor_id = doctor.id
+            is_verified = DoctorHospitalVerification.objects.filter(
+                doctor_id=doctor_id,
+                hospital_id=admin_role.hospital_id,
+                status=DoctorHospitalVerification.Status.VERIFIED,
+            ).exists()
 
-        if not is_verified:
-            return Response(
-                {"detail": "Doctor is not verified for this hospital."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            if not is_verified:
+                return Response(
+                    {"detail": "Doctor is not verified for this hospital."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         with transaction.atomic():
             template = serializer.save(created_by=request.user)
@@ -297,17 +301,19 @@ class AdminSlotTemplateDetailView(HospitalAdminAPIView):
         serializer.is_valid(raise_exception=True)
 
         if "doctor" in serializer.validated_data:
-            doctor_id = serializer.validated_data["doctor"].id
-            is_verified = DoctorHospitalVerification.objects.filter(
-                doctor_id=doctor_id,
-                hospital_id=template.hospital_id,
-                status=DoctorHospitalVerification.Status.VERIFIED,
-            ).exists()
-            if not is_verified:
-                return Response(
-                    {"detail": "Doctor is not verified for this hospital."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            doctor = serializer.validated_data.get("doctor")
+            if doctor:
+                doctor_id = doctor.id
+                is_verified = DoctorHospitalVerification.objects.filter(
+                    doctor_id=doctor_id,
+                    hospital_id=template.hospital_id,
+                    status=DoctorHospitalVerification.Status.VERIFIED,
+                ).exists()
+                if not is_verified:
+                    return Response(
+                        {"detail": "Doctor is not verified for this hospital."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
         updated_template = serializer.save()
         return Response(
@@ -335,6 +341,247 @@ class AdminSlotTemplateDetailView(HospitalAdminAPIView):
         template.is_active = False
         template.save(update_fields=["is_active"])
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminApplySlotTemplatesView(HospitalAdminAPIView):
+    def post(self, request):
+        hospital_id = request.data.get("hospital")
+        if not hospital_id:
+            return Response(
+                {"detail": "hospital is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=hospital_id
+        )
+        if error_response:
+            return error_response
+
+        template_ids = request.data.get("template_ids", [])
+        doctor_ids = request.data.get("doctor_ids", [])
+        timeframe_type = request.data.get("timeframe_type")
+
+        if not template_ids or not isinstance(template_ids, list):
+            return Response(
+                {"detail": "template_ids must be a non-empty list of template IDs."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not doctor_ids or not isinstance(doctor_ids, list):
+            return Response(
+                {"detail": "doctor_ids must be a non-empty list of doctor IDs."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Verify templates belong to this hospital and are active
+        templates = SlotTemplate.objects.filter(
+            id__in=template_ids,
+            hospital=admin_role.hospital,
+            is_active=True
+        )
+        if templates.count() != len(set(template_ids)):
+            return Response(
+                {"detail": "One or more templates are invalid or inactive for this hospital."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Verify doctors are verified for this hospital branch
+        verified_doctors_count = DoctorHospitalVerification.objects.filter(
+            doctor_id__in=doctor_ids,
+            hospital=admin_role.hospital,
+            status=DoctorHospitalVerification.Status.VERIFIED
+        ).count()
+        if verified_doctors_count != len(set(doctor_ids)):
+            return Response(
+                {"detail": "One or more doctors are not verified for this hospital branch."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Parse timeframe/dates
+        today = timezone.localdate()
+        start_date_str = request.data.get("start_date")
+        if start_date_str:
+            try:
+                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                return Response(
+                    {"detail": "Invalid start_date format. Use YYYY-MM-DD."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            start_date = today
+
+        if timeframe_type == "1_week":
+            end_date = start_date + timedelta(weeks=1) - timedelta(days=1)
+        elif timeframe_type == "2_weeks":
+            end_date = start_date + timedelta(weeks=2) - timedelta(days=1)
+        elif timeframe_type == "1_month":
+            end_date = start_date + timedelta(days=30) - timedelta(days=1)
+        elif timeframe_type == "3_months":
+            end_date = start_date + timedelta(days=90) - timedelta(days=1)
+        elif timeframe_type == "custom":
+            end_date_str = request.data.get("end_date")
+            if not end_date_str:
+                return Response(
+                    {"detail": "end_date is required when timeframe_type is custom."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                return Response(
+                    {"detail": "Invalid end_date format. Use YYYY-MM-DD."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            return Response(
+                {"detail": "Invalid timeframe_type. Must be 1_week, 2_weeks, 1_month, 3_months, or custom."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if start_date > end_date:
+            return Response(
+                {"detail": "start_date cannot be after end_date."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        created_slots = 0
+        skipped_slots = 0
+        assignments_created = []
+
+        with transaction.atomic():
+            for doc_id in doctor_ids:
+                doctor = DoctorProfile.objects.get(id=doc_id)
+                for template in templates:
+                    # Create assignment record
+                    assignment = DoctorSlotTemplateAssignment.objects.create(
+                        doctor=doctor,
+                        hospital=admin_role.hospital,
+                        slot_template=template,
+                        start_date=start_date,
+                        end_date=end_date,
+                        is_active=True,
+                        created_by=request.user
+                    )
+                    assignments_created.append(assignment)
+
+                    # Generate available slots within range
+                    current_date = start_date
+                    while current_date <= end_date:
+                        if current_date.weekday() == template.day_of_week:
+                            # Combine date and time
+                            slot_start_naive = datetime.combine(current_date, template.start_time)
+                            slot_end_naive = datetime.combine(current_date, template.end_time)
+
+                            # Make timezone-aware
+                            slot_start = timezone.make_aware(slot_start_naive)
+                            slot_end = timezone.make_aware(slot_end_naive)
+
+                            # Check for duplicate slot
+                            existing_slot = AppointmentAvailableSlot.objects.filter(
+                                doctor=doctor,
+                                hospital=admin_role.hospital,
+                                date_start=slot_start,
+                                date_end=slot_end,
+                            ).exists()
+
+                            if existing_slot:
+                                skipped_slots += 1
+                            else:
+                                AppointmentAvailableSlot.objects.create(
+                                    doctor=doctor,
+                                    hospital=admin_role.hospital,
+                                    date=current_date,
+                                    date_start=slot_start,
+                                    date_end=slot_end,
+                                    start_time=template.start_time,
+                                    end_time=template.end_time,
+                                    slot_template=template,
+                                    patient_limit=template.default_patient_limit,
+                                    booked_count=0,
+                                    remaining_count=template.default_patient_limit,
+                                    created_by=request.user,
+                                    is_active=True,
+                                )
+                                created_slots += 1
+
+                        current_date += timedelta(days=1)
+
+        serializer = DoctorSlotTemplateAssignmentSerializer(assignments_created, many=True)
+        return Response(
+            {
+                "detail": "Templates applied successfully.",
+                "created_slots": created_slots,
+                "skipped_slots": skipped_slots,
+                "assignments": serializer.data
+            },
+            status=status.HTTP_201_CREATED
+        )
+
+
+class AdminSlotTemplateAssignmentListView(HospitalAdminAPIView):
+    def get(self, request):
+        hospital_id = request.query_params.get("hospital_id")
+        if not hospital_id:
+            return Response(
+                {"detail": "hospital_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=hospital_id
+        )
+        if error_response:
+            return error_response
+
+        queryset = (
+            DoctorSlotTemplateAssignment.objects.filter(hospital=admin_role.hospital)
+            .select_related("doctor", "hospital", "slot_template", "created_by")
+            .order_by("-created_at")
+        )
+
+        serializer = DoctorSlotTemplateAssignmentSerializer(queryset, many=True)
+        return Response({"assignments": serializer.data}, status=status.HTTP_200_OK)
+
+
+class AdminSlotTemplateAssignmentDetailView(HospitalAdminAPIView):
+    def delete(self, request, assignment_id):
+        assignment = DoctorSlotTemplateAssignment.objects.filter(id=assignment_id).first()
+        if not assignment:
+            return Response(
+                {"detail": "Assignment not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        admin_role, error_response = self._get_admin_role(
+            request.user, hospital_id=assignment.hospital_id
+        )
+        if error_response:
+            return error_response
+
+        now = timezone.now()
+        with transaction.atomic():
+            # Delete future unbooked slots created by this template for this doctor
+            slots_to_delete = AppointmentAvailableSlot.objects.filter(
+                doctor=assignment.doctor,
+                hospital=assignment.hospital,
+                slot_template=assignment.slot_template,
+                date_start__gte=now,
+                booked_count=0
+            )
+            deleted_slots_count = slots_to_delete.delete()[0]
+
+            # Delete the assignment record
+            assignment.delete()
+
+        return Response(
+            {
+                "detail": "Assignment revoked successfully.",
+                "deleted_slots_count": deleted_slots_count
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 class AdminAppointmentCancelView(HospitalAdminAPIView):

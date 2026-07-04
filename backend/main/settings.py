@@ -118,23 +118,31 @@ ASGI_APPLICATION = "main.asgi.application"
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 if DATABASE_URL:
-    parsed_db_url = urlparse(DATABASE_URL)
-    db_name = parsed_db_url.path.lstrip("/")
-    db_port = parsed_db_url.port or 5432
-    ssl_mode = os.getenv("DB_SSLMODE", "require")
-
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": db_name,
-            "USER": parsed_db_url.username,
-            "PASSWORD": parsed_db_url.password,
-            "HOST": parsed_db_url.hostname,
-            "PORT": db_port,
-            "OPTIONS": {"sslmode": ssl_mode},
-            "CONN_MAX_AGE": int(os.getenv("DJANGO_CONN_MAX_AGE") or os.getenv("CONN_MAX_AGE") or "0"),
+    if DATABASE_URL.startswith("sqlite"):
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": BASE_DIR / "db.sqlite3",
+            }
         }
-    }
+    else:
+        parsed_db_url = urlparse(DATABASE_URL)
+        db_name = parsed_db_url.path.lstrip("/")
+        db_port = parsed_db_url.port or 5432
+        ssl_mode = os.getenv("DB_SSLMODE", "require")
+
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": db_name,
+                "USER": parsed_db_url.username,
+                "PASSWORD": parsed_db_url.password,
+                "HOST": parsed_db_url.hostname,
+                "PORT": db_port,
+                "OPTIONS": {"sslmode": ssl_mode},
+                "CONN_MAX_AGE": int(os.getenv("DJANGO_CONN_MAX_AGE") or os.getenv("CONN_MAX_AGE") or "0"),
+            }
+        }
 else:
     raise Exception("DATABASE_URL environment variable not set. Please add it to your .env file.")
 
