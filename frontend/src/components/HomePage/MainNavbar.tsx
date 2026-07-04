@@ -28,20 +28,62 @@ function MainNavbar() {
                         </Link>
 
                         {/* Desktop Navigation Links */}
-                        <div className="hidden md:flex items-center gap-1.5 text-sm font-medium">
+                        <div className="hidden md:flex items-center gap-1 text-xs font-medium">
+                            <Link
+                                href="/#"
+                                onClick={closeMobileMenu}
+                                className="relative px-2.5 py-1.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200"
+                            >
+                                Home
+                            </Link>
+                            <Link
+                                href="/#features"
+                                onClick={closeMobileMenu}
+                                className="relative px-2.5 py-1.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200"
+                            >
+                                Features
+                            </Link>
+                            <Link
+                                href="/#services"
+                                onClick={closeMobileMenu}
+                                className="relative px-2.5 py-1.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200"
+                            >
+                                Services
+                            </Link>
+                            <Link
+                                href="/#about"
+                                onClick={closeMobileMenu}
+                                className="relative px-2.5 py-1.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200"
+                            >
+                                About
+                            </Link>
+                            <Link
+                                href="/#faq"
+                                onClick={closeMobileMenu}
+                                className="relative px-2.5 py-1.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200"
+                            >
+                                FAQ
+                            </Link>
+                            <Link
+                                href="/#help"
+                                onClick={closeMobileMenu}
+                                className="relative px-2.5 py-1.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200"
+                            >
+                                Help
+                            </Link>
+                            <Link
+                                href="/#contact"
+                                onClick={closeMobileMenu}
+                                className="relative px-2.5 py-1.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200"
+                            >
+                                Contact
+                            </Link>
                             <Link
                                 href="/news-articles"
                                 onClick={closeMobileMenu}
-                                className="relative px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200"
+                                className="relative px-2.5 py-1.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200 font-semibold text-green-600 dark:text-green-400"
                             >
-                                News & Articles
-                            </Link>
-                            <Link
-                                href="/help"
-                                onClick={closeMobileMenu}
-                                className="relative px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all duration-200"
-                            >
-                                Help
+                                News
                             </Link>
                         </div>
                     </div>
@@ -79,20 +121,62 @@ function MainNavbar() {
             {/* Mobile Navigation Drawer */}
             {isMobileMenuOpen && (
                 <div className="md:hidden border-t border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950 animate-in fade-in slide-in-from-top-4 duration-200">
-                    <div className="space-y-1.5 px-4 py-4">
+                    <div className="space-y-1 px-4 py-3">
+                        <Link
+                            href="/#"
+                            onClick={closeMobileMenu}
+                            className="block px-4 py-2 rounded-xl text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+                        >
+                            Home
+                        </Link>
+                        <Link
+                            href="/#features"
+                            onClick={closeMobileMenu}
+                            className="block px-4 py-2 rounded-xl text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+                        >
+                            Features
+                        </Link>
+                        <Link
+                            href="/#services"
+                            onClick={closeMobileMenu}
+                            className="block px-4 py-2 rounded-xl text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+                        >
+                            Services
+                        </Link>
+                        <Link
+                            href="/#about"
+                            onClick={closeMobileMenu}
+                            className="block px-4 py-2 rounded-xl text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+                        >
+                            About
+                        </Link>
+                        <Link
+                            href="/#faq"
+                            onClick={closeMobileMenu}
+                            className="block px-4 py-2 rounded-xl text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+                        >
+                            FAQ
+                        </Link>
+                        <Link
+                            href="/#help"
+                            onClick={closeMobileMenu}
+                            className="block px-4 py-2 rounded-xl text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+                        >
+                            Help
+                        </Link>
+                        <Link
+                            href="/#contact"
+                            onClick={closeMobileMenu}
+                            className="block px-4 py-2 rounded-xl text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+                        >
+                            Contact
+                        </Link>
                         <Link
                             href="/news-articles"
                             onClick={closeMobileMenu}
-                            className="block px-4 py-2.5 rounded-xl text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+                            className="block px-4 py-2 rounded-xl text-base font-semibold text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-white/10 transition-colors"
                         >
-                            News & Articles
-                        </Link>
-                        <Link
-                            href="/help"
-                            onClick={closeMobileMenu}
-                            className="block px-4 py-2.5 rounded-xl text-base font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
-                        >
-                            Help
+                            News
                         </Link>
                         <div className="pt-2 grid grid-cols-2 gap-2">
                             <GreenButton className="w-full">
