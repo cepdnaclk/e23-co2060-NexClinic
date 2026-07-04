@@ -67,6 +67,7 @@ export default function UserProfile() {
   const [profileData, setProfileData] = useState<PatientProfileResponse | null>(
     null,
   );
+  const [profileImageVersion, setProfileImageVersion] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -107,6 +108,12 @@ export default function UserProfile() {
     loadProfile();
   }, [router]);
 
+  useEffect(() => {
+    setProfileImageVersion(
+      window.localStorage.getItem("patient-profile-image-updated-at") || "",
+    );
+  }, []);
+
   const patientName = profileData?.patient.fullName || "Patient";
   const patientEmail = profileData?.patient.email || "Not available";
   const patientPhone = profileData?.patient.phone || "Not available";
@@ -126,9 +133,12 @@ export default function UserProfile() {
   const emergencyEmail = profileData?.emergencyContact.email || "Not specified";
   const insuranceProvider = profileData?.insurance.provider || "Not provided";
   const insurancePolicy = profileData?.insurance.policyNumber || "Not provided";
-  const profileImage = profileData?.patient.profileImage?.trim()
-    ? profileData.patient.profileImage
-    : "/images/user.png";
+  const profileImageSrc = profileData?.patient.profileImage?.trim();
+  const profileImage = !profileImageSrc
+    ? "/images/user.png"
+    : profileImageSrc.startsWith("/images/") || profileImageSrc.startsWith("data:")
+      ? profileImageSrc
+      : `${profileImageSrc}${profileImageVersion ? `?v=${profileImageVersion}` : ""}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white pb-6">
@@ -161,13 +171,10 @@ export default function UserProfile() {
               <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-8">
                 <div className="mx-auto shrink-0 rounded-[2rem] bg-gradient-to-br from-emerald-600 via-emerald-600 to-emerald-700 p-1 shadow-xl shadow-emerald-200/50 lg:mx-0">
                   <div className="rounded-[1.75rem] bg-white p-2">
-                    <Image
+                    <img
                       src={profileImage}
                       alt="Patient profile photo"
-                      width={136}
-                      height={136}
                       className="h-[136px] w-[136px] rounded-[1.5rem] object-cover"
-                      priority
                     />
                   </div>
                 </div>

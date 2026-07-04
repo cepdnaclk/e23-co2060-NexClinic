@@ -1117,7 +1117,7 @@ class DoctorProfileView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        payload = request.data if isinstance(request.data, dict) else {}
+        payload = request.data
 
         field_map = {
             "fullName": "full_name",
