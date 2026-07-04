@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-
 import GreenButton from "@/components/buttons/GreenButton";
 import BlackButton from "@/components/buttons/BlackButton";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
@@ -137,6 +135,7 @@ export default function UserEditProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<PatientProfileResponse | null>(null);
   const [formData, setFormData] = useState<Patient>(defaultFormData);
+  const [profileImageVersion, setProfileImageVersion] = useState("");
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [selectedMedicalReportFile, setSelectedMedicalReportFile] = useState<File | null>(null);
   const [selectedMedicalDocumentFile, setSelectedMedicalDocumentFile] = useState<File | null>(null);
@@ -203,11 +202,26 @@ export default function UserEditProfilePage() {
     loadProfile();
   }, [router]);
 
+  useEffect(() => {
+    setProfileImageVersion(
+      window.localStorage.getItem("patient-profile-image-updated-at") || "",
+    );
+  }, []);
+
   const profileImage = useMemo(() => {
-    return formData.profileImage?.trim()
-      ? formData.profileImage
-      : "/images/user.png";
-  }, [formData.profileImage]);
+    const imageSrc = formData.profileImage?.trim();
+    if (!imageSrc) {
+      return "/images/user.png";
+    }
+
+    if (imageSrc.startsWith("/images/") || imageSrc.startsWith("data:")) {
+      return imageSrc;
+    }
+
+    return profileImageVersion
+      ? `${imageSrc}?v=${profileImageVersion}`
+      : imageSrc;
+  }, [formData.profileImage, profileImageVersion]);
 
   const getAttachmentLabel = (url: string) => {
     if (!url.trim()) {
@@ -427,6 +441,9 @@ export default function UserEditProfilePage() {
       setSelectedMedicalDocumentFile(null);
       setMedicalReportLabel(getAttachmentLabel(updatedProfile.health.medicalReports));
       setMedicalDocumentLabel(getAttachmentLabel(updatedProfile.health.medicalDocuments));
+      const imageVersion = Date.now().toString();
+      window.localStorage.setItem("patient-profile-image-updated-at", imageVersion);
+      setProfileImageVersion(imageVersion);
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       window.localStorage.removeItem("patient-profile-draft-saved-at");
       setDraftSavedAt(null);
@@ -613,11 +630,9 @@ export default function UserEditProfilePage() {
                 <div className="flex items-center gap-4">
                   <div className="rounded-[1.75rem] bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-1 shadow-xl shadow-emerald-200/40">
                     <div className="relative overflow-hidden rounded-[1.5rem] bg-white p-1">
-                      <Image
+                      <img
                         src={profileImage}
                         alt="Patient profile preview"
-                        width={120}
-                        height={120}
                         className="h-[120px] w-[120px] rounded-[1.25rem] object-cover"
                       />
                       <div className="absolute inset-0 flex items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-emerald-600/0 via-emerald-600/0 to-emerald-950/20 text-3xl font-bold text-white opacity-0 transition-opacity duration-200 hover:opacity-100">
