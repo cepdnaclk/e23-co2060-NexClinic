@@ -24,6 +24,7 @@ from .serializers import (
     DoctorAppointmentActionSerializer,
     DoctorAppointmentRescheduleSerializer,
     DoctorPatientProfileSerializer,
+    DoctorPatientProfileUpdateSerializer,
     OnlineAdviceAvailabilitySerializer,
     BulkOnlineAdviceSlotCreateSerializer,
     OnlineAdviceSlotUpdateSerializer,
@@ -833,6 +834,31 @@ class DoctorPatientProfileView(VerifiedDoctorAPIView):
             context={'doctor_profile': doctor_profile},
         )
         return Response({'patient': serializer.data}, status=status.HTTP_200_OK)
+
+    def patch(self, request, patient_id):
+        user = request.user
+        doctor_profile, error_response = self._get_verified_doctor_profile_or_response(user)
+        if error_response:
+            return error_response
+
+        appointment = Appointment.objects.filter(
+            doctor=doctor_profile,
+            patient_id=patient_id,
+        ).select_related('patient', 'patient__user').first()
+
+        if not appointment or not appointment.patient:
+            return Response({'detail': 'Patient not found for this doctor.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = DoctorPatientProfileUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.context.update({'doctor_profile': doctor_profile, 'appointment': appointment})
+        serializer.update(appointment.patient, serializer.validated_data)
+
+        response_serializer = DoctorPatientProfileSerializer(
+            appointment.patient,
+            context={'doctor_profile': doctor_profile},
+        )
+        return Response({'patient': response_serializer.data}, status=status.HTTP_200_OK)
 
 
 class DoctorAppointmentActionView(VerifiedDoctorAPIView):

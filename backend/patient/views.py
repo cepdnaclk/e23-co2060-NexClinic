@@ -85,6 +85,8 @@ class PatientProfileView(BasePatientAPIView):
         allergies = ""
         medications = ""
         medical_history = ""
+        doctor_comments = ""
+        prescriptions = ""
         emergency_contact_name = ""
         emergency_contact_phone = ""
         emergency_contact_relation = ""
@@ -111,6 +113,8 @@ class PatientProfileView(BasePatientAPIView):
             allergies = patient_profile.allergies or ""
             medications = patient_profile.medications or ""
             medical_history = patient_profile.medical_history or ""
+            doctor_comments = patient_profile.doctor_comments or ""
+            prescriptions = patient_profile.prescriptions or ""
             emergency_contact_name = patient_profile.emergency_contact_name or ""
             emergency_contact_phone = patient_profile.emergency_contact_phone or ""
             emergency_contact_relation = (
@@ -164,6 +168,8 @@ class PatientProfileView(BasePatientAPIView):
                 "allergies": allergies,
                 "medications": medications,
                 "medicalHistory": medical_history,
+                "comments": doctor_comments,
+                "prescriptions": prescriptions,
                 "medicalReports": medical_reports,
                 "medicalDocuments": medical_documents,
             },

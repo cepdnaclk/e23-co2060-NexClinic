@@ -492,10 +492,18 @@ class DoctorDirectoryPublicSerializer(serializers.ModelSerializer):
         if not obj.qualifications:
             return []
         return [qualification.strip() for qualification in obj.qualifications.split(',') if qualification.strip()]
-
+    
+                instance.doctor_comments = merge_entry(
+                    instance.doctor_comments,
+                    build_entry('Comments', validated_data['comments']),
+                )
         years = obj.experience_years or 0
         return f'{years} years'
-
+    
+                instance.prescriptions = merge_entry(
+                    instance.prescriptions,
+                    build_entry('Prescriptions', validated_data['prescriptions']),
+                )
         return f'Rs. {obj.chat_fee:,.2f}'
 
     def get_appointmentFee(self, obj):

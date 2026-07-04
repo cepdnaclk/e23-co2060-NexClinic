@@ -52,6 +52,8 @@ type PatientProfile = {
   allergies: string[];
   conditions: string[];
   currentMedications: string[];
+  comments: string;
+  prescriptions: string;
   lastVisit: string;
 };
 
@@ -66,6 +68,8 @@ type ApiPatientProfile = {
   allergies?: string[];
   conditions?: string[];
   currentMedications?: string[];
+  comments?: string;
+  prescriptions?: string;
   lastVisit?: string;
 };
 
@@ -139,10 +143,12 @@ function DoctorAppointmentsPage() {
   const router = useRouter();
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<PatientProfile | null>(null);
+  const [patientNotesDraft, setPatientNotesDraft] = useState({ comments: "", prescriptions: "" });
   const [toastMessage, setToastMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoadingAppointments, setIsLoadingAppointments] = useState(true);
   const [isLoadingPatientProfile, setIsLoadingPatientProfile] = useState(false);
+  const [isSavingPatientNotes, setIsSavingPatientNotes] = useState(false);
   const [updatingAppointmentIds, setUpdatingAppointmentIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>("All");
@@ -339,10 +345,13 @@ function DoctorAppointmentsPage() {
       allergies: ["Not available"],
       conditions: ["Not available"],
       currentMedications: ["Not available"],
+      comments: "",
+      prescriptions: "",
       lastVisit: "Not available",
     };
 
     setSelectedPatient(fallbackProfile);
+    setPatientNotesDraft({ comments: "", prescriptions: "" });
     setIsLoadingPatientProfile(true);
 
     try {
@@ -374,12 +383,70 @@ function DoctorAppointmentsPage() {
         allergies: Array.isArray(apiProfile.allergies) && apiProfile.allergies.length > 0 ? apiProfile.allergies : ["Not available"],
         conditions: Array.isArray(apiProfile.conditions) && apiProfile.conditions.length > 0 ? apiProfile.conditions : ["Not available"],
         currentMedications: Array.isArray(apiProfile.currentMedications) && apiProfile.currentMedications.length > 0 ? apiProfile.currentMedications : ["Not available"],
+        comments: apiProfile.comments?.trim() || "",
+        prescriptions: apiProfile.prescriptions?.trim() || "",
         lastVisit: apiProfile.lastVisit?.trim() || "Not available",
       };
 
       setSelectedPatient(profileFromApi);
+      setPatientNotesDraft({ comments: profileFromApi.comments, prescriptions: profileFromApi.prescriptions });
     } finally {
       setIsLoadingPatientProfile(false);
+    }
+  };
+
+  const savePatientNotes = async () => {
+    if (!selectedPatient) {
+      return;
+    }
+
+    setIsSavingPatientNotes(true);
+
+    try {
+      const response = await fetch(`/api/doctor/patients/${selectedPatient.patientId}/profile`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          comments: patientNotesDraft.comments,
+          prescriptions: patientNotesDraft.prescriptions,
+        }),
+      });
+
+      if (response.status === 401) {
+        handleDoctorSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.detail || "Failed to update patient notes");
+      }
+
+      const apiProfile = (payload?.patient ?? {}) as ApiPatientProfile;
+      const updatedNotes = {
+        comments: apiProfile.comments?.trim() || "",
+        prescriptions: apiProfile.prescriptions?.trim() || "",
+      };
+
+      setSelectedPatient((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...updatedNotes,
+            }
+          : prev,
+      );
+      setPatientNotesDraft(updatedNotes);
+      setToastMessage("Patient notes updated successfully.");
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : "Failed to update patient notes.");
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } finally {
+      setIsSavingPatientNotes(false);
     }
   };
 
@@ -521,13 +588,34 @@ function DoctorAppointmentsPage() {
                 <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">Appointments Management</h1>
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
                   Review patient requests, manage upcoming visits and track previous appointments in one place.
+                  <p className="mt-1"><span className="font-semibold">Prescriptions:</span> {selectedPatient.prescriptions || "Not available"}</p>
                 </p>
                 <p className="mt-2 text-sm text-slate-500">Advice chats are managed separately from this page in the Chats section.</p>
-
-                {errorMessage && (
-                  <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">{errorMessage}</p>
-                )}
-                {toastMessage && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 space-y-4">
+                  <h4 className="font-semibold text-emerald-800">Doctor Update</h4>
+                  <div>
+                    <label className="block text-sm font-semibold text-emerald-900">Comments</label>
+                    <textarea
+                      value={patientNotesDraft.comments}
+                      onChange={(event) => setPatientNotesDraft((prev) => ({ ...prev, comments: event.target.value }))}
+                      rows={4}
+                      className="mt-2 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
+                      placeholder="Add doctor comments or observations here"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-emerald-900">Prescriptions</label>
+                    <textarea
+                      value={patientNotesDraft.prescriptions}
+                      onChange={(event) => setPatientNotesDraft((prev) => ({ ...prev, prescriptions: event.target.value }))}
+                      rows={4}
+                      className="mt-2 w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
+                      placeholder="List prescribed medicines, dosage, and instructions"
+                    />
+                  </div>
+                  <GreenButton className="px-4 py-2" disabled={isSavingPatientNotes || isLoadingPatientProfile} onClick={() => void savePatientNotes()}>
+                    {isSavingPatientNotes ? "Saving..." : "Save Updates"}
+                  </GreenButton>
                   <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">{toastMessage}</p>
                 )}
 

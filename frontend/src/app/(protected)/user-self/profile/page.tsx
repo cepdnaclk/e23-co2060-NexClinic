@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import GreenButton from "@/components/buttons/GreenButton";
@@ -278,6 +279,12 @@ export default function UserProfile() {
                 follow-up calls.
               </p>
             </div>
+            <Link
+              href="/user-self/profile/medical-history"
+              className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+            >
+              Open Medical History
+            </Link>
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">

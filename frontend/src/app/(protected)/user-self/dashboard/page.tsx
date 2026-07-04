@@ -339,25 +339,6 @@ export default function UserDashboard() {
                 </p>
               </Link>
               <Link
-                href="/user-self/prescriptions"
-                className="group rounded-2xl border border-green-100 bg-white/90 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-700">
-                    Quick Action
-                  </p>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
-                    Records
-                  </span>
-                </div>
-                <p className="mt-3 text-lg font-bold text-slate-900">
-                  View Prescriptions
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Review your active and past prescription details.
-                </p>
-              </Link>
-              <Link
                 href="/user-self/profile"
                 className="group rounded-2xl border border-green-100 bg-white/90 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
               >

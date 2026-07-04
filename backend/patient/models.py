@@ -17,6 +17,8 @@ class PatientProfile(models.Model):
     allergies = models.TextField(blank=True, default="")
     medications = models.TextField(blank=True, default="")
     medical_history = models.TextField(blank=True, null=True)
+    doctor_comments = models.TextField(blank=True, default="")
+    prescriptions = models.TextField(blank=True, default="")
     emergency_contact_name = models.CharField(max_length=255, blank=True, default="")
     emergency_contact_phone = models.CharField(max_length=20, blank=True, default="")
     emergency_contact_relation = models.CharField(max_length=100, blank=True, default="")
