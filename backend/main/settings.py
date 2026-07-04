@@ -76,7 +76,7 @@ INSTALLED_APPS = [
     "channels",
 ]
 
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = "users.CustomUser"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -88,7 +88,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "users.middleware.UserActivityLoggingMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware"
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = "main.urls"
@@ -132,11 +132,15 @@ if DATABASE_URL:
             "HOST": parsed_db_url.hostname,
             "PORT": db_port,
             "OPTIONS": {"sslmode": ssl_mode},
-            "CONN_MAX_AGE": int(os.getenv("DJANGO_CONN_MAX_AGE") or os.getenv("CONN_MAX_AGE") or "0"),
+            "CONN_MAX_AGE": int(
+                os.getenv("DJANGO_CONN_MAX_AGE") or os.getenv("CONN_MAX_AGE") or "0"
+            ),
         }
     }
 else:
-    raise Exception("DATABASE_URL environment variable not set. Please add it to your .env file.")
+    raise Exception(
+        "DATABASE_URL environment variable not set. Please add it to your .env file."
+    )
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -180,91 +184,93 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'DEFAULT_THROTTLE_CLASSES': (
-        'rest_framework.throttling.ScopedRateThrottle',
-    ),
-    'DEFAULT_THROTTLE_RATES': {
-        'auth_register': '5/hour',
-        'auth_login': '10/minute',
-        'auth_verify_otp': '8/minute',
-        'auth_resend_otp': '3/minute',
-        'auth_password_reset_request': '5/hour',
-        'auth_password_reset_confirm': '10/hour',
+    "DEFAULT_THROTTLE_CLASSES": ("rest_framework.throttling.ScopedRateThrottle",),
+    "DEFAULT_THROTTLE_RATES": {
+        "auth_register": "5/hour",
+        "auth_login": "10/minute",
+        "auth_verify_otp": "8/minute",
+        "auth_resend_otp": "3/minute",
+        "auth_password_reset_request": "5/hour",
+        "auth_password_reset_confirm": "10/hour",
     },
-
-
-
 }
 
 from datetime import timedelta
 
 # JWT Token Lifetime Configuration (in minutes and hours, read from .env)
-JWT_ACCESS_TOKEN_LIFETIME_MINUTES = int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', '5'))
-JWT_REFRESH_TOKEN_LIFETIME_MINUTES = int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_MINUTES', '10'))
+JWT_ACCESS_TOKEN_LIFETIME_MINUTES = int(
+    os.getenv("JWT_ACCESS_TOKEN_LIFETIME_MINUTES", "5")
+)
+JWT_REFRESH_TOKEN_LIFETIME_MINUTES = int(
+    os.getenv("JWT_REFRESH_TOKEN_LIFETIME_MINUTES", "10")
+)
 # JWT_REFRESH_TOKEN_LIFETIME_HOURS = int(os.getenv('JWT_REFRESH_TOKEN_LIFETIME_HOURS', '2'))
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=JWT_ACCESS_TOKEN_LIFETIME_MINUTES),
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=JWT_REFRESH_TOKEN_LIFETIME_MINUTES),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=JWT_ACCESS_TOKEN_LIFETIME_MINUTES),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=JWT_REFRESH_TOKEN_LIFETIME_MINUTES),
     # ROTATE_REFRESH_TOKENS: issue a new refresh token on every refresh call (good practice).
     # BLACKLIST_AFTER_ROTATION is intentionally FALSE to avoid race conditions:
     # When multiple parallel requests all hold the same expired access token, they each
     # try to refresh. With blacklisting ON, the second request's refresh would be
     # rejected (blacklisted) even though the session is still valid. Keeping it OFF
     # means all parallel refresh attempts succeed safely.
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': False,
-    'UPDATE_LAST_LOGIN': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JWK_URL': None,
-    'LEEWAY': timedelta(seconds=10),  # tolerate minor clock skew
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
-    'JTI_CLAIM': 'jti',
-    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JWK_URL": None,
+    "LEEWAY": timedelta(seconds=10),  # tolerate minor clock skew
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
 }
 
 # OTP security controls
-OTP_EXPIRATION_MINUTES = int(os.getenv('OTP_EXPIRATION_MINUTES', '10'))
-OTP_MAX_FAILED_ATTEMPTS = int(os.getenv('OTP_MAX_FAILED_ATTEMPTS', '5'))
-OTP_LOCKOUT_MINUTES = int(os.getenv('OTP_LOCKOUT_MINUTES', '15'))
-OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv('OTP_RESEND_COOLDOWN_SECONDS', '60'))
+OTP_EXPIRATION_MINUTES = int(os.getenv("OTP_EXPIRATION_MINUTES", "10"))
+OTP_MAX_FAILED_ATTEMPTS = int(os.getenv("OTP_MAX_FAILED_ATTEMPTS", "5"))
+OTP_LOCKOUT_MINUTES = int(os.getenv("OTP_LOCKOUT_MINUTES", "15"))
+OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv("OTP_RESEND_COOLDOWN_SECONDS", "60"))
 
 
 # Email Configuration
 # Use SendGrid's Django backend when an API key is present; otherwise fall back to SMTP.
-SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
-EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 
 if SENDGRID_API_KEY:
-    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'sgbackend.SendGridBackend')
+    EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "sgbackend.SendGridBackend")
 else:
-    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+    EMAIL_BACKEND = os.getenv(
+        "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+    )
     # Default to Gmail SMTP unless a different provider is configured.
-    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-    EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', True)
-    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+    EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+    EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+    EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", True)
+    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@nexclinic.local')
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "noreply@nexclinic.local"
+)
 ADMIN_NOTIFICATION_EMAILS = _env_list(
-    'ADMIN_NOTIFICATION_EMAILS',
-    [EMAIL_HOST_USER] if EMAIL_HOST_USER else []
+    "ADMIN_NOTIFICATION_EMAILS", [EMAIL_HOST_USER] if EMAIL_HOST_USER else []
 )
 
 # CORS Configuration
@@ -282,35 +288,35 @@ CORS_ALLOW_CREDENTIALS = _env_bool("CORS_ALLOW_CREDENTIALS", True)
 
 # Logging Configuration
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
         },
     },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
     },
-    'loggers': {
-        'users': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
+    "loggers": {
+        "users": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
         },
     },
 }
 
 # Celery configuration
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', CELERY_BROKER_URL)
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 
 # Channels configuration
 CHANNEL_LAYERS = {
@@ -326,11 +332,12 @@ CHANNEL_LAYERS = {
 
 # Schedule: weekly regeneration of slots (run every Monday at 02:00)
 from celery.schedules import crontab
+
 CELERY_BEAT_SCHEDULE = {
-    'generate_slots_weekly': {
-        'task': 'hospital.tasks.generate_slots',
-        'schedule': crontab(hour=2, minute=0, day_of_week='mon'),
-        'args': (),
+    "generate_slots_weekly": {
+        "task": "hospital.tasks.generate_slots",
+        "schedule": crontab(hour=2, minute=0, day_of_week="mon"),
+        "args": (),
     },
 }
 
@@ -338,4 +345,3 @@ CELERY_BEAT_SCHEDULE = {
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
