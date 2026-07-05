@@ -48,14 +48,22 @@ type ApiAppointment = Omit<AppointmentItem, "id" | "patientId"> & {
 type PatientProfile = {
   patientId: string;
   fullName: string;
+  email: string;
   age: number | null;
   gender: string;
   bloodGroup: string;
   phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
   emergencyContact: string;
+  emergencyContactEmail: string;
   allergies: string[];
   conditions: string[];
   currentMedications: string[];
+  insuranceProvider: string;
+  insurancePolicyNumber: string;
   comments: string;
   prescriptions: string;
   lastVisit: string;
@@ -82,14 +90,22 @@ type MedicalRecord = {
 type ApiPatientProfile = {
   patientId?: string | number;
   fullName?: string;
+  email?: string;
   age?: number | null;
   gender?: string;
   bloodGroup?: string;
   phone?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
   emergencyContact?: string;
+  emergencyContactEmail?: string;
   allergies?: string[];
   conditions?: string[];
   currentMedications?: string[];
+  insuranceProvider?: string;
+  insurancePolicyNumber?: string;
   comments?: string;
   prescriptions?: string;
   lastVisit?: string;
@@ -461,16 +477,24 @@ function DoctorAppointmentsPage() {
     const fallbackProfile: PatientProfile = {
       patientId,
       fullName: relatedAppointment.patientName?.trim() || "Not available",
+      email: "Not available",
       age: Number.isFinite(relatedAppointment.patientAge)
         ? relatedAppointment.patientAge
         : null,
       gender: relatedAppointment.patientGender || "Not available",
       bloodGroup: "Not available",
       phone: "Not available",
+      address: "Not available",
+      city: "Not available",
+      postalCode: "Not available",
+      country: "Not available",
       emergencyContact: "Not available",
+      emergencyContactEmail: "Not available",
       allergies: ["Not available"],
       conditions: ["Not available"],
       currentMedications: ["Not available"],
+      insuranceProvider: "Not available",
+      insurancePolicyNumber: "Not available",
       comments: "",
       prescriptions: "",
       lastVisit: "Not available",
@@ -505,6 +529,7 @@ function DoctorAppointmentsPage() {
       const profileFromApi: PatientProfile = {
         patientId: String(apiProfile.patientId ?? patientId),
         fullName: apiProfile.fullName?.trim() || "Not available",
+        email: apiProfile.email?.trim() || "Not available",
         age:
           typeof apiProfile.age === "number" && Number.isFinite(apiProfile.age)
             ? apiProfile.age
@@ -512,8 +537,14 @@ function DoctorAppointmentsPage() {
         gender: apiProfile.gender?.trim() || "Not available",
         bloodGroup: apiProfile.bloodGroup?.trim() || "Not available",
         phone: apiProfile.phone?.trim() || "Not available",
+        address: apiProfile.address?.trim() || "Not available",
+        city: apiProfile.city?.trim() || "Not available",
+        postalCode: apiProfile.postalCode?.trim() || "Not available",
+        country: apiProfile.country?.trim() || "Not available",
         emergencyContact:
           apiProfile.emergencyContact?.trim() || "Not available",
+        emergencyContactEmail:
+          apiProfile.emergencyContactEmail?.trim() || "Not available",
         allergies:
           Array.isArray(apiProfile.allergies) && apiProfile.allergies.length > 0
             ? apiProfile.allergies
@@ -528,6 +559,10 @@ function DoctorAppointmentsPage() {
             apiProfile.currentMedications.length > 0
             ? apiProfile.currentMedications
             : ["Not available"],
+        insuranceProvider:
+          apiProfile.insuranceProvider?.trim() || "Not available",
+        insurancePolicyNumber:
+          apiProfile.insurancePolicyNumber?.trim() || "Not available",
         comments: apiProfile.comments?.trim() || "",
         prescriptions: apiProfile.prescriptions?.trim() || "",
         lastVisit: apiProfile.lastVisit?.trim() || "Not available",
@@ -1353,11 +1388,19 @@ function DoctorAppointmentsPage() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="h-full w-full overflow-y-auto bg-white p-6 shadow-2xl sm:max-w-lg">
-            <div className="flex items-start justify-between gap-4">
-              <h3 className="text-xl font-bold text-slate-900">
-                Patient Profile
-              </h3>
+          <div className="h-full w-full overflow-y-auto bg-gradient-to-b from-slate-50 to-white p-6 shadow-2xl sm:max-w-2xl">
+            <div className="flex items-start justify-between gap-4 rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
+                  Patient profile
+                </p>
+                <h3 className="mt-2 text-2xl font-bold text-slate-900">
+                  {selectedPatient.fullName}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  ID: {selectedPatient.patientId} • Last visit: {selectedPatient.lastVisit}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setSelectedPatient(null)}
@@ -1374,35 +1417,122 @@ function DoctorAppointmentsPage() {
                   Loading latest patient details...
                 </p>
               )}
-              <div className="rounded-2xl border border-slate-200 p-4">
-                <p className="font-semibold text-slate-900">
-                  {selectedPatient.fullName}
-                </p>
-                <p className="mt-1">Patient ID: {selectedPatient.patientId}</p>
-                <p>
-                  Age: {selectedPatient.age ?? "Not available"} • Gender:{" "}
-                  {selectedPatient.gender || "Not available"}
-                </p>
-                <p>Blood Group: {selectedPatient.bloodGroup}</p>
-                <p>Phone: {selectedPatient.phone}</p>
-                <p>Emergency Contact: {selectedPatient.emergencyContact}</p>
-                <p>Last Visit: {selectedPatient.lastVisit}</p>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Demographics
+                  </h4>
+                  <p className="mt-3 text-sm">
+                    <span className="font-semibold text-slate-900">Age:</span>{" "}
+                    {selectedPatient.age ?? "Not available"}
+                  </p>
+                  <p className="mt-1 text-sm">
+                    <span className="font-semibold text-slate-900">Gender:</span>{" "}
+                    {selectedPatient.gender}
+                  </p>
+                  <p className="mt-1 text-sm">
+                    <span className="font-semibold text-slate-900">Blood Group:</span>{" "}
+                    {selectedPatient.bloodGroup}
+                  </p>
+                  <p className="mt-1 text-sm">
+                    <span className="font-semibold text-slate-900">Email:</span>{" "}
+                    {selectedPatient.email}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Contact
+                  </h4>
+                  <p className="mt-3 text-sm">
+                    <span className="font-semibold text-slate-900">Phone:</span>{" "}
+                    {selectedPatient.phone}
+                  </p>
+                  <p className="mt-1 text-sm">
+                    <span className="font-semibold text-slate-900">Emergency:</span>{" "}
+                    {selectedPatient.emergencyContact}
+                  </p>
+                  <p className="mt-1 text-sm">
+                    <span className="font-semibold text-slate-900">Emergency Email:</span>{" "}
+                    {selectedPatient.emergencyContactEmail}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2">
+                  <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Address
+                  </h4>
+                  <p className="mt-3 text-sm text-slate-700">{selectedPatient.address}</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {selectedPatient.city} • {selectedPatient.postalCode} • {selectedPatient.country}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2">
+                  <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Insurance
+                  </h4>
+                  <p className="mt-3 text-sm">
+                    <span className="font-semibold text-slate-900">Provider:</span>{" "}
+                    {selectedPatient.insuranceProvider}
+                  </p>
+                  <p className="mt-1 text-sm">
+                    <span className="font-semibold text-slate-900">Policy #:</span>{" "}
+                    {selectedPatient.insurancePolicyNumber}
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 p-4">
-                <h4 className="font-semibold text-slate-900">Clinical Notes</h4>
-                <p className="mt-2">
-                  <span className="font-semibold">Allergies:</span>{" "}
-                  {selectedPatient.allergies.join(", ")}
-                </p>
-                <p className="mt-1">
-                  <span className="font-semibold">Known Conditions:</span>{" "}
-                  {selectedPatient.conditions.join(", ")}
-                </p>
-                <p className="mt-1">
-                  <span className="font-semibold">Current Medications:</span>{" "}
-                  {selectedPatient.currentMedications.join(", ")}
-                </p>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h4 className="font-semibold text-slate-900">Clinical Snapshot</h4>
+                <div className="mt-3 grid gap-4 md:grid-cols-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+                      Allergies
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedPatient.allergies.map((item, index) => (
+                        <span
+                          key={`allergy-${index}`}
+                          className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+                      Conditions
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedPatient.conditions.map((item, index) => (
+                        <span
+                          key={`condition-${index}`}
+                          className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+                      Current medications
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedPatient.currentMedications.map((item, index) => (
+                        <span
+                          key={`medication-${index}`}
+                          className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">

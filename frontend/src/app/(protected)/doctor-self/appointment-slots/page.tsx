@@ -177,7 +177,7 @@ function DoctorAppointmentSlotsPage() {
                 </div>
                 <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">In-Person Appointment Slots</h1>
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                  Publish future in-person slot windows. Patients can book only from slots you create here.
+                  Publish future in-person slot windows. Patients can book only from slots are created here.
                 </p>
 
                 {error && <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</p>}
