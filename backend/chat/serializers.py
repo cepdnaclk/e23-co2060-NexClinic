@@ -13,6 +13,7 @@ class AdviceChatThreadSerializer(serializers.ModelSerializer):
 	patientName = serializers.SerializerMethodField()
 	unreadCount = serializers.SerializerMethodField()
 	lastMessage = serializers.SerializerMethodField()
+	doctor_id = serializers.CharField(source="doctor.id", read_only=True)
 
 	class Meta:
 		model = AdviceChatThread
@@ -26,6 +27,7 @@ class AdviceChatThreadSerializer(serializers.ModelSerializer):
 			"price_paid",
 			"doctorName",
 			"patientName",
+			"doctor_id",
 			"unreadCount",
 			"lastMessage",
 		]
@@ -51,11 +53,11 @@ class AdviceChatThreadSerializer(serializers.ModelSerializer):
 
 
 class AdviceChatThreadCreateSerializer(serializers.Serializer):
-	chat_slot_id = serializers.IntegerField()
+	doctor_id = serializers.IntegerField()
 
-	def validate_chat_slot_id(self, value):
+	def validate_doctor_id(self, value):
 		if value <= 0:
-			raise serializers.ValidationError("chat_slot_id must be a positive integer.")
+			raise serializers.ValidationError("doctor_id must be a positive integer.")
 		return value
 
 

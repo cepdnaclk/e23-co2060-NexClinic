@@ -1,4 +1,5 @@
 import uuid
+import os
 
 from django.db import IntegrityError, transaction
 from django.db.utils import ProgrammingError
@@ -114,15 +115,14 @@ class AdviceChatThreadListCreateView(BaseChatAPIView):
 		doctor_profile, error_response = self._get_doctor_profile_or_response(request.user)
 		patient_profile, patient_error = self._get_patient_profile_or_response(request.user)
 
-		chat_slot_id = serializer.validated_data["chat_slot_id"]
+		doctor_id = serializer.validated_data["doctor_id"]
 		if doctor_profile is None and patient_profile is None:
 			return error_response or patient_error or Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
 		try:
-			chat_slot = DoctorChatSlot.objects.get(id=chat_slot_id, is_active=True)
-			target_doctor = chat_slot.doctor
-		except DoctorChatSlot.DoesNotExist:
-			return Response({"detail": "Chat slot not found or inactive."}, status=status.HTTP_404_NOT_FOUND)
+			target_doctor = DoctorProfile.objects.get(id=doctor_id)
+		except DoctorProfile.DoesNotExist:
+			return Response({"detail": "Doctor not found."}, status=status.HTTP_404_NOT_FOUND)
 
 		if request.user.role == "PATIENT":
 			active_patient = patient_profile
@@ -148,7 +148,9 @@ class AdviceChatThreadListCreateView(BaseChatAPIView):
 			return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
 		thread_code = f"CHAT{uuid.uuid4().hex[:12].upper()}"
-		expires_at = timezone.now() + timedelta(minutes=chat_slot.duration_minutes)
+		chat_expiration_hours = int(os.getenv("CHAT_EXPIRATION_HOURS", "24"))
+		expires_at = timezone.now() + timedelta(hours=chat_expiration_hours)
+		price = target_doctor.chat_fee
 
 		try:
 			with transaction.atomic():
@@ -159,19 +161,19 @@ class AdviceChatThreadListCreateView(BaseChatAPIView):
 					defaults={
 						"thread_code": thread_code,
 						"expires_at": expires_at,
-						"price_paid": chat_slot.price,
+						"price_paid": price,
 						"status": AdviceChatThread.Status.OPEN
 					},
 				)
 				if not created:
 					thread.expires_at = expires_at
-					thread.price_paid = chat_slot.price
+					thread.price_paid = price
 					thread.status = AdviceChatThread.Status.OPEN
 					thread.save(update_fields=["expires_at", "price_paid", "status"])
 		except IntegrityError:
 			thread = AdviceChatThread.objects.get(doctor=target_doctor, patient=active_patient)
 			thread.expires_at = expires_at
-			thread.price_paid = chat_slot.price
+			thread.price_paid = price
 			thread.status = AdviceChatThread.Status.OPEN
 			thread.save(update_fields=["expires_at", "price_paid", "status"])
 
@@ -223,6 +225,9 @@ class AdviceChatThreadStatusView(BaseChatAPIView):
 		action = str(request.data.get("action", "")).strip().lower()
 		if action not in {"close", "reopen"}:
 			return Response({"detail": "action must be close or reopen."}, status=status.HTTP_400_BAD_REQUEST)
+
+		if action == "reopen" and request.user.role == "PATIENT":
+			return Response({"detail": "Patients must pay to reopen a consultation."}, status=status.HTTP_403_FORBIDDEN)
 
 		thread.status = AdviceChatThread.Status.CLOSED if action == "close" else AdviceChatThread.Status.OPEN
 		thread.save(update_fields=["status"])

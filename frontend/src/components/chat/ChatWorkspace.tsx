@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
+import MockPaymentGateway from "@/components/payment/MockPaymentGateway";
 
 type Role = "PATIENT" | "DOCTOR";
 
@@ -18,6 +19,7 @@ type ChatThread = {
   price_paid: string;
   doctorName?: string;
   patientName?: string;
+  doctor_id?: string;
   unreadCount: number;
   lastMessage: string;
 };
@@ -92,6 +94,11 @@ export default function ChatWorkspace({
   const [error, setError] = useState("");
   const [initialThreadsLoaded, setInitialThreadsLoaded] = useState(false);
   const [wsStatus, setWsStatus] = useState<"Connecting..." | "Connected" | "Disconnected">("Disconnected");
+  
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pendingDoctorId, setPendingDoctorId] = useState("");
+  const [pendingPrice, setPendingPrice] = useState("0");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const hasAutoOpenedDoctorRef = useRef(false);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -232,22 +239,46 @@ export default function ChatWorkspace({
   }, []);
 
   const openOrCreatePatientThread = useCallback(async (doctorId: string) => {
+    // If there is an already OPEN and unexpired thread for this doctor, just select it
+    const existingThread = threads.find(
+      (t) => t.doctor_id === doctorId && t.status === "OPEN" && (!t.expires_at || new Date(t.expires_at).getTime() > Date.now())
+    );
+    if (existingThread) {
+      setSelectedThreadId(existingThread.id);
+      return;
+    }
+
     try {
-      const slotsResponse = await fetch(`/api/chat/slots/doctor/${doctorId}`);
-      if (!slotsResponse.ok) throw new Error("Failed to fetch doctor slots");
-      const slotsPayload = await slotsResponse.json().catch(() => ({}));
-      const slots = slotsPayload?.slots || [];
+      const profileResponse = await fetch(`/api/doctor/directory/${doctorId}/`);
+      if (!profileResponse.ok) throw new Error("Failed to fetch doctor profile");
+      const profilePayload = await profileResponse.json().catch(() => ({}));
+      const profile = profilePayload?.doctor || profilePayload;
       
-      if (slots.length === 0) {
-         throw new Error("This doctor has no available chat slots set by the hospital admin.");
+      if (!profile.availableForChat) {
+         throw new Error("This doctor is currently offline for chats.");
       }
       
-      const slotId = slots[0].id;
+      setPendingDoctorId(doctorId);
+      
+      const rawPrice = profile.chatFee ? profile.chatFee.replace(/[^0-9.-]+/g,"") : "0";
+      setPendingPrice(rawPrice);
+      
+      setShowPaymentModal(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to initiate chat");
+    }
+  }, [threads]);
 
+  const handlePaymentSuccess = async () => {
+    if (!pendingDoctorId) return;
+    setIsProcessingPayment(true);
+    setError("");
+
+    try {
       const response = await fetch("/api/chat/threads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_slot_id: Number(slotId) }),
+        body: JSON.stringify({ doctor_id: pendingDoctorId }),
       });
 
       if (response.status === 401 || response.status === 403) {
@@ -268,13 +299,16 @@ export default function ChatWorkspace({
 
       const threadId = payload?.thread?.id ? String(payload.thread.id) : "";
       if (threadId) {
+        setShowPaymentModal(false);
         setSelectedThreadId(threadId);
         await loadThreads(true);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to open chat");
+    } finally {
+      setIsProcessingPayment(false);
     }
-  }, [role, loadThreads]);
+  };
 
   const sendMessage = async () => {
     if (!selectedThreadId || selectedThread?.status === "CLOSED" || isExpired) {
@@ -639,9 +673,15 @@ export default function ChatWorkspace({
                         Close thread
                       </WhiteButton>
                     ) : (
-                      <GreenButton onClick={() => void updateThreadStatus("reopen")} disabled={actionBusy} className="rounded-full px-4 py-2 text-sm">
-                        Reopen thread
-                      </GreenButton>
+                      role === "DOCTOR" ? (
+                        <GreenButton onClick={() => void updateThreadStatus("reopen")} disabled={actionBusy} className="rounded-full px-4 py-2 text-sm">
+                          Reopen thread
+                        </GreenButton>
+                      ) : (
+                        <GreenButton onClick={() => { if (selectedThread.doctor_id) void openOrCreatePatientThread(selectedThread.doctor_id); }} disabled={actionBusy} className="rounded-full px-4 py-2 text-sm">
+                          Renew Consultation
+                        </GreenButton>
+                      )
                     )}
                   </div>
                 </div>
@@ -719,6 +759,11 @@ export default function ChatWorkspace({
                   </p>
                   
                   <div className="flex items-center gap-3">
+                    {(isExpired || selectedThread.status === "CLOSED") && role === "PATIENT" && (
+                       <GreenButton onClick={() => { if (selectedThread.doctor_id) void openOrCreatePatientThread(selectedThread.doctor_id); }} disabled={actionBusy} className="rounded-full px-4 py-2 text-sm mr-2 whitespace-nowrap">
+                         Renew Consultation
+                       </GreenButton>
+                    )}
                     {timeLeft && selectedThread.status === "OPEN" && !isExpired && (
                       <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">{timeLeft}</span>
                     )}
@@ -771,6 +816,15 @@ export default function ChatWorkspace({
           {error}
         </div>
       ) : null}
+
+      {showPaymentModal && (
+        <MockPaymentGateway
+          amount={`Rs. ${pendingPrice}`}
+          onSuccess={handlePaymentSuccess}
+          onCancel={() => setShowPaymentModal(false)}
+          isProcessing={isProcessingPayment}
+        />
+      )}
     </section>
   );
 }
