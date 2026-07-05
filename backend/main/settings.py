@@ -265,11 +265,10 @@ EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 
 if SENDGRID_API_KEY is not None and len(SENDGRID_API_KEY) > 1:
-    EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "sgbackend.SendGridBackend")
+    EMAIL_BACKEND = "sgbackend.SendGridBackend"
 else:
-    EMAIL_BACKEND = os.getenv(
-        "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
-    )
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    
     # Default to Gmail SMTP unless a different provider is configured.
     EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
     EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
