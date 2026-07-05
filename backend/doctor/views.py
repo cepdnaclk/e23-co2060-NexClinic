@@ -1328,10 +1328,25 @@ class DoctorAppointmentActionView(VerifiedDoctorAPIView):
         action = serializer.validated_data['action']
 
         transition_rules = {
+            'accept': {
+                'allowed': {Appointment.Status.PENDING},
+                'target': Appointment.Status.ACCEPTED,
+                'message': 'Appointment accepted successfully.',
+            },
+            'reject': {
+                'allowed': {Appointment.Status.PENDING, Appointment.Status.ACCEPTED},
+                'target': Appointment.Status.REJECTED,
+                'message': 'Appointment rejected successfully.',
+            },
             'complete': {
                 'allowed': {Appointment.Status.ACCEPTED},
                 'target': Appointment.Status.COMPLETED,
                 'message': 'Appointment marked as completed.',
+            },
+            'cancel': {
+                'allowed': {Appointment.Status.PENDING, Appointment.Status.ACCEPTED},
+                'target': Appointment.Status.CANCELLED,
+                'message': 'Appointment cancelled successfully.',
             },
         }
 

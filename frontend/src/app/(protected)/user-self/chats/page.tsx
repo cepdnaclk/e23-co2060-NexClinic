@@ -18,7 +18,7 @@ type PatientProfilePayload = {
 };
 
 type DashboardAppointment = {
-  category?: "request" | "upcoming" | "previous";
+  category?: "upcoming" | "previous";
 };
 
 type AppointmentsPayload = {

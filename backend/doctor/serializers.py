@@ -444,7 +444,7 @@ class DoctorAppointmentSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         mapping = {
-            Appointment.Status.PENDING: "Pending",
+            Appointment.Status.PENDING: "Accepted",
             Appointment.Status.ACCEPTED: "Accepted",
             Appointment.Status.REJECTED: "Rejected",
             Appointment.Status.COMPLETED: "Completed",
@@ -453,10 +453,7 @@ class DoctorAppointmentSerializer(serializers.ModelSerializer):
         return mapping.get(obj.status, obj.status)
 
     def get_category(self, obj):
-        if obj.status == Appointment.Status.PENDING:
-            return "request"
-
-        if obj.status == Appointment.Status.ACCEPTED:
+        if obj.status in {Appointment.Status.PENDING, Appointment.Status.ACCEPTED}:
             naive_dt = datetime.combine(obj.slot.date, obj.slot.start_time)
             appointment_dt = timezone.make_aware(
                 naive_dt, timezone.get_current_timezone()
@@ -469,16 +466,35 @@ class DoctorAppointmentSerializer(serializers.ModelSerializer):
 class DoctorPatientProfileSerializer(serializers.Serializer):
     patientId = serializers.SerializerMethodField()
     fullName = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
     gender = serializers.SerializerMethodField()
     bloodGroup = serializers.SerializerMethodField()
     phone = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    postalCode = serializers.SerializerMethodField()
+    country = serializers.SerializerMethodField()
     emergencyContact = serializers.SerializerMethodField()
+    emergencyContactEmail = serializers.SerializerMethodField()
     allergies = serializers.SerializerMethodField()
     conditions = serializers.SerializerMethodField()
     currentMedications = serializers.SerializerMethodField()
+    insuranceProvider = serializers.SerializerMethodField()
+    insurancePolicyNumber = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
+    prescriptions = serializers.SerializerMethodField()
     lastVisit = serializers.SerializerMethodField()
     medicalRecords = serializers.SerializerMethodField()
+
+    @staticmethod
+    def _split_text_list(raw_value):
+        if not raw_value:
+            return []
+
+        normalized = str(raw_value).replace("\n", ",").replace(";", ",")
+        parts = [item.strip() for item in normalized.split(",") if item.strip()]
+        return parts
 
     def get_patientId(self, obj):
         return str(obj.id)
@@ -489,6 +505,9 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
         if obj.user and obj.user.email:
             return obj.user.email
         return "Not available"
+
+    def get_email(self, obj):
+        return obj.user.email if obj.user and obj.user.email else "Not available"
 
     def get_age(self, obj):
         dob = getattr(obj, "date_of_birth", None)
@@ -501,22 +520,58 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
         return obj.gender or "Not available"
 
     def get_bloodGroup(self, obj):
-        return "Not available"
+        return obj.blood_type or "Not available"
 
     def get_phone(self, obj):
         return obj.phone or "Not available"
 
+    def get_address(self, obj):
+        return obj.address or "Not available"
+
+    def get_city(self, obj):
+        return obj.city or "Not available"
+
+    def get_postalCode(self, obj):
+        return obj.postal_code or "Not available"
+
+    def get_country(self, obj):
+        return obj.country or "Not available"
+
     def get_emergencyContact(self, obj):
-        return "Not available"
+        name = (obj.emergency_contact_name or "").strip()
+        relation = (obj.emergency_contact_relation or "").strip()
+        phone = (obj.emergency_contact_phone or "").strip()
+
+        details = []
+        if name:
+            details.append(name)
+        if relation:
+            details.append(f"({relation})")
+        if phone:
+            details.append(f"- {phone}")
+
+        return " ".join(details).strip() or "Not available"
+
+    def get_emergencyContactEmail(self, obj):
+        return obj.emergency_contact_email or "Not available"
 
     def get_allergies(self, obj):
-        return ["Not available"]
+        allergies = self._split_text_list(obj.allergies)
+        return allergies if allergies else ["Not available"]
 
     def get_conditions(self, obj):
-        return ["Not available"]
+        conditions = self._split_text_list(obj.medical_history)
+        return conditions if conditions else ["Not available"]
 
     def get_currentMedications(self, obj):
-        return ["Not available"]
+        medications = self._split_text_list(obj.medications)
+        return medications if medications else ["Not available"]
+
+    def get_insuranceProvider(self, obj):
+        return obj.insurance_provider or "Not available"
+
+    def get_insurancePolicyNumber(self, obj):
+        return obj.insurance_policy_number or "Not available"
 
     def get_comments(self, obj):
         return getattr(obj, "doctor_comments", "") or ""

@@ -8,7 +8,7 @@ import ConfirmationDialog from "@/components/modals/ConfirmationDialog";
 import { Appointment } from "@/types/appointment";
 
 type SortBy = "date" | "doctor" | "status";
-type SectionFilter = "all" | "request" | "upcoming" | "previous";
+type SectionFilter = "all" | "upcoming" | "previous";
 
 type ApiAppointment = Omit<Appointment, "id" | "slotId" | "doctorId"> & {
   id: string | number;
@@ -71,9 +71,6 @@ const statusPillClass = (status: string) => {
   if (status === "Confirmed") {
     return "bg-emerald-100 text-emerald-700 border border-emerald-200";
   }
-  if (status === "Pending") {
-    return "bg-amber-100 text-amber-800 border border-amber-200";
-  }
   if (status === "Completed") {
     return "bg-slate-100 text-slate-700 border border-slate-200";
   }
@@ -91,11 +88,6 @@ const sectionMeta: {
     emptyText: "No appointments found.",
   },
   {
-    key: "request",
-    label: "Pending Requests",
-    emptyText: "No pending requests.",
-  },
-  {
     key: "upcoming",
     label: "Upcoming",
     emptyText: "No upcoming appointments.",
@@ -108,7 +100,6 @@ const sectionMeta: {
 ];
 
 const getSectionTitle = (section: SectionFilter) => {
-  if (section === "request") return "Pending Requests";
   if (section === "upcoming") return "Upcoming Appointments";
   if (section === "previous") return "Appointment History";
   return "All Appointments";
@@ -294,14 +285,6 @@ const PatientAppointmentPage = () => {
     });
   }, [appointments, searchTerm]);
 
-  const requests = useMemo(
-    () =>
-      sortAppointments(
-        filteredAppointments.filter((item) => item.category === "request"),
-        sortBy,
-      ),
-    [filteredAppointments, sortBy],
-  );
   const upcoming = useMemo(
     () =>
       sortAppointments(
@@ -327,19 +310,17 @@ const PatientAppointmentPage = () => {
   const sectionCounts = useMemo(
     () => ({
       all: filteredAppointments.length,
-      request: requests.length,
       upcoming: upcoming.length,
       previous: previous.length,
     }),
-    [filteredAppointments.length, requests.length, upcoming.length, previous.length],
+    [filteredAppointments.length, upcoming.length, previous.length],
   );
 
   const visibleItems = useMemo(() => {
-    if (activeSection === "request") return requests;
     if (activeSection === "upcoming") return upcoming;
     if (activeSection === "previous") return previous;
     return allSorted;
-  }, [activeSection, requests, upcoming, previous, allSorted]);
+  }, [activeSection, upcoming, previous, allSorted]);
 
   const renderCards = (items: Appointment[], emptyText: string) => {
     if (loading) {
@@ -369,8 +350,7 @@ const PatientAppointmentPage = () => {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {items.map((appt) => {
-          const canCancel =
-            appt.status === "Pending" || appt.status === "Confirmed";
+                  const canCancel = appt.status === "Confirmed";
           const isCancelling = cancellingIds.includes(appt.id);
 
           return (
@@ -470,7 +450,7 @@ const PatientAppointmentPage = () => {
                   My Appointments
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-                  Easily track requests, upcoming visits, and completed consultations in one place.
+                  Easily track upcoming visits and completed consultations in one place.
                 </p>
               </div>
 

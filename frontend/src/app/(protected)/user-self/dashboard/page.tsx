@@ -21,7 +21,7 @@ type DashboardAppointment = {
   time: string;
   type: string;
   status: string;
-  category: "request" | "upcoming" | "previous";
+  category: "upcoming" | "previous";
   requestedAt: string;
 };
 
@@ -47,10 +47,6 @@ const getInitials = (name: string) => {
 const statusTheme = (status: string) => {
   if (status === "Confirmed") {
     return "bg-green-100 text-green-800 border-green-200";
-  }
-
-  if (status === "Pending") {
-    return "bg-amber-100 text-amber-800 border-amber-200";
   }
 
   if (status === "Completed") {
@@ -167,16 +163,16 @@ export default function UserDashboard() {
     const upcomingCount = appointments.filter(
       (item) => item.category === "upcoming",
     ).length;
-    const pendingCount = appointments.filter(
-      (item) => item.category === "request",
-    ).length;
     const completedCount = appointments.filter(
       (item) => item.status === "Completed",
     ).length;
 
     return [
       { label: "Upcoming Appointments", value: String(upcomingCount) },
-      { label: "Pending Requests", value: String(pendingCount) },
+      {
+        label: "Appointment History",
+        value: String(appointments.filter((item) => item.category === "previous").length),
+      },
       { label: "Completed Consultations", value: String(completedCount) },
     ];
   }, [appointments]);
@@ -228,7 +224,7 @@ export default function UserDashboard() {
                     <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
                       {isLoading
                         ? "Loading your latest updates..."
-                        : "Track consultations, requests, and care activity in one calm, easy-to-scan workspace."}
+                        : "Track consultations and care activity in one calm, easy-to-scan workspace."}
                     </p>
                     {error ? (
                       <p className="mt-3 text-sm font-semibold text-rose-600">

@@ -9,5 +9,5 @@ export interface Appointment {
     reason: string;
     status: string;
     requestedAt: string;
-    category: "request" | "upcoming" | "previous";
+    category: "upcoming" | "previous";
 }

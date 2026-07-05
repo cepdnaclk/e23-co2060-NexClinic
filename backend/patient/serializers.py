@@ -70,7 +70,7 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         mapping = {
-            Appointment.Status.PENDING: "Pending",
+            Appointment.Status.PENDING: "Confirmed",
             Appointment.Status.ACCEPTED: "Confirmed",
             Appointment.Status.REJECTED: "Rejected",
             Appointment.Status.COMPLETED: "Completed",
@@ -82,10 +82,7 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
         return timezone.localtime(obj.requested_at).strftime("%Y-%m-%d %H:%M")
 
     def get_category(self, obj):
-        if obj.status == Appointment.Status.PENDING:
-            return "request"
-
-        if obj.status == Appointment.Status.ACCEPTED:
+        if obj.status in {Appointment.Status.PENDING, Appointment.Status.ACCEPTED}:
             naive_dt = datetime.combine(obj.slot.date, obj.slot.start_time)
             appointment_dt = timezone.make_aware(
                 naive_dt, timezone.get_current_timezone()

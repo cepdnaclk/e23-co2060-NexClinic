@@ -9,12 +9,11 @@ import ConfirmationDialog from "@/components/modals/ConfirmationDialog";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
 
 type AppointmentStatus =
-  | "Pending"
   | "Accepted"
   | "Rejected"
   | "Completed"
   | "Cancelled";
-type AppointmentCategory = "request" | "upcoming" | "previous";
+type AppointmentCategory = "upcoming" | "previous";
 type AppointmentStatusFilter = "All" | AppointmentStatus;
 type DateFilter = "all" | "today" | "next7" | "custom";
 
@@ -109,21 +108,18 @@ type MedicalRecordDraft = {
 
 const statusFilters: AppointmentStatusFilter[] = [
   "All",
-  "Pending",
   "Accepted",
   "Rejected",
   "Completed",
   "Cancelled",
 ];
 const appointmentStatuses: AppointmentStatus[] = [
-  "Pending",
   "Accepted",
   "Rejected",
   "Completed",
   "Cancelled",
 ];
 const appointmentCategories: AppointmentCategory[] = [
-  "request",
   "upcoming",
   "previous",
 ];
@@ -182,10 +178,10 @@ const formatTimeForDisplay = (time: string): string => {
 const normalizeAppointment = (item: ApiAppointment): AppointmentItem => {
   const safeStatus = appointmentStatuses.includes(item.status)
     ? item.status
-    : "Pending";
+    : "Accepted";
   const safeCategory = appointmentCategories.includes(item.category)
     ? item.category
-    : "request";
+    : "upcoming";
 
   return {
     ...item,
@@ -324,10 +320,6 @@ function DoctorAppointmentsPage() {
     });
   }, [appointments, searchTerm, statusFilter, dateFilter, customDate]);
 
-  const requests = useMemo(
-    () => filteredAppointments.filter((item) => item.category === "request"),
-    [filteredAppointments],
-  );
   const upcoming = useMemo(
     () => filteredAppointments.filter((item) => item.category === "upcoming"),
     [filteredAppointments],
@@ -363,7 +355,7 @@ function DoctorAppointmentsPage() {
 
   const setStatus = async (
     appointmentId: string,
-    action: "accept" | "reject" | "complete" | "cancel",
+    action: "reject" | "complete" | "cancel",
   ) => {
     setUpdatingAppointmentIds((prev) =>
       prev.includes(appointmentId) ? prev : [...prev, appointmentId],
@@ -937,7 +929,7 @@ function DoctorAppointmentsPage() {
                 </h1>
                 <div className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
                   <p>
-                    Review patient requests, manage upcoming visits and track
+                    Manage upcoming visits and track
                     previous appointments in one place.
                   </p>
                   <p className="mt-1">
@@ -1027,8 +1019,8 @@ function DoctorAppointmentsPage() {
                     Clear actions for each appointment state.
                   </p>
                   <p className="mt-3 text-sm leading-6 text-white/85">
-                    Accept quickly, reschedule with published slots, and close
-                    visits without losing context.
+                    Reschedule with published slots and close visits without
+                    losing context.
                   </p>
                 </div>
 
@@ -1145,16 +1137,7 @@ function DoctorAppointmentsPage() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
-            <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500" />
-            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Appointment Requests
-            </p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">
-              {isLoadingAppointments ? "..." : requests.length}
-            </p>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
             <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
             <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -1174,81 +1157,6 @@ function DoctorAppointmentsPage() {
             </p>
           </div>
         </div>
-
-        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <h2 className="text-xl font-bold text-emerald-700">
-              Appointment Requests
-            </h2>
-            <span className="text-sm text-slate-500">
-              New requests waiting for your response
-            </span>
-          </div>
-          <div className="my-4 flex w-full border-t border-emerald-100"></div>
-
-          {requests.length === 0 ? (
-            renderNoDataMessage("No pending requests right now.")
-          ) : (
-            <div className="space-y-3">
-              {requests.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-emerald-50/60 p-4 shadow-sm"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-slate-900">
-                        {appointment.patientName}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {appointment.reason}
-                      </p>
-                    </div>
-                    <span className="w-max rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
-                      Pending
-                    </span>
-                  </div>
-
-                  <p className="mt-2 text-sm text-slate-500">
-                    {appointment.date} •{" "}
-                    {formatTimeForDisplay(appointment.time)}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {appointment.location}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Requested: {appointment.requestedAt}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    <GreenButton
-                      className="px-4 py-2"
-                      disabled={isUpdatingAppointment(appointment.id)}
-                      onClick={() => void setStatus(appointment.id, "accept")}
-                    >
-                      Accept
-                    </GreenButton>
-                    <WhiteButton
-                      className="px-4 py-2"
-                      disabled={isUpdatingAppointment(appointment.id)}
-                      onClick={() => void setStatus(appointment.id, "reject")}
-                    >
-                      Reject
-                    </WhiteButton>
-                    <WhiteButton
-                      className="px-4 py-2"
-                      onClick={() =>
-                        void openPatientProfile(appointment.patientId)
-                      }
-                    >
-                      View Patient Profile
-                    </WhiteButton>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
 
         <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
           <div className="flex items-center justify-between gap-4 mb-4">
@@ -1308,26 +1216,6 @@ function DoctorAppointmentsPage() {
                     )}
 
                   <div className="flex flex-wrap gap-2 mt-4">
-                    {appointment.status === "Pending" && (
-                      <>
-                        <GreenButton
-                          className="px-4 py-2"
-                          disabled={isUpdatingAppointment(appointment.id)}
-                          onClick={() =>
-                            void setStatus(appointment.id, "accept")
-                          }
-                        >
-                          Accept
-                        </GreenButton>
-                        <WhiteButton
-                          className="px-4 py-2"
-                          disabled={isUpdatingAppointment(appointment.id)}
-                          onClick={() => openConfirm(appointment, "reject")}
-                        >
-                          Reject
-                        </WhiteButton>
-                      </>
-                    )}
                     {appointment.status === "Accepted" && (
                       <>
                         <GreenButton
