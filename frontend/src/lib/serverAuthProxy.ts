@@ -170,6 +170,7 @@ export async function proxyBackendWithRefresh({
 }: ProxyWithRefreshOptions): Promise<NextResponse> {
   let authToken = request.cookies.get("authToken")?.value;
   const refreshToken = request.cookies.get("refreshToken")?.value;
+  let refreshedTokens: RefreshedTokens | null = null;
 
   // If the access token cookie has expired (or is missing) but we still have
   // a refresh token, attempt a proactive refresh before even calling the backend.
@@ -177,6 +178,7 @@ export async function proxyBackendWithRefresh({
     const proactiveRefresh = await refreshAccessToken(refreshToken);
     if (proactiveRefresh?.accessToken) {
       authToken = proactiveRefresh.accessToken;
+      refreshedTokens = proactiveRefresh;
       // We'll apply these cookies to the final response below.
     } else {
       // Refresh token is also expired or invalid — force login.
@@ -207,11 +209,11 @@ export async function proxyBackendWithRefresh({
   };
 
   let backendResponse = await callBackend(authToken);
-  let refreshedTokens: RefreshedTokens | null = null;
 
   // Access token was rejected — try to refresh.
   if (backendResponse.status === 401 && refreshToken) {
     refreshedTokens = await refreshAccessToken(refreshToken);
+
 
     if (refreshedTokens?.accessToken) {
       backendResponse = await callBackend(refreshedTokens.accessToken);

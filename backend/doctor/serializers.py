@@ -728,10 +728,13 @@ class DoctorDirectoryPublicSerializer(serializers.ModelSerializer):
             if qualification.strip()
         ]
 
+    def get_experience(self, obj):
         years = obj.experience_years or 0
         return f"{years} years"
 
+    def get_chatFee(self, obj):
         return f"Rs. {obj.chat_fee:,.2f}"
+
 
     def get_appointmentFee(self, obj):
         return f"Rs. {obj.appointment_fee:,.2f}"
