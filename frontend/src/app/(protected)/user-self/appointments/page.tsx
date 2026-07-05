@@ -8,6 +8,7 @@ import ConfirmationDialog from "@/components/modals/ConfirmationDialog";
 import { Appointment } from "@/types/appointment";
 
 type SortBy = "date" | "doctor" | "status";
+type SectionFilter = "all" | "request" | "upcoming" | "previous";
 
 type ApiAppointment = Omit<Appointment, "id" | "slotId" | "doctorId"> & {
   id: string | number;
@@ -18,7 +19,9 @@ type ApiAppointment = Omit<Appointment, "id" | "slotId" | "doctorId"> & {
 const sortAppointments = (appointments: Appointment[], sortBy: string) => {
   if (sortBy === "date") {
     return [...appointments].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      (a, b) =>
+        new Date(`${a.date}T${a.time}`).getTime() -
+        new Date(`${b.date}T${b.time}`).getTime(),
     );
   } else if (sortBy === "doctor") {
     return [...appointments].sort((a, b) =>
@@ -66,7 +69,7 @@ const normalizeAppointment = (appointment: ApiAppointment): Appointment => ({
 
 const statusPillClass = (status: string) => {
   if (status === "Confirmed") {
-    return "bg-green-100 text-green-800 border border-green-200";
+    return "bg-emerald-100 text-emerald-700 border border-emerald-200";
   }
   if (status === "Pending") {
     return "bg-amber-100 text-amber-800 border border-amber-200";
@@ -77,6 +80,40 @@ const statusPillClass = (status: string) => {
   return "bg-rose-100 text-rose-800 border border-rose-200";
 };
 
+const sectionMeta: {
+  key: SectionFilter;
+  label: string;
+  emptyText: string;
+}[] = [
+  {
+    key: "all",
+    label: "All",
+    emptyText: "No appointments found.",
+  },
+  {
+    key: "request",
+    label: "Pending Requests",
+    emptyText: "No pending requests.",
+  },
+  {
+    key: "upcoming",
+    label: "Upcoming",
+    emptyText: "No upcoming appointments.",
+  },
+  {
+    key: "previous",
+    label: "History",
+    emptyText: "No appointment history yet.",
+  },
+];
+
+const getSectionTitle = (section: SectionFilter) => {
+  if (section === "request") return "Pending Requests";
+  if (section === "upcoming") return "Upcoming Appointments";
+  if (section === "previous") return "Appointment History";
+  return "All Appointments";
+};
+
 const PatientAppointmentPage = () => {
   const router = useRouter();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -84,6 +121,9 @@ const PatientAppointmentPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+  const [activeSection, setActiveSection] =
+    useState<SectionFilter>("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [cancellingIds, setCancellingIds] = useState<string[]>([]);
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
@@ -163,6 +203,42 @@ const PatientAppointmentPage = () => {
     void loadAppointments();
   }, [router]);
 
+  const loadAppointments = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/patient/appointments", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        handlePatientSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to load appointments");
+      }
+
+      const normalized = Array.isArray(payload?.appointments)
+        ? payload.appointments.map((item: ApiAppointment) =>
+            normalizeAppointment(item),
+          )
+        : [];
+
+      setAppointments(normalized);
+    } catch (err) {
+      setAppointments([]);
+      setError(err instanceof Error ? err.message : "Failed to load appointments");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const cancelAppointment = async (appointmentId: string) => {
     setCancellingIds((prev) =>
       prev.includes(appointmentId) ? prev : [...prev, appointmentId],
@@ -208,50 +284,90 @@ const PatientAppointmentPage = () => {
     }
   };
 
+  const filteredAppointments = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) return appointments;
+
+    return appointments.filter((item) => {
+      const haystack = `${item.doctorName} ${item.hospital} ${item.reason} ${item.status}`.toLowerCase();
+      return haystack.includes(keyword);
+    });
+  }, [appointments, searchTerm]);
+
   const requests = useMemo(
     () =>
       sortAppointments(
-        appointments.filter((item) => item.category === "request"),
+        filteredAppointments.filter((item) => item.category === "request"),
         sortBy,
       ),
-    [appointments, sortBy],
+    [filteredAppointments, sortBy],
   );
   const upcoming = useMemo(
     () =>
       sortAppointments(
-        appointments.filter((item) => item.category === "upcoming"),
+        filteredAppointments.filter((item) => item.category === "upcoming"),
         sortBy,
       ),
-    [appointments, sortBy],
+    [filteredAppointments, sortBy],
   );
   const previous = useMemo(
     () =>
       sortAppointments(
-        appointments.filter((item) => item.category === "previous"),
+        filteredAppointments.filter((item) => item.category === "previous"),
         sortBy,
       ),
-    [appointments, sortBy],
+    [filteredAppointments, sortBy],
   );
 
-  const renderTable = (items: Appointment[], emptyText: string) => {
+  const allSorted = useMemo(
+    () => sortAppointments(filteredAppointments, sortBy),
+    [filteredAppointments, sortBy],
+  );
+
+  const sectionCounts = useMemo(
+    () => ({
+      all: filteredAppointments.length,
+      request: requests.length,
+      upcoming: upcoming.length,
+      previous: previous.length,
+    }),
+    [filteredAppointments.length, requests.length, upcoming.length, previous.length],
+  );
+
+  const visibleItems = useMemo(() => {
+    if (activeSection === "request") return requests;
+    if (activeSection === "upcoming") return upcoming;
+    if (activeSection === "previous") return previous;
+    return allSorted;
+  }, [activeSection, requests, upcoming, previous, allSorted]);
+
+  const renderCards = (items: Appointment[], emptyText: string) => {
     if (loading) {
       return (
-        <div className="bg-white/90 p-6 rounded-lg text-slate-700 text-center shadow-sm">
-          Loading appointments...
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {[1, 2, 3].map((skeleton) => (
+            <div
+              key={skeleton}
+              className="h-44 animate-pulse rounded-2xl border border-emerald-100 bg-white/80 p-4"
+            />
+          ))}
         </div>
       );
     }
 
     if (items.length === 0) {
       return (
-        <div className="bg-white/90 p-6 rounded-lg text-slate-700 text-center shadow-sm">
-          {emptyText}
+        <div className="rounded-2xl border border-dashed border-emerald-200 bg-white/80 p-10 text-center shadow-sm">
+          <p className="text-base font-medium text-slate-700">{emptyText}</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Try changing filters or booking a new appointment.
+          </p>
         </div>
       );
     }
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {items.map((appt) => {
           const canCancel =
             appt.status === "Pending" || appt.status === "Confirmed";
@@ -260,64 +376,63 @@ const PatientAppointmentPage = () => {
           return (
             <div
               key={appt.id}
-              className="bg-white rounded-xl shadow-md p-4 flex flex-col sm:flex-row gap-4 items-start transition-transform hover:-translate-y-1 border border-green-50"
+              className="group rounded-2xl border border-emerald-100 bg-white p-4 shadow-[0_12px_32px_rgba(15,118,110,0.08)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,118,110,0.16)]"
             >
-              <div className="flex-shrink-0 w-16 h-16 rounded-full bg-gradient-to-br from-emerald-200 to-emerald-50 flex items-center justify-center text-emerald-700 font-bold text-xl">
-                {appt.doctorName.split(" ")[0][0] ?? "D"}
-              </div>
-
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-lg font-semibold text-slate-900">
-                      {appt.doctorName}
-                    </h4>
-                    <p className="text-sm text-slate-600">{appt.hospital}</p>
-                  </div>
-
-                  <div className="text-right">
-                    <div
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusPillClass(appt.status)}`}
-                    >
-                      {appt.status}
-                    </div>
-                    <div className="text-xs text-slate-500 mt-2">
-                      Requested:{" "}
-                      {new Date(appt.requestedAt).toLocaleDateString()}
-                    </div>
-                  </div>
+              <div className="flex items-start gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-200 to-emerald-50 text-lg font-bold text-emerald-700">
+                  {appt.doctorName.split(" ")[0][0] ?? "D"}
                 </div>
 
-                <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="text-sm text-slate-700">
-                    <div className="font-medium">
-                      {appt.date} • {formatTimeForDisplay(appt.time)}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h4 className="truncate text-lg font-semibold text-slate-900">
+                        {appt.doctorName}
+                      </h4>
+                      <p className="truncate text-sm text-slate-600">{appt.hospital}</p>
+                    </div>
+
+                    <div className="text-right">
+                      <div
+                        className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${statusPillClass(appt.status)}`}
+                      >
+                        {appt.status}
+                      </div>
+                      <div className="mt-2 text-xs text-slate-500">
+                        Requested: {new Date(appt.requestedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-xl bg-emerald-50/70 p-3">
+                    <div className="text-sm font-medium text-slate-900">
+                      {appt.date} at {formatTimeForDisplay(appt.time)}
                     </div>
                     {appt.reason && (
-                      <div className="text-xs text-slate-500 mt-1">
+                      <div className="mt-1 text-xs text-slate-600">
                         {truncateText(appt.reason)}
                       </div>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => openAppointmentModal(appt)}
-                      className="text-sm text-green-600 font-semibold hover:underline bg-none border-none cursor-pointer p-0"
+                      className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
                     >
                       View
                     </button>
                     {canCancel ? (
                       <button
                         type="button"
-                        className="ml-2 bg-red-50 text-red-600 border border-red-100 rounded px-3 py-1 text-sm font-semibold hover:bg-red-100 disabled:opacity-60"
+                        className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
                         disabled={isCancelling}
                         onClick={() => openCancelConfirmation(appt.id)}
                       >
                         {isCancelling ? "Cancelling..." : "Cancel"}
                       </button>
                     ) : (
-                      <span className="text-xs text-slate-400">—</span>
+                      <span className="text-xs text-slate-400">No actions</span>
                     )}
                   </div>
                 </div>
@@ -330,7 +445,7 @@ const PatientAppointmentPage = () => {
   };
 
   return (
-    <div className="relative flex flex-col items-center w-full min-h-screen py-8 transition-colors bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white">
+    <div className="relative min-h-screen bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white py-6 sm:py-8">
       <div aria-hidden className="absolute inset-0 -z-10">
         <img
           src="/images/hexagons.png"
@@ -341,58 +456,111 @@ const PatientAppointmentPage = () => {
         <div className="absolute -right-40 -bottom-32 w-96 h-96 rounded-full bg-gradient-to-br from-emerald-100 to-transparent opacity-20 blur-2xl transform -rotate-12" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-emerald-50/30 mix-blend-overlay" />
       </div>
-      <div className="w-full max-w-6xl px-6 py-8 rounded-3xl border border-emerald-100/30 shadow-lg transition-colors bg-white/95">
+      <div className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6">
         <div
-          className="w-full rounded-2xl shadow-sm p-4 md:p-8 flex flex-col gap-6 backdrop-blur-sm"
-          style={{ backgroundColor: "#ffffff" }}
+          className="w-full rounded-[2rem] border border-emerald-100/40 bg-white/95 p-4 shadow-[0_24px_64px_rgba(16,185,129,0.14)] backdrop-blur sm:p-6 lg:p-8"
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-green-100 pb-4">
-            <h2 className="text-4xl font-extrabold text-slate-900">
-              My Appointments
-            </h2>
-            <Link href="/user-self/book-appointment">
-              <button className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition-all">
-                + Book Appointment
-              </button>
-            </Link>
+          <div className="rounded-3xl border border-white/80 bg-gradient-to-br from-white via-emerald-50/30 to-white p-4 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
+                  Care Timeline
+                </p>
+                <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                  My Appointments
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
+                  Easily track requests, upcoming visits, and completed consultations in one place.
+                </p>
+              </div>
+
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => void loadAppointments()}
+                  className="rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                >
+                  Refresh
+                </button>
+                <Link href="/user-self/book-appointment">
+                  <button className="w-full rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto">
+                    + Book Appointment
+                  </button>
+                </Link>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <span className="font-medium text-slate-700">Sort by:</span>
-            <select
-              className="border border-gray-300 bg-white text-slate-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortBy)}
-            >
-              <option value="date">Date</option>
-              <option value="doctor">Doctor</option>
-              <option value="status">Status</option>
-            </select>
+
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {sectionMeta.map((section) => (
+              <button
+                key={section.key}
+                type="button"
+                onClick={() => setActiveSection(section.key)}
+                className={`rounded-2xl border px-3 py-3 text-left transition ${
+                  activeSection === section.key
+                    ? "border-emerald-300 bg-emerald-50 shadow-sm"
+                    : "border-emerald-100 bg-white hover:border-emerald-200"
+                }`}
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {section.label}
+                </p>
+                <p className="mt-1 text-2xl font-bold text-slate-900">
+                  {sectionCounts[section.key]}
+                </p>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="w-full sm:w-72">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by doctor, hospital, reason"
+                  className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-slate-700">Sort by</span>
+                <select
+                  className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortBy)}
+                >
+                  <option value="date">Date</option>
+                  <option value="doctor">Doctor</option>
+                  <option value="status">Status</option>
+                </select>
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-500">
+              Showing {visibleItems.length} appointment
+              {visibleItems.length === 1 ? "" : "s"}
+            </p>
           </div>
 
           {error && <div className="text-red-500 text-sm">{error}</div>}
           {toast && (
-            <div className="text-green-600 text-sm font-semibold">{toast}</div>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+              {toast}
+            </div>
           )}
 
-          <div>
-            <h3 className="text-xl font-semibold mb-3 text-slate-900">
-              Pending Requests
+          <div className="mt-5">
+            <h3 className="mb-3 text-xl font-semibold text-slate-900">
+              {getSectionTitle(activeSection)}
             </h3>
-            {renderTable(requests, "No pending requests.")}
-          </div>
-
-          <div>
-            <h3 className="text-xl font-semibold mb-3 text-slate-900">
-              Upcoming Appointments
-            </h3>
-            {renderTable(upcoming, "No upcoming appointments.")}
-          </div>
-
-          <div>
-            <h3 className="text-xl font-semibold mb-3 text-slate-900">
-              Appointment History
-            </h3>
-            {renderTable(previous, "No appointment history yet.")}
+            {renderCards(
+              visibleItems,
+              sectionMeta.find((item) => item.key === activeSection)?.emptyText ||
+                "No appointments found.",
+            )}
           </div>
         </div>
       </div>

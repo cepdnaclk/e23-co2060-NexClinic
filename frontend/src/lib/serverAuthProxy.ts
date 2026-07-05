@@ -233,10 +233,15 @@ export async function proxyBackendWithRefresh({
     return buildSessionExpiredResponse();
   }
 
+  const resolvedSuccessStatus = successStatus ?? backendResponse.status;
+  const isNoContentStatus = [204, 205, 304].includes(resolvedSuccessStatus);
+
   const response = backendResponse.ok
-    ? NextResponse.json(payload, {
-        status: successStatus ?? backendResponse.status,
-      })
+    ? isNoContentStatus
+      ? new NextResponse(null, { status: resolvedSuccessStatus })
+      : NextResponse.json(payload, {
+          status: resolvedSuccessStatus,
+        })
     : NextResponse.json(
         {
           error:

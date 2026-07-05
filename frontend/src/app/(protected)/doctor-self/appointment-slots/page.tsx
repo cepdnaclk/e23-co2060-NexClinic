@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
 
@@ -14,6 +13,9 @@ type AppointmentSlot = {
   hospital: string;
   start_time: string;
   end_time: string;
+  is_active?: boolean;
+  patientLimit?: number;
+  remainingCount?: number;
 };
 
 const formatTimeForDisplay = (time: string): string => {
@@ -40,14 +42,13 @@ function DoctorAppointmentSlotsPage() {
 
   const [slots, setSlots] = useState<AppointmentSlot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-
-  const [date, setDate] = useState("");
-  const [hospital, setHospital] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "date" | "week" | "month">("all");
+  const [filterDate, setFilterDate] = useState("");
+  const [filterWeekStart, setFilterWeekStart] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
+  const [timeBucket, setTimeBucket] = useState<"all" | "morning" | "afternoon" | "evening">("all");
 
   const loadSlots = async () => {
     setIsLoading(true);
@@ -117,69 +118,44 @@ function DoctorAppointmentSlotsPage() {
     return `${next.date} • ${formatTimeForDisplay(next.start_time)}`;
   }, [upcomingSlots]);
 
-  const handleCreateSlot = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError("");
-    setMessage("");
+  const filteredSlots = useMemo(() => {
+    return upcomingSlots.filter((slot) => {
+      const slotDate = slot.date;
 
-    if (!date || !hospital || !startTime || !endTime) {
-      setError("Please fill date, hospital, start time, and end time.");
-      return;
-    }
-
-    if (startTime >= endTime) {
-      setError("Start time must be before end time.");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/doctor/appointment-slots", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          slots: [
-            {
-              date,
-              hospital,
-              start_time: startTime,
-              end_time: endTime,
-            },
-          ],
-        }),
-      });
-
-      if (response.status === 401) {
-        handleDoctorSessionExpired(router);
-        return;
+      if (filterType === "date" && filterDate && slotDate !== filterDate) {
+        return false;
       }
 
-      const payload = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const firstConflict = Array.isArray(payload?.conflicts) ? payload.conflicts[0] : null;
-        if (firstConflict?.error) {
-          throw new Error(firstConflict.error);
+      if (filterType === "week" && filterWeekStart) {
+        const start = new Date(`${filterWeekStart}T00:00:00`);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 6);
+        const current = new Date(`${slotDate}T00:00:00`);
+        if (current < start || current > end) {
+          return false;
         }
-
-        throw new Error(payload?.error || payload?.detail || "Failed to create appointment slot");
       }
 
-      setMessage(payload?.message || "Appointment slot created successfully.");
-      setDate("");
-      setHospital("");
-      setStartTime("");
-      setEndTime("");
-      await loadSlots();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create appointment slot");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      if (filterType === "month" && filterMonth && !slotDate.startsWith(filterMonth)) {
+        return false;
+      }
+
+      if (timeBucket !== "all") {
+        const hour = Number(slot.start_time.slice(0, 2));
+        if (timeBucket === "morning" && !(hour >= 6 && hour < 12)) {
+          return false;
+        }
+        if (timeBucket === "afternoon" && !(hour >= 12 && hour < 17)) {
+          return false;
+        }
+        if (timeBucket === "evening" && !(hour >= 17 || hour < 6)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [upcomingSlots, filterType, filterDate, filterWeekStart, filterMonth, timeBucket]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_28%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)] pb-8">
@@ -249,21 +225,93 @@ function DoctorAppointmentSlotsPage() {
             <h2 className="text-xl font-bold text-emerald-700">Published Future Slots</h2>
             <span className="text-sm text-slate-500">Sorted by date and start time</span>
           </div>
+
+          <div className="grid gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Filter</label>
+              <select
+                value={filterType}
+                onChange={(event) => setFilterType(event.target.value as "all" | "date" | "week" | "month")}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+              >
+                <option value="all">All dates</option>
+                <option value="date">Specific date</option>
+                <option value="week">Week range</option>
+                <option value="month">Month</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Date</label>
+              <input
+                type="date"
+                value={filterDate}
+                onChange={(event) => setFilterDate(event.target.value)}
+                disabled={filterType !== "date"}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm disabled:bg-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Week Start</label>
+              <input
+                type="date"
+                value={filterWeekStart}
+                onChange={(event) => setFilterWeekStart(event.target.value)}
+                disabled={filterType !== "week"}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm disabled:bg-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Month</label>
+              <input
+                type="month"
+                value={filterMonth}
+                onChange={(event) => setFilterMonth(event.target.value)}
+                disabled={filterType !== "month"}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm disabled:bg-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Time Bucket</label>
+              <select
+                value={timeBucket}
+                onChange={(event) => setTimeBucket(event.target.value as "all" | "morning" | "afternoon" | "evening")}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+              >
+                <option value="all">All times</option>
+                <option value="morning">Morning (06:00-11:59)</option>
+                <option value="afternoon">Afternoon (12:00-16:59)</option>
+                <option value="evening">Evening/Night (17:00-05:59)</option>
+              </select>
+            </div>
+          </div>
+
           <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
           {isLoading ? (
             <p className="text-sm text-slate-600">Loading slots...</p>
-          ) : upcomingSlots.length === 0 ? (
+          ) : filteredSlots.length === 0 ? (
             <p className="text-sm text-slate-600">No future slots published yet.</p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {upcomingSlots.map((slot) => (
+              {filteredSlots.map((slot) => (
                 <div key={slot.id} className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-emerald-50/60 p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">{slot.day_of_week || "DAY"}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">{slot.day_of_week || "DAY"}</p>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${slot.is_active === false ? "bg-slate-100 text-slate-600" : "bg-emerald-100 text-emerald-700"}`}>
+                      {slot.is_active === false ? "Disabled" : "Active"}
+                    </span>
+                  </div>
                   <p className="mt-2 text-lg font-bold text-slate-900">{slot.date}</p>
                   <p className="mt-2 text-sm font-medium text-slate-700">{slot.hospital || "NexClinic"}</p>
                   <p className="mt-2 text-sm text-slate-600">
                     {formatTimeForDisplay(slot.start_time)} - {formatTimeForDisplay(slot.end_time)}
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Remaining: {slot.remainingCount ?? "-"} / Limit: {slot.patientLimit ?? "-"}
                   </p>
                 </div>
               ))}

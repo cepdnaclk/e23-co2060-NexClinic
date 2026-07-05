@@ -85,6 +85,7 @@ class DoctorVerificationProfileSerializer(serializers.ModelSerializer):
 
 class DoctorHospitalVerificationSerializer(serializers.ModelSerializer):
     doctorName = serializers.CharField(source="doctor.full_name", read_only=True)
+    doctorIdentifier = serializers.SerializerMethodField(read_only=True)
     hospitalName = serializers.CharField(source="hospital.name", read_only=True)
     verifiedByEmail = serializers.CharField(source="verified_by.email", read_only=True)
     doctorDetails = DoctorVerificationProfileSerializer(source="doctor", read_only=True)
@@ -95,6 +96,7 @@ class DoctorHospitalVerificationSerializer(serializers.ModelSerializer):
             "id",
             "doctor",
             "doctorName",
+            "doctorIdentifier",
             "doctorDetails",
             "hospital",
             "hospitalName",
@@ -105,6 +107,15 @@ class DoctorHospitalVerificationSerializer(serializers.ModelSerializer):
             "rejection_reason",
             "created_at",
         ]
+
+    def get_doctorIdentifier(self, obj):
+        doctor = getattr(obj, "doctor", None)
+        doctor_user = getattr(doctor, "user", None)
+        if doctor_user and getattr(doctor_user, "email", ""):
+            return doctor_user.email
+        if doctor and getattr(doctor, "license_number", ""):
+            return doctor.license_number
+        return f"DOC-{obj.doctor_id}" if obj.doctor_id else ""
 
         read_only_fields = [
             "id",
@@ -118,6 +129,7 @@ class DoctorHospitalVerificationSerializer(serializers.ModelSerializer):
 
 class SlotTemplateSerializer(serializers.ModelSerializer):
     doctorName = serializers.SerializerMethodField(read_only=True)
+    doctorIdentifier = serializers.SerializerMethodField(read_only=True)
     hospitalName = serializers.CharField(source="hospital.name", read_only=True)
 
     class Meta:
@@ -126,6 +138,7 @@ class SlotTemplateSerializer(serializers.ModelSerializer):
             "id",
             "doctor",
             "doctorName",
+            "doctorIdentifier",
             "hospital",
             "hospitalName",
             "day_of_week",
@@ -134,6 +147,7 @@ class SlotTemplateSerializer(serializers.ModelSerializer):
             "slot_duration_minutes",
             "default_patient_limit",
             "is_active",
+            "is_deleted",
             "created_by",
             "created_at",
             "updated_at",
@@ -152,11 +166,25 @@ class SlotTemplateSerializer(serializers.ModelSerializer):
         }
 
     def get_doctorName(self, obj):
-        return obj.doctor.full_name if obj.doctor else "Generic"
+        if not obj.doctor:
+            return "Generic"
+        return obj.doctor.full_name or obj.doctor.preferred_name or "Doctor"
+
+    def get_doctorIdentifier(self, obj):
+        doctor = getattr(obj, "doctor", None)
+        if not doctor:
+            return "GENERIC"
+        doctor_user = getattr(doctor, "user", None)
+        if doctor_user and getattr(doctor_user, "email", ""):
+            return doctor_user.email
+        if getattr(doctor, "license_number", ""):
+            return doctor.license_number
+        return f"DOC-{doctor.id}"
 
 
 class DoctorSlotTemplateAssignmentSerializer(serializers.ModelSerializer):
     doctorName = serializers.CharField(source="doctor.full_name", read_only=True)
+    doctorIdentifier = serializers.SerializerMethodField(read_only=True)
     hospitalName = serializers.CharField(source="hospital.name", read_only=True)
     templateDetails = serializers.SerializerMethodField(read_only=True)
     status = serializers.SerializerMethodField(read_only=True)
@@ -167,6 +195,7 @@ class DoctorSlotTemplateAssignmentSerializer(serializers.ModelSerializer):
             "id",
             "doctor",
             "doctorName",
+            "doctorIdentifier",
             "hospital",
             "hospitalName",
             "slot_template",
@@ -179,6 +208,15 @@ class DoctorSlotTemplateAssignmentSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def get_doctorIdentifier(self, obj):
+        doctor = getattr(obj, "doctor", None)
+        doctor_user = getattr(doctor, "user", None)
+        if doctor_user and getattr(doctor_user, "email", ""):
+            return doctor_user.email
+        if doctor and getattr(doctor, "license_number", ""):
+            return doctor.license_number
+        return f"DOC-{obj.doctor_id}" if obj.doctor_id else ""
 
     def get_templateDetails(self, obj):
         t = obj.slot_template
@@ -214,6 +252,8 @@ class AdminAppointmentCancelSerializer(serializers.Serializer):
 class AppointmentAvailableSlotSerializer(serializers.ModelSerializer):
     hospital = serializers.SerializerMethodField()
     bookedCount = serializers.SerializerMethodField()
+    patientLimit = serializers.IntegerField(source="patient_limit", read_only=True)
+    remainingCount = serializers.IntegerField(source="remaining_count", read_only=True)
 
     class Meta:
         model = AppointmentAvailableSlot
@@ -225,6 +265,10 @@ class AppointmentAvailableSlotSerializer(serializers.ModelSerializer):
             "start_time",
             "end_time",
             "bookedCount",
+            "patientLimit",
+            "remainingCount",
+            "is_active",
+            "slot_template",
         ]
 
     def get_hospital(self, obj):

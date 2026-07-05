@@ -9,6 +9,7 @@ export interface SlotTemplateItem {
   id: number | string;
   doctor?: number | string;
   doctorName?: string;
+  doctorIdentifier?: string;
   doctor_name?: string;
   doctor_display?: string;
   hospital?: number | string;
@@ -21,12 +22,14 @@ export interface SlotTemplateItem {
   default_patient_limit?: number;
   patient_limit?: number;
   is_active?: boolean;
+  is_deleted?: boolean;
 }
 
 export interface DoctorVerificationItem {
   id: number | string;
   doctor: number | string;
   doctorName?: string;
+  doctorIdentifier?: string;
   hospital: number | string;
   hospitalName?: string;
   status?: string;
@@ -125,6 +128,7 @@ export interface DoctorSlotTemplateAssignmentItem {
   id: number | string;
   doctor: number | string;
   doctorName?: string;
+  doctorIdentifier?: string;
   doctor_preferred_name?: string;
   hospital: number | string;
   hospitalName?: string;
