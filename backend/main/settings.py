@@ -143,6 +143,7 @@ if DATABASE_URL:
                 "CONN_MAX_AGE": int(
                     os.getenv("DJANGO_CONN_MAX_AGE") or os.getenv("CONN_MAX_AGE") or "0"
                 ),
+            }
         }
 else:
     raise Exception(
