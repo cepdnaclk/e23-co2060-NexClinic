@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
+import MockPaymentGateway from "@/components/payment/MockPaymentGateway";
 
 type AvailableSlot = {
   id: number;
@@ -57,6 +58,7 @@ const BookAppointmentPage = () => {
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const loadAvailableSlots = React.useCallback(async () => {
     setLoadingSlots(true);
@@ -162,7 +164,7 @@ const BookAppointmentPage = () => {
   const selectedSlot =
     filteredSlots.find((slot) => String(slot.id) === slotId) || null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!doctorId || !slotId) {
       setError("Please fill in all fields.");
@@ -174,6 +176,11 @@ const BookAppointmentPage = () => {
       return;
     }
 
+    setError("");
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async () => {
     setSubmitting(true);
     setError("");
 
@@ -201,6 +208,7 @@ const BookAppointmentPage = () => {
       }
 
       await loadAvailableSlots();
+      setShowPaymentModal(false);
       setSuccess(true);
       setReason("");
       setSlotId("");
@@ -208,6 +216,7 @@ const BookAppointmentPage = () => {
       setError(
         err instanceof Error ? err.message : "Failed to book appointment",
       );
+      setShowPaymentModal(false);
     } finally {
       setSubmitting(false);
     }
@@ -284,7 +293,7 @@ const BookAppointmentPage = () => {
                 </p>
               </div>
 
-              <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+              <form className="flex flex-col gap-6" onSubmit={handleProceedToPayment}>
                 {/* Doctor Selection */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-900 mb-2">
@@ -467,7 +476,7 @@ const BookAppointmentPage = () => {
                   {submitting ? (
                     <>
                       <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Booking Appointment...
+                      Processing...
                     </>
                   ) : (
                     <>
@@ -478,7 +487,7 @@ const BookAppointmentPage = () => {
                       >
                         <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v2h16V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" />
                       </svg>
-                      Book Appointment
+                      Proceed to Payment
                     </>
                   )}
                 </button>
@@ -498,6 +507,15 @@ const BookAppointmentPage = () => {
           </div>
         )}
       </div>
+
+      {showPaymentModal && (
+        <MockPaymentGateway
+          amount="Rs. 3,500.00"
+          onSuccess={handlePaymentSuccess}
+          onCancel={() => setShowPaymentModal(false)}
+          isProcessing={submitting}
+        />
+      )}
     </div>
   );
 };
