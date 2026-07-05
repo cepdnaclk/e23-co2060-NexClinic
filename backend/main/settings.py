@@ -264,7 +264,7 @@ SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 
-if SENDGRID_API_KEY:
+if SENDGRID_API_KEY is not None and len(SENDGRID_API_KEY) > 1:
     EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "sgbackend.SendGridBackend")
 else:
     EMAIL_BACKEND = os.getenv(
