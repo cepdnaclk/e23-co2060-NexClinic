@@ -24,7 +24,7 @@ const MockPaymentGateway: React.FC<MockPaymentGatewayProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLocalProcessing(true);
-    
+
     // Simulate payment processing delay
     setTimeout(() => {
       setLocalProcessing(false);
@@ -63,9 +63,9 @@ const MockPaymentGateway: React.FC<MockPaymentGatewayProps> = ({
         <div className="bg-slate-50 border-b border-slate-100 p-6 flex justify-between items-center">
           <div>
             <h2 className="text-xl font-bold text-slate-900">Secure Payment</h2>
-            <p className="text-sm text-slate-500 mt-1">Simulated Gateway for University Project</p>
+            <p className="text-sm text-slate-500 mt-1">Simulated Payment Gateway</p>
           </div>
-          <button 
+          <button
             onClick={onCancel}
             disabled={isLoading}
             className="text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
