@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import BlackButton from '@/components/buttons/BlackButton';
 import RoleBasedNavbar from '@/components/common/RoleBasedNavbar';
@@ -19,112 +19,48 @@ interface NewsArticle {
     readTime: string;
 }
 
-const demoArticles: NewsArticle[] = [
-    {
-        id: 1,
-        url: "https://youtu.be/LXrh2AJa8nU?si=GrW4zL7ixYIHcuiL",
-        title: "Revolutionary AI Diagnosis System Achieves 99% Accuracy in Early Cancer Detection",
-        summary: "New artificial intelligence system developed by leading researchers shows unprecedented accuracy in detecting early-stage cancers across multiple organ systems.",
-        author: "Dr. Sarah Johnson",
-        date: "January 14, 2026",
-        category: "Medical Technology",
-        imageUrl: "/images/medical-ai.jpg",
-        readTime: "5 min read"
-    },
-    {
-        id: 2,
-        url: "https://youtu.be/example2",
-        title: "Breakthrough in Alzheimer's Treatment Shows Promising Results in Clinical Trials",
-        summary: "A novel drug treatment has demonstrated significant cognitive improvement in Alzheimer's patients during phase 3 clinical trials.",
-        author: "Dr. Michael Chen",
-        date: "January 12, 2026",
-        category: "Neurology",
-        imageUrl: "/images/alzheimers-research.jpg",
-        readTime: "7 min read"
-    },
-    {
-        id: 3,
-        url: "https://youtu.be/example3",
-        title: "Telemedicine Adoption Increases by 300% Post-Pandemic",
-        summary: "Healthcare providers report sustained growth in virtual consultations as patients continue to embrace digital health solutions.",
-        author: "Emily Roberts",
-        date: "January 10, 2026",
-        category: "Digital Health",
-        imageUrl: "/images/telemedicine.jpg",
-        readTime: "4 min read"
-    },
-    {
-        id: 4,
-        url: "https://youtu.be/example4",
-        title: "New Guidelines Released for Managing Type 2 Diabetes in 2026",
-        summary: "Leading endocrinology association updates treatment protocols incorporating latest research on lifestyle interventions and medication.",
-        author: "Dr. James Wilson",
-        date: "January 8, 2026",
-        category: "Endocrinology",
-        imageUrl: "/images/diabetes-care.jpg",
-        readTime: "6 min read"
-    },
-    {
-        id: 5,
-        url: "https://youtu.be/example5",
-        title: "Mental Health Apps Show Effectiveness in Treating Mild to Moderate Anxiety",
-        summary: "Comprehensive study reveals that digital mental health interventions can be as effective as traditional therapy for certain conditions.",
-        author: "Dr. Lisa Anderson",
-        date: "January 6, 2026",
-        category: "Mental Health",
-        imageUrl: "/images/mental-health-tech.jpg",
-        readTime: "5 min read"
-    },
-    {
-        id: 6,
-        url: "https://youtu.be/example6",
-        title: "Vitamin D Deficiency Linked to Increased Risk of Respiratory Infections",
-        summary: "Large-scale study confirms correlation between low vitamin D levels and susceptibility to common respiratory illnesses.",
-        author: "Dr. Robert Martinez",
-        date: "January 4, 2026",
-        category: "Public Health",
-        imageUrl: "/images/vitamin-d.jpg",
-        readTime: "4 min read"
-    },
-    {
-        id: 7,
-        url: "https://youtu.be/example7",
-        title: "Innovative Heart Surgery Technique Reduces Recovery Time by 50%",
-        summary: "Minimally invasive cardiac procedure allows patients to return to normal activities significantly faster than traditional surgery.",
-        author: "Dr. Patricia Kumar",
-        date: "January 2, 2026",
-        category: "Cardiology",
-        imageUrl: "/images/heart-surgery.jpg",
-        readTime: "6 min read"
-    },
-    {
-        id: 8,
-        url: "https://youtu.be/example8",
-        title: "Global Health Organizations Launch Initiative to Combat Antimicrobial Resistance",
-        summary: "WHO and partners announce comprehensive strategy to address growing threat of antibiotic-resistant bacteria.",
-        author: "Dr. Ahmed Hassan",
-        date: "December 30, 2025",
-        category: "Global Health",
-        imageUrl: "/images/antimicrobial.jpg",
-        readTime: "8 min read"
-    }
-];
+const API_KEY = '3ad27a1f2e6ec9457e36de238ce09fcf';
 
 export default function NewsArticlesPage() {
+    const [articles, setArticles] = useState<NewsArticle[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const [selectedCategory, setSelectedCategory] = useState<string>('All Articles');
 
-    const categories = useMemo(() => {
-        const uniqueCategories = Array.from(new Set(demoArticles.map((article) => article.category)));
-        return ['All Articles', ...uniqueCategories];
-    }, []);
+    useEffect(() => {
+        const fetchNews = async () => {
+            setLoading(true);
+            try {
+                const query = selectedCategory === 'Sri Lanka' ? 'health sri lanka' : 'health';
+                const response = await fetch(`https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&apikey=${API_KEY}`);
+                const data = await response.json();
 
-    const filteredArticles = useMemo(() => {
-        if (selectedCategory === 'All Articles') {
-            return demoArticles;
-        }
+                if (data && data.articles) {
+                    const formattedArticles: NewsArticle[] = data.articles.map((article: any, index: number) => ({
+                        id: index,
+                        url: article.url,
+                        title: article.title,
+                        summary: article.description,
+                        author: article.source.name,
+                        date: new Date(article.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                        category: selectedCategory === 'Sri Lanka' ? 'Sri Lanka' : 'Health News',
+                        imageUrl: article.image || "/images/medical-ai.jpg",
+                        readTime: "5 min read"
+                    }));
+                    setArticles(formattedArticles);
+                }
+            } catch (error) {
+                console.error("Error fetching news:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        return demoArticles.filter((article) => article.category === selectedCategory);
+        fetchNews();
     }, [selectedCategory]);
+
+    const categories = ['All Articles', 'Sri Lanka'];
+
+    const filteredArticles = articles;
 
     const featuredArticle = filteredArticles[0];
     const secondaryArticles = filteredArticles.slice(1);
@@ -177,10 +113,10 @@ export default function NewsArticlesPage() {
                                 <div className="col-span-2 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-700">Today&apos;s spotlight</p>
                                     <p className="mt-2 text-lg font-bold text-gray-900">
-                                        {demoArticles[0].title}
+                                        {articles.length > 0 ? articles[0].title : (loading ? "Loading..." : "No articles found.")}
                                     </p>
                                     <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-                                        {demoArticles[0].summary}
+                                        {articles.length > 0 ? articles[0].summary : (loading ? "Please wait while we fetch the latest health news." : "")}
                                     </p>
                                 </div>
                             </div>
