@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import BlackButton from '@/components/buttons/BlackButton';
 import RoleBasedNavbar from '@/components/common/RoleBasedNavbar';
@@ -25,6 +25,14 @@ export default function NewsArticlesPage() {
     const [articles, setArticles] = useState<NewsArticle[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [selectedCategory, setSelectedCategory] = useState<string>('All Articles');
+    const newsSectionRef = useRef<HTMLElement>(null);
+
+    const handleCategoryClick = (category: string) => {
+        setSelectedCategory(category);
+        if (newsSectionRef.current) {
+            newsSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -108,10 +116,10 @@ export default function NewsArticlesPage() {
                                     Explore expert summaries, clinical breakthroughs, and practical wellness stories curated to fit the NexClinic care journey.
                                 </p>
                                 <div className="mt-6 flex flex-wrap items-center gap-3">
-                                    <GreenButton className="px-6 py-3" onClick={() => setSelectedCategory('Trending')}>
+                                    <GreenButton className="px-6 py-3" onClick={() => handleCategoryClick('Trending')}>
                                         Explore Trending
                                     </GreenButton>
-                                    <WhiteButton className="px-6 py-3" onClick={() => setSelectedCategory('All Articles')}>
+                                    <WhiteButton className="px-6 py-3" onClick={() => handleCategoryClick('All Articles')}>
                                         View Recent Articles
                                     </WhiteButton>
                                 </div>
@@ -143,7 +151,7 @@ export default function NewsArticlesPage() {
                 </section>
 
                 {/* Content */}
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <section ref={newsSectionRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 scroll-mt-24">
                     {/* Category Filter */}
                     <div className="mb-8 flex flex-wrap gap-2">
                         {categories.map((category) => {
@@ -154,7 +162,7 @@ export default function NewsArticlesPage() {
                                     <BlackButton
                                         key={category}
                                         className="px-4 py-2 text-sm"
-                                        onClick={() => setSelectedCategory(category)}
+                                        onClick={() => handleCategoryClick(category)}
                                     >
                                         {category}
                                     </BlackButton>
@@ -165,7 +173,7 @@ export default function NewsArticlesPage() {
                                 <button
                                     key={category}
                                     type="button"
-                                    onClick={() => setSelectedCategory(category)}
+                                    onClick={() => handleCategoryClick(category)}
                                     className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors"
                                 >
                                     {category}
