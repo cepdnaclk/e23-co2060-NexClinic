@@ -30,8 +30,15 @@ export default function NewsArticlesPage() {
         const fetchNews = async () => {
             setLoading(true);
             try {
-                const query = selectedCategory === 'Sri Lanka' ? 'health sri lanka' : 'health';
-                const response = await fetch(`https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&apikey=${API_KEY}`);
+                let url = '';
+                if (selectedCategory === 'Trending') {
+                    url = `https://gnews.io/api/v4/top-headlines?category=health&lang=en&apikey=${API_KEY}`;
+                } else {
+                    const queryCategory = selectedCategory.toLowerCase().replace(/&/g, 'and').replace(/'/g, '');
+                    const query = selectedCategory === 'All Articles' ? 'health' : `health ${queryCategory}`;
+                    url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&sortby=publishedAt&apikey=${API_KEY}`;
+                }
+                const response = await fetch(url);
                 const data = await response.json();
 
                 if (data && data.articles) {
@@ -42,7 +49,7 @@ export default function NewsArticlesPage() {
                         summary: article.description,
                         author: article.source.name,
                         date: new Date(article.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-                        category: selectedCategory === 'Sri Lanka' ? 'Sri Lanka' : 'Health News',
+                        category: selectedCategory === 'All Articles' ? 'Health News' : selectedCategory,
                         imageUrl: article.image || "/images/medical-ai.jpg",
                         readTime: "5 min read"
                     }));
@@ -58,7 +65,18 @@ export default function NewsArticlesPage() {
         fetchNews();
     }, [selectedCategory]);
 
-    const categories = ['All Articles', 'Sri Lanka'];
+    const categories = [
+        'Trending',
+        'All Articles',
+        'Sri Lanka',
+        'Medical Technology',
+        'Neurology & Brain Health',
+        'Digital Health',
+        'Mental Health',
+        'Public Health',
+        'Cancer',
+        "Women's Health"
+    ];
 
     const filteredArticles = articles;
 
@@ -90,10 +108,10 @@ export default function NewsArticlesPage() {
                                     Explore expert summaries, clinical breakthroughs, and practical wellness stories curated to fit the NexClinic care journey.
                                 </p>
                                 <div className="mt-6 flex flex-wrap items-center gap-3">
-                                    <GreenButton className="px-6 py-3">
+                                    <GreenButton className="px-6 py-3" onClick={() => setSelectedCategory('Trending')}>
                                         Explore Trending
                                     </GreenButton>
-                                    <WhiteButton className="px-6 py-3">
+                                    <WhiteButton className="px-6 py-3" onClick={() => setSelectedCategory('All Articles')}>
                                         View Recent Articles
                                     </WhiteButton>
                                 </div>
