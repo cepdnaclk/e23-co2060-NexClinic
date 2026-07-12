@@ -111,8 +111,6 @@ export default function SessionSyncProvider() {
           window.location.pathname === "/doctor/login" ||
           window.location.pathname === "/hospital/login" ||
           window.location.pathname === "/register" ||
-          window.location.pathname === "/doctor/register" ||
-          window.location.pathname === "/hospital/register" ||
           window.location.pathname.startsWith("/news-articles") ||
           window.location.pathname.startsWith("/doctors/");
 

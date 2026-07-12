@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import GreenButton from "../buttons/GreenButton";
 
 
 function UserRegistrationNavBar() {
@@ -46,13 +45,6 @@ function UserRegistrationNavBar() {
                         </div>
                     </div>
 
-                    {/* Desktop Right Panel (Doctor link) */}
-                    <div className="hidden md:flex items-center gap-4 shrink-0">
-                        <GreenButton>
-                            <Link href="/doctor/register" onClick={closeMobileMenu}>Are you a Doctor? Click here</Link>
-                        </GreenButton>
-                    </div>
-
                     {/* Mobile Hamburger button */}
                     <div className="flex md:hidden">
                         <button
@@ -91,11 +83,6 @@ function UserRegistrationNavBar() {
                         >
                             Help
                         </Link>
-                        <div className="pt-2">
-                            <GreenButton className="w-full">
-                                <Link href="/doctor/register" onClick={closeMobileMenu} className="block w-full text-center">Are you a Doctor? Click here</Link>
-                            </GreenButton>
-                        </div>
                     </div>
                 </div>
             )}
