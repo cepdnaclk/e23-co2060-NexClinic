@@ -10,9 +10,39 @@ from users.serializers import (
     GENDER_LOOKUP
 )
 import re
-from .models import ActivityLog, Hospital
+from .models import ActivityLog, Hospital, HospitalAdmin, HospitalAdminProfile
 
 User = get_user_model()
+
+
+class HospitalAdminProfileSerializer(serializers.ModelSerializer):
+    email = serializers.SerializerMethodField()
+    hospitals = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HospitalAdminProfile
+        fields = (
+            'email',
+            'full_name',
+            'date_of_birth',
+            'gender',
+            'nic_number',
+            'phone',
+            'address',
+            'employee_id',
+            'designation',
+            'date_of_joining',
+            'is_verified',
+            'hospitals',
+        )
+        read_only_fields = fields
+
+    def get_email(self, obj):
+        return obj.user.email
+
+    def get_hospitals(self, obj):
+        admin_roles = HospitalAdmin.objects.filter(user=obj.user, is_active=True).select_related('hospital')
+        return [{'id': role.hospital_id, 'name': role.hospital.name} for role in admin_roles]
 
 
 class HospitalSerializer(serializers.ModelSerializer):

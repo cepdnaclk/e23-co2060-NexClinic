@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
-from .models import ActivityLog, Hospital, HospitalAdmin
-from .serializers import ActivityLogSerializer, HospitalSerializer
+from .models import ActivityLog, Hospital, HospitalAdmin, HospitalAdminProfile
+from .serializers import ActivityLogSerializer, HospitalSerializer, HospitalAdminProfileSerializer
 from doctor.models import Appointment, AppointmentAvailableSlot
 from django.db.models import F
 from django.utils import timezone
@@ -49,6 +49,18 @@ class AvailableDoctorsView(APIView):
         ]
         return Response({"doctors": doctors})
     
+
+class HospitalAdminProfileView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request):
+		profile = HospitalAdminProfile.objects.select_related('user').filter(user=request.user).first()
+		if not profile:
+			return Response({'detail': 'Hospital admin profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+		serializer = HospitalAdminProfileSerializer(profile)
+		return Response(serializer.data)
+
 
 class ActiveHospitalListView(APIView):
 	permission_classes = [AllowAny]
