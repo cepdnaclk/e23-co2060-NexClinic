@@ -139,7 +139,13 @@ export default function NewsArticlesPage() {
                                 <div className="col-span-2 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-700">Today&apos;s spotlight</p>
                                     <p className="mt-2 text-lg font-bold text-gray-900">
-                                        {articles.length > 0 ? articles[0].title : (loading ? "Loading..." : "No articles found.")}
+                                        {articles.length > 0 ? (
+                                            <Link href={articles[0].url} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 transition-colors">
+                                                {articles[0].title}
+                                            </Link>
+                                        ) : (
+                                            loading ? "Loading..." : "No articles found."
+                                        )}
                                     </p>
                                     <p className="mt-2 text-sm text-gray-600 line-clamp-2">
                                         {articles.length > 0 ? articles[0].summary : (loading ? "Please wait while we fetch the latest health news." : "")}
@@ -190,8 +196,10 @@ export default function NewsArticlesPage() {
                                     <span className="inline-flex w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
                                         Featured Story
                                     </span>
-                                    <h2 className="mt-4 text-2xl md:text-3xl font-extrabold max-w-3xl">
-                                        {featuredArticle.title}
+                                    <h2 className="mt-4 text-2xl md:text-3xl font-extrabold max-w-3xl hover:underline">
+                                        <Link href={featuredArticle.url} target="_blank" rel="noopener noreferrer">
+                                            {featuredArticle.title}
+                                        </Link>
                                     </h2>
                                 </div>
 
@@ -220,7 +228,11 @@ export default function NewsArticlesPage() {
                                 {secondaryArticles.slice(0, 3).map((article) => (
                                     <article key={article.id} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
                                         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{article.category}</p>
-                                        <h3 className="mt-2 text-base font-bold text-gray-900 line-clamp-2">{article.title}</h3>
+                                        <h3 className="mt-2 text-base font-bold text-gray-900 line-clamp-2">
+                                            <Link href={article.url} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 transition-colors">
+                                                {article.title}
+                                            </Link>
+                                        </h3>
                                         <p className="mt-2 text-sm text-gray-600 line-clamp-2">{article.summary}</p>
                                         <Link
                                             href={article.url}
@@ -244,15 +256,21 @@ export default function NewsArticlesPage() {
                                 className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                                 style={{ animationDelay: `${index * 80}ms` }}
                             >
-                                <div className="h-32 rounded-xl bg-gradient-to-br from-emerald-100 via-lime-100 to-white border border-emerald-100 flex items-center justify-center">
-                                    <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                                        {article.category}
-                                    </span>
-                                </div>
+                                <Link href={article.url} target="_blank" rel="noopener noreferrer" className="block h-40 w-full rounded-xl overflow-hidden border border-emerald-100 bg-gray-50 relative">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={article.imageUrl}
+                                        alt={article.title}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        loading="lazy"
+                                    />
+                                </Link>
 
                                 <div className="mt-4">
-                                    <h2 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors">
-                                        {article.title}
+                                    <h2 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors hover:underline">
+                                        <Link href={article.url} target="_blank" rel="noopener noreferrer">
+                                            {article.title}
+                                        </Link>
                                     </h2>
                                     <p className="mt-2 text-sm text-gray-600 line-clamp-3">{article.summary}</p>
                                 </div>
