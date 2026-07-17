@@ -162,6 +162,33 @@ class DoctorAppointmentAnalyticsView(APIView):
 					) & active_appointments,
 					distinct=True,
 				),
+				daily_completed_count=Count(
+					"appointments",
+					filter=Q(
+						appointments__hospital=admin_role.hospital,
+						appointments__slot__date=today,
+						appointments__status=Appointment.Status.COMPLETED,
+					),
+					distinct=True,
+				),
+				weekly_completed_count=Count(
+					"appointments",
+					filter=Q(
+						appointments__hospital=admin_role.hospital,
+						appointments__slot__date__range=(week_start, week_end),
+						appointments__status=Appointment.Status.COMPLETED,
+					),
+					distinct=True,
+				),
+				monthly_completed_count=Count(
+					"appointments",
+					filter=Q(
+						appointments__hospital=admin_role.hospital,
+						appointments__slot__date__range=(month_start, month_end),
+						appointments__status=Appointment.Status.COMPLETED,
+					),
+					distinct=True,
+				),
 			)
 			.order_by("full_name", "id")
 		)
@@ -179,6 +206,12 @@ class DoctorAppointmentAnalyticsView(APIView):
 					"daily": doctor.daily_count,
 					"weekly": doctor.weekly_count,
 					"monthly": doctor.monthly_count,
+					"appointment_fee": float(doctor.appointment_fee),
+					"income": {
+						"daily": float(doctor.appointment_fee * doctor.daily_completed_count),
+						"weekly": float(doctor.appointment_fee * doctor.weekly_completed_count),
+						"monthly": float(doctor.appointment_fee * doctor.monthly_completed_count),
+					},
 				}
 				for doctor in doctors
 			],

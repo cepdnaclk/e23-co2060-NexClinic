@@ -12,12 +12,20 @@ type DoctorAppointmentCount = {
   daily: number;
   weekly: number;
   monthly: number;
+  appointment_fee: number;
+  income: Record<PeriodKey, number>;
 };
 
 type AppointmentAnalytics = {
   periods: Record<PeriodKey, { start: string; end: string }>;
   doctors: DoctorAppointmentCount[];
 };
+
+const lkrFormatter = new Intl.NumberFormat("en-LK", {
+  style: "currency",
+  currency: "LKR",
+  maximumFractionDigits: 0,
+});
 
 function AppointmentChart({
   title,
@@ -260,10 +268,43 @@ export default function HospitalAdminDashboard() {
             {[0, 1, 2].map((item) => <div key={item} className="h-64 animate-pulse rounded-3xl bg-white/70" />)}
           </div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-3">
-            <AppointmentChart title="Daily" subtitle={analytics.periods.daily.start} period="daily" doctors={analytics.doctors} />
-            <AppointmentChart title="Weekly" subtitle={`${analytics.periods.weekly.start} to ${analytics.periods.weekly.end}`} period="weekly" doctors={analytics.doctors} />
-            <AppointmentChart title="Monthly" subtitle={`${analytics.periods.monthly.start} to ${analytics.periods.monthly.end}`} period="monthly" doctors={analytics.doctors} />
+          <div className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-3">
+              <AppointmentChart title="Daily" subtitle={analytics.periods.daily.start} period="daily" doctors={analytics.doctors} />
+              <AppointmentChart title="Weekly" subtitle={`${analytics.periods.weekly.start} to ${analytics.periods.weekly.end}`} period="weekly" doctors={analytics.doctors} />
+              <AppointmentChart title="Monthly" subtitle={`${analytics.periods.monthly.start} to ${analytics.periods.monthly.end}`} period="monthly" doctors={analytics.doctors} />
+            </div>
+
+            <article className="overflow-hidden rounded-3xl border border-white/80 bg-white/90 shadow-sm">
+              <div className="border-b border-slate-100 px-6 py-5">
+                <h3 className="text-lg font-bold text-slate-950">Individual Doctor Income</h3>
+                <p className="mt-1 text-xs text-slate-500">Calculated from completed appointments × the doctor&apos;s current appointment fee.</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th className="px-6 py-4 font-semibold">Doctor</th>
+                      <th className="px-4 py-4 text-right font-semibold">Fee</th>
+                      <th className="px-4 py-4 text-right font-semibold">Daily income</th>
+                      <th className="px-4 py-4 text-right font-semibold">Weekly income</th>
+                      <th className="px-6 py-4 text-right font-semibold">Monthly income</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {analytics.doctors.map((doctor) => (
+                      <tr key={doctor.id} className="transition-colors hover:bg-emerald-50/50">
+                        <td className="px-6 py-4 font-semibold text-slate-800">{doctor.name}</td>
+                        <td className="px-4 py-4 text-right tabular-nums text-slate-600">{lkrFormatter.format(doctor.appointment_fee)}</td>
+                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-emerald-700">{lkrFormatter.format(doctor.income.daily)}</td>
+                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-emerald-700">{lkrFormatter.format(doctor.income.weekly)}</td>
+                        <td className="px-6 py-4 text-right font-bold tabular-nums text-emerald-800">{lkrFormatter.format(doctor.income.monthly)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
           </div>
         )}
       </section>
