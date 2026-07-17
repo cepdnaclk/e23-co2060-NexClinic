@@ -189,6 +189,11 @@ class DoctorAppointmentAnalyticsView(APIView):
 					),
 					distinct=True,
 				),
+				patient_count=Count(
+					"appointments__patient",
+					filter=Q(appointments__hospital=admin_role.hospital) & active_appointments,
+					distinct=True,
+				),
 			)
 			.order_by("full_name", "id")
 		)
@@ -207,6 +212,7 @@ class DoctorAppointmentAnalyticsView(APIView):
 					"weekly": doctor.weekly_count,
 					"monthly": doctor.monthly_count,
 					"appointment_fee": float(doctor.appointment_fee),
+					"patient_count": doctor.patient_count,
 					"income": {
 						"daily": float(doctor.appointment_fee * doctor.daily_completed_count),
 						"weekly": float(doctor.appointment_fee * doctor.weekly_completed_count),
