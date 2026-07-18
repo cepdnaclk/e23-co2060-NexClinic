@@ -5,7 +5,7 @@ import DoctorRegistrationForm from '@/components/doctor/DoctorRegistrationForm';
 
 function DoctorRegistration() {
     return (
-        <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-12 pt-24">
+        <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-6 pt-16 overflow-hidden">
             {/* Background Image with Dark Gradient Overlay */}
             <div className="absolute inset-0 z-0">
                 <img
@@ -22,11 +22,11 @@ function DoctorRegistration() {
 
             {/* Register Card Panel */}
             <div className="relative z-10 w-full max-w-xl animate-in fade-in zoom-in-95 duration-300">
-                <div className="flex flex-col items-center mb-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 shadow-lg shadow-emerald-500/30 mb-4 hover:scale-105 transition-transform">
-                        <img src="/images/logo-main.png" alt="NexClinic Logo" className="h-8 w-8" />
+                <div className="flex flex-col items-center mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-600 shadow-lg shadow-emerald-500/30 mb-2 hover:scale-105 transition-transform">
+                        <img src="/images/logo-main.png" alt="NexClinic Logo" className="h-6 w-6" />
                     </div>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white text-center">
+                    <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white text-center">
                         NexClinic
                     </h1>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5 text-center">

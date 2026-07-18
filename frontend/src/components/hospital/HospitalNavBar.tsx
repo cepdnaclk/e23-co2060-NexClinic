@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import BlackButton from "../buttons/BlackButton";
+import NotificationBell from "../common/NotificationBell";
 
 export default function HospitalNavBar() {
   const pathname = usePathname();
@@ -78,6 +79,15 @@ export default function HospitalNavBar() {
                 Slots
               </Link>
               <Link
+                href="/hospital/announcements"
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/announcements/new")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                  }`}
+              >
+                Announce
+              </Link>
+              <Link
                 href="/hospital/profile"
                 className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/profile")
                   ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
@@ -91,6 +101,7 @@ export default function HospitalNavBar() {
 
           {/* Desktop Right Panel (Logout) */}
           <div className="hidden md:flex items-center gap-4">
+            <NotificationBell />
             <button
               onClick={handleLogout}
               className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-slate-800 hover:shadow-md transition-all active:scale-[0.98]"
@@ -100,7 +111,8 @@ export default function HospitalNavBar() {
           </div>
 
           {/* Mobile Hamburguer button */}
-          <div className="flex md:hidden">
+          <div className="flex items-center md:hidden gap-4">
+            <NotificationBell />
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors"
@@ -149,6 +161,15 @@ export default function HospitalNavBar() {
                 }`}
             >
               Slots
+            </Link>
+            <Link
+              href="/hospital/announcements"
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/announcements/new")
+                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+            >
+              Announce
             </Link>
             <Link
               href="/hospital/profile"

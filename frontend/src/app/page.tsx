@@ -17,6 +17,17 @@ type Story = {
     image: string;
 };
 
+interface NewsArticle {
+    id: number;
+    url: string;
+    title: string;
+    summary: string;
+    author: string;
+    date: string;
+    imageUrl: string;
+    readTime: string;
+}
+
 // Animated Stats Counter component
 function StatsCounter({ target, suffix = "", duration = 1500 }: { target: number; suffix?: string; duration?: number }) {
     const [count, setCount] = useState(0);
@@ -25,7 +36,7 @@ function StatsCounter({ target, suffix = "", duration = 1500 }: { target: number
         let start = 0;
         const end = target;
         if (end === 0) return;
-        
+
         // Dynamic step time to ensure the animation completes roughly in 'duration' ms
         const increment = Math.ceil(end / (duration / 16)); // 16ms is ~1 frame at 60fps
         const timer = setInterval(() => {
@@ -109,7 +120,40 @@ const quickStories: Story[] = [
     },
 ];
 
+const API_KEY = '3ad27a1f2e6ec9457e36de238ce09fcf';
+
 export default function Home() {
+    const [trendingArticles, setTrendingArticles] = useState<NewsArticle[]>([]);
+    const [loadingNews, setLoadingNews] = useState<boolean>(true);
+
+    useEffect(() => {
+        const fetchNews = async () => {
+            setLoadingNews(true);
+            try {
+                const response = await fetch(`https://gnews.io/api/v4/top-headlines?category=health&lang=en&apikey=${API_KEY}`);
+                const data = await response.json();
+                if (data && data.articles) {
+                    const formattedArticles = data.articles.slice(0, 3).map((article: any, index: number) => ({
+                        id: index,
+                        url: article.url,
+                        title: article.title,
+                        summary: article.description,
+                        author: article.source.name,
+                        date: new Date(article.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                        imageUrl: article.image || "/images/medical-ai.jpg",
+                        readTime: "5 min read"
+                    }));
+                    setTrendingArticles(formattedArticles);
+                }
+            } catch (error) {
+                console.error("Error fetching news:", error);
+            } finally {
+                setLoadingNews(false);
+            }
+        };
+        fetchNews();
+    }, []);
+
     return (
         <main className="relative min-h-screen w-full overflow-hidden bg-slate-50/50 text-slate-900 scroll-smooth">
             {/* Design System Blur Backdrops (Mesh Gradients in Green/Teal) */}
@@ -163,7 +207,7 @@ export default function Home() {
                                     Explore Health News
                                 </Link>
                             </div>
-                            
+
                             {/* Hero Small Stats */}
                             <div className="mt-8 sm:mt-12 grid grid-cols-3 gap-4 sm:gap-6 border-t border-slate-100 pt-6 sm:pt-8">
                                 <div>
@@ -267,7 +311,7 @@ export default function Home() {
                             <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600">
                                 Our dashboard enables users to access high-quality diagnosis advice, check doctor availability instantly, book slots securely, and store consultations with absolute data confidentiality.
                             </p>
-                            
+
                             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="rounded-xl bg-white border border-slate-100 p-4 shadow-sm transition-all duration-300 hover:border-green-100 hover:shadow-md">
                                     <h4 className="font-bold text-sm text-slate-900">Patient-Centric</h4>
@@ -637,7 +681,7 @@ export default function Home() {
             </section>
 
             {/* HEALTH DESK / ARTICLES (News and articles section from original code) */}
-            <section id="health-desk" className="py-16 sm:py-24 bg-white">
+            {/* <section id="health-desk" className="py-16 sm:py-24 bg-white">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
                         <div className="max-w-2xl text-left">
@@ -655,11 +699,11 @@ export default function Home() {
                         >
                             See All Articles
                         </Link>
-                    </div>
+                    </div> */}
 
-                    <div className="grid gap-6 lg:grid-cols-12 lg:gap-8">
-                        {/* Big Featured Article */}
-                        <article className="group relative overflow-hidden rounded-2xl shadow-lg lg:col-span-6 min-h-[320px] sm:min-h-[400px] flex flex-col justify-end transition-all duration-300 hover:shadow-xl active:scale-[0.99]">
+            {/* <div className="grid gap-6 lg:grid-cols-12 lg:gap-8"> */}
+            {/* Big Featured Article */}
+            {/* <article className="group relative overflow-hidden rounded-2xl shadow-lg lg:col-span-6 min-h-[320px] sm:min-h-[400px] flex flex-col justify-end transition-all duration-300 hover:shadow-xl active:scale-[0.99]">
                             <div className="absolute inset-0">
                                 <img className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" src="/images/doc2.jpg" alt="Top health story" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
@@ -676,10 +720,10 @@ export default function Home() {
                                     <span>Medical Research</span>
                                 </div>
                             </div>
-                        </article>
+                        </article> */}
 
-                        {/* Stories Side Grid */}
-                        <div className="space-y-4 sm:space-y-6 lg:col-span-6">
+            {/* Stories Side Grid */}
+            {/* <div className="space-y-4 sm:space-y-6 lg:col-span-6">
                             {quickStories.map((story) => (
                                 <article key={story.title} className="group flex gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all duration-300 hover:bg-white hover:shadow-md hover:border-green-100 active:scale-[0.99]">
                                     <div className="h-20 w-24 sm:h-24 sm:w-28 shrink-0 overflow-hidden rounded-xl">
@@ -695,7 +739,7 @@ export default function Home() {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section> */}
 
             {/* TESTIMONIALS SECTION */}
             <section className="py-16 sm:py-24 border-t border-slate-100 bg-slate-50/30">
@@ -919,7 +963,7 @@ export default function Home() {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="mt-8">
                                 <Link
                                     href="/help"
@@ -951,6 +995,75 @@ export default function Home() {
                             </p>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            {/* TRENDING NEWS SECTION */}
+            <section id="news" className="py-16 sm:py-24 bg-white border-t border-slate-100">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 sm:mb-16">
+                        <div className="max-w-3xl text-left">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3.5 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700">
+                                Latest Updates
+                            </span>
+                            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900">
+                                Trending Health News
+                            </h2>
+                            <p className="mt-3 text-xs sm:text-sm text-slate-600">
+                                Stay informed with the latest medical breakthroughs and health insights.
+                            </p>
+                        </div>
+                        <Link href="/news-articles" className="mt-3 md:mt-0 inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-green-600 hover:text-green-700 transition-colors active:translate-x-0.5">
+                            View All Articles
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </Link>
+                    </div>
+
+                    {loadingNews ? (
+                        <div className="flex justify-center items-center py-10">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+                        </div>
+                    ) : trendingArticles.length > 0 ? (
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            {trendingArticles.map((article) => (
+                                <article key={article.id} className="group flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-green-200/50">
+                                    <div className="relative h-48 w-full overflow-hidden bg-slate-100">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={article.imageUrl} alt={article.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                                    </div>
+                                    <div className="flex flex-col flex-1 p-6">
+                                        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-600 mb-3">
+                                            <span>{article.author}</span>
+                                            <span className="h-1 w-1 rounded-full bg-slate-300" />
+                                            <span>{article.date}</span>
+                                        </div>
+                                        <h3 className="text-lg font-bold text-slate-900 line-clamp-2 group-hover:text-green-600 transition-colors">
+                                            <Link href={article.url} target="_blank" rel="noopener noreferrer">
+                                                {article.title}
+                                            </Link>
+                                        </h3>
+                                        <p className="mt-2 text-sm text-slate-600 line-clamp-3 mb-6">
+                                            {article.summary}
+                                        </p>
+                                        <div className="mt-auto">
+                                            <Link href={article.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-900 transition-colors group-hover:text-green-600">
+                                                Read full article
+                                                <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                                </svg>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-10 text-slate-500 text-sm">
+                            No trending news available right now.
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -994,7 +1107,7 @@ export default function Home() {
                 <div className="relative rounded-[2rem] border border-white/60 bg-gradient-to-r from-slate-900 via-slate-800 to-green-950 p-8 sm:p-12 md:p-16 text-white shadow-2xl overflow-hidden text-left">
                     {/* Visual grids backdrop */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(0,173,133,0.12),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,173,133,0.15),transparent_50%)] pointer-events-none" />
-                    
+
                     <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between z-10">
                         <div>
                             <span className="text-xs font-semibold uppercase tracking-widest text-green-300">Ready to Begin?</span>

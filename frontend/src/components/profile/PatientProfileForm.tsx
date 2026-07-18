@@ -39,7 +39,7 @@ export default function PatientProfileForm({
       emergencyContactRelation: '',
       insuranceProvider: '',
       insurancePolicyNumber: '',
-      profileImage: '/images/user-profile-default.png',
+      profileImage: '/images/user.png',
       lastUpdated: new Date().toISOString().split('T')[0],
     }
   );
@@ -84,7 +84,7 @@ export default function PatientProfileForm({
         {/* Profile Header */}
         <div className="flex items-center gap-6 mb-8 pb-6 border-b">
           <img
-            src={formData.profileImage || '/images/user-profile-default.png'}
+            src={formData.profileImage || '/images/user.png'}
             alt={formData.name}
             className="w-24 h-24 rounded-full object-cover"
           />
@@ -218,7 +218,7 @@ export default function PatientProfileForm({
         <div className="flex items-center gap-6 pb-6 border-b">
           <div>
             <img
-              src={formData.profileImage || '/images/user-profile-default.png'}
+              src={formData.profileImage || '/images/user.png'}
               alt="Profile"
               className="w-24 h-24 rounded-full object-cover"
             />

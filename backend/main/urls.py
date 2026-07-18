@@ -29,6 +29,7 @@ urlpatterns = [
     path("api/patient/", include("patient.urls")),
     path("api/hospital/", include("hospital.urls")),
     path("api/chat/", include("chat.urls")),
+    path("api/notifications/", include("notifications.urls")),
 ]
 
 if settings.DEBUG:

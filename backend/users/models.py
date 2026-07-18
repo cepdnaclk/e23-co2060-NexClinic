@@ -33,6 +33,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
+    dnd_enabled = models.BooleanField(default=False, help_text="Do Not Disturb mode for notifications")
 
     objects = CustomUserManager()
  

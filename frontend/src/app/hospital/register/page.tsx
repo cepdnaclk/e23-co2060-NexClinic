@@ -4,7 +4,7 @@ import HospitalRegisterForm from '@/components/hospital/HospitalRegisterForm';
 
 export default function HospitalRegisterPage() {
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 px-4 py-16">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 px-4 py-16 overflow-hidden">
       {/* Background Image with Dark Gradient Overlay */}
       <div className="absolute inset-0 z-0">
         <img
