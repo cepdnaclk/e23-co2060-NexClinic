@@ -303,7 +303,7 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
             return Response({"appointments": []}, status=status.HTTP_200_OK)
 
         today = timezone.localdate()
-        window_end = today + timedelta(days=13)
+        window_end = today + timedelta(days=90)
 
         slots = (
             AppointmentAvailableSlot.objects.filter(

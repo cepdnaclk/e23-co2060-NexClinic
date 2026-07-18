@@ -70,6 +70,7 @@ class UserOTP(models.Model):
     otp_locked_until = models.DateTimeField(null=True, blank=True)
     otp_last_sent_at = models.DateTimeField(null=True, blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    last_otp_verified_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"OTP for {self.user.email}"
