@@ -410,8 +410,9 @@ export default function ManageDoctorsPage() {
 
   const filteredDoctors = doctors.filter(
     (doc) =>
-      doc.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.email.toLowerCase().includes(searchQuery.toLowerCase())
+      doc.is_added &&
+      (doc.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const getInitials = (name: string) => {
