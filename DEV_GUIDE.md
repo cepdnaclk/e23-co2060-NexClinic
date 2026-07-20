@@ -41,10 +41,11 @@ cp backend/.env.example backend/.env
 There is no committed frontend .env template in this repository.
 Create frontend/.env.local manually.
 
-Required value:
+Required values:
 
 ```env
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
 
 ## 4. Backend Local Setup
@@ -129,6 +130,7 @@ Create frontend/.env.local:
 
 ```env
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
 ```
 
 Run dev server:
@@ -322,10 +324,11 @@ EMAIL_HOST_PASSWORD=your-sendgrid-api-key
 - Root directory: frontend
 - Framework: Next.js
 
-Set env var:
+Set env vars:
 
 ```env
 NEXT_PUBLIC_BACKEND_URL=https://your-backend-service.onrender.com
+NEXT_PUBLIC_WS_URL=wss://your-backend-service.onrender.com
 ```
 
 Optional CLI flow:
@@ -337,6 +340,8 @@ vercel login
 vercel link
 vercel env add NEXT_PUBLIC_BACKEND_URL production
 vercel env add NEXT_PUBLIC_BACKEND_URL preview
+vercel env add NEXT_PUBLIC_WS_URL production
+vercel env add NEXT_PUBLIC_WS_URL preview
 vercel
 vercel --prod
 ```

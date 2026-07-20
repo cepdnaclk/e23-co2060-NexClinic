@@ -48,11 +48,12 @@ NexClinic handles core outpatient workflows:
 - Doctor actions: accept, reject, or complete appointments.
 - Email reminders and notifications.
 - Prescription and medical record storage with secure file uploads.
+- Real-time chat consultations between patients and doctors.
+- Mock payment gateway integration for in-person appointments and chat bookings.
+- Dynamic health news and announcements (via GNews API).
 - Admin dashboards for clinic oversight.
 
 **Planned for Future Releases:**
-- Real-time chat and video consultations.
-- Payment processing integration.
 - AI-powered scheduling recommendations.
 - Advanced analytics and reporting.
 
@@ -73,15 +74,19 @@ NexClinic uses modern, open-source, and widely-supported technologies:
 ✓ Search for doctors by name and specialization  
 ✓ View availability and consultation fees  
 ✓ Book, reschedule, and cancel appointments  
+✓ Pay for consultations using an integrated mock payment gateway  
 ✓ Receive email reminders before appointments  
 ✓ Securely store and access medical records  
 ✓ View complete appointment history  
+✓ Chat with doctors for medical advice  
+✓ Stay informed with dynamic health news and announcements  
 
 ### For Doctors
 ✓ Create and manage professional profiles  
 ✓ Set and update availability slots  
 ✓ Review and respond to appointment requests  
 ✓ Accept, reject, reschedule, or complete appointments  
+✓ Provide medical advice via real-time chat consultations  
 ✓ Attach prescriptions and medical notes  
 ✓ View patient history and records  
 
@@ -123,8 +128,10 @@ NexClinic addresses core outpatient workflow needs:
 - Role-specific authentication and authorization for PATIENT, DOCTOR, and ADMIN users.
 - OTP-gated account activation to ensure verified email ownership before account use.
 - Doctor profile and availability management.
-- Patient-side doctor discovery and appointment booking.
+- Patient-side doctor discovery and appointment booking with mock payment gateway integration.
 - Appointment lifecycle actions (accept, reject, complete, cancel, reschedule).
+- Real-time patient-doctor chat consultation threads.
+- Dynamic news section fetching up-to-date medical articles using GNews API.
 - Frontend route guarding and API proxying with token refresh.
 
 ## 2. Architectural Overview
@@ -191,7 +198,8 @@ Operational assumptions:
 
 ## 7. Known Limitations and Improvement Opportunities
 
-- Chat capability is currently a placeholder in dashboard payloads.
+- Video consultation capabilities are yet to be implemented.
+- Mock payment gateway is used instead of a real payment processor (e.g., Stripe, PayPal).
 - Some profile responses still return static/default fallback values when optional data is missing.
 - Frontend and backend route coverage should be validated in CI with integration tests.
 - Observability can be extended by wiring UserActivityLog to analytics dashboards.
