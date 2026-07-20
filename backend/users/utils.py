@@ -1,4 +1,5 @@
 import secrets
+import string
 import logging
 from django.core.mail import send_mail
 from django.conf import settings
@@ -6,8 +7,30 @@ from django.contrib.auth.hashers import check_password, make_password
 
 logger = logging.getLogger(__name__)
 
+
+class CredentialEmailDeliveryError(RuntimeError):
+    pass
+
 def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
+
+
+def generate_temporary_password(length=16):
+    """Generate a password containing every required character category."""
+    if length < 12:
+        raise ValueError('Temporary passwords must be at least 12 characters long.')
+
+    alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
+    required = [
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice('!@#$%^&*'),
+    ]
+    remaining = [secrets.choice(alphabet) for _ in range(length - len(required))]
+    characters = required + remaining
+    secrets.SystemRandom().shuffle(characters)
+    return ''.join(characters)
 
 
 def hash_otp(otp):
@@ -49,13 +72,24 @@ def send_doctor_account_credentials_email(email, password, doctor_name):
         f'If you want to change it, use the Forgot password option or visit {reset_url}.\n\n'
         'If you were not expecting this account, please contact your hospital administrator.'
     )
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [email],
-        fail_silently=False,
-    )
+    try:
+        sent_count = send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+    except Exception as exc:
+        raise CredentialEmailDeliveryError(
+            f'Credential email delivery failed for {email}.'
+        ) from exc
+    if sent_count != 1:
+        raise CredentialEmailDeliveryError(
+            f'Credential email was not accepted for delivery to {email}.'
+        )
+    logger.info('doctor_credentials_email.accepted recipient=%s', email)
+    return sent_count
 
 
 

@@ -9,6 +9,7 @@ from hospital.models import Hospital, ActivityLog, SlotTemplate, DoctorHospitalV
 from doctor.models import DoctorProfile, AppointmentAvailableSlot, Appointment
 from patient.models import PatientProfile
 from rest_framework import status
+import re
 
 
 class ActivityLogModelTests(TestCase):
@@ -419,8 +420,6 @@ class CreateHospitalDoctorApiTests(TestCase):
         self.client.force_authenticate(user=self.admin_user)
         payload = {
             'email': 'new_doctor@test.com',
-            'password': 'ComplexPassword123!',
-            'password2': 'ComplexPassword123!',
             'full_name': 'Dr. John Doe',
             'preferred_name': 'Dr. John',
             'nic_number': '199512345678',
@@ -457,17 +456,22 @@ class CreateHospitalDoctorApiTests(TestCase):
         )
         self.assertEqual(credentials_email.to, ['new_doctor@test.com'])
         self.assertIn('Login email: new_doctor@test.com', credentials_email.body)
-        self.assertIn('Temporary password: ComplexPassword123!', credentials_email.body)
         self.assertIn('/doctor/login', credentials_email.body)
         self.assertIn('/reset-password?role=doctor', credentials_email.body)
-        self.assertTrue(user.check_password('ComplexPassword123!'))
+        password_match = re.search(r'^Temporary password: (.+)$', credentials_email.body, re.MULTILINE)
+        self.assertIsNotNone(password_match)
+        generated_password = password_match.group(1).strip()
+        self.assertGreaterEqual(len(generated_password), 12)
+        self.assertRegex(generated_password, r'[A-Z]')
+        self.assertRegex(generated_password, r'[a-z]')
+        self.assertRegex(generated_password, r'\d')
+        self.assertRegex(generated_password, r'[^A-Za-z0-9]')
+        self.assertTrue(user.check_password(generated_password))
 
     def test_non_admin_cannot_create_doctor(self):
         self.client.force_authenticate(user=self.other_user)
         payload = {
             'email': 'new_doctor_fail@test.com',
-            'password': 'ComplexPassword123!',
-            'password2': 'ComplexPassword123!',
             'full_name': 'Dr. John Doe',
             'preferred_name': 'Dr. John',
             'nic_number': '199512345678',
@@ -479,29 +483,100 @@ class CreateHospitalDoctorApiTests(TestCase):
         response = self.client.post('/api/hospital/create-doctor/', payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_validation_errors(self):
+    def test_existing_email_explains_that_password_reset_is_required(self):
         self.client.force_authenticate(user=self.admin_user)
-        
-        # Mismatching passwords
         payload = {
-            'email': 'mismatch@test.com',
-            'password': 'ComplexPassword123!',
-            'password2': 'WrongPassword123!',
-            'full_name': 'Dr. John Doe',
-            'preferred_name': 'Dr. John',
+            'email': self.other_user.email,
+            'full_name': 'Dr. Existing User',
+            'preferred_name': 'Dr. Existing',
             'nic_number': '199512345678',
             'gender': 'Male',
             'license_number': 'MC/12345',
             'specialization': 'Cardiology',
             'phone': '0771234567',
         }
+
         response = self.client.post('/api/hospital/create-doctor/', payload, format='json')
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.json())
+        self.assertIn('active account', response.json()['email'][0])
+        self.assertIn('Forgot password', response.json()['email'][0])
+
+    def test_orphaned_doctor_login_is_rebuilt_and_emailed(self):
+        orphan = CustomUser.objects.create_user(
+            email='deleted_doctor@test.com',
+            password='OldPassword123!',
+            role=CustomUser.Role.DOCTOR,
+            is_active=False,
+        )
+        original_user_id = orphan.id
+        self.client.force_authenticate(user=self.admin_user)
+        payload = {
+            'email': orphan.email,
+            'full_name': 'Dr. Recreated User',
+            'preferred_name': 'Dr. Recreated',
+            'nic_number': '199512345678',
+            'gender': 'Female',
+            'license_number': 'MC/54321',
+            'specialization': 'Cardiology',
+            'phone': '0771234567',
+        }
+
+        response = self.client.post('/api/hospital/create-doctor/', payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        rebuilt_user = CustomUser.objects.get(email=orphan.email)
+        self.assertEqual(rebuilt_user.id, original_user_id)
+        self.assertTrue(rebuilt_user.is_active)
+        self.assertTrue(hasattr(rebuilt_user, 'doctor_profile'))
+        credentials_email = next(
+            message for message in mail.outbox
+            if message.subject == 'Your NexClinic doctor account' and orphan.email in message.to
+        )
+        password_match = re.search(r'^Temporary password: (.+)$', credentials_email.body, re.MULTILINE)
+        self.assertIsNotNone(password_match)
+        self.assertTrue(rebuilt_user.check_password(password_match.group(1).strip()))
+
+    @patch('users.utils.send_doctor_account_credentials_email')
+    def test_email_failure_rolls_back_doctor_account(self, _send_email):
+        from users.utils import CredentialEmailDeliveryError
+        _send_email.side_effect = CredentialEmailDeliveryError('SMTP failure')
+        self.client.force_authenticate(user=self.admin_user)
+        payload = {
+            'email': 'email_failure_doctor@test.com',
+            'full_name': 'Dr. Email Failure',
+            'preferred_name': 'Dr. Failure',
+            'nic_number': '199512345678',
+            'gender': 'Female',
+            'license_number': 'MC/54321',
+            'specialization': 'Cardiology',
+            'phone': '0771234567',
+        }
+
+        response = self.client.post('/api/hospital/create-doctor/', payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertIn('email could not be delivered', response.json()['detail'])
+        self.assertFalse(CustomUser.objects.filter(email=payload['email']).exists())
+        self.assertFalse(ActivityLog.objects.filter(
+            action='doctor_created_by_admin',
+            data__doctor_email=payload['email'],
+        ).exists())
+
+    def test_validation_errors(self):
+        self.client.force_authenticate(user=self.admin_user)
 
         # Invalid NIC
-        payload['password2'] = 'ComplexPassword123!'
-        payload['nic_number'] = 'invalid_nic'
+        payload = {
+            'email': 'invalid@test.com',
+            'full_name': 'Dr. John Doe',
+            'preferred_name': 'Dr. John',
+            'nic_number': 'invalid_nic',
+            'gender': 'Male',
+            'license_number': 'MC/12345',
+            'specialization': 'Cardiology',
+            'phone': '0771234567',
+        }
         response = self.client.post('/api/hospital/create-doctor/', payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('nic_number', response.json())

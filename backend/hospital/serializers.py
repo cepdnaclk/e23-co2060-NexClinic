@@ -1,7 +1,5 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password
 from users.serializers import (
     SL_NIC_REGEX,
     SLMC_REG_NUMBER_REGEX,
@@ -42,14 +40,6 @@ class ActivityLogSerializer(serializers.ModelSerializer):
 class HospitalAdminCreateDoctorSerializer(serializers.Serializer):
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
-    )
-    password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password],
-        style={'input_type': 'password'}
-    )
-    password2 = serializers.CharField(
-        write_only=True, required=True, style={'input_type': 'password'}
     )
     full_name = serializers.CharField(required=True)
     preferred_name = serializers.CharField(required=True)
@@ -58,6 +48,23 @@ class HospitalAdminCreateDoctorSerializer(serializers.Serializer):
     license_number = serializers.CharField(required=True)
     specialization = serializers.CharField(required=True)
     phone = serializers.CharField(required=True)
+
+    def validate_email(self, value):
+        normalized = User.objects.normalize_email(value).lower()
+        existing_user = User.objects.filter(email__iexact=normalized).first()
+        if not existing_user:
+            return normalized
+
+        # A deleted DoctorProfile can leave its CustomUser login behind. Allow
+        # that orphaned doctor login to be rebuilt, but never reset an active
+        # account (or an account belonging to another role) through this API.
+        if existing_user.role == User.Role.DOCTOR and not hasattr(existing_user, 'doctor_profile'):
+            return existing_user.email
+
+        raise serializers.ValidationError(
+            'An active account with this email already exists. Use Forgot password '
+            'or add the existing doctor to the hospital instead.'
+        )
 
     def validate_full_name(self, value):
         cleaned = value.strip()
@@ -99,9 +106,4 @@ class HospitalAdminCreateDoctorSerializer(serializers.Serializer):
         if not canonical:
             raise serializers.ValidationError('Please choose a valid specialization.')
         return canonical
-
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "Password fields didn't match."})
-        return attrs
 
