@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core import mail
 from django.utils import timezone
 from unittest.mock import patch, MagicMock
 from rest_framework.test import APIClient
@@ -449,6 +450,17 @@ class CreateHospitalDoctorApiTests(TestCase):
 
         activity_log = ActivityLog.objects.filter(action='doctor_created_by_admin', user=self.admin_user).exists()
         self.assertTrue(activity_log)
+
+        credentials_email = next(
+            message for message in mail.outbox
+            if message.subject == 'Your NexClinic doctor account'
+        )
+        self.assertEqual(credentials_email.to, ['new_doctor@test.com'])
+        self.assertIn('Login email: new_doctor@test.com', credentials_email.body)
+        self.assertIn('Temporary password: ComplexPassword123!', credentials_email.body)
+        self.assertIn('/doctor/login', credentials_email.body)
+        self.assertIn('/reset-password?role=doctor', credentials_email.body)
+        self.assertTrue(user.check_password('ComplexPassword123!'))
 
     def test_non_admin_cannot_create_doctor(self):
         self.client.force_authenticate(user=self.other_user)

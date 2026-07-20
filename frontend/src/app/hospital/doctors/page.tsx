@@ -274,7 +274,7 @@ export default function ManageDoctorsPage() {
               throw new Error(data.detail || "Failed to create doctor account");
             }
           } else {
-            setFormSuccess("Doctor account created successfully!");
+            setFormSuccess("Doctor account created and login credentials emailed successfully!");
             if (data.doctor) {
               setDoctors((prev) => [data.doctor, ...prev]);
             }

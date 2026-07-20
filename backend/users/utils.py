@@ -31,6 +31,33 @@ def send_otp_email(email, otp):
     )
 
 
+def send_doctor_account_credentials_email(email, password, doctor_name):
+    """Send the credentials for an account created by a hospital admin."""
+    frontend_base_url = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000').rstrip('/')
+    login_url = f'{frontend_base_url}/doctor/login'
+    reset_url = f'{frontend_base_url}/reset-password?role=doctor'
+    display_name = (doctor_name or '').strip() or 'Doctor'
+
+    subject = 'Your NexClinic doctor account'
+    message = (
+        f'Hello {display_name},\n\n'
+        'A hospital administrator has created a NexClinic doctor account for you.\n\n'
+        f'Login email: {email}\n'
+        f'Temporary password: {password}\n'
+        f'Login: {login_url}\n\n'
+        'Use these credentials for your first login. Keep this password private. '
+        f'If you want to change it, use the Forgot password option or visit {reset_url}.\n\n'
+        'If you were not expecting this account, please contact your hospital administrator.'
+    )
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [email],
+        fail_silently=False,
+    )
+
+
 
 def send_admin_notification_email(doctor_email, doctor_name):
     recipients = getattr(settings, 'ADMIN_NOTIFICATION_EMAILS', [])

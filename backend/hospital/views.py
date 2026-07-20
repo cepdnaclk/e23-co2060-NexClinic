@@ -290,6 +290,7 @@ class CreateHospitalDoctorView(APIView):
         from .serializers import HospitalAdminCreateDoctorSerializer
         from django.db import transaction
         from django.contrib.auth import get_user_model
+        from users.utils import send_doctor_account_credentials_email
 
         User = get_user_model()
 
@@ -344,8 +345,17 @@ class CreateHospitalDoctorView(APIView):
                 created_at=timezone.now()
             )
 
+            # Do not leave an unusable account behind when its initial credentials
+            # cannot be delivered. An exception from the email backend rolls back
+            # all database changes in this transaction.
+            send_doctor_account_credentials_email(
+                email=user.email,
+                password=password,
+                doctor_name=doctor_profile.preferred_name or doctor_profile.full_name,
+            )
+
         return Response({
-            "detail": "Doctor account created successfully.",
+            "detail": "Doctor account created successfully and login credentials were emailed.",
             "doctor": {
                 "id": doctor_profile.id,
                 "full_name": doctor_profile.full_name,
