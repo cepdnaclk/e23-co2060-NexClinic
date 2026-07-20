@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from .models import ActivityLog, Hospital, HospitalAdmin
 from .serializers import ActivityLogSerializer, HospitalSerializer
 from doctor.models import Appointment, AppointmentAvailableSlot
-from django.db.models import F
+from django.db.models import Count, F, Q
 from django.utils import timezone
 from datetime import timedelta
 
@@ -106,6 +106,124 @@ class ReportsView(APIView):
 			'filled_slots': filled_slots,
 		}
 		return Response(data)
+
+
+class DoctorAppointmentAnalyticsView(APIView):
+	"""Return current daily, weekly, and monthly appointment totals per doctor."""
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request):
+		admin_role = (
+			HospitalAdmin.objects.filter(user=request.user, is_active=True)
+			.select_related("hospital")
+			.first()
+		)
+		if not admin_role:
+			return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+
+		today = timezone.localdate()
+		week_start = today - timedelta(days=today.weekday())
+		week_end = week_start + timedelta(days=6)
+		month_start = today.replace(day=1)
+		if month_start.month == 12:
+			next_month = month_start.replace(year=month_start.year + 1, month=1)
+		else:
+			next_month = month_start.replace(month=month_start.month + 1)
+		month_end = next_month - timedelta(days=1)
+
+		active_appointments = ~Q(appointments__status__in=[
+			Appointment.Status.CANCELLED,
+			Appointment.Status.REJECTED,
+		])
+		doctors = (
+			DoctorProfile.objects.filter(
+				hospital_app_verifications__hospital=admin_role.hospital,
+				hospital_app_verifications__status=DoctorHospitalVerification.Status.VERIFIED,
+			)
+			.select_related("user")
+			.annotate(
+				daily_count=Count(
+					"appointments",
+					filter=Q(appointments__hospital=admin_role.hospital, appointments__slot__date=today)
+					& active_appointments,
+					distinct=True,
+				),
+				weekly_count=Count(
+					"appointments",
+					filter=Q(
+						appointments__hospital=admin_role.hospital,
+						appointments__slot__date__range=(week_start, week_end),
+					) & active_appointments,
+					distinct=True,
+				),
+				monthly_count=Count(
+					"appointments",
+					filter=Q(
+						appointments__hospital=admin_role.hospital,
+						appointments__slot__date__range=(month_start, month_end),
+					) & active_appointments,
+					distinct=True,
+				),
+				daily_completed_count=Count(
+					"appointments",
+					filter=Q(
+						appointments__hospital=admin_role.hospital,
+						appointments__slot__date=today,
+						appointments__status=Appointment.Status.COMPLETED,
+					),
+					distinct=True,
+				),
+				weekly_completed_count=Count(
+					"appointments",
+					filter=Q(
+						appointments__hospital=admin_role.hospital,
+						appointments__slot__date__range=(week_start, week_end),
+						appointments__status=Appointment.Status.COMPLETED,
+					),
+					distinct=True,
+				),
+				monthly_completed_count=Count(
+					"appointments",
+					filter=Q(
+						appointments__hospital=admin_role.hospital,
+						appointments__slot__date__range=(month_start, month_end),
+						appointments__status=Appointment.Status.COMPLETED,
+					),
+					distinct=True,
+				),
+				patient_count=Count(
+					"appointments__patient",
+					filter=Q(appointments__hospital=admin_role.hospital) & active_appointments,
+					distinct=True,
+				),
+			)
+			.order_by("full_name", "id")
+		)
+
+		return Response({
+			"periods": {
+				"daily": {"start": today, "end": today},
+				"weekly": {"start": week_start, "end": week_end},
+				"monthly": {"start": month_start, "end": month_end},
+			},
+			"doctors": [
+				{
+					"id": doctor.id,
+					"name": doctor.full_name or doctor.preferred_name or doctor.user.email,
+					"daily": doctor.daily_count,
+					"weekly": doctor.weekly_count,
+					"monthly": doctor.monthly_count,
+					"appointment_fee": float(doctor.appointment_fee),
+					"patient_count": doctor.patient_count,
+					"income": {
+						"daily": float(doctor.appointment_fee * doctor.daily_completed_count),
+						"weekly": float(doctor.appointment_fee * doctor.weekly_completed_count),
+						"monthly": float(doctor.appointment_fee * doctor.monthly_completed_count),
+					},
+				}
+				for doctor in doctors
+			],
+		})
 
 class ManageHospitalDoctorView(APIView):
     permission_classes = [IsAuthenticated]
