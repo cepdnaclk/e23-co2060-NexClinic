@@ -26,6 +26,7 @@ export default function NewsArticlesPage() {
     const [loading, setLoading] = useState<boolean>(true);
     const [selectedCategory, setSelectedCategory] = useState<string>('All Articles');
     const newsSectionRef = useRef<HTMLElement>(null);
+    const [spotlightIndex, setSpotlightIndex] = useState<number>(0);
 
     const handleCategoryClick = (category: string) => {
         setSelectedCategory(category);
@@ -72,6 +73,16 @@ export default function NewsArticlesPage() {
 
         fetchNews();
     }, [selectedCategory]);
+
+    useEffect(() => {
+        if (articles.length === 0) return;
+
+        const intervalId = setInterval(() => {
+            setSpotlightIndex((prevIndex) => (prevIndex + 1) % Math.min(articles.length, 5));
+        }, 5000);
+
+        return () => clearInterval(intervalId);
+    }, [articles, spotlightIndex]);
 
     const categories = [
         'Trending',
@@ -125,31 +136,39 @@ export default function NewsArticlesPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="rounded-2xl border border-emerald-100 dark:border-emerald-900 bg-gradient-to-br from-emerald-100 dark:from-emerald-900/50 to-emerald-50 dark:to-emerald-800/20 p-5 shadow-sm">
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Published this month</p>
-                                    <p className="mt-3 text-4xl font-black text-gray-900 dark:text-white">48</p>
-                                    <p className="mt-2 text-sm text-gray-600 dark:text-slate-400">Articles reviewed by healthcare professionals</p>
-                                </div>
-                                <div className="rounded-2xl border border-teal-100 dark:border-teal-900 bg-gradient-to-br from-teal-100 dark:from-teal-900/50 to-cyan-50 dark:to-cyan-900/20 p-5 shadow-sm">
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-400">Reader trust score</p>
-                                    <p className="mt-3 text-4xl font-black text-gray-900 dark:text-white">4.9</p>
-                                    <p className="mt-2 text-sm text-gray-600 dark:text-slate-400">Average rating based on relevance and clarity</p>
-                                </div>
-                                <div className="col-span-2 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-slate-400">Today&apos;s spotlight</p>
-                                    <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
-                                        {articles.length > 0 ? (
-                                            <Link href={articles[0].url} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                                                {articles[0].title}
-                                            </Link>
-                                        ) : (
-                                            loading ? "Loading..." : "No articles found."
-                                        )}
-                                    </p>
-                                    <p className="mt-2 text-sm text-gray-600 dark:text-slate-400 line-clamp-2">
-                                        {articles.length > 0 ? articles[0].summary : (loading ? "Please wait while we fetch the latest health news." : "")}
-                                    </p>
+                            <div className="flex flex-col gap-3">
+                                <div className="rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm overflow-hidden">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-slate-400">Today&apos;s spotlights</p>
+                                        <div className="flex gap-1.5">
+                                            {articles.length > 0 && Array.from({ length: Math.min(articles.length, 5) }).map((_, index) => (
+                                                <button
+                                                    key={index}
+                                                    onClick={() => setSpotlightIndex(index)}
+                                                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                                                        index === spotlightIndex
+                                                            ? 'w-4 bg-emerald-500'
+                                                            : 'w-1.5 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600'
+                                                    }`}
+                                                    aria-label={`Go to spotlight ${index + 1}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div key={spotlightIndex} className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                        <p className="text-lg font-bold text-gray-900 dark:text-white">
+                                            {articles.length > 0 ? (
+                                                <Link href={articles[spotlightIndex].url} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                                                    {articles[spotlightIndex].title}
+                                                </Link>
+                                            ) : (
+                                                loading ? "Loading..." : "No articles found."
+                                            )}
+                                        </p>
+                                        <p className="mt-2 text-sm text-gray-600 dark:text-slate-400 line-clamp-2">
+                                            {articles.length > 0 ? articles[spotlightIndex].summary : (loading ? "Please wait while we fetch the latest health news." : "")}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
