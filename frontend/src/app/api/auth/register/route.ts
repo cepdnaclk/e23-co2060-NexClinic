@@ -17,6 +17,46 @@ function extractErrorMessage(payload: unknown): string {
       return message;
     }
 
+    if (Array.isArray(message) && message.length > 0) {
+      if (typeof message[0] === "string") return message[0];
+      return JSON.stringify(message[0]);
+    }
+
+    const errorMessages: string[] = [];
+    for (const [key, value] of Object.entries(errorPayload)) {
+      if (key === "status" || key === "code") continue;
+
+      let cleanKey = key;
+      if (key === "non_field_errors") {
+        cleanKey = "";
+      } else {
+        cleanKey =
+          key
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (char) => char.toUpperCase()) + ": ";
+      }
+
+      if (typeof value === "string") {
+        errorMessages.push(`${cleanKey}${value}`);
+      } else if (Array.isArray(value)) {
+        const msgs = value
+          .filter((v): v is string => typeof v === "string")
+          .join(" ");
+        if (msgs) {
+          errorMessages.push(`${cleanKey}${msgs}`);
+        }
+      } else if (value && typeof value === "object") {
+        const nested = extractErrorMessage(value);
+        if (nested) {
+          errorMessages.push(`${cleanKey}${nested}`);
+        }
+      }
+    }
+
+    if (errorMessages.length > 0) {
+      return errorMessages.join(" ");
+    }
+
     return JSON.stringify(payload);
   }
 
