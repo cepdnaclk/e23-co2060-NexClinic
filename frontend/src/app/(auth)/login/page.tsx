@@ -4,7 +4,7 @@ import UserLoginForm from '@/components/user/UserLoginForm';
 
 function UserLogin() {
     return (
-        <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-12 pt-24">
+        <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-12 pt-24 overflow-hidden">
             {/* Background Image with Dark Gradient Overlay */}
             <div className="absolute inset-0 z-0">
                 <img

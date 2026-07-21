@@ -58,17 +58,16 @@ export default function DoctorsDirectory() {
     }
     setRole('GUEST');
     setIsRoleResolved(true);
-    router.replace('/login');
-  }, [router]);
+  }, []);
 
   useEffect(() => {
-    if (!isRoleResolved || role === 'GUEST') {
+    if (!isRoleResolved) {
       setLoading(false);
       setDoctors([]);
       return;
     }
 
-    if (!['DOCTOR', 'PATIENT', 'ADMIN'].includes(role)) {
+    if (!['DOCTOR', 'PATIENT', 'ADMIN', 'GUEST'].includes(role)) {
       setLoading(false);
       setDoctors([]);
       return;
@@ -248,7 +247,18 @@ export default function DoctorsDirectory() {
                         </Link>
                       </>
                     ) : (
-                      <p className="text-xs text-gray-500 text-center">Chat and booking are available for patients.</p>
+                      <>
+                        <GreenButton
+                          disabled={true}
+                          className="w-full opacity-60 cursor-not-allowed"
+                        >
+                          Chat Now
+                        </GreenButton>
+                        <BlackButton disabled={true} className="w-full opacity-60 cursor-not-allowed">
+                          Book Appointment
+                        </BlackButton>
+                        <p className="text-xs text-gray-500 text-center">Chat and booking are available for patients.</p>
+                      </>
                     )}
 
                     <Link href={`/doctors/${doctor.id}`} className="w-full">

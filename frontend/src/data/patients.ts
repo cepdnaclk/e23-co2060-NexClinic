@@ -51,7 +51,7 @@ const patients: Patient[] = [
     emergencyContactEmail: "jane.doe@example.com",
     insuranceProvider: "Blue Cross",
     insurancePolicyNumber: "BC123456789",
-    profileImage: "/images/user-profile-default.png",
+    profileImage: "/images/user.png",
     lastUpdated: "2024-02-27",
   },
 ];

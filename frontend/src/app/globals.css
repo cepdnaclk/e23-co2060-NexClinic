@@ -35,3 +35,7 @@ body {
 h1, h2, .display-heading {
   font-family: var(--font-heading);
 }
+
+html {
+  scroll-behavior: smooth;
+}

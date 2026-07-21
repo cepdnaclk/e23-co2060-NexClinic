@@ -202,7 +202,6 @@ export default function UserProfile() {
                   )}
 
                   <div className="mt-4 grid gap-3">
-                    <DetailCard label="Blood Type" value={bloodType} />
                     {/* <DetailCard label="Phone" value={patientPhone} accentClassName="from-teal-500 to-cyan-500" /> */}
                     {/* <DetailCard label="City" value={patientCity} accentClassName="from-sky-500 to-blue-500" /> */}
                     <DetailCard
@@ -284,57 +283,63 @@ export default function UserProfile() {
               href="/user-self/profile/medical-history"
               className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
             >
-              Open Medical History
+              Open Medical Records and Documents
             </Link>
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                Blood Type
+              </p>
+              <div className="mt-3 flex h-full items-start">
+                <p className="text-4xl font-bold text-rose-600">{bloodType}</p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
                 Allergies
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {allergies
-                  .split(/[,;]+/)
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                  .map((a) => (
-                    <span key={a} className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
-                      {a}
-                    </span>
-                  ))}
+                {allergies !== "None reported" && allergies.trim() !== "" ? (
+                  allergies
+                    .split(/[,;]+/)
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                    .map((a) => (
+                      <span key={a} className="rounded-full bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 ring-1 ring-rose-200">
+                        {a}
+                      </span>
+                    ))
+                ) : (
+                  <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200">
+                    None reported
+                  </span>
+                )}
               </div>
             </div>
+
             <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
                 Current Medications
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {medications
-                  .split(/[,;]+/)
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                  .map((m) => (
-                    <span key={m} className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
-                      {m}
-                    </span>
-                  ))}
-              </div>
-            </div>
-            <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                Medical History
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {medicalHistory
-                  .split(/[,;]+/)
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                  .map((h) => (
-                    <span key={h} className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100">
-                      {h}
-                    </span>
-                  ))}
+                {medications !== "None reported" && medications.trim() !== "" ? (
+                  medications
+                    .split(/[,;]+/)
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                    .map((m) => (
+                      <span key={m} className="rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 ring-1 ring-amber-200">
+                        {m}
+                      </span>
+                    ))
+                ) : (
+                  <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200">
+                    None reported
+                  </span>
+                )}
               </div>
             </div>
           </div>
