@@ -260,7 +260,7 @@ export default function ChatWorkspace({
       
       setPendingDoctorId(doctorId);
       
-      const rawPrice = profile.chatFee ? profile.chatFee.replace(/[^0-9.-]+/g,"") : "0";
+      const rawPrice = profile.chatFee || "Rs. 0.00";
       setPendingPrice(rawPrice);
       
       setShowPaymentModal(true);
@@ -819,7 +819,7 @@ export default function ChatWorkspace({
 
       {showPaymentModal && (
         <MockPaymentGateway
-          amount={`Rs. ${pendingPrice}`}
+          amount={pendingPrice}
           onSuccess={handlePaymentSuccess}
           onCancel={() => setShowPaymentModal(false)}
           isProcessing={isProcessingPayment}

@@ -1,5 +1,40 @@
 from django.contrib import admin
-from .models import HospitalAdminProfile, HospitalAdmin, ActivityLog
+from .models import (
+    HospitalAdminProfile,
+    HospitalAdmin,
+    ActivityLog,
+    Hospital,
+    DoctorHospitalVerification,
+    SlotTemplate,
+)
+
+
+@admin.register(Hospital)
+class HospitalModelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'email', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'email', 'contact_numbers')
+
+
+@admin.register(HospitalAdmin)
+class HospitalAdminRoleAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'hospital', 'is_active', 'created_at')
+    list_filter = ('is_active', 'hospital')
+    search_fields = ('user__email', 'hospital__name')
+
+
+@admin.register(DoctorHospitalVerification)
+class DoctorHospitalVerificationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'doctor', 'hospital', 'status', 'verified_by', 'verified_at', 'created_at')
+    list_filter = ('status', 'hospital')
+    search_fields = ('doctor__full_name', 'doctor__preferred_name', 'hospital__name', 'verified_by__email')
+
+
+@admin.register(SlotTemplate)
+class SlotTemplateAdmin(admin.ModelAdmin):
+    list_display = ('id', 'doctor', 'hospital', 'day_of_week', 'start_time', 'end_time', 'slot_duration_minutes', 'default_patient_limit', 'is_active')
+    list_filter = ('is_active', 'hospital', 'day_of_week')
+    search_fields = ('doctor__full_name', 'doctor__preferred_name', 'hospital__name')
 
 
 @admin.register(HospitalAdminProfile)
