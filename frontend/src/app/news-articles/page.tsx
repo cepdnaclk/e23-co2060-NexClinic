@@ -314,21 +314,7 @@ export default function NewsArticlesPage() {
                         ))}
                     </div>
 
-                    {/* Newsletter Banner */}
-                    <div className="mt-12 rounded-3xl border border-emerald-200 bg-gradient-to-r from-emerald-600 to-green-500 p-8 text-white shadow-lg">
-                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-100">Weekly Health Brief</p>
-                                <h3 className="mt-2 text-2xl font-extrabold">Receive curated medical stories every Monday</h3>
-                                <p className="mt-2 text-sm text-emerald-50 max-w-xl">
-                                    We summarize important findings from trusted journals and present them in a patient-friendly, doctor-approved format.
-                                </p>
-                            </div>
-                            <WhiteButton className="px-6 py-3 border-white text-emerald-700 hover:bg-emerald-50">
-                                Subscribe for Updates
-                            </WhiteButton>
-                        </div>
-                    </div>
+
                 </section>
             </main>
         </div>
