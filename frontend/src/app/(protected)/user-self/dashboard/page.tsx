@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
@@ -203,11 +202,9 @@ export default function UserDashboard() {
             <div className="flex flex-col gap-5 xl:flex-row xl:items-stretch xl:justify-between">
               <div className="flex-1 rounded-[1.75rem] border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur sm:p-5 lg:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <Image
+                  <img
                     src={profileImage || "/images/user.png"}
                     alt={displayName}
-                    width={92}
-                    height={92}
                     className="mx-auto h-[92px] w-[92px] shrink-0 rounded-full border-4 border-green-500 object-cover sm:mx-0"
                   />
 
