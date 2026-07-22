@@ -172,9 +172,9 @@ function DoctorLoginForm() {
                     </a>
                 </p>
                 <p>
-                    Don't have an account?{" "}
+                    Don&apos;t have an account?{" "}
                     <a href="/doctor/register" className="font-semibold text-emerald-600 hover:underline">
-                        Sign up here
+                        Register here
                     </a>
                 </p>
             </div>

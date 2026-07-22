@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import DoctorLoginNavBar from "@/components/doctor/DoctorLoginNavBar";
-import DoctorRegistrationNavBar from "@/components/doctor/DoctorRegistrationNavBar";
 import VerifyOTPNavBar from "@/components/HomePage/VerifyOTPNavBar";
 import UserLoginNavBar from "@/components/user/UserLoginNavBar";
 import UserRegistrationNavBar from "@/components/user/UserRegistrationNavBar";
@@ -12,10 +11,6 @@ function AuthNavbar() {
 
   if (pathname === "/doctor/login") {
     return <DoctorLoginNavBar />;
-  }
-
-  if (pathname === "/doctor/register") {
-    return <DoctorRegistrationNavBar />;
   }
 
   if (pathname === "/login") {

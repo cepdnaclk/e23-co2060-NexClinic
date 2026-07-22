@@ -79,8 +79,26 @@ export default function HospitalNavBar() {
                 Slots
               </Link>
               <Link
+                href="/hospital/reports"
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/reports")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                  }`}
+              >
+                Reports
+              </Link>
+              <Link
+                href="/hospital/activity-logs"
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/activity-logs")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                  }`}
+              >
+                Activity Log
+              </Link>
+              <Link
                 href="/hospital/announcements"
-                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/announcements/new")
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/announcements")
                   ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
                   : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
                   }`}
@@ -163,8 +181,26 @@ export default function HospitalNavBar() {
               Slots
             </Link>
             <Link
+              href="/hospital/reports"
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/reports")
+                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+            >
+              Reports
+            </Link>
+            <Link
+              href="/hospital/activity-logs"
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/activity-logs")
+                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+            >
+              Activity Log
+            </Link>
+            <Link
               href="/hospital/announcements"
-              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/announcements/new")
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/announcements")
                 ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
                 : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                 }`}

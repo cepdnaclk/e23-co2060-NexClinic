@@ -1,5 +1,5 @@
 {
-    "title": "NexClini - Smart Healthcare System",
+    "title": "NexClinic - Smart Healthcare System",
     "team": [
         {
             "name": "M.T. Dineth",
@@ -22,8 +22,12 @@
             "eNumber": "E/23/226"
         }
     ],
-    
-    "tags": ["Web Application", "Software Systems Development", "AI", "Healthcare", "Medical"],
+    "tags": [
+        "Web Application",
+        "Software Systems Development",
+        "Healthcare",
+        "Medical"
+    ],
     "image": "cover_page.jpg",
     "thumbnail": "thumbnail.jpg"
 }

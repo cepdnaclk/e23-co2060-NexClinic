@@ -4,8 +4,51 @@ from django.contrib.auth.admin import UserAdmin
 from .activity_log_settings import ACTIVITY_LOG_EVENT_CATEGORY_PREFIXES
 from .models import CustomUser, UserActivityLog
 
+from django import forms
+from django.contrib.auth.forms import UserChangeForm
+
+class CustomUserCreationForm(forms.ModelForm):
+    password1 = forms.CharField(
+        label="Password",
+        widget=forms.PasswordInput,
+        help_text="Enter a strong password."
+    )
+    password2 = forms.CharField(
+        label="Password confirmation",
+        widget=forms.PasswordInput,
+        help_text="Enter the same password as before, for verification."
+    )
+
+    class Meta:
+        model = CustomUser
+        fields = ('email', 'role', 'is_active', 'is_staff', 'is_superuser')
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords don't match")
+        return password2
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        if commit:
+            user.save()
+        return user
+
+
+class CustomUserChangeForm(UserChangeForm):
+    class Meta:
+        model = CustomUser
+        fields = '__all__'
+
+
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
+    form = CustomUserChangeForm
+    add_form = CustomUserCreationForm
+
     list_display = ('display_name', 'email', 'role', 'is_staff', 'is_active')
     list_filter = ('role', 'is_staff', 'is_active')
     fieldsets = (
@@ -17,7 +60,7 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'password', 'role'),
+            'fields': ('email', 'role', 'password1', 'password2', 'is_active', 'is_staff', 'is_superuser'),
         }),
     )
     search_fields = ('email', 'username', 'role', 'doctor_profile__full_name', 'patient_profile__full_name')

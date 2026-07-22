@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import GreenButton from "@/components/buttons/GreenButton";
+import WhiteButton from "@/components/buttons/WhiteButton";
 import ToggleSwitch from "@/components/buttons/ToggleSwitch";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
 
@@ -142,211 +143,281 @@ function DoctorProfilePage() {
     const profileImage = profileData?.doctor.profileImage || profileData?.doctor.photo || "/images/user.png";
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.24),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(34,197,94,0.16),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(22,163,74,0.12),_transparent_24%),linear-gradient(180deg,#eafbf2_0%,#f7fdf8_40%,#ffffff_100%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.08),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(34,197,94,0.06),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(22,163,74,0.05),_transparent_24%),linear-gradient(180deg,#1a1a1a_0%,#252525_40%,#1f1f1f_100%)]">
-            <div className="absolute inset-0 bg-[url('/images/doctor-registration-bg.jpg')] bg-cover bg-center bg-no-repeat opacity-[0.10] dark:opacity-[0.05]" aria-hidden="true" />
-            <div className="absolute inset-0 bg-gradient-to-b from-white/84 via-white/76 to-white/96 dark:from-gray-900/86 dark:via-gray-800/80 dark:to-gray-900/96" aria-hidden="true" />
-            <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-emerald-100/70 via-green-100/30 to-transparent" aria-hidden="true" />
-            <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-emerald-200/30 dark:bg-emerald-800/15 blur-3xl" aria-hidden="true" />
-            <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-green-200/24 dark:bg-green-800/15 blur-3xl" aria-hidden="true" />
-            <div className="absolute left-1/3 top-10 h-56 w-56 rounded-full bg-emerald-200/20 blur-3xl" aria-hidden="true" />
+        <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.16),_transparent_26%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)] pb-8">
+            <div className="absolute inset-0 bg-[url('/images/doctor-login-bg.png')] bg-cover bg-center bg-no-repeat opacity-[0.08]" aria-hidden="true" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/88 via-white/80 to-white/95" aria-hidden="true" />
+            <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-emerald-100/60 to-transparent" aria-hidden="true" />
+            <div className="absolute -left-24 top-28 h-72 w-72 rounded-full bg-emerald-200/25 blur-3xl" aria-hidden="true" />
+            <div className="absolute right-0 top-36 h-80 w-80 rounded-full bg-cyan-200/20 blur-3xl" aria-hidden="true" />
 
-            <div className="relative mx-auto max-w-7xl justify-center gap-4">
-            <div title="profile-header-card" className="relative flex flex-col xl:flex-row items-center justify-between gap-8 xl:gap-12 mx-4 mt-4 sm:mt-8 bg-gradient-to-r from-white/98 dark:from-gray-800/96 via-emerald-50/90 dark:via-gray-800/90 to-green-50/82 dark:to-gray-700/80 shadow-[0_28px_70px_rgba(16,185,129,0.16)] dark:shadow-black/30 backdrop-blur p-6 sm:p-10 xl:p-14 rounded-[2rem] border border-white/80 dark:border-gray-600 overflow-hidden">
-                <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-emerald-200/20 dark:bg-emerald-900/10 blur-3xl" aria-hidden="true" />
-                <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-amber-200/20 blur-3xl" aria-hidden="true" />
-                <div title="left-column" className="relative z-10 flex flex-col sm:flex-row gap-6 items-center xl:gap-8">
-                    <div className="relative rounded-[2rem] bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-[4px] shadow-[0_18px_45px_rgba(16,185,129,0.26)] dark:shadow-black/40">
-                        <div className="relative overflow-hidden rounded-[1.75rem] bg-white p-1">
-                            <img src={profileImage} alt="Doctor Profile" className="w-28 h-28 sm:w-40 sm:h-40 rounded-[1.5rem] object-cover" />
-                            <div className="absolute left-3 top-3 rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-bold tracking-[0.22em] text-emerald-700 backdrop-blur-sm">
-                                PROFILE
+            <div className="relative mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
+                <section className="overflow-hidden rounded-[2.5rem] border border-emerald-100/70 bg-white/80 shadow-[0_24px_80px_rgba(16,185,129,0.12)] backdrop-blur">
+                    <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+                        <div className="relative p-6 sm:p-8 lg:p-10">
+                            <div className="absolute right-0 top-0 h-44 w-44 translate-x-1/3 -translate-y-1/3 rounded-full bg-emerald-100/60 blur-3xl" aria-hidden="true" />
+                            <div className="relative">
+                                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold tracking-[0.24em] text-emerald-700">
+                                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                    MY PROFILE
+                                </div>
+
+                                <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center">
+                                    <div className="mx-auto shrink-0 rounded-[2rem] bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-[4px] shadow-[0_18px_45px_rgba(16,185,129,0.26)] sm:mx-0">
+                                        <div className="relative overflow-hidden rounded-[1.75rem] bg-white p-1">
+                                            <img src={profileImage} alt="Doctor Profile" className="h-28 w-28 rounded-[1.5rem] object-cover sm:h-36 sm:w-36" />
+                                        </div>
+                                    </div>
+
+                                    <div className="min-w-0 flex-1 text-center sm:text-left">
+                                        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">{doctorName}</h1>
+                                        <p className="mt-1 text-sm font-semibold text-emerald-700">Medical Professional</p>
+
+                                        <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
+                                            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
+                                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                                {specialization}
+                                            </span>
+                                            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
+                                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                                {experience}
+                                            </span>
+                                        </div>
+
+                                        <p className="mt-3 flex items-center justify-center text-sm text-slate-600 sm:justify-start">
+                                            <img src="/images/location.png" className="mr-2 h-4 w-4" alt="Location" />
+                                            {location}
+                                        </p>
+
+                                        {loading && <p className="mt-2 text-xs text-slate-500">Loading profile...</p>}
+                                        {error && <p className="mt-2 text-xs text-rose-500">{error}</p>}
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 flex flex-wrap gap-3">
+                                    <Link href="/doctor-self/edit-profile">
+                                        <GreenButton className="rounded-full px-6 py-3">Edit Profile</GreenButton>
+                                    </Link>
+                                    <Link href="/doctor-self/appointment-slots">
+                                        <WhiteButton className="rounded-full px-6 py-3">Manage Slots</WhiteButton>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="relative min-h-[320px] bg-gradient-to-br from-emerald-700 via-teal-700 to-cyan-700 p-4 sm:p-6 lg:min-h-full">
+                            <div className="absolute inset-0 bg-[url('/images/doctor-login-bg.png')] bg-cover bg-center bg-no-repeat opacity-25" aria-hidden="true" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/20 via-transparent to-slate-950/30" aria-hidden="true" />
+                            <div className="relative flex h-full flex-col justify-between rounded-[2rem] border border-white/15 bg-white/10 p-5 text-white backdrop-blur-sm sm:p-6">
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/80">Availability</p>
+                                    <p className="mt-3 text-2xl font-bold sm:text-3xl">
+                                        {isOn ? "You are currently available for online advice." : "You are currently offline."}
+                                    </p>
+                                    <p className="mt-3 max-w-md text-sm leading-6 text-white/85">
+                                        Toggle your online availability to let patients reach you for quick advice chats.
+                                    </p>
+
+                                    <div className="mt-6 flex items-center gap-4">
+                                        <div className={`transition-opacity duration-300 ${isSavingAvailability || loading || !profileData ? "pointer-events-none opacity-60" : ""}`}>
+                                            <ToggleSwitch isOn={isOn} onToggle={(newState) => {
+                                                void handleAvailabilityToggle(newState);
+                                            }} />
+                                        </div>
+                                        <p className={`text-sm font-semibold ${isOn ? "text-emerald-200" : "text-white/60"}`}>
+                                            {isSavingAvailability ? "Updating..." : isOn ? "Available Now" : "Not Available"}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="rounded-3xl border border-white/20 bg-white/12 p-4">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Chat Fee</p>
+                                        <p className="mt-2 text-2xl font-bold">Rs. {chatFee.toLocaleString()}</p>
+                                    </div>
+                                    <div className="rounded-3xl border border-white/20 bg-white/12 p-4">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Appointment Fee</p>
+                                        <p className="mt-2 text-2xl font-bold">Rs. {appointmentFee.toLocaleString()}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div title="name-spec-place" className="flex flex-col gap-3 text-center sm:text-left">
+                </section>
+
+                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+                        <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+                        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Specialization</p>
+                        <p className="mt-2 text-xl font-bold text-slate-900">{specialization}</p>
+                    </div>
+                    <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+                        <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-cyan-500 to-sky-500" />
+                        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Experience</p>
+                        <p className="mt-2 text-xl font-bold text-slate-900">{experience}</p>
+                    </div>
+                    <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+                        <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-emerald-500 to-lime-500" />
+                        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">SLMC Registration</p>
+                        <p className="mt-2 text-xl font-bold text-slate-900">{licenseNumber}</p>
+                    </div>
+                    <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+                        <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500" />
+                        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Verification</p>
+                        <div className="mt-2 flex items-center gap-2">
+                            <img src="/images/verified.png" className="h-5 w-5" alt="Verified" />
+                            <p className="text-xl font-bold text-slate-900">{isVerified ? "Verified" : "Pending"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    <div className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/90 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+                        <div className="border-b border-emerald-100/80 bg-gradient-to-r from-emerald-50 to-white p-6">
+                            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-700">Credentials</p>
+                            <h2 className="mt-2 text-2xl font-bold text-slate-900">Professional Details</h2>
+                        </div>
+
+                        <div className="space-y-5 p-6">
+                            <div>
+                                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Qualifications</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {qualifications.length > 0 ? (
+                                        qualifications.map((item) => (
+                                            <span key={item} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
+                                                {item}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-slate-500">No qualifications added yet.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Verified Hospitals</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {verifiedHospitals.length > 0 ? (
+                                        verifiedHospitals.map((item) => (
+                                            <span key={item} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
+                                                {item}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-slate-500">No verified hospitals yet.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Languages Spoken</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {languages.length > 0 ? (
+                                        languages.map((item) => (
+                                            <span key={item} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
+                                                {item}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-slate-500">No languages specified.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Online Advice Schedule</p>
+                                <div className="mt-3">
+                                    {schedule.length > 0 ? (
+                                        <ul className="space-y-2">
+                                            {schedule.map((slot) => (
+                                                <li key={slot} className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-emerald-50/60 px-4 py-2.5 text-sm text-slate-700">
+                                                    {slot}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-sm text-slate-500">No schedule configured.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/90 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+                        <div className="border-b border-cyan-100/80 bg-gradient-to-r from-cyan-50 to-white p-6">
+                            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-cyan-700">Contact</p>
+                            <h2 className="mt-2 text-2xl font-bold text-slate-900">Personal Information</h2>
+                        </div>
+
+                        <div className="space-y-5 p-6">
+                            <div className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-emerald-50/60 p-4 shadow-sm">
+                                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Email Address</p>
+                                <div className="mt-3 flex items-start">
+                                    <img src="/images/at.png" className="mr-2 mt-0.5 h-4 w-4 shrink-0" alt="Email" />
+                                    <p className="break-all text-sm font-medium text-slate-900 sm:break-words">{email}</p>
+                                </div>
+                            </div>
+
+                            <div className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-cyan-50/60 p-4 shadow-sm">
+                                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Contact Number</p>
+                                <div className="mt-3 flex items-start">
+                                    <img src="/images/phone.png" className="mr-2 mt-0.5 h-4 w-4 shrink-0" alt="Phone" />
+                                    <p className="break-all text-sm font-medium text-slate-900 sm:break-words">{phone}</p>
+                                </div>
+                            </div>
+
+                            <div className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-emerald-50/60 p-4 shadow-sm">
+                                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Location</p>
+                                <div className="mt-3 flex items-start">
+                                    <img src="/images/location.png" className="mr-2 mt-0.5 h-4 w-4 shrink-0" alt="Location" />
+                                    <p className="text-sm font-medium text-slate-900">{location}</p>
+                                </div>
+                            </div>
+
+                            <div className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-cyan-50/60 p-4 shadow-sm">
+                                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Consultation Fees</p>
+                                <div className="mt-3 grid grid-cols-2 gap-4">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <img src="/images/chat.png" className="h-4 w-4" alt="Chat" />
+                                            <p className="text-xs font-semibold text-slate-500">Online Chat</p>
+                                        </div>
+                                        <p className="mt-1 text-lg font-bold text-emerald-700">Rs. {chatFee.toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <img src="/images/appointment.png" className="h-4 w-4" alt="Appointment" />
+                                            <p className="text-xs font-semibold text-slate-500">In-Person</p>
+                                        </div>
+                                        <p className="mt-1 text-lg font-bold text-emerald-700">Rs. {appointmentFee.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-6 rounded-[2rem] border border-emerald-100 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-7">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 dark:text-gray-100">{doctorName}</h1>
-                            <p className="text-emerald-700 dark:text-emerald-400 text-sm font-semibold mt-1">Medical Professional</p>
+                            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-700">Quick Actions</p>
+                            <h3 className="mt-2 text-2xl font-bold text-slate-900">Manage your profile and schedule</h3>
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                                Update your details, manage appointment slots, and respond to advice chats with less friction.
+                            </p>
                         </div>
-                        <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
-                            <div title="specialization" className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-100 via-white to-emerald-50 dark:from-emerald-900/40 dark:via-gray-800 dark:to-emerald-800/40 px-4 py-2 text-emerald-700 dark:text-emerald-300 font-semibold text-sm sm:text-base border border-emerald-200/60 dark:border-emerald-700/50 w-max shadow-sm">
-                                <span className="inline-flex h-2 w-2 rounded-full bg-emerald-600 dark:bg-emerald-400"></span>
-                                {specialization}
-                            </div>
-                            <div title="experience" className="flex items-center gap-2 rounded-full bg-gradient-to-r from-green-100 via-white to-emerald-50 dark:from-green-900/40 dark:via-gray-800 dark:to-emerald-800/40 px-4 py-2 text-green-700 dark:text-green-300 font-semibold text-sm sm:text-base border border-green-200/60 dark:border-green-700/50 w-max shadow-sm">
-                                <span className="inline-flex h-2 w-2 rounded-full bg-green-600 dark:bg-green-400"></span>
-                                {experience}
-                            </div>
-                        </div>
-                        <p title="location" className="text-gray-700 dark:text-gray-300 font-medium mt-2 flex items-center justify-center sm:justify-start">
-                            <img src="/images/location.png" className="w-5 h-5 mr-2" alt="Location Icon" />
-                            {location}
-                        </p>
-                        {loading && <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Loading profile...</p>}
-                        {error && <p className="text-xs text-red-500 dark:text-red-400 mt-2">{error}</p>}
-                    </div>
-                </div>
-                <div title="right-column" className="relative z-10 flex flex-col gap-6 justify-center w-full xl:w-auto">
-                    <div className="rounded-[1.5rem] bg-gradient-to-br from-emerald-50/90 via-white to-green-50/85 dark:from-emerald-900/30 dark:via-gray-800/85 dark:to-gray-800 border border-emerald-100/50 dark:border-emerald-700/50 p-6 backdrop-blur shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
-                        <div title="toggle-btn" className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center sm:justify-between">
-                            <div title="text-column" className="text-center sm:text-left">
-                                <p className="text-gray-900 dark:text-gray-100 font-bold text-base sm:text-lg">Online Availability</p>
-                                <p className={`text-sm font-semibold mt-1 ${
-                                    isOn ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500 dark:text-gray-400"
-                                }`}>
-                                    {isSavingAvailability ? "Updating..." : isOn ? "✓ Available Now" : "○ Not Available"}
-                                </p>
-                            </div>
-                            <div title="toggle-switch" className={`transition-opacity duration-300 ${isSavingAvailability || loading || !profileData ? "pointer-events-none opacity-60" : ""}`}>
-                                <ToggleSwitch isOn={isOn} onToggle={(newState) => {
-                                    void handleAvailabilityToggle(newState);
-                                }} />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex w-full justify-center">
-                        <Link href="/doctor-self/edit-profile">
-                            <GreenButton className="px-8 py-3 rounded-full font-semibold bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700 shadow-[0_12px_30px_rgba(16,185,129,0.32)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.42)] transition-all duration-300">
-                                Edit Profile
-                            </GreenButton>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-
-            <div title="consultation-fees-section" className="mx-4 mt-6 rounded-[2rem] border border-white/80 dark:border-gray-600 bg-gradient-to-br from-white via-emerald-50/70 to-green-50/70 dark:bg-gray-800/92 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] dark:shadow-black/20 sm:p-6 lg:p-8">
-                <h2 className="mb-4 text-xl font-bold text-emerald-700 dark:text-emerald-400 sm:text-2xl">Consultation Fees and Active hours</h2>
-                <div className="my-4 flex w-full border-t border-emerald-100 dark:border-emerald-800"></div>
-                <div className="grid md:grid-cols-2 gap-6">
-                    <div className="flex flex-col rounded-[1.5rem] bg-white/85 dark:bg-gray-800/80 p-5 border border-emerald-100/70 dark:border-emerald-700/40 shadow-sm">
-                        <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            <img src="/images/chat.png" className="w-4 h-4 inline mr-2" alt="Chat Icon" />
-                            Online Chat Session:
-                        </p>
-                        <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">Rs. {chatFee.toLocaleString()}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Quick online advice for minor concerns</p>
-                    </div>
-                    <div className="flex flex-col rounded-[1.5rem] bg-white/85 dark:bg-gray-800/80 p-5 border border-green-100/70 dark:border-green-700/40 shadow-sm">
-                        <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            <img src="/images/appointment.png" className="w-4 h-4 inline mr-2" alt="Appointment Icon" />
-                            In-Person Appointment:
-                        </p>
-                        <p className="text-2xl sm:text-3xl font-black text-green-600 dark:text-green-400">Rs. {appointmentFee.toLocaleString()}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Full consultation and examination</p>
-                    </div>
-                </div>
-                <div className="rounded-3xl border border-emerald-100 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 dark:from-emerald-900/30 via-white to-white dark:via-gray-800/85 dark:to-gray-800 p-4">
-                    <div className="text-gray-700 dark:text-gray-300 text-sm">
-                        <span className="font-semibold text-gray-800 dark:text-gray-200">Usually available times for Online Advice Chats:</span>
-                        <ul className="flex flex-col list-disc pl-6 gap-2 mt-2">
-                            {schedule.map((slot) => (
-                                <li key={slot} className="text-gray-700 dark:text-gray-300">{slot}</li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div title="profile-content-section" className="flex flex-col lg:flex-row mx-4 my-6 gap-4">
-
-                <div title="professional-details" className="w-full rounded-[2rem] border border-white/80 dark:border-gray-600 bg-gradient-to-br from-white via-emerald-50/60 to-green-50/50 dark:bg-gray-800/92 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] dark:shadow-black/20 sm:p-8 lg:w-1/2">
-                    <div title="Title">
-                        <h2 className="mb-4 text-xl font-bold text-emerald-700 dark:text-emerald-400 sm:text-2xl">Professional Details</h2>
-                    </div>
-
-                    <div className="my-4 flex w-full border-t border-emerald-100 dark:border-emerald-800"></div>
-
-                    <div title="SLMC-reg-ID" className="flex flex-col sm:flex-row my-2 items-start sm:items-center justify-between gap-2 sm:gap-4">
-                        <div className="text-gray-700 dark:text-gray-300">
-                            <span className="font-semibold text-gray-800 dark:text-gray-200">SLMC Registration ID:</span>
-                            <span className="font-semibold text-gray-900 dark:text-gray-100 ml-2">{licenseNumber}</span>
-                        </div>
-                        <div title="verification-status" className="flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-3 py-1 text-emerald-700 dark:text-emerald-300 font-semibold text-sm sm:text-md w-max mt-1">
-                            <img src="/images/verified.png" className="w-4 h-4 inline mr-2" alt="Verified Icon" />
-                            {isVerified ? "Verified" : "Pending Verification"}
-                        </div>
-
-                    </div>
-
-                    <div title="Qualifications" className="flex flex-col my-2">
-                        <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Qualifications:</p>
                         <div className="flex flex-wrap gap-2">
-                            {qualifications.length > 0 ? (
-                                qualifications.map((item) => (
-                                    <span
-                                        key={item}
-                                        className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                                    >
-                                        {item}
-                                    </span>
-                                ))
-                            ) : (
-                                <p className="text-sm text-gray-500 dark:text-gray-400">No qualifications added yet.</p>
-                            )}
+                            <Link href="/doctor-self/edit-profile">
+                                <WhiteButton className="rounded-full px-5 py-3">Edit Profile</WhiteButton>
+                            </Link>
+                            <Link href="/doctor-self/appointment-slots">
+                                <WhiteButton className="rounded-full px-5 py-3">Manage Slots</WhiteButton>
+                            </Link>
+                            <Link href="/doctor-self/appointments">
+                                <GreenButton className="rounded-full px-5 py-3">View Appointments</GreenButton>
+                            </Link>
                         </div>
                     </div>
-
-
-                    <div title="Verified-Hospitals" className="flex flex-col my-2">
-                        <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Verified Hospitals:</p>
-                        {verifiedHospitals.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                                {verifiedHospitals.map((item) => (
-                                    <span
-                                        key={item}
-                                        className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                                    >
-                                        {item}
-                                    </span>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-gray-500 dark:text-gray-400">No verified hospitals yet.</p>
-                        )}
-                    </div>
-
-                    <div title="Languages" className="flex flex-col my-2">
-                        <p className="font-semibold text-gray-800 mb-2">Languages Spoken:</p>
-                        <div className="flex flex-wrap gap-2">
-                            {languages.length > 0 ? (
-                                languages.map((item) => (
-                                    <span key={item} className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                                        {item}
-                                    </span>
-                                ))
-                            ) : (
-                                <p className="text-sm text-gray-500 dark:text-gray-400">No languages specified.</p>
-                            )}
-                        </div>
-                    </div>
-
                 </div>
-
-                <div title="personal-info" className="w-full rounded-[2rem] border border-white/80 bg-gradient-to-br from-white via-emerald-50/55 to-green-50/55 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-8 lg:w-1/2">
-                    <div title="Title">
-                        <h2 className="mb-4 text-xl font-bold text-emerald-700 sm:text-2xl">Personal Information</h2>
-                    </div>
-
-                    <div className="my-4 flex w-full border-t border-emerald-100"></div>
-
-                    <div title="Email" className="flex flex-col mb-4">
-                        <p className="font-semibold text-gray-800 mb-2">Email Address:</p>
-                        <div className="flex items-start min-w-0">
-                            <img src="/images/at.png" className="w-4 h-4 inline mr-2 mt-1 shrink-0" alt="Email Icon" />
-                            <p className="break-all sm:break-words text-gray-700 font-medium">{email}</p>
-                        </div>
-                    </div>
-                    <div title="Contact" className="flex flex-col mb-4">
-                        <p className="font-semibold text-gray-800 mb-2">Contact Number:</p>
-                        <div className="flex items-start min-w-0">
-                            <img src="/images/phone.png" className="w-4 h-4 inline mr-2 mt-1 shrink-0" alt="Phone Icon" />
-                            <p className="break-all sm:break-words text-gray-700 font-medium">{phone}</p>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
             </div>
         </div>
     );

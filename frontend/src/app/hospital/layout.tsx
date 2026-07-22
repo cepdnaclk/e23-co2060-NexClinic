@@ -17,7 +17,6 @@ export default function HospitalLayout({
   // Pages that are unauthenticated and should not display the navbar
   const isAuthRoute =
     pathname === "/hospital/login" ||
-    pathname === "/hospital/register" ||
     pathname === "/hospital/contact";
 
   useEffect(() => {

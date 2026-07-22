@@ -32,6 +32,29 @@ export default function HospitalAdminProfilePage() {
         console.error("Failed to parse userInfo", err);
       }
     }
+
+    (async () => {
+      try {
+        const res = await fetch("/api/hospital/profile", { method: "GET", credentials: "include" });
+        if (!res.ok) return;
+        const data = await res.json();
+        setAdminInfo((prev) => ({
+          ...prev,
+          email: data.email,
+          role: prev?.role || "HOSPITAL_ADMIN",
+          full_name: data.full_name,
+          nic_number: data.nic_number,
+          phone: data.phone,
+          address: data.address,
+          employee_id: data.employee_id,
+          designation: data.designation,
+          date_of_joining: data.date_of_joining,
+          hospitals: Array.isArray(data.hospitals) ? data.hospitals : prev?.hospitals || [],
+        }));
+      } catch (err) {
+        console.error("Failed to load hospital admin profile", err);
+      }
+    })();
   }, []);
 
   const displayName = adminInfo?.full_name || adminInfo?.designation || "Hospital Administrator";
