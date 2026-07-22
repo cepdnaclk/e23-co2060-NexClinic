@@ -4,6 +4,119 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchSlotTemplates, fetchAdminHospitals } from "@/lib/api/hospitalSlots";
 
+type PeriodKey = "daily" | "weekly" | "monthly";
+
+type DoctorAppointmentCount = {
+  id: number;
+  name: string;
+  daily: number;
+  weekly: number;
+  monthly: number;
+  appointment_fee: number;
+  patient_count: number;
+  income: Record<PeriodKey, number>;
+};
+
+type AppointmentAnalytics = {
+  periods: Record<PeriodKey, { start: string; end: string }>;
+  doctors: DoctorAppointmentCount[];
+};
+
+const lkrFormatter = new Intl.NumberFormat("en-LK", {
+  style: "currency",
+  currency: "LKR",
+  maximumFractionDigits: 0,
+});
+
+function AppointmentChart({
+  title,
+  subtitle,
+  period,
+  doctors,
+}: {
+  title: string;
+  subtitle: string;
+  period: PeriodKey;
+  doctors: DoctorAppointmentCount[];
+}) {
+  const maximum = Math.max(1, ...doctors.map((doctor) => doctor[period]));
+  const axisMaximum = maximum <= 5 ? 5 : Math.ceil(maximum / 5) * 5;
+  const ticks = Array.from({ length: 6 }, (_, index) => Math.round((axisMaximum * (5 - index)) / 5));
+
+  return (
+    <article className="rounded-3xl border border-white/80 bg-white/90 p-6 shadow-sm">
+      <div className="mb-6">
+        <h3 className="text-lg font-bold text-slate-950">{title}</h3>
+        <p className="mt-1 text-xs font-medium text-slate-500">{subtitle}</p>
+      </div>
+      {doctors.length === 0 ? (
+        <div className="flex min-h-40 items-center justify-center rounded-2xl bg-slate-50 text-sm text-slate-500">
+          No affiliated doctors found.
+        </div>
+      ) : (
+        <div className="overflow-x-auto pb-2">
+          <div className="flex min-w-[420px]">
+            <div className="flex h-64 w-9 shrink-0 flex-col justify-between pb-10 pr-2 text-right text-[10px] font-medium tabular-nums text-slate-400">
+              {ticks.map((tick, index) => <span key={`${tick}-${index}`}>{tick}</span>)}
+            </div>
+            <div className="relative h-64 min-w-0 flex-1 border-b border-l border-slate-200">
+              <div className="pointer-events-none absolute inset-x-0 top-0 bottom-10 flex flex-col justify-between">
+                {ticks.map((tick, index) => (
+                  <div key={`${tick}-${index}`} className="border-t border-dashed border-slate-200" />
+                ))}
+              </div>
+              <div
+                className="absolute inset-x-2 top-0 bottom-10 grid items-end gap-2"
+                style={{ gridTemplateColumns: `repeat(${doctors.length}, minmax(32px, 1fr))` }}
+              >
+                {doctors.map((doctor) => {
+                  const count = doctor[period];
+                  const barHeight = count === 0 ? 0 : Math.max(4, (count / axisMaximum) * 100);
+                  return (
+                    <div key={doctor.id} className="group relative flex h-full items-end justify-center">
+                      <span
+                        className="absolute z-10 -translate-y-1 text-xs font-bold tabular-nums text-emerald-700"
+                        style={{ bottom: `${barHeight}%` }}
+                      >
+                        {count}
+                      </span>
+                      <div
+                        className="w-full max-w-12 rounded-t-md bg-gradient-to-t from-emerald-600 to-teal-400 shadow-[0_-4px_14px_rgba(16,185,129,0.18)] transition-all duration-500 group-hover:from-emerald-700 group-hover:to-teal-500"
+                        style={{ height: `${barHeight}%` }}
+                        role="img"
+                        aria-label={`${doctor.name}: ${count} appointments`}
+                        title={`${doctor.name}: ${count} appointments`}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <div
+                className="absolute inset-x-2 bottom-0 grid h-10 items-start gap-2 pt-2"
+                style={{ gridTemplateColumns: `repeat(${doctors.length}, minmax(32px, 1fr))` }}
+              >
+                {doctors.map((doctor) => (
+                  <span key={doctor.id} className="truncate text-center text-[10px] font-semibold text-slate-500" title={doctor.name}>
+                    {doctor.name.replace(/^Dr\.?\s*/i, "Dr. ")}
+                  </span>
+                ))}
+              </div>
+              <span className="absolute -left-8 top-1/2 -rotate-90 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                Count
+              </span>
+              <div className="sr-only">
+                {doctors.map((doctor) => (
+                  <span key={doctor.id}>{doctor.name}: {doctor[period]} appointments. </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
 export default function HospitalAdminDashboard() {
   const [hospitalName, setHospitalName] = useState<string>("");
   const [adminName, setAdminName] = useState<string>("");
@@ -13,6 +126,8 @@ export default function HospitalAdminDashboard() {
     templatesCount: 0,
   });
   const [loadingStats, setLoadingStats] = useState(true);
+  const [analytics, setAnalytics] = useState<AppointmentAnalytics | null>(null);
+  const [analyticsError, setAnalyticsError] = useState("");
 
   useEffect(() => {
     async function loadDashboard() {
@@ -53,8 +168,6 @@ export default function HospitalAdminDashboard() {
         const firstHospital = hospitalsPayload?.hospitals?.[0];
         if (firstHospital && !currentHospitalId) {
           currentHospitalId = String(firstHospital.hospital ?? firstHospital.id ?? "");
-          setHospitalId(currentHospitalId);
-          setHospitalName(firstHospital.hospitalName || firstHospital.name || "Hospital");
         }
 
         if (currentHospitalId) {
@@ -63,8 +176,8 @@ export default function HospitalAdminDashboard() {
           let docCount = 0;
           if (docRes.ok) {
             const docData = await docRes.json();
-            const docs = Array.isArray(docData.doctors) ? docData.doctors : [];
-            docCount = docs.filter((d: any) => d.is_added).length;
+            const docs: Array<{ is_added?: boolean }> = Array.isArray(docData.doctors) ? docData.doctors : [];
+            docCount = docs.filter((doctor) => doctor.is_added).length;
           }
 
           // Fetch slot templates count
@@ -86,6 +199,20 @@ export default function HospitalAdminDashboard() {
         console.error("Dashboard stats loader error:", err);
       } finally {
         setLoadingStats(false);
+      }
+
+      try {
+        const analyticsResponse = await fetch("/api/hospital/appointment-analytics", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const analyticsPayload = await analyticsResponse.json().catch(() => ({}));
+        if (!analyticsResponse.ok) {
+          throw new Error(analyticsPayload?.detail || analyticsPayload?.error || "Failed to load appointment graphs");
+        }
+        setAnalytics(analyticsPayload as AppointmentAnalytics);
+      } catch (err) {
+        setAnalyticsError(err instanceof Error ? err.message : "Failed to load appointment graphs");
       }
     }
 
@@ -147,6 +274,63 @@ export default function HospitalAdminDashboard() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section>
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Appointments by Doctor</h2>
+            <p className="mt-1 text-sm text-slate-500">Active scheduled appointments; cancelled and rejected bookings are excluded.</p>
+          </div>
+        </div>
+        {analyticsError ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{analyticsError}</div>
+        ) : !analytics ? (
+          <div className="grid gap-6 lg:grid-cols-3">
+            {[0, 1, 2].map((item) => <div key={item} className="h-64 animate-pulse rounded-3xl bg-white/70" />)}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-3">
+              <AppointmentChart title="Daily" subtitle={analytics.periods.daily.start} period="daily" doctors={analytics.doctors} />
+              <AppointmentChart title="Weekly" subtitle={`${analytics.periods.weekly.start} to ${analytics.periods.weekly.end}`} period="weekly" doctors={analytics.doctors} />
+              <AppointmentChart title="Monthly" subtitle={`${analytics.periods.monthly.start} to ${analytics.periods.monthly.end}`} period="monthly" doctors={analytics.doctors} />
+            </div>
+
+            <article className="overflow-hidden rounded-3xl border border-white/80 bg-white/90 shadow-sm">
+              <div className="border-b border-slate-100 px-6 py-5">
+                <h3 className="text-lg font-bold text-slate-950">Individual Doctor Income</h3>
+                <p className="mt-1 text-xs text-slate-500">Patient totals are unique per doctor. Income is calculated from completed appointments × the current appointment fee.</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th className="px-6 py-4 font-semibold">Doctor</th>
+                      <th className="px-4 py-4 text-right font-semibold">Patients</th>
+                      <th className="px-4 py-4 text-right font-semibold">Fee</th>
+                      <th className="px-4 py-4 text-right font-semibold">Daily income</th>
+                      <th className="px-4 py-4 text-right font-semibold">Weekly income</th>
+                      <th className="px-6 py-4 text-right font-semibold">Monthly income</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {analytics.doctors.map((doctor) => (
+                      <tr key={doctor.id} className="transition-colors hover:bg-emerald-50/50">
+                        <td className="px-6 py-4 font-semibold text-slate-800">{doctor.name}</td>
+                        <td className="px-4 py-4 text-right font-bold tabular-nums text-sky-700">{doctor.patient_count}</td>
+                        <td className="px-4 py-4 text-right tabular-nums text-slate-600">{lkrFormatter.format(doctor.appointment_fee)}</td>
+                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-emerald-700">{lkrFormatter.format(doctor.income.daily)}</td>
+                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-emerald-700">{lkrFormatter.format(doctor.income.weekly)}</td>
+                        <td className="px-6 py-4 text-right font-bold tabular-nums text-emerald-800">{lkrFormatter.format(doctor.income.monthly)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        )}
       </section>
 
       {/* Quick Action Navigation Grid */}

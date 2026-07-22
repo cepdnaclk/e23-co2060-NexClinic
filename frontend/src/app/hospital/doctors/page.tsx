@@ -103,8 +103,6 @@ export default function ManageDoctorsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
-    password2: "",
     full_name: "",
     preferred_name: "",
     nic_number: "",
@@ -229,10 +227,6 @@ export default function ManageDoctorsPage() {
 
     const errors: Record<string, string> = {};
     if (!formData.email.trim()) errors.email = "Email is required";
-    if (!formData.password) errors.password = "Password is required";
-    if (formData.password !== formData.password2) {
-      errors.password2 = "Passwords do not match";
-    }
     if (!formData.full_name.trim()) errors.full_name = "Full name is required";
     if (!formData.preferred_name.trim()) errors.preferred_name = "Preferred name is required";
     if (!formData.nic_number.trim()) errors.nic_number = "NIC number is required";
@@ -261,27 +255,28 @@ export default function ManageDoctorsPage() {
             if (typeof data === "object") {
               const drfErrors: Record<string, string> = {};
               for (const key in data) {
-                if (Array.isArray(data[key])) {
+                if (key === "detail" && typeof data[key] === "string") {
+                  drfErrors.general = data[key];
+                } else if (Array.isArray(data[key])) {
                   drfErrors[key] = data[key].join(" ");
                 } else if (typeof data[key] === "string") {
                   drfErrors[key] = data[key];
-                } else if (key === "detail") {
-                  drfErrors.general = data[key];
                 }
+              }
+              if (!drfErrors.general) {
+                drfErrors.general = Object.values(drfErrors)[0] || "Please correct the highlighted fields.";
               }
               setFormErrors(drfErrors);
             } else {
               throw new Error(data.detail || "Failed to create doctor account");
             }
           } else {
-            setFormSuccess("Doctor account created successfully!");
+            setFormSuccess("Doctor account created and login credentials emailed successfully!");
             if (data.doctor) {
               setDoctors((prev) => [data.doctor, ...prev]);
             }
             setFormData({
               email: "",
-              password: "",
-              password2: "",
               full_name: "",
               preferred_name: "",
               nic_number: "",
@@ -774,30 +769,8 @@ export default function ManageDoctorsPage() {
                   </select>
                 </div>
 
-                {/* Password */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Password</label>
-                  <input
-                    type="password"
-                    required
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 ${formErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-slate-200 focus:border-emerald-500'}`}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  />
-                  {formErrors.password && <span className="text-red-500 text-xs mt-1 block">{formErrors.password}</span>}
-                </div>
-
-                {/* Confirm Password */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Confirm Password</label>
-                  <input
-                    type="password"
-                    required
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 ${formErrors.password2 ? 'border-red-500 focus:ring-red-500' : 'border-slate-200'}`}
-                    value={formData.password2}
-                    onChange={(e) => setFormData({ ...formData, password2: e.target.value })}
-                  />
-                  {formErrors.password2 && <span className="text-red-500 text-xs mt-1 block">{formErrors.password2}</span>}
+                <div className="md:col-span-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  A secure temporary password will be generated automatically and emailed to the doctor.
                 </div>
               </div>
 
