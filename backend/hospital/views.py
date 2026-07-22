@@ -3,12 +3,16 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
-from .models import ActivityLog, Hospital, HospitalAdmin
-from .serializers import ActivityLogSerializer, HospitalSerializer
+from .models import ActivityLog, Hospital, HospitalAdmin, HospitalAdminProfile
+from .serializers import ActivityLogSerializer, HospitalSerializer, HospitalAdminProfileSerializer
 from doctor.models import Appointment, AppointmentAvailableSlot
 from django.db.models import Count, F, Q
 from django.utils import timezone
 from datetime import timedelta
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 from rest_framework.views import APIView
@@ -51,6 +55,18 @@ class AvailableDoctorsView(APIView):
         ]
         return Response({"doctors": doctors})
     
+
+class HospitalAdminProfileView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request):
+		profile = HospitalAdminProfile.objects.select_related('user').filter(user=request.user).first()
+		if not profile:
+			return Response({'detail': 'Hospital admin profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+		serializer = HospitalAdminProfileSerializer(profile)
+		return Response(serializer.data)
+
 
 class ActiveHospitalListView(APIView):
 	permission_classes = [AllowAny]
@@ -292,6 +308,11 @@ class CreateHospitalDoctorView(APIView):
         from .serializers import HospitalAdminCreateDoctorSerializer
         from django.db import transaction
         from django.contrib.auth import get_user_model
+        from users.utils import (
+            CredentialEmailDeliveryError,
+            generate_temporary_password,
+            send_doctor_account_credentials_email,
+        )
 
         User = get_user_model()
 
@@ -300,54 +321,81 @@ class CreateHospitalDoctorView(APIView):
 
         data = serializer.validated_data
         email = data['email']
-        password = data['password']
+        password = generate_temporary_password()
 
-        with transaction.atomic():
-            # Create user
-            user = User.objects.create_user(
-                email=email,
-                password=password,
-                role='DOCTOR'
-            )
-            user.is_active = True
-            user.save()
+        try:
+            with transaction.atomic():
+                # Rebuild an orphaned doctor login when its profile was deleted;
+                # otherwise create a completely new user.
+                user = User.objects.filter(email__iexact=email).first()
+                if user:
+                    user.set_password(password)
+                    user.role = User.Role.DOCTOR
+                    user.is_active = True
+                    user.save(update_fields=['password', 'role', 'is_active'])
+                else:
+                    user = User.objects.create_user(
+                        email=email,
+                        password=password,
+                        role=User.Role.DOCTOR,
+                    )
 
-            # Create profile
-            doctor_profile = DoctorProfile.objects.create(
-                user=user,
-                specialization=data['specialization'],
-                license_number=data['license_number'],
-                phone=data['phone'],
-                full_name=data['full_name'],
-                preferred_name=data['preferred_name'],
-                nic_number=data['nic_number'],
-                gender=data.get('gender', 'Other'),
-                is_verified=True  # System verified automatically when created by hospital admin
-            )
+                # Create profile
+                doctor_profile = DoctorProfile.objects.create(
+                    user=user,
+                    specialization=data['specialization'],
+                    license_number=data['license_number'],
+                    phone=data['phone'],
+                    full_name=data['full_name'],
+                    preferred_name=data['preferred_name'],
+                    nic_number=data['nic_number'],
+                    gender=data.get('gender', 'Other'),
+                    is_verified=True  # System verified automatically when created by hospital admin
+                )
 
-            # Link/Verify for this hospital
-            verification = DoctorHospitalVerification.objects.create(
-                doctor=doctor_profile,
-                hospital=hospital,
-                status=DoctorHospitalVerification.Status.VERIFIED,
-                verified_by=request.user,
-                verified_at=timezone.now()
-            )
-            doctor_profile.verified_hospitals.add(hospital)
+                # Link/Verify for this hospital
+                DoctorHospitalVerification.objects.create(
+                    doctor=doctor_profile,
+                    hospital=hospital,
+                    status=DoctorHospitalVerification.Status.VERIFIED,
+                    verified_by=request.user,
+                    verified_at=timezone.now()
+                )
+                doctor_profile.verified_hospitals.add(hospital)
 
-            # Create an ActivityLog entry for audit
-            ActivityLog.objects.create(
-                user=request.user,
-                hospital=hospital,
-                action='doctor_created_by_admin',
-                model_name='DoctorProfile',
-                object_id=str(doctor_profile.id),
-                data={'doctor_email': email},
-                created_at=timezone.now()
+                # Create an ActivityLog entry for audit
+                ActivityLog.objects.create(
+                    user=request.user,
+                    hospital=hospital,
+                    action='doctor_created_by_admin',
+                    model_name='DoctorProfile',
+                    object_id=str(doctor_profile.id),
+                    data={'doctor_email': email},
+                    created_at=timezone.now()
+                )
+
+                # Do not leave an unusable account behind when its initial credentials
+                # cannot be delivered. An exception from the email backend rolls back
+                # all database changes in this transaction.
+                send_doctor_account_credentials_email(
+                    email=user.email,
+                    password=password,
+                    doctor_name=doctor_profile.preferred_name or doctor_profile.full_name,
+                )
+        except CredentialEmailDeliveryError:
+            logger.exception('doctor_account_creation.email_delivery_failed recipient=%s', email)
+            return Response(
+                {
+                    'detail': (
+                        'The doctor account was not created because the login credentials '
+                        'email could not be delivered. Check the email configuration and try again.'
+                    )
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
         return Response({
-            "detail": "Doctor account created successfully.",
+            "detail": "Doctor account created successfully and login credentials were emailed.",
             "doctor": {
                 "id": doctor_profile.id,
                 "full_name": doctor_profile.full_name,
