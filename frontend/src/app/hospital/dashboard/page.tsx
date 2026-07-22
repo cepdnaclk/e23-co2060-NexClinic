@@ -118,6 +118,9 @@ function AppointmentChart({
 }
 
 export default function HospitalAdminDashboard() {
+  const [hospitalName, setHospitalName] = useState<string>("");
+  const [adminName, setAdminName] = useState<string>("");
+  const [hospitalId, setHospitalId] = useState<string>("");
   const [stats, setStats] = useState({
     doctorsCount: 0,
     templatesCount: 0,
@@ -130,15 +133,33 @@ export default function HospitalAdminDashboard() {
     async function loadDashboard() {
       let currentHospitalId = "";
 
-      // Resolve the hospital selected for this admin.
+      // Fallback data from cached login payload, used until the profile call resolves
       const userInfo = typeof window !== "undefined" ? localStorage.getItem("userInfo") : null;
       if (userInfo) {
         try {
           const u = JSON.parse(userInfo);
           if (u?.hospitals && u.hospitals[0]) {
             currentHospitalId = String(u.hospitals[0].id);
+            setHospitalId(currentHospitalId);
+            setHospitalName(u.hospitals[0].name || "Hospital");
           }
         } catch { }
+      }
+
+      // 1. Fetch Hospital Admin Profile
+      try {
+        const res = await fetch("/api/hospital/profile", { method: "GET", credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.full_name) setAdminName(data.full_name);
+          if (data?.hospitals?.[0]) {
+            currentHospitalId = String(data.hospitals[0].id);
+            setHospitalId(currentHospitalId);
+            setHospitalName(data.hospitals[0].name || "Hospital");
+          }
+        }
+      } catch (err) {
+        console.error("Profile API error:", err);
       }
 
       // 2. Fetch Active Hospitals & Doctor Counts
@@ -212,10 +233,10 @@ export default function HospitalAdminDashboard() {
               SYSTEM PORTAL
             </div>
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-              Welcome back!
+              Welcome back{adminName ? `, ${adminName}` : ""}!
             </h1>
             <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-600">
-              Manage your medical staff, verify doctor associations, customize appointment slot templates, and generate calendars from your dedicated command center.
+              Manage your medical staff, verify doctor associations, customize appointment slot templates, and generate calendars from your dedicated command center{hospitalName ? ` at ${hospitalName}` : ""}.
             </p>
           </div>
  
@@ -381,6 +402,50 @@ export default function HospitalAdminDashboard() {
             </p>
             <div className="mt-6 flex items-center text-xs font-semibold text-purple-600 group-hover:text-purple-700">
               View Profile
+              <svg className="ml-1.5 h-3 w-3 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </Link>
+
+          {/* Card 4 */}
+          <Link
+            href="/hospital/reports"
+            className="group relative overflow-hidden rounded-3xl border border-white/80 bg-white/90 p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 mb-5 group-hover:bg-sky-600 group-hover:text-white transition-colors duration-200">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-slate-950">Reports</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-500">
+              Track total appointments, recent bookings, and slot fill rates for your hospital.
+            </p>
+            <div className="mt-6 flex items-center text-xs font-semibold text-sky-600 group-hover:text-sky-700">
+              View Reports
+              <svg className="ml-1.5 h-3 w-3 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </Link>
+
+          {/* Card 5 */}
+          <Link
+            href="/hospital/activity-logs"
+            className="group relative overflow-hidden rounded-3xl border border-white/80 bg-white/90 p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 mb-5 group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-slate-950">Activity Log</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-500">
+              Review an audit trail of doctor additions, removals, and other admin actions.
+            </p>
+            <div className="mt-6 flex items-center text-xs font-semibold text-amber-600 group-hover:text-amber-700">
+              View Activity Log
               <svg className="ml-1.5 h-3 w-3 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
