@@ -46,9 +46,10 @@ The product is intentionally API-first and modular so clinics can adopt individu
 - Doctor directory: specializations, fees, profiles, availability windows and verification metadata.
 - Appointment engine: create slots, search availability, book slots (one appointment per slot), and enforce lifecycle transitions (PENDING → ACCEPTED/REJECTED → COMPLETED/CANCELLED).
 - Patient experience: search & filter doctors, book/reschedule/cancel, view history and prescriptions.
+- Consultations & Payments: real-time patient-doctor chat consultations and mock payment gateway integration for managing fees.
+- News & Content: dynamic health news fetching via GNews API for real-time announcements.
 - Notifications: OTP, booking confirmations, reminders, status updates via email and in-app notifications.
 - Secure attachments: upload prescriptions and reports with access-control and optional external storage.
-- Extensible APIs: designed for integrations with payments, AI services, SSO (Google), and analytics.
 
 ## Solution Architecture
 
@@ -78,7 +79,6 @@ This pattern keeps tokens out of client-accessible JavaScript and provides a sin
 	- JWT refresh rotation and blacklist to mitigate token replay.
 	- Role-based permission checks at the API layer.
 
-Follow `DEV_GUIDE.md` for environment variables and how to configure email providers and storage backends.
 
 ## Testing & Quality Assurance
 
@@ -97,9 +97,6 @@ The product vision is a single, cohesive platform that grows beyond booking into
 - Doctor verification workflows and credential management.
 - Prescription lifecycle: create, attach, and notify; support reminders and refill workflows.
 - Secure file storage and patient record management with role-limited access.
-- Real-time chat interfaces for remote consultations.
-- Payment gateway integration for paid consultations, invoices, and billing reports.
-- AI-assistance for users.
 - Provider reviews, dashboards, analytics, and admin tooling for operational insights.
 
 These features are organized as incremental capabilities that plugin to the core APIs and data models, keeping the overall product cohesive rather than split into disjoint releases.

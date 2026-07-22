@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import GreenButton from "@/components/buttons/GreenButton";
@@ -52,6 +52,9 @@ export default function PatientMedicalHistoryPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<"records" | "documents">("records");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -109,20 +112,41 @@ export default function PatientMedicalHistoryPage() {
   const historyItems = splitNotes(medicalHistory);
   const allergyItems = splitNotes(allergies);
 
+  const filteredRecords = useMemo(() => {
+    let records = [...medicalRecords];
+    
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      records = records.filter(r => 
+        (r.doctorName && r.doctorName.toLowerCase().includes(q)) ||
+        (r.hospitalName && r.hospitalName.toLowerCase().includes(q)) ||
+        (r.diagnosis && r.diagnosis.toLowerCase().includes(q)) ||
+        (r.observations && r.observations.toLowerCase().includes(q))
+      );
+    }
+    
+    records.sort((a, b) => {
+      const dateA = new Date(a.visit_date).getTime();
+      const dateB = new Date(b.visit_date).getTime();
+      return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+    });
+    
+    return records;
+  }, [medicalRecords, searchQuery, sortOrder]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white pb-8">
       <div className="mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-8 lg:pt-8">
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">
-              Patient Profile / Medical History
+              Medical Records
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              Medical History
+              Medical Records
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-              A focused view of your allergies, medications, and background
-              history for quick review before a consultation.
+              A detailed view of your appointment history, clinical notes, and uploaded medical files.
             </p>
           </div>
 
@@ -153,252 +177,209 @@ export default function PatientMedicalHistoryPage() {
             <p className="text-sm font-semibold text-rose-600">{error}</p>
           </div>
         ) : (
-          <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-            <section className="rounded-[2rem] border border-green-100 bg-white p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-7">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    Clinical Summary
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Patient: {patientName} · {patientEmail}
-                  </p>
-                </div>
-                <p className="text-sm font-semibold text-emerald-700">
-                  {historyItems.length} recorded item
-                  {historyItems.length === 1 ? "" : "s"}
-                </p>
-              </div>
+          <div className="flex flex-col gap-6">
+            {/* Tab Navigation */}
+            <div className="flex w-full flex-col sm:flex-row items-center gap-2 overflow-x-auto rounded-[2rem] border border-emerald-100 bg-white p-2 shadow-sm">
+              <button
+                onClick={() => setActiveTab("records")}
+                className={`flex-1 w-full whitespace-nowrap rounded-[1.5rem] px-6 py-3 text-sm font-semibold transition-all duration-300 ${activeTab === "records" ? "bg-emerald-600 text-white shadow-md shadow-emerald-200" : "bg-transparent text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"}`}
+              >
+                Medical Records
+              </button>
+              <button
+                onClick={() => setActiveTab("documents")}
+                className={`flex-1 w-full whitespace-nowrap rounded-[1.5rem] px-6 py-3 text-sm font-semibold transition-all duration-300 ${activeTab === "documents" ? "bg-emerald-600 text-white shadow-md shadow-emerald-200" : "bg-transparent text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"}`}
+              >
+                Medical Documents
+              </button>
+            </div>
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Blood Type
-                  </p>
-                  <p className="mt-3 text-2xl font-bold text-slate-900">
-                    {bloodType}
-                  </p>
-                </div>
-                <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Medical Records
-                  </p>
-                  <p className="mt-3 text-sm leading-6 text-slate-700">
-                    Uploads and attached files are linked on the right for quick
-                    access.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-5">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Observations
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {historyItems.length ? (
-                      historyItems.map((item) => (
-                        <span
-                          key={item}
-                          className="rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100"
+            {/* Tab Content */}
+            <div className="w-full">
+              {activeTab === "records" && (
+                <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <section className="rounded-[2rem] border border-green-100 bg-white p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-7">
+                    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <h2 className="text-2xl font-bold text-slate-900">
+                        Appointment Records
+                      </h2>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <input
+                          type="text"
+                          placeholder="Search records..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none transition-colors focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                        />
+                        <select
+                          value={sortOrder}
+                          onChange={(e) => setSortOrder(e.target.value as "desc" | "asc")}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none transition-colors focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                         >
-                          {item}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200">
-                        None reported
-                      </span>
-                    )}
-                  </div>
-                </div>
+                          <option value="desc">Newest First</option>
+                          <option value="asc">Oldest First</option>
+                        </select>
+                      </div>
+                    </div>
 
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Comments
-                  </p>
-                  <div className="mt-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-7 text-slate-700">
-                    <p className="font-semibold text-slate-900 whitespace-pre-line">
-                      {comments}
-                    </p>
-                  </div>
-                </div>
+                    <div className="space-y-4">
+                      {filteredRecords.length ? (
+                        filteredRecords.map((record) => (
+                          <div
+                            key={record.id}
+                            className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-5 transition-colors hover:border-emerald-200 hover:bg-emerald-50/30"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
+                              <p className="text-base font-bold text-slate-900">
+                                {new Date(record.visit_date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                              </p>
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                                Dr. {record.doctorName}
+                              </p>
+                            </div>
+                            
+                            <div className="mt-3 flex items-center gap-2">
+                              <span className="inline-flex items-center rounded-md bg-white px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-200">
+                                {record.hospitalName}
+                              </span>
+                            </div>
 
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Prescriptions
-                  </p>
-                  <div className="mt-3 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-7 text-slate-700">
-                    <p className="font-semibold text-slate-900 whitespace-pre-line">
-                      {prescriptions}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Allergies
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {allergyItems.length ? (
-                      allergyItems.map((item) => (
-                        <span
-                          key={item}
-                          className="rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 ring-1 ring-amber-100"
-                        >
-                          {item}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200">
-                        None reported
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Medical Record Timeline
-                  </p>
-                  <div className="mt-3 space-y-3">
-                    {medicalRecords.length ? (
-                      medicalRecords.map((record) => (
-                        <div
-                          key={record.id}
-                          className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-sm font-bold text-slate-900">
-                              {record.visit_date}
-                            </p>
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                              {record.doctorName}
-                            </p>
+                            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                              {record.diagnosis && (
+                                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
+                                  <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Diagnosis</span>
+                                  <span className="mt-1 block text-sm font-medium text-slate-900">{record.diagnosis}</span>
+                                </div>
+                              )}
+                              
+                              {record.observations && (
+                                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100">
+                                  <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Observations</span>
+                                  <span className="mt-1 block text-sm text-slate-700">{record.observations}</span>
+                                </div>
+                              )}
+                              
+                              {record.prescriptions && (
+                                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100 sm:col-span-2">
+                                  <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Medications / Prescriptions</span>
+                                  <span className="mt-1 block text-sm font-medium text-slate-900 whitespace-pre-line">{record.prescriptions}</span>
+                                </div>
+                              )}
+                              
+                              {record.comments && (
+                                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100 sm:col-span-2">
+                                  <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Comments</span>
+                                  <span className="mt-1 block text-sm text-slate-700 whitespace-pre-line">{record.comments}</span>
+                                </div>
+                              )}
+                              
+                              {record.recommended_tests && (
+                                <div className="rounded-2xl bg-emerald-50/50 p-3 shadow-sm ring-1 ring-emerald-100 sm:col-span-2">
+                                  <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-emerald-700">Recommended Tests</span>
+                                  <span className="mt-1 block text-sm font-medium text-emerald-900">{record.recommended_tests}</span>
+                                </div>
+                              )}
+                              
+                              {(record.followUpDate || record.follow_up_notes) && (
+                                <div className="rounded-2xl bg-amber-50/50 p-3 shadow-sm ring-1 ring-amber-100 sm:col-span-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-amber-800">Follow-up</span>
+                                    {record.followUpDate && (
+                                      <span className="rounded bg-amber-200/50 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                                        {new Date(record.followUpDate).toLocaleDateString()}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {record.follow_up_notes && (
+                                    <span className="mt-2 block text-sm text-amber-900">{record.follow_up_notes}</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <p className="mt-1 text-sm text-slate-600">
-                            {record.hospitalName}
-                          </p>
-                          {record.observations && (
-                            <p className="mt-3 text-sm leading-6 text-slate-700">
-                              <span className="font-semibold text-slate-900">
-                                Observations:
-                              </span>{" "}
-                              {record.observations}
-                            </p>
-                          )}
-                          {record.diagnosis && (
-                            <p className="mt-2 text-sm leading-6 text-slate-700">
-                              <span className="font-semibold text-slate-900">
-                                Diagnosis:
-                              </span>{" "}
-                              {record.diagnosis}
-                            </p>
-                          )}
-                          {record.comments && (
-                            <p className="mt-2 text-sm leading-6 text-slate-700">
-                              <span className="font-semibold text-slate-900">
-                                Comments:
-                              </span>{" "}
-                              {record.comments}
-                            </p>
-                          )}
-                          {record.prescriptions && (
-                            <p className="mt-2 text-sm leading-6 text-slate-700">
-                              <span className="font-semibold text-slate-900">
-                                Prescriptions:
-                              </span>{" "}
-                              {record.prescriptions}
-                            </p>
-                          )}
-                          {record.recommended_tests && (
-                            <p className="mt-2 text-sm leading-6 text-slate-700">
-                              <span className="font-semibold text-slate-900">
-                                Recommended Tests:
-                              </span>{" "}
-                              {record.recommended_tests}
-                            </p>
-                          )}
-                          {record.followUpDate && (
-                            <p className="mt-2 text-sm leading-6 text-slate-700">
-                              <span className="font-semibold text-slate-900">
-                                Follow-up:
-                              </span>{" "}
-                              {record.followUpDate}
-                            </p>
-                          )}
-                          {record.follow_up_notes && (
-                            <p className="mt-2 text-sm leading-6 text-slate-700">
-                              <span className="font-semibold text-slate-900">
-                                Follow-up Notes:
-                              </span>{" "}
-                              {record.follow_up_notes}
-                            </p>
-                          )}
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-8 text-center text-sm font-medium text-slate-500">
+                          {searchQuery ? "No records found matching your search." : "No saved medical records yet."}
                         </div>
-                      ))
-                    ) : (
-                      <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200">
-                        No saved medical records yet
-                      </span>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  </section>
                 </div>
-              </div>
-            </section>
+              )}
 
-            <aside className="space-y-5">
-              <div className="rounded-[2rem] border border-emerald-100 bg-white p-6 shadow-lg shadow-emerald-100/40">
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-700">
-                  Detailed History
-                </p>
-                <p className="mt-4 text-sm leading-7 text-slate-600">
-                  {medicalHistory}
-                </p>
-              </div>
+              {activeTab === "documents" && (
+                <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <section className="rounded-[2rem] border border-green-100 bg-white p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-7">
+                    <h2 className="mb-6 text-2xl font-bold text-slate-900">
+                      Medical Documents
+                    </h2>
+                    
+                    <div className="flex flex-col gap-4">
+                      {!medicalReports && !medicalDocuments && (
+                        <div className="flex w-full items-center justify-center rounded-xl bg-slate-50 px-4 py-8 text-sm font-medium text-slate-500 ring-1 ring-inset ring-slate-200">
+                          No documents or reports uploaded yet.
+                        </div>
+                      )}
 
-              <div className="rounded-[2rem] border border-emerald-100 bg-white p-6 shadow-lg shadow-emerald-100/40">
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-700">
-                  Attached Files
-                </p>
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <p className="text-sm text-slate-600">Medical Reports</p>
-                    {medicalReports ? (
-                      <a
-                        href={medicalReports}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 inline-flex text-sm font-semibold text-emerald-700 hover:text-emerald-800"
-                      >
-                        Open report
-                      </a>
-                    ) : (
-                      <p className="mt-1 text-sm text-slate-900">
-                        Not provided
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-600">Medical Documents</p>
-                    {medicalDocuments ? (
-                      <a
-                        href={medicalDocuments}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 inline-flex text-sm font-semibold text-emerald-700 hover:text-emerald-800"
-                      >
-                        Open document
-                      </a>
-                    ) : (
-                      <p className="mt-1 text-sm text-slate-900">
-                        Not provided
-                      </p>
-                    )}
-                  </div>
+                      {medicalReports && (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[1.5rem] border border-emerald-100 bg-gradient-to-r from-emerald-50/50 to-white p-5 shadow-sm">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-900">Diagnostic Report</p>
+                              <p className="text-sm text-slate-500">Lab results, scans, and clinical tests.</p>
+                            </div>
+                          </div>
+                          <a
+                            href={medicalReports}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm ring-1 ring-inset ring-emerald-200 transition-colors hover:bg-emerald-50"
+                          >
+                            View File
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+                      )}
+
+                      {medicalDocuments && (
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[1.5rem] border border-emerald-100 bg-gradient-to-r from-emerald-50/50 to-white p-5 shadow-sm">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-900">General Document</p>
+                              <p className="text-sm text-slate-500">Referral letters, certificates, or discharge summaries.</p>
+                            </div>
+                          </div>
+                          <a
+                            href={medicalDocuments}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm ring-1 ring-inset ring-emerald-200 transition-colors hover:bg-emerald-50"
+                          >
+                            View File
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </section>
                 </div>
-              </div>
-            </aside>
+              )}
+            </div>
           </div>
         )}
       </div>

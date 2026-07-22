@@ -155,7 +155,7 @@ const defaultFormData: DoctorFormData = {
   hospitals: [],
   languages: [],
   availabilityForOnlineAdvice: false,
-  profileImage: "/images/doctor-profile-default.png",
+  profileImage: "/images/user.png",
 };
 
 function splitCommaSeparated(value: string) {

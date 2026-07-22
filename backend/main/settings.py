@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     "hospital",
     "chat",
     "channels",
+    "notifications",
 ]
 
 AUTH_USER_MODEL = "users.CustomUser"

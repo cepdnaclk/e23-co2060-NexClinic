@@ -203,19 +203,13 @@ export default function UserDashboard() {
             <div className="flex flex-col gap-5 xl:flex-row xl:items-stretch xl:justify-between">
               <div className="flex-1 rounded-[1.75rem] border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur sm:p-5 lg:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  {profileImage ? (
-                    <Image
-                      src={profileImage}
-                      alt={displayName}
-                      width={92}
-                      height={92}
-                      className="mx-auto h-[92px] w-[92px] shrink-0 rounded-full border-4 border-green-500 object-cover sm:mx-0"
-                    />
-                  ) : (
-                    <div className="mx-auto flex h-[92px] w-[92px] shrink-0 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-green-600 via-emerald-300 to-green-700 text-3xl font-bold text-white shadow-xl sm:mx-0">
-                      {getInitials(displayName)}
-                    </div>
-                  )}
+                  <Image
+                    src={profileImage || "/images/user.png"}
+                    alt={displayName}
+                    width={92}
+                    height={92}
+                    className="mx-auto h-[92px] w-[92px] shrink-0 rounded-full border-4 border-green-500 object-cover sm:mx-0"
+                  />
 
                   <div className="min-w-0 flex-1 text-center sm:text-left">
                     <h1 className="mt-3 break-words text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">

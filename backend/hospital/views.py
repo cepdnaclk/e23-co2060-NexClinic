@@ -45,8 +45,10 @@ class AvailableDoctorsView(APIView):
         doctors = [
             {
                 "id": doc.id,
+                "user_id": doc.user.id,
                 "full_name": doc.full_name,
                 "email": doc.user.email,
+                "specialization": doc.specialization,
                 "is_added": doc.id in verified_doctor_ids,
             }
             for doc in all_doctors

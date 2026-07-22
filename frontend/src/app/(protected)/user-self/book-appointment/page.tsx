@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
 import MockPaymentGateway from "@/components/payment/MockPaymentGateway";
+import { SearchableSelect } from "@/components/common/SearchableSelect";
+import { fetchAvailableSlots } from "@/app/api/appointmentApi";
 
 type AvailableSlot = {
   id: number;
@@ -50,6 +52,7 @@ const formatDateForDisplay = (dateString: string): string => {
 
 const BookAppointmentPage = () => {
   const router = useRouter();
+  const [selectedHospital, setSelectedHospital] = useState("");
   const [doctorId, setDoctorId] = useState("");
   const [slotId, setSlotId] = useState("");
   const [reason, setReason] = useState("");
@@ -65,30 +68,9 @@ const BookAppointmentPage = () => {
     setError("");
 
     try {
-      const params = new URLSearchParams();
-      if (doctorId) {
-        params.set("doctor_id", doctorId);
-      }
-
-      const endpoint = params.toString()
-        ? `/api/patient/appointment-slots?${params.toString()}`
-        : "/api/patient/appointment-slots";
-
-      const response = await fetch(endpoint, {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      if (response.status === 401 || response.status === 403) {
-        handlePatientSessionExpired(router);
-        return;
-      }
-
-      const payload = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to load available slots");
-      }
+      // Fetch all slots, no need to filter by doctor ID initially 
+      // since we want to allow users to select hospital first.
+      const payload = await fetchAvailableSlots(undefined, router);
 
       const rawSlots: unknown[] = Array.isArray(payload?.slots)
         ? payload.slots
@@ -109,24 +91,24 @@ const BookAppointmentPage = () => {
             typeof candidate.time === "string" &&
             typeof candidate.bookedCount === "number"
           );
-        },
+        }
       );
       setAvailableSlots(slots);
 
       setSlotId((currentSlotId) =>
         slots.some((slot) => String(slot.id) === currentSlotId)
           ? currentSlotId
-          : "",
+          : ""
       );
     } catch (err) {
       setAvailableSlots([]);
       setError(
-        err instanceof Error ? err.message : "Failed to load available slots",
+        err instanceof Error ? err.message : "Failed to load available slots"
       );
     } finally {
       setLoadingSlots(false);
     }
-  }, [doctorId, router]);
+  }, [router]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -144,30 +126,59 @@ const BookAppointmentPage = () => {
     void loadAvailableSlots();
   }, [loadAvailableSlots]);
 
-  const doctors = useMemo(() => {
+  // Derived options for SearchableSelect
+  const hospitalOptions = useMemo(() => {
+    const hospitals = Array.from(new Set(availableSlots.map((s) => s.hospital)));
+    return hospitals.map((h) => ({ value: h, label: h }));
+  }, [availableSlots]);
+
+  const doctorOptions = useMemo(() => {
+    const filteredByHospital = selectedHospital
+      ? availableSlots.filter((s) => s.hospital === selectedHospital)
+      : availableSlots;
+
     const map = new Map<string, { id: string; name: string }>();
-    availableSlots.forEach((slot) => {
+    filteredByHospital.forEach((slot) => {
       if (!map.has(slot.doctorId)) {
         map.set(slot.doctorId, { id: slot.doctorId, name: slot.doctorName });
       }
     });
-    return Array.from(map.values());
-  }, [availableSlots]);
+    return Array.from(map.values()).map((d) => ({
+      value: d.id,
+      label: d.name,
+    }));
+  }, [availableSlots, selectedHospital]);
 
   const filteredSlots = useMemo(() => {
     return availableSlots.filter((slot) => {
+      const matchesHospital = selectedHospital ? slot.hospital === selectedHospital : true;
       const matchesDoctor = doctorId ? slot.doctorId === doctorId : true;
-      return matchesDoctor;
+      return matchesHospital && matchesDoctor;
     });
-  }, [availableSlots, doctorId]);
+  }, [availableSlots, selectedHospital, doctorId]);
+
+  const slotsByDate = useMemo(() => {
+    const grouped = new Map<string, AvailableSlot[]>();
+    filteredSlots.forEach(slot => {
+      if (!grouped.has(slot.date)) grouped.set(slot.date, []);
+      grouped.get(slot.date)!.push(slot);
+    });
+    
+    return Array.from(grouped.keys())
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+      .map(date => ({
+        date,
+        slots: grouped.get(date)!.sort((a, b) => a.time.localeCompare(b.time))
+      }));
+  }, [filteredSlots]);
 
   const selectedSlot =
-    filteredSlots.find((slot) => String(slot.id) === slotId) || null;
+    availableSlots.find((slot) => String(slot.id) === slotId) || null;
 
   const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!doctorId || !slotId) {
-      setError("Please fill in all fields.");
+    if (!doctorId || !slotId || !selectedHospital) {
+      setError("Please fill in all fields (Hospital, Doctor, Slot).");
       return;
     }
 
@@ -212,9 +223,11 @@ const BookAppointmentPage = () => {
       setSuccess(true);
       setReason("");
       setSlotId("");
+      setDoctorId("");
+      setSelectedHospital("");
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to book appointment",
+        err instanceof Error ? err.message : "Failed to book appointment"
       );
       setShowPaymentModal(false);
     } finally {
@@ -223,17 +236,17 @@ const BookAppointmentPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white py-6 px-3 sm:px-4 sm:py-8 lg:px-6">
+    <div className="min-h-screen w-full bg-slate-50 py-6 px-3 sm:px-4 sm:py-8 lg:px-6">
       <div className="mx-auto w-full max-w-2xl">
         {success ? (
           /* Success Message */
-          <div className="relative overflow-hidden rounded-[2rem] border border-green-100 bg-white shadow-[0_20px_60px_rgba(16,185,129,0.14)]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(0,173,133,0.08),transparent_42%),radial-gradient(circle_at_bottom_left,_rgba(0,119,88,0.08),transparent_40%)]" />
+          <div className="relative overflow-hidden rounded-[2rem] border border-green-100 bg-white shadow-xl shadow-green-900/5">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.05),transparent_42%),radial-gradient(circle_at_bottom_left,_rgba(16,185,129,0.05),transparent_40%)]" />
             <div className="relative space-y-6 p-6 sm:p-8 lg:p-10">
               <div className="flex flex-col items-center text-center">
-                <div className="mb-6 h-20 w-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-xl">
+                <div className="mb-6 h-20 w-20 rounded-full bg-green-50 flex items-center justify-center shadow-sm">
                   <svg
-                    className="h-10 w-10 text-white"
+                    className="h-10 w-10 text-green-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -241,28 +254,28 @@ const BookAppointmentPage = () => {
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={3}
+                      strokeWidth={2.5}
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
                 </div>
                 <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                  Appointment Confirmed!
+                  Appointment Confirmed
                 </h2>
-                <p className="mt-3 max-w-lg text-base leading-6 text-slate-600">
-                  Your appointment has been successfully booked. Check your
-                  email for confirmation details and appointment reminders.
+                <p className="mt-3 max-w-lg text-base text-slate-500">
+                  Your appointment has been successfully booked. We've sent a
+                  confirmation email with all the details.
                 </p>
 
                 <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center w-full">
                   <Link href="/user-self/appointments" className="flex-1">
-                    <button className="w-full rounded-2xl border border-green-100 bg-gradient-to-br from-green-600 to-emerald-700 px-6 py-3 text-base font-semibold text-white shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+                    <button className="w-full rounded-2xl bg-green-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-700 active:scale-[0.98]">
                       View My Appointments
                     </button>
                   </Link>
                   <button
                     type="button"
-                    className="flex-1 rounded-2xl border border-green-100 bg-white/90 px-6 py-3 text-base font-semibold text-slate-900 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-green-200 hover:shadow-md"
+                    className="flex-1 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98]"
                     onClick={() => {
                       setSuccess(false);
                       setError("");
@@ -276,115 +289,172 @@ const BookAppointmentPage = () => {
           </div>
         ) : (
           /* Booking Form */
-          <div className="relative overflow-hidden rounded-[2rem] border border-green-100 bg-white shadow-[0_20px_60px_rgba(16,185,129,0.14)]">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(0,173,133,0.08),transparent_42%),radial-gradient(circle_at_bottom_left,_rgba(0,119,88,0.08),transparent_40%)]" />
-            <div className="relative space-y-6 p-6 sm:p-8 lg:p-10">
+          <div className="relative overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-xl shadow-slate-200/40">
+            <div className="relative space-y-8 p-6 sm:p-8 lg:p-10">
               {/* Header */}
-              <div className="mb-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-700">
-                  Book Your Appointment
-                </p>
-                <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                  Schedule with a Doctor
+              <div className="mb-2 text-center">
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                  Book an Appointment
                 </h1>
-                <p className="mt-3 max-w-xl text-base leading-6 text-slate-600">
-                  Find your preferred doctor and select a convenient time slot
-                  for your medical consultation.
+                <p className="mt-2 text-base text-slate-500">
+                  Select a hospital, choose a doctor, and pick a convenient time slot.
                 </p>
               </div>
 
               <form className="flex flex-col gap-6" onSubmit={handleProceedToPayment}>
-                {/* Doctor Selection */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">
-                    Select a Doctor
+                {/* Hospital Selection */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-900">
+                    Hospital
                   </label>
-                  <select
-                    className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-slate-900 focus:border-green-300 focus:outline-none focus:ring-1 focus:ring-green-300 transition-all"
-                    value={doctorId}
-                    onChange={(e) => {
-                      setDoctorId(e.target.value);
-                      setSlotId("");
+                  <SearchableSelect
+                    options={hospitalOptions}
+                    value={selectedHospital}
+                    onChange={(val) => {
+                      setSelectedHospital(val);
+                      setDoctorId(""); // Reset doctor selection
+                      setSlotId(""); // Reset slot selection
                     }}
-                    required
-                    disabled={loadingSlots}
-                  >
-                    <option value="">Choose your preferred doctor...</option>
-                    {doctors.map((doc) => (
-                      <option key={doc.id} value={doc.id}>
-                        {doc.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Search hospitals..."
+                    disabled={loadingSlots || hospitalOptions.length === 0}
+                  />
                 </div>
 
-                {/* Slot Selection */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">
-                    Select Time Slot
+                {/* Doctor Selection */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-900">
+                    Doctor
                   </label>
-                  <select
-                    className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-slate-900 focus:border-green-300 focus:outline-none focus:ring-1 focus:ring-green-300 transition-all"
-                    value={slotId}
-                    onChange={(e) => setSlotId(e.target.value)}
-                    required
-                    disabled={loadingSlots || filteredSlots.length === 0}
-                  >
-                    <option value="">Choose an available time...</option>
-                    {filteredSlots.map((slot) => (
-                      <option key={slot.id} value={slot.id}>
-                        {`${slot.hospital} • ${formatDateForDisplay(slot.date)} at ${formatTimeForDisplay(slot.time)}`}
-                      </option>
-                    ))}
-                  </select>
+                  <SearchableSelect
+                    options={doctorOptions}
+                    value={doctorId}
+                    onChange={(val) => {
+                      setDoctorId(val);
+                      setSlotId(""); // Reset slot selection
+                    }}
+                    placeholder="Search doctors..."
+                    disabled={loadingSlots || doctorOptions.length === 0 || !selectedHospital}
+                  />
+                  
+                  {/* Doctor Profile Card */}
+                  {doctorId && (
+                    <div className="mt-3 flex items-center gap-4 rounded-2xl border border-emerald-100 bg-gradient-to-r from-white to-emerald-50/30 p-4 shadow-sm transition-all animate-in fade-in slide-in-from-bottom-2">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-sm font-bold text-emerald-700 shadow-inner">
+                        {doctorOptions.find(d => d.value === doctorId)?.label.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() || "DR"}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-slate-900 truncate">{doctorOptions.find(d => d.value === doctorId)?.label}</div>
+                        <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-1 truncate">
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-700/10">
+                            Available Now
+                          </span>
+                          <span>•</span>
+                          <span className="truncate">{selectedHospital || "Multiple Locations"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Slot Selection (Grid Layout) */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-semibold text-slate-900">
+                    Available Time Slots
+                  </label>
+                  
+                  {(!selectedHospital || !doctorId) ? (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                      Please select a hospital and doctor to view available times.
+                    </div>
+                  ) : slotsByDate.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
+                      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 mb-2">
+                        <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      </div>
+                      <p className="text-slate-900 font-medium text-sm mb-1">Fully Booked</p>
+                      <p className="text-slate-500 text-xs">No available slots for this doctor at this hospital.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-5 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+                      {slotsByDate.map((dateGroup) => (
+                        <div key={dateGroup.date} className="space-y-2 animate-in fade-in">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-1">
+                            {formatDateForDisplay(dateGroup.date)}
+                          </h4>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2">
+                            {dateGroup.slots.map((slot) => {
+                              const isSelected = slotId === String(slot.id);
+                              return (
+                                <button
+                                  key={slot.id}
+                                  type="button"
+                                  onClick={() => setSlotId(String(slot.id))}
+                                  className={`flex flex-col items-center justify-center rounded-xl py-2 px-1 text-xs font-semibold transition-all ${
+                                    isSelected 
+                                      ? "bg-emerald-600 text-white shadow-md ring-2 ring-emerald-600 ring-offset-1" 
+                                      : "bg-white border border-slate-200 text-slate-700 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700"
+                                  }`}
+                                >
+                                  {formatTimeForDisplay(slot.time)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Reason For Visit */}
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-900">
                     Reason for Visit (Optional)
                   </label>
                   <textarea
-                    className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-slate-900 focus:border-green-300 focus:outline-none focus:ring-1 focus:ring-green-300 transition-all resize-none"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-green-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-green-400/10 transition-all resize-none"
                     rows={3}
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    placeholder="Describe your symptoms or reason for the visit..."
+                    placeholder="Describe your symptoms..."
                   />
                 </div>
 
                 {/* Selected Appointment Summary */}
                 {selectedSlot && (
-                  <div className="rounded-2xl border border-green-100 bg-gradient-to-r from-green-50 via-white to-emerald-50 p-4 sm:p-5">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="h-5 w-5 text-green-600"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
-                        </svg>
+                  <div className="rounded-2xl border border-green-100 bg-green-50/50 p-5">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 border-b border-green-100 pb-3">
+                        <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                          <svg
+                            className="h-4 w-4 text-green-700"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
                         <h3 className="font-semibold text-slate-900">
-                          Appointment Summary
+                          Summary
                         </h3>
                       </div>
-                      <div className="space-y-2 text-sm text-slate-600 ml-7">
+                      <div className="space-y-3 text-sm">
                         <div className="flex justify-between items-center">
-                          <span>Doctor:</span>
+                          <span className="text-slate-500">Doctor</span>
                           <span className="font-medium text-slate-900">
                             {selectedSlot.doctorName}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span>Location:</span>
+                          <span className="text-slate-500">Location</span>
                           <span className="font-medium text-slate-900">
                             {selectedSlot.hospital}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span>Date & Time:</span>
-                          <span className="font-medium text-slate-900">
+                          <span className="text-slate-500">Date & Time</span>
+                          <span className="font-medium text-slate-900 bg-white px-2 py-1 rounded-md border border-slate-100 shadow-sm">
                             {formatDateForDisplay(selectedSlot.date)} at{" "}
                             {formatTimeForDisplay(selectedSlot.time)}
                           </span>
@@ -399,7 +469,7 @@ const BookAppointmentPage = () => {
                   <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                     <div className="flex items-start gap-3">
                       <svg
-                        className="h-5 w-5 flex-shrink-0 mt-0.5"
+                        className="h-5 w-5 flex-shrink-0 mt-0.5 text-red-500"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -416,53 +486,33 @@ const BookAppointmentPage = () => {
 
                 {/* Loading State */}
                 {loadingSlots && (
-                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-700 text-sm text-center flex items-center justify-center gap-2">
-                    <div className="h-4 w-4 border-2 border-blue-300 border-t-blue-700 rounded-full animate-spin" />
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-500 text-sm text-center flex items-center justify-center gap-3">
+                    <div className="h-4 w-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
                     Loading available slots...
                   </div>
                 )}
 
                 {/* No Slots Message */}
                 {!loadingSlots && availableSlots.length === 0 && (
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
-                    <svg
-                      className="h-12 w-12 text-slate-400 mx-auto mb-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <p className="text-slate-600 text-sm">
-                      No doctors or hospitals are currently available. Please
-                      check back later.
-                    </p>
-                  </div>
-                )}
-
-                {!loadingSlots && doctorId && filteredSlots.length === 0 && (
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
-                    <svg
-                      className="h-12 w-12 text-slate-400 mx-auto mb-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M9.172 16.172a4 4 0 015.656 0M9 10a4 4 0 118 0 4 4 0 01-8 0z"
-                      />
-                    </svg>
-                    <p className="text-slate-600 text-sm">
-                      No available slots for the selected doctor. Try another
-                      doctor or check back soon.
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-3">
+                      <svg
+                        className="h-6 w-6 text-slate-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-slate-900 font-medium text-sm mb-1">No Availability</p>
+                    <p className="text-slate-500 text-sm">
+                      No doctors or hospitals are currently available. Please check back later.
                     </p>
                   </div>
                 )}
@@ -470,38 +520,23 @@ const BookAppointmentPage = () => {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={submitting || loadingSlots || !doctorId || !slotId}
-                  className="mt-2 w-full rounded-2xl bg-gradient-to-br from-green-700 via-emerald-700 to-green-800 px-6 py-3 text-base font-semibold text-white shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-md flex items-center justify-center gap-2"
+                  disabled={submitting || loadingSlots || !doctorId || !slotId || !selectedHospital}
+                  className="mt-4 w-full rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <>
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Processing...
                     </>
                   ) : (
                     <>
-                      <svg
-                        className="h-5 w-5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v2h16V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" />
-                      </svg>
                       Proceed to Payment
+                      <svg className="h-4 w-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
                     </>
                   )}
                 </button>
-
-                {/* Help Text */}
-                <p className="text-center text-sm text-slate-600">
-                  Need help?{" "}
-                  <Link
-                    href="/doctors"
-                    className="font-semibold text-green-700 hover:text-green-800 transition-colors"
-                  >
-                    Browse all doctors
-                  </Link>
-                </p>
               </form>
             </div>
           </div>

@@ -102,6 +102,20 @@ class PatientLoginView(APIView):
             minutes = int(diff.total_seconds() / 60) + 1
             return Response({'error': f'Too many failed attempts. Locked out for {minutes} minutes.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
             
+        # Check if they verified an OTP recently (Option 2 - 14 days)
+        if user_otp.last_otp_verified_at:
+            time_since_last_otp = timezone.now() - user_otp.last_otp_verified_at
+            if time_since_last_otp.days <= 14:
+                # Bypass OTP, issue JWT directly
+                refresh = RefreshToken.for_user(user)
+                logger.info('patient_login.otp_bypassed email=%s', user.email)
+                return Response({
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh),
+                    'role': 'PATIENT',
+                    'email': user.email,
+                }, status=status.HTTP_200_OK)
+
         # Check resend cooldown
         otp_cooldown = getattr(settings, 'OTP_RESEND_COOLDOWN_SECONDS', 60)
         if user_otp.otp_last_sent_at:
@@ -187,6 +201,7 @@ class LoginVerifyOTPView(APIView):
         user_otp.otp_failed_attempts = 0
         user_otp.otp_locked_until = None
         user_otp.expires_at = None
+        user_otp.last_otp_verified_at = timezone.now()
         user_otp.save()
         
         # Issue access and refresh tokens

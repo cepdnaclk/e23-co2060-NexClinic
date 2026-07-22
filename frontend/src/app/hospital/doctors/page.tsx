@@ -405,12 +405,13 @@ export default function ManageDoctorsPage() {
 
   const filteredDoctors = doctors.filter(
     (doc) =>
-      doc.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.email.toLowerCase().includes(searchQuery.toLowerCase())
+      doc.is_added &&
+      ((doc.full_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (doc.email?.toLowerCase() || "").includes(searchQuery.toLowerCase()))
   );
 
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string | null | undefined) => {
+    return (name || "Doctor")
       .split(" ")
       .map((n) => n[0])
       .join("")
@@ -552,7 +553,7 @@ export default function ManageDoctorsPage() {
 
                 <button
                   disabled={submittingId === doctor.id}
-                  onClick={() => handleAddRemove(doctor.id, doctor.is_added, doctor.full_name)}
+                  onClick={() => handleAddRemove(doctor.id, doctor.is_added, doctor.full_name || "Doctor")}
                   className={`w-full sm:w-auto px-4 py-2.5 text-xs font-semibold rounded-xl transition-all ${doctor.is_added
                       ? 'bg-slate-50 border border-slate-200 text-red-600 hover:bg-red-55 hover:border-red-200'
                       : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/10 hover:shadow-lg'

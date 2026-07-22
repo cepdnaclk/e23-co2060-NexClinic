@@ -101,8 +101,8 @@ export default function SessionSyncProvider() {
           typeof input === "string"
             ? input
             : input instanceof URL
-            ? input.toString()
-            : input.url;
+              ? input.toString()
+              : input.url;
 
         // Skip if we're already on a public/auth page.
         const onPublicPage =

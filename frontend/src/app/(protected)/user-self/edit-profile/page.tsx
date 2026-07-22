@@ -137,6 +137,7 @@ export default function UserEditProfilePage() {
   const [formData, setFormData] = useState<Patient>(defaultFormData);
   const [profileImageVersion, setProfileImageVersion] = useState("");
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
   const [selectedMedicalReportFile, setSelectedMedicalReportFile] = useState<File | null>(null);
   const [selectedMedicalDocumentFile, setSelectedMedicalDocumentFile] = useState<File | null>(null);
   const [bloodTypeUnknown, setBloodTypeUnknown] = useState(false);
@@ -325,12 +326,22 @@ export default function UserEditProfilePage() {
     const reader = new FileReader();
     reader.onloadend = () => {
       setSelectedImageFile(file);
+      setRemovePhoto(false);
       setFormData((previous) => ({
         ...previous,
         profileImage: reader.result as string,
       }));
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = () => {
+    setSelectedImageFile(null);
+    setRemovePhoto(true);
+    setFormData((previous) => ({
+      ...previous,
+      profileImage: "/images/user.png",
+    }));
   };
 
   const handleMedicalReportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -402,6 +413,8 @@ export default function UserEditProfilePage() {
 
       if (selectedImageFile) {
         requestBody.set("profileImage", selectedImageFile);
+      } else if (removePhoto) {
+        requestBody.set("clearProfilePicture", "true");
       }
 
       if (selectedMedicalReportFile) {
@@ -486,6 +499,7 @@ export default function UserEditProfilePage() {
       setFormData(mappedProfile);
       setBloodTypeUnknown(!mappedProfile.bloodType);
       setSelectedImageFile(null);
+      setRemovePhoto(false);
       setSelectedMedicalReportFile(null);
       setSelectedMedicalDocumentFile(null);
       setMedicalReportLabel(getAttachmentLabel(profile.health.medicalReports));
@@ -657,15 +671,26 @@ export default function UserEditProfilePage() {
                   </div>
                 </div>
 
-                <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50">
-                  Change photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                  />
-                </label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50">
+                    Change photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+                  {(formData.profileImage && formData.profileImage !== "/images/user.png") && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50"
+                    >
+                      Remove photo
+                    </button>
+                  )}
+                </div>
               </div>
 
               {loading ? (

@@ -33,6 +33,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
+    dnd_enabled = models.BooleanField(default=False, help_text="Do Not Disturb mode for notifications")
 
     objects = CustomUserManager()
  
@@ -70,6 +71,7 @@ class UserOTP(models.Model):
     otp_locked_until = models.DateTimeField(null=True, blank=True)
     otp_last_sent_at = models.DateTimeField(null=True, blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    last_otp_verified_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"OTP for {self.user.email}"

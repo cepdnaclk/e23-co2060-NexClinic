@@ -1,0 +1,67 @@
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+from .models import Notification
+from doctor.models import Appointment
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from .serializers import NotificationSerializer
+from .tasks import process_notification_delivery
+
+@receiver(pre_save, sender=Appointment)
+def capture_old_appointment_status(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old_instance = Appointment.objects.get(pk=instance.pk)
+            instance._old_status = old_instance.status
+        except Appointment.DoesNotExist:
+            instance._old_status = None
+    else:
+        instance._old_status = None
+
+@receiver(post_save, sender=Appointment)
+def trigger_appointment_notification(sender, instance, created, **kwargs):
+    old_status = getattr(instance, '_old_status', None)
+    
+    if old_status != instance.status:
+        if instance.status == Appointment.Status.ACCEPTED:
+            Notification.objects.create(
+                recipient=instance.patient.user,
+                sender=instance.doctor.user,
+                notification_type=Notification.NotificationType.APPOINTMENT_UPDATE,
+                title="Appointment Confirmed",
+                message=f"Your appointment with {instance.doctor.preferred_name} on {instance.slot.date} at {instance.slot.start_time.strftime('%I:%M %p')} has been confirmed.",
+                metadata={"appointment_id": instance.id}
+            )
+        elif instance.status == Appointment.Status.CANCELLED:
+            canceler = "Your doctor" if instance.cancelled_by == 'ADMIN' else "You"
+            msg = f"{canceler} cancelled the appointment with {instance.doctor.preferred_name} on {instance.slot.date} at {instance.slot.start_time.strftime('%I:%M %p')}."
+            
+            # Notify patient (if cancelled by doctor)
+            if instance.cancelled_by == 'ADMIN':
+                Notification.objects.create(
+                    recipient=instance.patient.user,
+                    sender=instance.doctor.user,
+                    notification_type=Notification.NotificationType.APPOINTMENT_UPDATE,
+                    title="Appointment Cancelled",
+                    message=msg,
+                    metadata={"appointment_id": instance.id}
+                )
+
+@receiver(post_save, sender=Notification)
+def push_notification_and_email(sender, instance, created, **kwargs):
+    if created:
+        # 1. Trigger WebSocket Push
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            group_name = f"user_{instance.recipient.id}_notifications"
+            serializer = NotificationSerializer(instance)
+            async_to_sync(channel_layer.group_send)(
+                group_name,
+                {
+                    'type': 'notify',
+                    'message': serializer.data
+                }
+            )
+        
+        # 2. Trigger Email/SMS Task
+        process_notification_delivery.delay(str(instance.id))
