@@ -1011,6 +1011,10 @@ class DoctorProfileView(APIView):
                 "location": location,
                 "chatFee": chat_fee,
                 "appointmentFee": appointment_fee,
+                "onlineDoctorPayment": float(doctor_profile.online_doctor_payment) if doctor_profile else 0.0,
+                "onlineHospitalCharge": float(doctor_profile.online_hospital_charge) if doctor_profile else 0.0,
+                "inpersonDoctorPayment": float(doctor_profile.inperson_doctor_payment) if doctor_profile else 0.0,
+                "inpersonHospitalCharge": float(doctor_profile.inperson_hospital_charge) if doctor_profile else 0.0,
                 "availabilityForOnlineAdvice": availability,
                 "onlineAdviceSchedule": [
                     "Monday, 2:00 PM - 5:00 PM",
