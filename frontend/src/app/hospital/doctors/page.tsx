@@ -133,6 +133,97 @@ export default function ManageDoctorsPage() {
     onConfirm: () => { },
   });
 
+  // Fee Management Modal
+  const [feeModal, setFeeModal] = useState<{
+    isOpen: boolean;
+    doctorId: number;
+    doctorName: string;
+    loading: boolean;
+    saving: boolean;
+    error: string;
+    success: string;
+    onlineDoctorPayment: string;
+    onlineHospitalCharge: string;
+    inpersonDoctorPayment: string;
+    inpersonHospitalCharge: string;
+  }>({
+    isOpen: false,
+    doctorId: 0,
+    doctorName: "",
+    loading: false,
+    saving: false,
+    error: "",
+    success: "",
+    onlineDoctorPayment: "0",
+    onlineHospitalCharge: "0",
+    inpersonDoctorPayment: "0",
+    inpersonHospitalCharge: "0",
+  });
+
+  const openFeeModal = async (doctorId: number, doctorName: string) => {
+    setFeeModal({
+      isOpen: true,
+      doctorId,
+      doctorName,
+      loading: true,
+      saving: false,
+      error: "",
+      success: "",
+      onlineDoctorPayment: "0",
+      onlineHospitalCharge: "0",
+      inpersonDoctorPayment: "0",
+      inpersonHospitalCharge: "0",
+    });
+
+    try {
+      const res = await fetch(`/api/hospital/doctor-fees/${doctorId}`);
+      if (!res.ok) throw new Error("Failed to load doctor fees");
+      const data = await res.json();
+      setFeeModal((prev) => ({
+        ...prev,
+        loading: false,
+        onlineDoctorPayment: String(data.online_doctor_payment || 0),
+        onlineHospitalCharge: String(data.online_hospital_charge || 0),
+        inpersonDoctorPayment: String(data.inperson_doctor_payment || 0),
+        inpersonHospitalCharge: String(data.inperson_hospital_charge || 0),
+      }));
+    } catch (err: any) {
+      setFeeModal((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.message || "Failed to load fees",
+      }));
+    }
+  };
+
+  const handleSaveFees = async () => {
+    setFeeModal((prev) => ({ ...prev, saving: true, error: "", success: "" }));
+    try {
+      const res = await fetch(`/api/hospital/doctor-fees/${feeModal.doctorId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          online_doctor_payment: parseFloat(feeModal.onlineDoctorPayment) || 0,
+          online_hospital_charge: parseFloat(feeModal.onlineHospitalCharge) || 0,
+          inperson_doctor_payment: parseFloat(feeModal.inpersonDoctorPayment) || 0,
+          inperson_hospital_charge: parseFloat(feeModal.inpersonHospitalCharge) || 0,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "Failed to update fees");
+      }
+
+      setFeeModal((prev) => ({ ...prev, saving: false, success: "Fees updated successfully!" }));
+      setTimeout(() => {
+        setFeeModal((prev) => ({ ...prev, isOpen: false, success: "" }));
+      }, 1500);
+    } catch (err: any) {
+      setFeeModal((prev) => ({ ...prev, saving: false, error: err.message || "Failed to save fees" }));
+    }
+  };
+
   // Rejection Reason Modal
   const [rejectionModal, setRejectionModal] = useState<{
     isOpen: boolean;
@@ -551,16 +642,26 @@ export default function ManageDoctorsPage() {
                   </div>
                 </div>
 
-                <button
-                  disabled={submittingId === doctor.id}
-                  onClick={() => handleAddRemove(doctor.id, doctor.is_added, doctor.full_name || "Doctor")}
-                  className={`w-full sm:w-auto px-4 py-2.5 text-xs font-semibold rounded-xl transition-all ${doctor.is_added
-                      ? 'bg-slate-50 border border-slate-200 text-red-600 hover:bg-red-55 hover:border-red-200'
-                      : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/10 hover:shadow-lg'
-                    } ${submittingId === doctor.id ? 'opacity-50 cursor-not-allowed' : ''} active:scale-[0.98]`}
-                >
-                  {submittingId === doctor.id ? "Working..." : doctor.is_added ? "Delink Account" : "Add to Hospital"}
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  {doctor.is_added && (
+                    <button
+                      onClick={() => openFeeModal(doctor.id, doctor.full_name || "Doctor")}
+                      className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700 hover:bg-cyan-100 hover:border-cyan-300 transition-all active:scale-[0.98]"
+                    >
+                      Manage Payments
+                    </button>
+                  )}
+                  <button
+                    disabled={submittingId === doctor.id}
+                    onClick={() => handleAddRemove(doctor.id, doctor.is_added, doctor.full_name || "Doctor")}
+                    className={`w-full sm:w-auto px-4 py-2.5 text-xs font-semibold rounded-xl transition-all ${doctor.is_added
+                        ? 'bg-slate-50 border border-slate-200 text-red-600 hover:bg-red-55 hover:border-red-200'
+                        : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/10 hover:shadow-lg'
+                      } ${submittingId === doctor.id ? 'opacity-50 cursor-not-allowed' : ''} active:scale-[0.98]`}
+                  >
+                    {submittingId === doctor.id ? "Working..." : doctor.is_added ? "Delink Account" : "Add to Hospital"}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -964,6 +1065,149 @@ export default function ManageDoctorsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Manage Doctor Payments */}
+      {feeModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg p-6 sm:p-8 border border-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-900">Manage the payments of the doctor</h2>
+                <p className="text-xs text-slate-500 mt-1">Set the fee breakdown for {feeModal.doctorName}.</p>
+              </div>
+              <button
+                onClick={() => setFeeModal((prev) => ({ ...prev, isOpen: false }))}
+                className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {feeModal.loading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="h-8 w-8 animate-spin rounded-full border-3 border-emerald-600 border-t-transparent" />
+                <span className="mt-3 text-sm text-slate-500">Loading fee details...</span>
+              </div>
+            ) : (
+              <>
+                {feeModal.error && (
+                  <div className="mb-4 bg-red-50 border border-red-100 text-red-600 p-3 rounded-2xl text-sm font-medium">
+                    {feeModal.error}
+                  </div>
+                )}
+
+                {feeModal.success && (
+                  <div className="mb-4 bg-emerald-50 border border-emerald-100 text-emerald-600 p-3 rounded-2xl text-sm font-medium text-center">
+                    {feeModal.success}
+                  </div>
+                )}
+
+                <div className="space-y-6">
+                  {/* Online Advisory Payment */}
+                  <div className="rounded-2xl border border-cyan-100 bg-gradient-to-br from-white to-cyan-50/40 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-sm font-bold text-slate-800">Online Advisory Payment</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Doctor Payment (LKR)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={feeModal.onlineDoctorPayment}
+                          onChange={(e) => setFeeModal((prev) => ({ ...prev, onlineDoctorPayment: e.target.value }))}
+                          className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Hospital Charge (LKR)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={feeModal.onlineHospitalCharge}
+                          onChange={(e) => setFeeModal((prev) => ({ ...prev, onlineHospitalCharge: e.target.value }))}
+                          className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 bg-white"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 text-xs text-slate-500 font-semibold">
+                      Total Online Fee: <span className="text-cyan-700">Rs. {((parseFloat(feeModal.onlineDoctorPayment) || 0) + (parseFloat(feeModal.onlineHospitalCharge) || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+
+                  {/* In Person Payment */}
+                  <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/40 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-sm font-bold text-slate-800">In Person Payment</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Doctor Payment (LKR)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={feeModal.inpersonDoctorPayment}
+                          onChange={(e) => setFeeModal((prev) => ({ ...prev, inpersonDoctorPayment: e.target.value }))}
+                          className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Hospital Charge (LKR)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={feeModal.inpersonHospitalCharge}
+                          onChange={(e) => setFeeModal((prev) => ({ ...prev, inpersonHospitalCharge: e.target.value }))}
+                          className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 text-xs text-slate-500 font-semibold">
+                      Total In-Person Fee: <span className="text-emerald-700">Rs. {((parseFloat(feeModal.inpersonDoctorPayment) || 0) + (parseFloat(feeModal.inpersonHospitalCharge) || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-3 border-t border-slate-100 pt-5 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setFeeModal((prev) => ({ ...prev, isOpen: false }))}
+                    disabled={feeModal.saving}
+                    className="px-5 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 text-slate-650 hover:bg-slate-50 transition-all disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveFees}
+                    disabled={feeModal.saving}
+                    className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/15 transition-all hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {feeModal.saving ? "Saving..." : "Save Fees"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
