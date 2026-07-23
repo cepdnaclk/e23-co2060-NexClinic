@@ -1201,12 +1201,14 @@ export default function EditDoctorProfilePage() {
                     <p className="font-semibold text-slate-900">{formData.licenseNumber || "Not provided"}</p>
                   </div>
                   <div>
-                    <p className="text-slate-500">Chat Fee</p>
-                    <p className="font-semibold text-slate-900">Rs. {formData.chatFee || "0"}</p>
+                    <p className="text-slate-500">Online Advisory Fee</p>
+                    <p className="font-semibold text-slate-900">Rs. {Number(formData.chatFee || 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-400">Set by hospital admin</p>
                   </div>
                   <div>
-                    <p className="text-slate-500">Appointment Fee</p>
-                    <p className="font-semibold text-teal-700">Rs. {formData.appointmentFee || "0"}</p>
+                    <p className="text-slate-500">In-Person Fee</p>
+                    <p className="font-semibold text-teal-700">Rs. {Number(formData.appointmentFee || 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-400">Set by hospital admin</p>
                   </div>
                   <div>
                     <p className="text-slate-500">Online advice</p>

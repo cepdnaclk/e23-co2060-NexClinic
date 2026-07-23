@@ -25,6 +25,10 @@ type DoctorProfileData = {
         location: string;
         chatFee: number;
         appointmentFee: number;
+        onlineDoctorPayment: number;
+        onlineHospitalCharge: number;
+        inpersonDoctorPayment: number;
+        inpersonHospitalCharge: number;
         availabilityForOnlineAdvice: boolean;
         onlineAdviceSchedule: string[];
         qualifications: string[];
@@ -132,6 +136,10 @@ function DoctorProfilePage() {
     const location = profileData?.profileDetails.location || "Not specified";
     const chatFee = profileData?.profileDetails.chatFee ?? 0;
     const appointmentFee = profileData?.profileDetails.appointmentFee ?? 0;
+    const onlineDoctorPayment = profileData?.profileDetails.onlineDoctorPayment ?? 0;
+    const onlineHospitalCharge = profileData?.profileDetails.onlineHospitalCharge ?? 0;
+    const inpersonDoctorPayment = profileData?.profileDetails.inpersonDoctorPayment ?? 0;
+    const inpersonHospitalCharge = profileData?.profileDetails.inpersonHospitalCharge ?? 0;
     const schedule = profileData?.profileDetails.onlineAdviceSchedule ?? [];
     const qualifications = profileData?.profileDetails.qualifications ?? [];
     const verifiedHospitals = profileData?.profileDetails.hospitals ?? [];
@@ -375,20 +383,41 @@ function DoctorProfilePage() {
 
                             <div className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-cyan-50/60 p-4 shadow-sm">
                                 <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Consultation Fees</p>
-                                <div className="mt-3 grid grid-cols-2 gap-4">
+                                <p className="text-[10px] text-slate-400 mt-0.5">Managed by hospital admin</p>
+                                <div className="mt-3 space-y-4">
                                     <div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 mb-2">
                                             <img src="/images/chat.png" className="h-4 w-4" alt="Chat" />
-                                            <p className="text-xs font-semibold text-slate-500">Online Chat</p>
+                                            <p className="text-xs font-semibold text-slate-500">Online Advisory</p>
+                                            <span className="ml-auto text-sm font-bold text-emerald-700">Rs. {chatFee.toLocaleString()}</span>
                                         </div>
-                                        <p className="mt-1 text-lg font-bold text-emerald-700">Rs. {chatFee.toLocaleString()}</p>
+                                        <div className="grid grid-cols-2 gap-2 pl-6">
+                                            <div>
+                                                <p className="text-[10px] text-slate-400">Doctor Payment</p>
+                                                <p className="text-xs font-semibold text-slate-700">Rs. {onlineDoctorPayment.toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-slate-400">Hospital Charge</p>
+                                                <p className="text-xs font-semibold text-slate-700">Rs. {onlineHospitalCharge.toLocaleString()}</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
+                                    <div className="border-t border-slate-100 pt-3">
+                                        <div className="flex items-center gap-2 mb-2">
                                             <img src="/images/appointment.png" className="h-4 w-4" alt="Appointment" />
                                             <p className="text-xs font-semibold text-slate-500">In-Person</p>
+                                            <span className="ml-auto text-sm font-bold text-emerald-700">Rs. {appointmentFee.toLocaleString()}</span>
                                         </div>
-                                        <p className="mt-1 text-lg font-bold text-emerald-700">Rs. {appointmentFee.toLocaleString()}</p>
+                                        <div className="grid grid-cols-2 gap-2 pl-6">
+                                            <div>
+                                                <p className="text-[10px] text-slate-400">Doctor Payment</p>
+                                                <p className="text-xs font-semibold text-slate-700">Rs. {inpersonDoctorPayment.toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-slate-400">Hospital Charge</p>
+                                                <p className="text-xs font-semibold text-slate-700">Rs. {inpersonHospitalCharge.toLocaleString()}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
