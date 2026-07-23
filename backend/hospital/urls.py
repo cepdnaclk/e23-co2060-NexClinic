@@ -9,6 +9,7 @@ from .views import (
     ManageHospitalDoctorView,
     CreateHospitalDoctorView,
     HospitalAdminProfileView,
+    ManageDoctorFeesView,
 )
 
 urlpatterns = [
@@ -20,4 +21,5 @@ urlpatterns = [
     path('available-doctors/', AvailableDoctorsView.as_view(), name='available-doctors'),
     path('manage-doctor/', ManageHospitalDoctorView.as_view(), name='manage-doctor'),
     path('create-doctor/', CreateHospitalDoctorView.as_view(), name='create-doctor'),
+    path('doctor-fees/<int:doctor_id>/', ManageDoctorFeesView.as_view(), name='manage-doctor-fees'),
 ]

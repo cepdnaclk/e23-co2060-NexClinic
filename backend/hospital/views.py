@@ -404,3 +404,83 @@ class CreateHospitalDoctorView(APIView):
             }
         }, status=status.HTTP_201_CREATED)
 
+
+class ManageDoctorFeesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, doctor_id):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+
+        doctor = get_object_or_404(DoctorProfile, id=doctor_id)
+
+        if not DoctorHospitalVerification.objects.filter(
+            doctor=doctor,
+            hospital=admin_role.hospital,
+            status=DoctorHospitalVerification.Status.VERIFIED,
+        ).exists():
+            return Response({"detail": "This doctor is not affiliated with your hospital."}, status=status.HTTP_403_FORBIDDEN)
+
+        return Response({
+            "doctor_id": doctor.id,
+            "doctor_name": doctor.full_name,
+            "online_doctor_payment": float(doctor.online_doctor_payment),
+            "online_hospital_charge": float(doctor.online_hospital_charge),
+            "inperson_doctor_payment": float(doctor.inperson_doctor_payment),
+            "inperson_hospital_charge": float(doctor.inperson_hospital_charge),
+        })
+
+    def patch(self, request, doctor_id):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+
+        doctor = get_object_or_404(DoctorProfile, id=doctor_id)
+
+        if not DoctorHospitalVerification.objects.filter(
+            doctor=doctor,
+            hospital=admin_role.hospital,
+            status=DoctorHospitalVerification.Status.VERIFIED,
+        ).exists():
+            return Response({"detail": "This doctor is not affiliated with your hospital."}, status=status.HTTP_403_FORBIDDEN)
+
+        fee_fields = {
+            "online_doctor_payment": "online_doctor_payment",
+            "online_hospital_charge": "online_hospital_charge",
+            "inperson_doctor_payment": "inperson_doctor_payment",
+            "inperson_hospital_charge": "inperson_hospital_charge",
+        }
+
+        update_fields = []
+        for payload_key, model_field in fee_fields.items():
+            if payload_key in request.data:
+                try:
+                    value = float(request.data[payload_key])
+                except (TypeError, ValueError):
+                    return Response({"detail": f"{payload_key} must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
+                if value < 0:
+                    return Response({"detail": f"{payload_key} cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
+                setattr(doctor, model_field, value)
+                update_fields.append(model_field)
+
+        if not update_fields:
+            return Response({"detail": "No fee fields provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        doctor.chat_fee = doctor.online_doctor_payment + doctor.online_hospital_charge
+        doctor.appointment_fee = doctor.inperson_doctor_payment + doctor.inperson_hospital_charge
+        update_fields.extend(["chat_fee", "appointment_fee"])
+
+        doctor.save(update_fields=sorted(set(update_fields)))
+
+        return Response({
+            "detail": "Doctor fees updated successfully.",
+            "doctor_id": doctor.id,
+            "online_doctor_payment": float(doctor.online_doctor_payment),
+            "online_hospital_charge": float(doctor.online_hospital_charge),
+            "inperson_doctor_payment": float(doctor.inperson_doctor_payment),
+            "inperson_hospital_charge": float(doctor.inperson_hospital_charge),
+            "chat_fee": float(doctor.chat_fee),
+            "appointment_fee": float(doctor.appointment_fee),
+        })
+
