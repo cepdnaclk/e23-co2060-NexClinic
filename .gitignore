@@ -132,3 +132,4 @@ temp/
 *.crt
 *.cer
 collaborator-env-handoff.txt
+.claude

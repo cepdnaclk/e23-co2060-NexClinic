@@ -14,7 +14,7 @@ from doctor.models import (
     AppointmentAvailableSlot,
 )
 from chat.models import AdviceChatThread
-from hospital.models import Hospital
+from hospital.models import DoctorHospitalVerification, Hospital
 
 from .serializers import (
     PatientAppointmentSerializer,
@@ -312,8 +312,10 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
                 is_active=True,
             )
             .select_related("doctor", "doctor__user", "hospital")
-            # Only include slots where the doctor is verified for the slot's hospital
-            .filter(doctor__verified_hospitals__id=F("hospital_id"))
+            .filter(
+                doctor__hospital_app_verifications__hospital_id=F("hospital_id"),
+                doctor__hospital_app_verifications__status=DoctorHospitalVerification.Status.VERIFIED,
+            )
             .order_by("date", "start_time")
         )
 
@@ -421,18 +423,13 @@ class PatientAppointmentsView(BasePatientAPIView):
                 )
 
             # Ensure the doctor is verified for the hospital where this slot is offered
-            try:
-                if not slot.doctor.verified_hospitals.filter(
-                    id=slot.hospital_id
-                ).exists():
-                    return Response(
-                        {"detail": "Doctor is not verified for this hospital."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-            except Exception:
-                # If any unexpected error occurs, block booking as a safe default
+            if not DoctorHospitalVerification.objects.filter(
+                doctor=slot.doctor,
+                hospital_id=slot.hospital_id,
+                status=DoctorHospitalVerification.Status.VERIFIED,
+            ).exists():
                 return Response(
-                    {"detail": "Doctor verification check failed."},
+                    {"detail": "Doctor is not verified for this hospital."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
