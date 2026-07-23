@@ -722,8 +722,6 @@ export default function EditDoctorProfilePage() {
       requestBody.set("specialization", formData.specialization);
       requestBody.set("experienceYears", String(Number.parseInt(formData.experienceYears || "0", 10) || 0));
       requestBody.set("location", formData.location);
-      requestBody.set("chatFee", String(Number.parseFloat(formData.chatFee || "0") || 0));
-      requestBody.set("appointmentFee", String(Number.parseFloat(formData.appointmentFee || "0") || 0));
       requestBody.set("qualifications", formData.qualifications.join(", "));
       requestBody.set("languages", formData.languages.join(", "));
       requestBody.set(
@@ -1042,8 +1040,16 @@ export default function EditDoctorProfilePage() {
                     <SelectCard label="Specialization" value={formData.specialization} onChange={(value) => handleChange("specialization", value)} options={DOCTOR_SPECIALIZATIONS} placeholder="Select specialization" />
                     <FieldCard label="Years of Experience" type="number" value={formData.experienceYears} onChange={(value) => handleChange("experienceYears", value)} placeholder="8" />
                     <FieldCard label="Practice Location" value={formData.location} onChange={(value) => handleChange("location", value)} placeholder="Colombo" />
-                    <FieldCard label="Online Chat Fee (LKR)" type="number" value={formData.chatFee} onChange={(value) => handleChange("chatFee", value)} placeholder="500" />
-                    <FieldCard label="In-Person Fee (LKR)" type="number" value={formData.appointmentFee} onChange={(value) => handleChange("appointmentFee", value)} placeholder="3000" />
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Online Chat Fee (LKR)</label>
+                      <p className="text-sm font-bold text-slate-800">Rs. {Number(formData.chatFee || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">Set by hospital admin</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">In-Person Fee (LKR)</label>
+                      <p className="text-sm font-bold text-slate-800">Rs. {Number(formData.appointmentFee || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">Set by hospital admin</p>
+                    </div>
                     <div className="sm:col-span-2 rounded-2xl border border-white/80 bg-slate-50/80 p-4">
                       <div className="flex items-center justify-between gap-4">
                         <div>
