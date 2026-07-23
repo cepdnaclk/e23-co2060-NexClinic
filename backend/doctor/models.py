@@ -23,6 +23,10 @@ class DoctorProfile(models.Model):
     languages_spoken = models.CharField(max_length=255, default="English")
     chat_fee = models.DecimalField(max_digits=10, decimal_places=2, default=500.00)
     appointment_fee = models.DecimalField(max_digits=10, decimal_places=2, default=3500.00)
+    online_doctor_payment = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    online_hospital_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    inperson_doctor_payment = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    inperson_hospital_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     availability = models.BooleanField(default=False)
     
     def __str__(self):
