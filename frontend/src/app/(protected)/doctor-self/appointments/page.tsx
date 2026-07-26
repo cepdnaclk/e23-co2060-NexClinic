@@ -134,6 +134,8 @@ type PrescriptionMedicine = {
   name: string;
   dose: string;
   duration: string;
+  frequency: string;
+  notes: string;
   timings: MedicineTiming[];
 };
 
@@ -157,11 +159,25 @@ const medicineTimings: MedicineTiming[] = [
   "Night",
 ];
 
+const medicineFrequencies = [
+  "Once daily",
+  "Twice daily",
+  "Three times daily",
+  "Every 4 hours",
+  "Every 6 hours",
+  "Every 8 hours",
+  "Every 12 hours",
+  "Every 24 hours",
+  "As needed",
+];
+
 const createPrescriptionMedicine = (): PrescriptionMedicine => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
   name: "",
   dose: "",
   duration: "",
+  frequency: "",
+  notes: "",
   timings: [],
 });
 
@@ -172,15 +188,17 @@ const serializePrescription = (medicines: PrescriptionMedicine[]) =>
         medicine.name ||
         medicine.dose ||
         medicine.duration ||
+        medicine.frequency ||
+        medicine.notes ||
         medicine.timings.length,
     )
     .map(
       (medicine) =>
         `${medicine.name || "Medicine"} | Dose: ${medicine.dose || "Not specified"} | Duration: ${
           medicine.duration || "Not specified"
-        } | Timing: ${
+        } | Frequency: ${medicine.frequency || "Not specified"} | Timing: ${
           medicine.timings.join(", ") || "Not specified"
-        }`,
+        } | Notes: ${medicine.notes || "None"}`,
     )
     .join("\n");
 
@@ -191,6 +209,8 @@ const parsePrescription = (value: string): PrescriptionMedicine[] => {
     const parts = line.split("|").map((part) => part.trim());
     const dosePart = parts.find((part) => part.startsWith("Dose:"));
     const durationPart = parts.find((part) => part.startsWith("Duration:"));
+    const frequencyPart = parts.find((part) => part.startsWith("Frequency:"));
+    const notesPart = parts.find((part) => part.startsWith("Notes:"));
     const timingPart = parts.find((part) => part.startsWith("Timing:"));
     const timings = timingPart
       ? timingPart
@@ -207,6 +227,8 @@ const parsePrescription = (value: string): PrescriptionMedicine[] => {
       name: parts[0] || "",
       dose: dosePart?.replace("Dose:", "").trim() || "",
       duration: durationPart?.replace("Duration:", "").trim() || "",
+      frequency: frequencyPart?.replace("Frequency:", "").trim() || "",
+      notes: notesPart?.replace("Notes:", "").trim() || "",
       timings,
     };
   });
@@ -1885,7 +1907,7 @@ function DoctorAppointmentsPage() {
                             </button>
                           )}
                         </div>
-                        <div className="grid gap-4 sm:grid-cols-3">
+                        <div className="grid gap-4 sm:grid-cols-2">
                           <div>
                             <label htmlFor={`medicine-name-${medicine.id}`} className="text-xs font-semibold text-slate-700">Medicine name</label>
                             <select
@@ -1918,6 +1940,20 @@ function DoctorAppointmentsPage() {
                               placeholder="e.g. 5 days"
                             />
                           </div>
+                          <div>
+                            <label htmlFor={`medicine-frequency-${medicine.id}`} className="text-xs font-semibold text-slate-700">Frequency</label>
+                            <select
+                              id={`medicine-frequency-${medicine.id}`}
+                              value={medicine.frequency}
+                              onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, frequency: event.target.value } : item))}
+                              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                            >
+                              <option value="">Select frequency</option>
+                              {medicineFrequencies.map((frequency) => (
+                                <option key={frequency} value={frequency}>{frequency}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                         <fieldset className="mt-4">
                           <legend className="text-xs font-semibold text-slate-700">Timing (select all that apply)</legend>
@@ -1938,6 +1974,19 @@ function DoctorAppointmentsPage() {
                             })}
                           </div>
                         </fieldset>
+                        <div className="mt-4">
+                          <label htmlFor={`medicine-notes-${medicine.id}`} className="text-xs font-semibold text-slate-700">
+                            Additional notes <span className="font-normal text-slate-400">(optional)</span>
+                          </label>
+                          <textarea
+                            id={`medicine-notes-${medicine.id}`}
+                            value={medicine.notes}
+                            onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, notes: event.target.value } : item))}
+                            rows={3}
+                            className="mt-2 w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-relaxed text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                            placeholder="Add special instructions, warnings, or other notes"
+                          />
+                        </div>
                       </article>
                     ))}
                   </div>
