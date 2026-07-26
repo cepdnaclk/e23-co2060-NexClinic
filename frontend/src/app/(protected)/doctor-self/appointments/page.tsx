@@ -220,6 +220,9 @@ function DoctorAppointmentsPage() {
   });
   const [medicalRecordTarget, setMedicalRecordTarget] =
     useState<AppointmentItem | null>(null);
+  const [prescriptionTarget, setPrescriptionTarget] =
+    useState<AppointmentItem | null>(null);
+  const [prescriptionDraft, setPrescriptionDraft] = useState("");
   const [medicalRecordDraft, setMedicalRecordDraft] =
     useState<MedicalRecordDraft>({
       observations: "",
@@ -237,6 +240,8 @@ function DoctorAppointmentsPage() {
   const [isSavingPatientNotes, setIsSavingPatientNotes] = useState(false);
   const [isLoadingMedicalRecord, setIsLoadingMedicalRecord] = useState(false);
   const [isSavingMedicalRecord, setIsSavingMedicalRecord] = useState(false);
+  const [isLoadingPrescription, setIsLoadingPrescription] = useState(false);
+  const [isSavingPrescription, setIsSavingPrescription] = useState(false);
   const [updatingAppointmentIds, setUpdatingAppointmentIds] = useState<
     string[]
   >([]);
@@ -674,7 +679,6 @@ function DoctorAppointmentsPage() {
             observations: medicalRecordDraft.observations,
             diagnosis: medicalRecordDraft.diagnosis,
             comments: medicalRecordDraft.comments,
-            prescriptions: medicalRecordDraft.prescriptions,
             recommendedTests: medicalRecordDraft.recommendedTests,
             followUpDate: medicalRecordDraft.followUpDate || undefined,
             followUpNotes: medicalRecordDraft.followUpNotes,
@@ -714,6 +718,86 @@ function DoctorAppointmentsPage() {
       window.setTimeout(() => setToastMessage(""), 2200);
     } finally {
       setIsSavingMedicalRecord(false);
+    }
+  };
+
+  const openPrescription = async (appointment: AppointmentItem) => {
+    setPrescriptionTarget(appointment);
+    setPrescriptionDraft("");
+    setIsLoadingPrescription(true);
+
+    try {
+      const response = await fetch(
+        `/api/doctor/appointments/${appointment.id}/medical-record`,
+        { method: "GET", cache: "no-store" },
+      );
+
+      if (response.status === 401) {
+        handleDoctorSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(
+          payload?.error || payload?.detail || "Failed to load prescription",
+        );
+      }
+
+      setPrescriptionDraft(payload?.medicalRecord?.prescriptions || "");
+    } catch (error) {
+      setToastMessage(
+        error instanceof Error ? error.message : "Failed to load prescription.",
+      );
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } finally {
+      setIsLoadingPrescription(false);
+    }
+  };
+
+  const closePrescription = () => {
+    setPrescriptionTarget(null);
+    setPrescriptionDraft("");
+    setIsLoadingPrescription(false);
+    setIsSavingPrescription(false);
+  };
+
+  const savePrescription = async () => {
+    if (!prescriptionTarget) return;
+
+    setIsSavingPrescription(true);
+    try {
+      const response = await fetch(
+        `/api/doctor/appointments/${prescriptionTarget.id}/medical-record`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prescriptions: prescriptionDraft }),
+        },
+      );
+
+      if (response.status === 401) {
+        handleDoctorSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(
+          payload?.error || payload?.detail || "Failed to save prescription",
+        );
+      }
+
+      setToastMessage("Prescription saved successfully.");
+      window.setTimeout(() => setToastMessage(""), 2200);
+      closePrescription();
+    } catch (error) {
+      setToastMessage(
+        error instanceof Error ? error.message : "Failed to save prescription.",
+      );
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } finally {
+      setIsSavingPrescription(false);
     }
   };
 
@@ -1290,12 +1374,21 @@ function DoctorAppointmentsPage() {
                     )}
                     {(appointment.status === "Accepted" ||
                       appointment.status === "Completed") && (
+                      <>
                         <WhiteButton
                           className="px-4 py-2"
                           onClick={() => void openMedicalRecord(appointment)}
                         >
                           Medical Record
                         </WhiteButton>
+                        <button
+                          type="button"
+                          onClick={() => void openPrescription(appointment)}
+                          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                        >
+                          Prescription
+                        </button>
+                      </>
                       )}
                     <WhiteButton
                       className="px-4 py-2"
@@ -1365,6 +1458,13 @@ function DoctorAppointmentsPage() {
                       >
                         Medical Record
                       </WhiteButton>
+                      <button
+                        type="button"
+                        onClick={() => void openPrescription(appointment)}
+                        className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                      >
+                        Prescription
+                      </button>
                       <WhiteButton
                         className="px-4 py-2"
                         onClick={() =>
@@ -1595,13 +1695,96 @@ function DoctorAppointmentsPage() {
         </div>
       )}
 
+      {prescriptionTarget && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/55 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="prescription-title"
+        >
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-[2rem] border border-emerald-100 bg-white shadow-2xl">
+            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-br from-emerald-100/80 via-teal-50 to-transparent" />
+            <div className="relative border-b border-emerald-100 px-6 py-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6m7-3a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700">
+                      Doctor order
+                    </p>
+                    <h3 id="prescription-title" className="mt-1 text-xl font-bold text-slate-900">
+                      Prescription
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {prescriptionTarget.patientName} · {prescriptionTarget.date} · {prescriptionTarget.location}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={closePrescription}
+                  className="rounded-full p-2 text-slate-500 transition hover:bg-white hover:text-slate-800"
+                  aria-label="Close prescription dialog"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div className="relative p-6">
+              {isLoadingPrescription ? (
+                <div className="flex min-h-48 items-center justify-center text-sm text-slate-500">
+                  Loading prescription...
+                </div>
+              ) : (
+                <>
+                  <label htmlFor="prescription-details" className="text-sm font-bold text-slate-800">
+                    Medicines and instructions
+                  </label>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Include medicine name, dosage, frequency, duration, and special instructions.
+                  </p>
+                  <textarea
+                    id="prescription-details"
+                    value={prescriptionDraft}
+                    onChange={(event) => setPrescriptionDraft(event.target.value)}
+                    rows={9}
+                    className="mt-4 w-full rounded-2xl border border-emerald-200 bg-emerald-50/30 px-4 py-3 text-sm leading-relaxed text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                    placeholder={"Example:\nAmoxicillin 500 mg — one capsule every 8 hours for 5 days, after meals."}
+                  />
+                  <p className="mt-2 text-xs text-slate-500">
+                    Reopen this Prescription card at any time to update the instructions.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 bg-slate-50/70 px-6 py-4">
+              <WhiteButton disabled={isSavingPrescription} onClick={closePrescription}>
+                Cancel
+              </WhiteButton>
+              <GreenButton
+                disabled={isLoadingPrescription || isSavingPrescription}
+                onClick={() => void savePrescription()}
+              >
+                {isSavingPrescription ? "Saving..." : "Save Prescription"}
+              </GreenButton>
+            </div>
+          </div>
+        </div>
+      )}
+
       {medicalRecordTarget && (
         <div
           className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-900/55 p-4"
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-3xl rounded-[2rem] border border-white/80 bg-white p-6 shadow-2xl">
+          <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border border-white/80 bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-xl font-bold text-slate-900">
@@ -1666,8 +1849,7 @@ function DoctorAppointmentsPage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
+                  <div>
                       <label className="block text-sm font-semibold text-slate-700">
                         Comments
                       </label>
@@ -1679,16 +1861,33 @@ function DoctorAppointmentsPage() {
                             comments: event.target.value,
                           }))
                         }
-                        rows={4}
+                        rows={3}
                         className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
                         placeholder="Doctor comments, warnings, or clinical remarks"
                       />
+                  </div>
+
+                  {false && <section className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-4 shadow-sm">
+                    <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-200/40 blur-2xl" />
+                    <div className="relative flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6m7-3a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900">Prescription</h4>
+                        <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                          Add or update medicines, dosage, frequency, duration, and patient instructions.
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700">
-                        Prescriptions
+                    <div className="relative mt-4">
+                      <label htmlFor="appointment-prescription" className="sr-only">
+                        Prescription details
                       </label>
                       <textarea
+                        id="appointment-prescription"
                         value={medicalRecordDraft.prescriptions}
                         onChange={(event) =>
                           setMedicalRecordDraft((prev) => ({
@@ -1696,12 +1895,15 @@ function DoctorAppointmentsPage() {
                             prescriptions: event.target.value,
                           }))
                         }
-                        rows={4}
-                        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
-                        placeholder="Medicines, dosage, and usage instructions"
+                        rows={5}
+                        className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 shadow-inner outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                        placeholder={"Example:\nAmoxicillin 500 mg — one capsule every 8 hours for 5 days, after meals."}
                       />
+                      <p className="mt-2 text-[11px] font-medium text-emerald-700">
+                        The prescription remains editable when this medical record is reopened.
+                      </p>
                     </div>
-                  </div>
+                  </section>}
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>

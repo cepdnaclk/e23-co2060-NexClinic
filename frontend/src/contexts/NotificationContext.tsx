@@ -37,12 +37,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const fetchNotifications = useCallback(async () => {
         try {
             const token = localStorage.getItem('authToken');
-            if (!token) return;
+            if (!token) {
+                setIsLoading(false);
+                return;
+            }
 
-            const res = await fetch('http://localhost:8000/api/notifications/', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const res = await fetch('/api/notifications', {
+                credentials: 'include',
+                cache: 'no-store',
             });
             if (res.ok) {
                 const data = await res.json();
@@ -51,10 +53,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 setUnreadCount(fetchedNotifications.filter((n: Notification) => !n.is_read).length);
             }
 
-            const prefRes = await fetch('http://localhost:8000/api/notifications/preferences/', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const prefRes = await fetch('/api/notifications/preferences', {
+                credentials: 'include',
+                cache: 'no-store',
             });
             if (prefRes.ok) {
                 const prefData = await prefRes.json();
@@ -68,47 +69,56 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, []);
 
     useEffect(() => {
-        fetchNotifications();
+        let ws: WebSocket | null = null;
+        let cancelled = false;
 
-        const token = localStorage.getItem('authToken');
-        if (!token) return;
+        const initializeNotifications = async () => {
+            await fetchNotifications();
+            if (cancelled) return;
 
-        // Establish WebSocket connection
-        const ws = new WebSocket(`ws://localhost:8000/ws/notifications/?token=${token}`);
+            // The refresh-aware HTTP request above synchronizes localStorage
+            // before the WebSocket is opened.
+            const token = localStorage.getItem('authToken');
+            if (!token) return;
 
-        ws.onmessage = (event) => {
-            try {
-                const newNotification = JSON.parse(event.data);
-                setNotifications(prev => [newNotification, ...prev]);
-                setUnreadCount(prev => prev + 1);
-            } catch (err) {
-                console.error("Error parsing websocket message", err);
-            }
+            const backendUrl =
+                process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+            const websocketBase = backendUrl.replace(/^http/, 'ws').replace(/\/$/, '');
+            ws = new WebSocket(
+                `${websocketBase}/ws/notifications/?token=${encodeURIComponent(token)}`,
+            );
+
+            ws.onmessage = (event) => {
+                try {
+                    const newNotification = JSON.parse(event.data);
+                    setNotifications(prev => [newNotification, ...prev]);
+                    setUnreadCount(prev => prev + 1);
+                } catch (err) {
+                    console.error("Error parsing websocket message", err);
+                }
+            };
         };
 
-        ws.onclose = () => {
-            console.log("Notification WebSocket closed");
-        };
+        void initializeNotifications();
 
         return () => {
-            ws.close();
+            cancelled = true;
+            ws?.close();
         };
     }, [fetchNotifications]);
 
     const toggleDnd = async () => {
         try {
-            const token = localStorage.getItem('authToken');
             const newDndState = !dndEnabled;
             setDndEnabled(newDndState); // Optimistic UI update
             
-            await fetch(`http://localhost:8000/api/notifications/preferences/`, {
+            const response = await fetch('/api/notifications/preferences', {
                 method: 'PATCH',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ dnd_enabled: newDndState })
             });
+            if (!response.ok) throw new Error("Failed to update notification preferences");
         } catch (err) {
             console.error("Failed to toggle DND", err);
             setDndEnabled(!dndEnabled); // Revert on error
@@ -117,11 +127,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const markAsRead = async (id: string) => {
         try {
-            const token = localStorage.getItem('authToken');
-            await fetch(`http://localhost:8000/api/notifications/${id}/mark_read/`, {
+            const response = await fetch(`/api/notifications/${id}/mark-read`, {
                 method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}` }
+                credentials: 'include',
             });
+            if (!response.ok) throw new Error("Failed to mark notification as read");
             
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
             setUnreadCount(prev => Math.max(0, prev - 1));
@@ -132,11 +142,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const markAllAsRead = async () => {
         try {
-            const token = localStorage.getItem('authToken');
-            await fetch(`http://localhost:8000/api/notifications/mark_all_read/`, {
+            const response = await fetch('/api/notifications/mark-all-read', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                credentials: 'include',
             });
+            if (!response.ok) throw new Error("Failed to mark all notifications as read");
             
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
             setUnreadCount(0);
