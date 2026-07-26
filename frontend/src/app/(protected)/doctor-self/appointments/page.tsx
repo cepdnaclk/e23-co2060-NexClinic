@@ -122,6 +122,86 @@ type MedicalRecordDraft = {
   followUpNotes: string;
 };
 
+type MedicineTiming =
+  | "Before meals"
+  | "After meals"
+  | "Breakfast"
+  | "Lunch"
+  | "Night";
+
+type PrescriptionMedicine = {
+  id: string;
+  name: string;
+  dose: string;
+  timings: MedicineTiming[];
+};
+
+const medicineOptions = [
+  "Amoxicillin",
+  "Azithromycin",
+  "Cetirizine",
+  "Losartan",
+  "Metformin",
+  "Omeprazole",
+  "Paracetamol",
+  "Salbutamol",
+  "Vitamin C",
+];
+
+const medicineTimings: MedicineTiming[] = [
+  "Before meals",
+  "After meals",
+  "Breakfast",
+  "Lunch",
+  "Night",
+];
+
+const createPrescriptionMedicine = (): PrescriptionMedicine => ({
+  id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  name: "",
+  dose: "",
+  timings: [],
+});
+
+const serializePrescription = (medicines: PrescriptionMedicine[]) =>
+  medicines
+    .filter((medicine) => medicine.name || medicine.dose || medicine.timings.length)
+    .map(
+      (medicine) =>
+        `${medicine.name || "Medicine"} | Dose: ${medicine.dose || "Not specified"} | Timing: ${
+          medicine.timings.join(", ") || "Not specified"
+        }`,
+    )
+    .join("\n");
+
+const parsePrescription = (value: string): PrescriptionMedicine[] => {
+  if (!value.trim()) return [createPrescriptionMedicine()];
+
+  const parsed = value.split("\n").filter(Boolean).map((line) => {
+    const parts = line.split("|").map((part) => part.trim());
+    const dosePart = parts.find((part) => part.startsWith("Dose:"));
+    const timingPart = parts.find((part) => part.startsWith("Timing:"));
+    const timings = timingPart
+      ? timingPart
+          .replace("Timing:", "")
+          .split(",")
+          .map((timing) => timing.trim())
+          .filter((timing): timing is MedicineTiming =>
+            medicineTimings.includes(timing as MedicineTiming),
+          )
+      : [];
+
+    return {
+      id: createPrescriptionMedicine().id,
+      name: parts[0] || "",
+      dose: dosePart?.replace("Dose:", "").trim() || "",
+      timings,
+    };
+  });
+
+  return parsed.length ? parsed : [createPrescriptionMedicine()];
+};
+
 const statusFilters: AppointmentStatusFilter[] = [
   "All",
   "Accepted",
@@ -222,7 +302,9 @@ function DoctorAppointmentsPage() {
     useState<AppointmentItem | null>(null);
   const [prescriptionTarget, setPrescriptionTarget] =
     useState<AppointmentItem | null>(null);
-  const [prescriptionDraft, setPrescriptionDraft] = useState("");
+  const [prescriptionMedicines, setPrescriptionMedicines] = useState<
+    PrescriptionMedicine[]
+  >([createPrescriptionMedicine()]);
   const [medicalRecordDraft, setMedicalRecordDraft] =
     useState<MedicalRecordDraft>({
       observations: "",
@@ -723,7 +805,7 @@ function DoctorAppointmentsPage() {
 
   const openPrescription = async (appointment: AppointmentItem) => {
     setPrescriptionTarget(appointment);
-    setPrescriptionDraft("");
+    setPrescriptionMedicines([createPrescriptionMedicine()]);
     setIsLoadingPrescription(true);
 
     try {
@@ -744,7 +826,9 @@ function DoctorAppointmentsPage() {
         );
       }
 
-      setPrescriptionDraft(payload?.medicalRecord?.prescriptions || "");
+      setPrescriptionMedicines(
+        parsePrescription(payload?.medicalRecord?.prescriptions || ""),
+      );
     } catch (error) {
       setToastMessage(
         error instanceof Error ? error.message : "Failed to load prescription.",
@@ -757,7 +841,7 @@ function DoctorAppointmentsPage() {
 
   const closePrescription = () => {
     setPrescriptionTarget(null);
-    setPrescriptionDraft("");
+    setPrescriptionMedicines([createPrescriptionMedicine()]);
     setIsLoadingPrescription(false);
     setIsSavingPrescription(false);
   };
@@ -772,7 +856,9 @@ function DoctorAppointmentsPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prescriptions: prescriptionDraft }),
+          body: JSON.stringify({
+            prescriptions: serializePrescription(prescriptionMedicines),
+          }),
         },
       );
 
@@ -1742,7 +1828,7 @@ function DoctorAppointmentsPage() {
                 </div>
               ) : (
                 <>
-                  <label htmlFor="prescription-details" className="text-sm font-bold text-slate-800">
+                  {false && <><label htmlFor="prescription-details" className="text-sm font-bold text-slate-800">
                     Medicines and instructions
                   </label>
                   <p className="mt-1 text-xs text-slate-500">
@@ -1750,15 +1836,89 @@ function DoctorAppointmentsPage() {
                   </p>
                   <textarea
                     id="prescription-details"
-                    value={prescriptionDraft}
-                    onChange={(event) => setPrescriptionDraft(event.target.value)}
+                    value=""
+                    readOnly
                     rows={9}
                     className="mt-4 w-full rounded-2xl border border-emerald-200 bg-emerald-50/30 px-4 py-3 text-sm leading-relaxed text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
                     placeholder={"Example:\nAmoxicillin 500 mg — one capsule every 8 hours for 5 days, after meals."}
                   />
                   <p className="mt-2 text-xs text-slate-500">
                     Reopen this Prescription card at any time to update the instructions.
-                  </p>
+                  </p></>}
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-800">Medicines</h4>
+                      <p className="mt-1 text-xs text-slate-500">Add each medicine with its dose and all applicable timings.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPrescriptionMedicines((items) => [...items, createPrescriptionMedicine()])}
+                      className="shrink-0 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
+                    >
+                      + Add Medicine
+                    </button>
+                  </div>
+                  <div className="mt-4 max-h-[52vh] space-y-4 overflow-y-auto pr-1">
+                    {prescriptionMedicines.map((medicine, index) => (
+                      <article key={medicine.id} className="rounded-2xl border border-emerald-100 bg-emerald-50/30 p-4">
+                        <div className="mb-4 flex items-center justify-between">
+                          <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">Medicine {index + 1}</p>
+                          {prescriptionMedicines.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setPrescriptionMedicines((items) => items.filter((item) => item.id !== medicine.id))}
+                              className="text-xs font-semibold text-rose-600 hover:text-rose-700"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <label htmlFor={`medicine-name-${medicine.id}`} className="text-xs font-semibold text-slate-700">Medicine name</label>
+                            <select
+                              id={`medicine-name-${medicine.id}`}
+                              value={medicine.name}
+                              onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, name: event.target.value } : item))}
+                              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                            >
+                              <option value="">Select medicine</option>
+                              {medicineOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label htmlFor={`medicine-dose-${medicine.id}`} className="text-xs font-semibold text-slate-700">Dose</label>
+                            <input
+                              id={`medicine-dose-${medicine.id}`}
+                              value={medicine.dose}
+                              onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, dose: event.target.value } : item))}
+                              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                              placeholder="e.g. 500 mg, 1 tablet"
+                            />
+                          </div>
+                        </div>
+                        <fieldset className="mt-4">
+                          <legend className="text-xs font-semibold text-slate-700">Timing (select all that apply)</legend>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {medicineTimings.map((timing) => {
+                              const checked = medicine.timings.includes(timing);
+                              return (
+                                <label key={timing} className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold ${checked ? "border-emerald-300 bg-emerald-100 text-emerald-800" : "border-slate-200 bg-white text-slate-600"}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, timings: checked ? item.timings.filter((value) => value !== timing) : [...item.timings, timing] } : item))}
+                                    className="h-4 w-4 accent-emerald-600"
+                                  />
+                                  {timing}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </fieldset>
+                      </article>
+                    ))}
+                  </div>
                 </>
               )}
             </div>
