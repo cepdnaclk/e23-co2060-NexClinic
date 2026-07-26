@@ -90,10 +90,11 @@ class AppointmentAvailableSlot(models.Model):
         super().save(*args, **kwargs)
     
     def refresh_counts(self, save=True):
-        booked = self.appointments.count()
-        remaining = self.appointments.exclude(status=Appointment.Status.COMPLETED).count()
+        booked = self.appointments.filter(
+            status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED]
+        ).count()
         self.booked_count = booked
-        self.remaining_count = remaining
+        self.remaining_count = max(self.patient_limit - booked, 0)
 
         if save:
             self.save(update_fields=["booked_count", "remaining_count"])

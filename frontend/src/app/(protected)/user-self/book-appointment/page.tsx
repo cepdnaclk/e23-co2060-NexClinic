@@ -15,6 +15,9 @@ type AvailableSlot = {
   date: string;
   time: string;
   bookedCount: number;
+  patientLimit: number;
+  remainingCount: number;
+  isFull: boolean;
 };
 
 const formatTimeForDisplay = (time: string): string => {
@@ -89,11 +92,33 @@ const BookAppointmentPage = () => {
             typeof candidate.hospital === "string" &&
             typeof candidate.date === "string" &&
             typeof candidate.time === "string" &&
-            typeof candidate.bookedCount === "number"
+            typeof candidate.bookedCount === "number" &&
+            typeof candidate.patientLimit === "number" &&
+            typeof candidate.remainingCount === "number" &&
+            typeof candidate.isFull === "boolean"
           );
         }
       );
       setAvailableSlots(slots);
+
+      const params = new URLSearchParams(window.location.search);
+      const requestedDoctorId = params.get("doctor");
+      const requestedSlotId = params.get("slot");
+      const requestedSlot = requestedSlotId
+        ? slots.find((slot) => String(slot.id) === requestedSlotId)
+        : undefined;
+      const requestedDoctorSlot = requestedDoctorId
+        ? slots.find((slot) => slot.doctorId === requestedDoctorId)
+        : undefined;
+      const initialSlot = requestedSlot ?? requestedDoctorSlot;
+
+      if (initialSlot) {
+        setSelectedHospital(initialSlot.hospital);
+        setDoctorId(initialSlot.doctorId);
+        if (requestedSlot) {
+          setSlotId(String(requestedSlot.id));
+        }
+      }
 
       setSlotId((currentSlotId) =>
         slots.some((slot) => String(slot.id) === currentSlotId)
@@ -109,18 +134,6 @@ const BookAppointmentPage = () => {
       setLoadingSlots(false);
     }
   }, [router]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const initialDoctorFromQuery = params.get("doctor");
-    const initialSlotFromQuery = params.get("slot");
-    if (initialDoctorFromQuery) {
-      setDoctorId(initialDoctorFromQuery);
-    }
-    if (initialSlotFromQuery) {
-      setSlotId(initialSlotFromQuery);
-    }
-  }, []);
 
   useEffect(() => {
     void loadAvailableSlots();
