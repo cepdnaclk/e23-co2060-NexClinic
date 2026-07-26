@@ -133,6 +133,7 @@ type PrescriptionMedicine = {
   id: string;
   name: string;
   dose: string;
+  duration: string;
   timings: MedicineTiming[];
 };
 
@@ -160,15 +161,24 @@ const createPrescriptionMedicine = (): PrescriptionMedicine => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
   name: "",
   dose: "",
+  duration: "",
   timings: [],
 });
 
 const serializePrescription = (medicines: PrescriptionMedicine[]) =>
   medicines
-    .filter((medicine) => medicine.name || medicine.dose || medicine.timings.length)
+    .filter(
+      (medicine) =>
+        medicine.name ||
+        medicine.dose ||
+        medicine.duration ||
+        medicine.timings.length,
+    )
     .map(
       (medicine) =>
-        `${medicine.name || "Medicine"} | Dose: ${medicine.dose || "Not specified"} | Timing: ${
+        `${medicine.name || "Medicine"} | Dose: ${medicine.dose || "Not specified"} | Duration: ${
+          medicine.duration || "Not specified"
+        } | Timing: ${
           medicine.timings.join(", ") || "Not specified"
         }`,
     )
@@ -180,6 +190,7 @@ const parsePrescription = (value: string): PrescriptionMedicine[] => {
   const parsed = value.split("\n").filter(Boolean).map((line) => {
     const parts = line.split("|").map((part) => part.trim());
     const dosePart = parts.find((part) => part.startsWith("Dose:"));
+    const durationPart = parts.find((part) => part.startsWith("Duration:"));
     const timingPart = parts.find((part) => part.startsWith("Timing:"));
     const timings = timingPart
       ? timingPart
@@ -195,6 +206,7 @@ const parsePrescription = (value: string): PrescriptionMedicine[] => {
       id: createPrescriptionMedicine().id,
       name: parts[0] || "",
       dose: dosePart?.replace("Dose:", "").trim() || "",
+      duration: durationPart?.replace("Duration:", "").trim() || "",
       timings,
     };
   });
@@ -1873,7 +1885,7 @@ function DoctorAppointmentsPage() {
                             </button>
                           )}
                         </div>
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-4 sm:grid-cols-3">
                           <div>
                             <label htmlFor={`medicine-name-${medicine.id}`} className="text-xs font-semibold text-slate-700">Medicine name</label>
                             <select
@@ -1894,6 +1906,16 @@ function DoctorAppointmentsPage() {
                               onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, dose: event.target.value } : item))}
                               className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                               placeholder="e.g. 500 mg, 1 tablet"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor={`medicine-duration-${medicine.id}`} className="text-xs font-semibold text-slate-700">Duration</label>
+                            <input
+                              id={`medicine-duration-${medicine.id}`}
+                              value={medicine.duration}
+                              onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, duration: event.target.value } : item))}
+                              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                              placeholder="e.g. 5 days"
                             />
                           </div>
                         </div>
