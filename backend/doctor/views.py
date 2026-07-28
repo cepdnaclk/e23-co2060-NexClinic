@@ -1011,6 +1011,10 @@ class DoctorProfileView(APIView):
                 "location": location,
                 "chatFee": chat_fee,
                 "appointmentFee": appointment_fee,
+                "onlineDoctorPayment": float(doctor_profile.online_doctor_payment) if doctor_profile else 0.0,
+                "onlineHospitalCharge": float(doctor_profile.online_hospital_charge) if doctor_profile else 0.0,
+                "inpersonDoctorPayment": float(doctor_profile.inperson_doctor_payment) if doctor_profile else 0.0,
+                "inpersonHospitalCharge": float(doctor_profile.inperson_hospital_charge) if doctor_profile else 0.0,
                 "availabilityForOnlineAdvice": availability,
                 "onlineAdviceSchedule": [
                     "Monday, 2:00 PM - 5:00 PM",
@@ -1115,30 +1119,6 @@ class DoctorProfileView(APIView):
 
             doctor_profile.experience_years = experience_years
             update_fields.append("experience_years")
-
-        if "chatFee" in payload:
-            try:
-                chat_fee = float(payload.get("chatFee"))
-            except (TypeError, ValueError):
-                return Response({"detail": "chatFee must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
-
-            if chat_fee < 0:
-                return Response({"detail": "chatFee cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
-
-            doctor_profile.chat_fee = chat_fee
-            update_fields.append("chat_fee")
-
-        if "appointmentFee" in payload:
-            try:
-                appointment_fee = float(payload.get("appointmentFee"))
-            except (TypeError, ValueError):
-                return Response({"detail": "appointmentFee must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
-
-            if appointment_fee < 0:
-                return Response({"detail": "appointmentFee cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
-
-            doctor_profile.appointment_fee = appointment_fee
-            update_fields.append("appointment_fee")
 
         if "availabilityForOnlineAdvice" in payload:
             doctor_profile.availability = bool(payload.get("availabilityForOnlineAdvice"))
