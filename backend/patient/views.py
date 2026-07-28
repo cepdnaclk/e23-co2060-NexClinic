@@ -476,7 +476,7 @@ class PatientAppointmentsView(BasePatientAPIView):
                 patient=patient_profile,
                 reason=reason,
                 status=Appointment.Status.ACCEPTED,  # auto-accepted
-                hospital=Hospital.objects.filter(name=slot.hospital).first(),
+                hospital=slot.hospital,
             )
 
             slot.booked_count = current_booked + 1
