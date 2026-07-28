@@ -96,7 +96,8 @@ class Command(BaseCommand):
             patient=patient,
             hospital=hospital,
             reason=reason,
-            status=Appointment.Status.ACCEPTED
+            status=Appointment.Status.ACCEPTED,
+            appointment_fee=doctor.appointment_fee,
         )
 
         self.stdout.write(self.style.SUCCESS(

@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 
 from django.db import transaction
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Sum, Count, Q
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 
@@ -844,14 +844,21 @@ class DoctorDashboardView(APIView):
             status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
         ).count()
 
-        month_completed_count = appointment_queryset.filter(
+        appointment_earnings_data = appointment_queryset.filter(
             status=Appointment.Status.COMPLETED,
             slot__date__year=current_year,
             slot__date__month=current_month,
-        ).count()
+        ).aggregate(total=Sum('appointment_fee'))
+        appointment_earnings = float(appointment_earnings_data['total'] or 0.0)
 
-        appointment_fee = float(doctor_profile.appointment_fee) if doctor_profile else 0.0
-        month_earnings = int(month_completed_count * appointment_fee)
+        chat_earnings_data = AdviceChatThread.objects.filter(
+            doctor=doctor_profile,
+            started_at__year=current_year,
+            started_at__month=current_month,
+        ).aggregate(total=Sum('price_paid')) if doctor_profile else {'total': 0.0}
+        chat_earnings = float(chat_earnings_data['total'] or 0.0)
+
+        month_earnings = int(appointment_earnings + chat_earnings)
 
         upcoming_queryset = appointment_queryset.filter(
             slot__date__gte=today,

@@ -487,6 +487,7 @@ class PatientAppointmentsView(BasePatientAPIView):
                 reason=reason,
                 status=Appointment.Status.ACCEPTED,  # auto-accepted
                 hospital=slot.hospital,
+                appointment_fee=slot.doctor.appointment_fee,
             )
 
             # Appointment's post-save signal refreshes both counters from the

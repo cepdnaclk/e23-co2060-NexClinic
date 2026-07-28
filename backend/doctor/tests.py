@@ -200,6 +200,7 @@ class DoctorMedicalRecordViewTests(TestCase):
             patient=self.patient_profile,
             hospital=self.hospital,
             status=Appointment.Status.ACCEPTED,
+            appointment_fee=self.doctor_profile.appointment_fee
         )
 
     def test_doctor_can_save_medical_record_and_patient_can_view_it(self):
