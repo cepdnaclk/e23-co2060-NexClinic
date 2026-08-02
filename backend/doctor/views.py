@@ -15,7 +15,7 @@ from chat.models import AdviceChatThread
 from .constants import DOCTOR_SPECIALIZATIONS
 from doctor.models import AppointmentAvailableSlot, DoctorOnlineAdviceAvailability, Appointment, DoctorProfile
 from hospital.models import Hospital, HospitalAdmin, DoctorHospitalVerification, SlotTemplate, DoctorSlotTemplateAssignment
-from patient.models import PatientMedicalRecord
+from patient.models import PatientMedicalRecord, Prescription
 from patient.serializers import PatientMedicalRecordSerializer, PatientMedicalRecordUpsertSerializer
 from users.models import CustomUser
 from .serializers import (
@@ -1278,6 +1278,25 @@ class DoctorAppointmentMedicalRecordView(VerifiedDoctorAPIView):
                 medical_record.follow_up_notes = validated.get('followUpNotes') or ''
 
             medical_record.save()
+
+            if 'prescriptionItems' in validated:
+                medical_record.prescription_items.all().delete()
+                Prescription.objects.bulk_create([
+                    Prescription(
+                        medical_record=medical_record,
+                        patient=appointment.patient,
+                        doctor=doctor_profile,
+                        appointment=appointment,
+                        medicine_name=item['name'],
+                        amount=item.get('amount'),
+                        unit=item.get('unit', ''),
+                        duration=item.get('duration', ''),
+                        frequency=item.get('frequency', ''),
+                        timings=item.get('timings', []),
+                        notes=item.get('notes', ''),
+                    )
+                    for item in validated['prescriptionItems']
+                ])
 
         payload = PatientMedicalRecordSerializer(medical_record).data
         return Response(

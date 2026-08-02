@@ -897,7 +897,29 @@ function DoctorAppointmentsPage() {
       }
 
       setPrescriptionMedicines(
-        parsePrescription(payload?.medicalRecord?.prescriptions || ""),
+        payload?.medicalRecord?.prescriptionItems?.length
+          ? payload.medicalRecord.prescriptionItems.map(
+              (item: {
+                id: string | number;
+                name: string;
+                amount: string | number | null;
+                unit: string;
+                duration: string;
+                frequency: string;
+                timings: MedicineTiming[];
+                notes: string;
+              }) => ({
+                id: String(item.id),
+                name: item.name || "",
+                dose: item.amount == null ? "" : String(item.amount),
+                unit: item.unit || "",
+                duration: item.duration || "",
+                frequency: item.frequency || "",
+                timings: item.timings || [],
+                notes: item.notes || "",
+              }),
+            )
+          : parsePrescription(payload?.medicalRecord?.prescriptions || ""),
       );
     } catch (error) {
       setToastMessage(
@@ -928,6 +950,26 @@ function DoctorAppointmentsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             prescriptions: serializePrescription(prescriptionMedicines),
+            prescriptionItems: prescriptionMedicines
+              .filter(
+                (medicine) =>
+                  medicine.name ||
+                  medicine.dose ||
+                  medicine.unit ||
+                  medicine.duration ||
+                  medicine.frequency ||
+                  medicine.notes ||
+                  medicine.timings.length,
+              )
+              .map((medicine) => ({
+                name: medicine.name || "Medicine",
+                amount: medicine.dose ? Number(medicine.dose) : null,
+                unit: medicine.unit,
+                duration: medicine.duration,
+                frequency: medicine.frequency,
+                timings: medicine.timings,
+                notes: medicine.notes,
+              })),
           }),
         },
       );

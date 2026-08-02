@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PatientMedicalRecord, PatientProfile
+from .models import PatientMedicalRecord, PatientProfile, Prescription
 
 
 @admin.register(PatientProfile)
@@ -24,3 +24,18 @@ class PatientMedicalRecordAdmin(admin.ModelAdmin):
         "diagnosis",
     )
     list_filter = ("visit_date", "hospital_name")
+
+
+@admin.register(Prescription)
+class PrescriptionAdmin(admin.ModelAdmin):
+    list_display = (
+        "medicine_name",
+        "amount",
+        "unit",
+        "patient",
+        "doctor",
+        "appointment",
+        "updated_at",
+    )
+    search_fields = ("medicine_name", "patient__full_name", "doctor__full_name")
+    list_filter = ("unit", "created_at")
