@@ -90,10 +90,11 @@ class AppointmentAvailableSlot(models.Model):
         super().save(*args, **kwargs)
     
     def refresh_counts(self, save=True):
-        booked = self.appointments.count()
-        remaining = self.appointments.exclude(status=Appointment.Status.COMPLETED).count()
+        booked = self.appointments.filter(
+            status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED]
+        ).count()
         self.booked_count = booked
-        self.remaining_count = remaining
+        self.remaining_count = max(self.patient_limit - booked, 0)
 
         if save:
             self.save(update_fields=["booked_count", "remaining_count"])
@@ -138,6 +139,7 @@ class Appointment(models.Model):
     reason = models.TextField(blank=True, default="")
     # The hospital where the appointment will take place. Nullable for backwards compatibility.
     hospital = models.ForeignKey('hospital.Hospital', null=True, blank=True, on_delete=models.PROTECT, related_name='appointments')
+    appointment_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING )
 
     # Cancellation metadata

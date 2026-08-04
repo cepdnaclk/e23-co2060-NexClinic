@@ -41,7 +41,7 @@ def run_checks():
     puser = CustomUser.objects.create_user(email=f'pch+{uuid.uuid4().hex[:6]}@example.com', password='pass', role=CustomUser.Role.PATIENT)
     patient = PatientProfile.objects.create(user=puser, full_name='PatChk', date_of_birth=timezone.now().date(), gender='Other', phone='0123456', address='Nowhere')
     slot = AppointmentAvailableSlot.objects.filter(hospital=h).first()
-    appt = Appointment.objects.create(slot=slot, doctor=doctor, patient=patient, hospital=h, status=Appointment.Status.ACCEPTED)
+    appt = Appointment.objects.create(slot=slot, doctor=doctor, patient=patient, hospital=h, status=Appointment.Status.ACCEPTED, appointment_fee=doctor.appointment_fee)
     booked = ActivityLog.objects.filter(action='appointment_booked').exists()
     print('Appointment booked log created:', booked)
 

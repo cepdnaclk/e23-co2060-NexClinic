@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BlackButton from "../buttons/BlackButton";
 import axios from "axios";
@@ -11,12 +11,20 @@ function DoctorLoginForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const submissionInProgress = useRef(false);
     const router = useRouter();
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
 
         // Prevent refreshing the entire page
         event.preventDefault();
+
+        // React state updates are asynchronous, so use a synchronous lock to
+        // prevent rapid clicks or repeated Enter presses from sending duplicates.
+        if (submissionInProgress.current) {
+            return;
+        }
+        submissionInProgress.current = true;
 
         // Set errors to empty
         setError("");
@@ -40,12 +48,8 @@ function DoctorLoginForm() {
             localStorage.setItem("userRole", role);
             localStorage.setItem("userInfo", JSON.stringify({ ...user, role }));
 
-            const secureFlag = window.location.protocol === "https:" ? "; secure" : "";
-            document.cookie = `authToken=${token}; path=/; max-age=86400; samesite=lax${secureFlag}`;
-            document.cookie = `userRole=${role}; path=/; max-age=86400; samesite=lax${secureFlag}`;
-
             // Redirect to doctor dashboard after successful login
-            router.push("/doctor-self/dashboard");
+            router.replace("/doctor-self/dashboard");
             // router.push("/doctor-self/profile");
 
         } catch (err: any) {
@@ -65,6 +69,7 @@ function DoctorLoginForm() {
             setPassword("");
             console.error("Login error:", err);
         } finally {
+            submissionInProgress.current = false;
             setLoading(false);
         }
     };

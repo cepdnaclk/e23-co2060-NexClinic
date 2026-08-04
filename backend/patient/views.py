@@ -7,14 +7,14 @@ from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import F
+from django.db.models import Count, F, Q
 
 from doctor.models import (
     Appointment,
     AppointmentAvailableSlot,
 )
 from chat.models import AdviceChatThread
-from hospital.models import DoctorHospitalVerification, Hospital
+from hospital.models import DoctorHospitalVerification
 
 from .serializers import (
     PatientAppointmentSerializer,
@@ -316,6 +316,18 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
                 doctor__hospital_app_verifications__hospital_id=F("hospital_id"),
                 doctor__hospital_app_verifications__status=DoctorHospitalVerification.Status.VERIFIED,
             )
+            .annotate(
+                active_booking_count=Count(
+                    "appointments",
+                    filter=Q(
+                        appointments__status__in=[
+                            Appointment.Status.PENDING,
+                            Appointment.Status.ACCEPTED,
+                        ]
+                    ),
+                )
+            )
+            .filter(active_booking_count__lt=F("patient_limit"))
             .order_by("date", "start_time")
         )
 
@@ -457,11 +469,12 @@ class PatientAppointmentsView(BasePatientAPIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            current_booked = (
-                slot.booked_count
-                if slot.booked_count is not None
-                else slot.appointments.count()
-            )
+            current_booked = slot.appointments.filter(
+                status__in=[
+                    Appointment.Status.PENDING,
+                    Appointment.Status.ACCEPTED,
+                ]
+            ).count()
             if current_booked >= slot.patient_limit:
                 return Response(
                     {"detail": "This slot is full."}, status=status.HTTP_400_BAD_REQUEST
@@ -473,12 +486,12 @@ class PatientAppointmentsView(BasePatientAPIView):
                 patient=patient_profile,
                 reason=reason,
                 status=Appointment.Status.ACCEPTED,  # auto-accepted
-                hospital=Hospital.objects.filter(name=slot.hospital).first(),
+                hospital=slot.hospital,
+                appointment_fee=slot.doctor.appointment_fee,
             )
 
-            slot.booked_count = current_booked + 1
-            slot.remaining_count = max(slot.patient_limit - slot.booked_count, 0)
-            slot.save(update_fields=["booked_count", "remaining_count"])
+            # Appointment's post-save signal refreshes both counters from the
+            # authoritative set of active bookings.
 
         payload = PatientAppointmentSerializer(appointment).data
         return Response(
