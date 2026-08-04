@@ -133,6 +133,7 @@ type PrescriptionMedicine = {
   id: string;
   name: string;
   dose: string;
+  unit: string;
   duration: string;
   frequency: string;
   notes: string;
@@ -171,10 +172,23 @@ const medicineFrequencies = [
   "As needed",
 ];
 
+const medicineUnits = [
+  "mg",
+  "g",
+  "mcg",
+  "mL",
+  "tablet",
+  "capsule",
+  "drop",
+  "puff",
+  "teaspoon",
+];
+
 const createPrescriptionMedicine = (): PrescriptionMedicine => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
   name: "",
   dose: "",
+  unit: "",
   duration: "",
   frequency: "",
   notes: "",
@@ -187,6 +201,7 @@ const serializePrescription = (medicines: PrescriptionMedicine[]) =>
       (medicine) =>
         medicine.name ||
         medicine.dose ||
+        medicine.unit ||
         medicine.duration ||
         medicine.frequency ||
         medicine.notes ||
@@ -194,7 +209,7 @@ const serializePrescription = (medicines: PrescriptionMedicine[]) =>
     )
     .map(
       (medicine) =>
-        `${medicine.name || "Medicine"} | Dose: ${medicine.dose || "Not specified"} | Duration: ${
+        `${medicine.name || "Medicine"} | Amount: ${medicine.dose || "Not specified"} | Unit: ${medicine.unit || "Not specified"} | Duration: ${
           medicine.duration || "Not specified"
         } | Frequency: ${medicine.frequency || "Not specified"} | Timing: ${
           medicine.timings.join(", ") || "Not specified"
@@ -207,7 +222,9 @@ const parsePrescription = (value: string): PrescriptionMedicine[] => {
 
   const parsed = value.split("\n").filter(Boolean).map((line) => {
     const parts = line.split("|").map((part) => part.trim());
+    const amountPart = parts.find((part) => part.startsWith("Amount:"));
     const dosePart = parts.find((part) => part.startsWith("Dose:"));
+    const unitPart = parts.find((part) => part.startsWith("Unit:"));
     const durationPart = parts.find((part) => part.startsWith("Duration:"));
     const frequencyPart = parts.find((part) => part.startsWith("Frequency:"));
     const notesPart = parts.find((part) => part.startsWith("Notes:"));
@@ -222,10 +239,29 @@ const parsePrescription = (value: string): PrescriptionMedicine[] => {
           )
       : [];
 
+    const legacyDose = dosePart?.replace("Dose:", "").trim() || "";
+    const legacyDoseMatch = legacyDose.match(
+      /^(.+?)\s+(mg|g|mcg|mL|ml|tablets?|capsules?|drops?|puffs?|teaspoons?)$/i,
+    );
+    const parsedAmount =
+      amountPart?.replace("Amount:", "").trim() ||
+      legacyDoseMatch?.[1] ||
+      legacyDose;
+    const parsedUnit =
+      unitPart?.replace("Unit:", "").trim() ||
+      legacyDoseMatch?.[2]?.replace(/s$/i, "") ||
+      "";
+
     return {
       id: createPrescriptionMedicine().id,
       name: parts[0] || "",
-      dose: dosePart?.replace("Dose:", "").trim() || "",
+      dose: parsedAmount === "Not specified" ? "" : parsedAmount,
+      unit:
+        parsedUnit === "Not specified"
+          ? ""
+          : parsedUnit.toLowerCase() === "ml"
+            ? "mL"
+            : parsedUnit,
       duration: durationPart?.replace("Duration:", "").trim() || "",
       frequency: frequencyPart?.replace("Frequency:", "").trim() || "",
       notes: notesPart?.replace("Notes:", "").trim() || "",
@@ -861,7 +897,29 @@ function DoctorAppointmentsPage() {
       }
 
       setPrescriptionMedicines(
-        parsePrescription(payload?.medicalRecord?.prescriptions || ""),
+        payload?.medicalRecord?.prescriptionItems?.length
+          ? payload.medicalRecord.prescriptionItems.map(
+              (item: {
+                id: string | number;
+                name: string;
+                amount: string | number | null;
+                unit: string;
+                duration: string;
+                frequency: string;
+                timings: MedicineTiming[];
+                notes: string;
+              }) => ({
+                id: String(item.id),
+                name: item.name || "",
+                dose: item.amount == null ? "" : String(item.amount),
+                unit: item.unit || "",
+                duration: item.duration || "",
+                frequency: item.frequency || "",
+                timings: item.timings || [],
+                notes: item.notes || "",
+              }),
+            )
+          : parsePrescription(payload?.medicalRecord?.prescriptions || ""),
       );
     } catch (error) {
       setToastMessage(
@@ -892,6 +950,26 @@ function DoctorAppointmentsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             prescriptions: serializePrescription(prescriptionMedicines),
+            prescriptionItems: prescriptionMedicines
+              .filter(
+                (medicine) =>
+                  medicine.name ||
+                  medicine.dose ||
+                  medicine.unit ||
+                  medicine.duration ||
+                  medicine.frequency ||
+                  medicine.notes ||
+                  medicine.timings.length,
+              )
+              .map((medicine) => ({
+                name: medicine.name || "Medicine",
+                amount: medicine.dose ? Number(medicine.dose) : null,
+                unit: medicine.unit,
+                duration: medicine.duration,
+                frequency: medicine.frequency,
+                timings: medicine.timings,
+                notes: medicine.notes,
+              })),
           }),
         },
       );
@@ -1921,14 +1999,34 @@ function DoctorAppointmentsPage() {
                             </select>
                           </div>
                           <div>
-                            <label htmlFor={`medicine-dose-${medicine.id}`} className="text-xs font-semibold text-slate-700">Dose</label>
-                            <input
-                              id={`medicine-dose-${medicine.id}`}
-                              value={medicine.dose}
-                              onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, dose: event.target.value } : item))}
-                              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
-                              placeholder="e.g. 500 mg, 1 tablet"
-                            />
+                            <span className="text-xs font-semibold text-slate-700">Dose</span>
+                            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(7rem,0.7fr)] gap-2">
+                              <div>
+                                <label htmlFor={`medicine-dose-${medicine.id}`} className="sr-only">Amount</label>
+                                <input
+                                  id={`medicine-dose-${medicine.id}`}
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={medicine.dose}
+                                  onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, dose: event.target.value } : item))}
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                                  placeholder="Amount"
+                                />
+                              </div>
+                              <div>
+                                <label htmlFor={`medicine-unit-${medicine.id}`} className="sr-only">Unit</label>
+                                <select
+                                  id={`medicine-unit-${medicine.id}`}
+                                  value={medicine.unit}
+                                  onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, unit: event.target.value } : item))}
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                                >
+                                  <option value="">Unit</option>
+                                  {medicineUnits.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+                                </select>
+                              </div>
+                            </div>
                           </div>
                           <div>
                             <label htmlFor={`medicine-duration-${medicine.id}`} className="text-xs font-semibold text-slate-700">Duration</label>
