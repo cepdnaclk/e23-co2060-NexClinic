@@ -115,3 +115,22 @@ class Prescription(models.Model):
 
     def __str__(self):
         return f"{self.medicine_name} - {self.patient.full_name}"
+
+
+class PatientMedication(models.Model):
+    patient = models.ForeignKey(
+        PatientProfile, on_delete=models.CASCADE, related_name="patient_medications"
+    )
+    name = models.CharField(max_length=255)
+    dosage = models.CharField(max_length=255)
+    frequency = models.CharField(max_length=255)
+    duration = models.CharField(max_length=255, blank=True, default="")
+    prescribing_doctor = models.CharField(max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.name} - {self.patient.full_name}"

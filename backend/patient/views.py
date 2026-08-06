@@ -23,8 +23,10 @@ from .serializers import (
     PatientAppointmentCancelSerializer,
     PatientMedicalRecordSerializer,
     PatientProfileUpdateSerializer,
+    PatientMedicationSerializer,
     is_slot_in_past,
 )
+from .models import PatientMedication
 
 
 class BasePatientAPIView(APIView):
@@ -575,3 +577,39 @@ class PatientAppointmentCancelView(BasePatientAPIView):
             {"message": "Appointment cancelled successfully.", "appointment": payload},
             status=status.HTTP_200_OK,
         )
+
+
+class PatientMedicationsView(BasePatientAPIView):
+    def get(self, request, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        medications = PatientMedication.objects.filter(patient=patient_profile)
+        serializer = PatientMedicationSerializer(medications, many=True)
+        return Response({"medications": serializer.data})
+
+    def post(self, request, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        serializer = PatientMedicationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(patient=patient_profile)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PatientMedicationDetailView(BasePatientAPIView):
+    def delete(self, request, medication_id, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        try:
+            medication = PatientMedication.objects.get(id=medication_id, patient=patient_profile)
+            medication.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except PatientMedication.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)

@@ -4,7 +4,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from doctor.models import Appointment, AppointmentAvailableSlot
-from patient.models import PatientMedicalRecord, PatientProfile, Prescription
+from patient.models import PatientMedicalRecord, PatientProfile, Prescription, PatientMedication
 from users.models import CustomUser
 
 
@@ -383,3 +383,19 @@ def is_slot_in_past(slot_obj):
     naive_dt = datetime.combine(slot_obj.date, slot_obj.start_time)
     slot_dt = timezone.make_aware(naive_dt, timezone.get_current_timezone())
     return slot_dt < timezone.now()
+
+
+class PatientMedicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatientMedication
+        fields = [
+            "id",
+            "name",
+            "dosage",
+            "frequency",
+            "duration",
+            "prescribing_doctor",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
