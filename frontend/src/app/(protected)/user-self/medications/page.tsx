@@ -41,7 +41,7 @@ export default function MedicationsPage() {
         setIsLoading(false);
       }
     };
-    
+
     void fetchMedications();
   }, []);
 
@@ -50,7 +50,7 @@ export default function MedicationsPage() {
     if (!name.trim() || !dosage.trim()) return;
 
     setIsSubmitting(true);
-    
+
     try {
       const response = await fetch("/api/patient/medications/", {
         method: "POST",
@@ -67,7 +67,7 @@ export default function MedicationsPage() {
       if (response.ok) {
         const newMedication = await response.json();
         setMedications((prev) => [newMedication, ...prev]);
-        
+
         // Reset form
         setName("");
         setDosage("");
@@ -91,7 +91,7 @@ export default function MedicationsPage() {
       const response = await fetch(`/api/patient/medications/${id}/`, {
         method: "DELETE",
       });
-      
+
       if (response.ok) {
         setMedications((prev) => prev.filter((med) => med.id !== id));
         toast?.success("Medication removed");

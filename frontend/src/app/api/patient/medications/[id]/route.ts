@@ -6,10 +6,11 @@ const BACKEND_URL =
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const id = params.id;
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
     return await proxyBackendWithRefresh({
       request,
       endpoint: `${BACKEND_URL}/api/patient/medications/${id}/`,
