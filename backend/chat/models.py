@@ -29,6 +29,7 @@ class AdviceChatThread(models.Model):
 	last_message_at = models.DateTimeField(null=True, blank=True)
 	expires_at = models.DateTimeField(null=True, blank=True)
 	price_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+	is_active = models.BooleanField(default=False)
 
 	class Meta:
 		constraints = [
@@ -42,6 +43,15 @@ class AdviceChatThread(models.Model):
 			models.Index(fields=["patient", "status"]),
 			models.Index(fields=["last_message_at"]),
 		]
+
+	@property
+	def is_expired(self):
+		from django.utils import timezone
+		if self.status == self.Status.CLOSED:
+			return True
+		if self.expires_at and timezone.now() > self.expires_at:
+			return True
+		return False
 
 	def __str__(self):
 		doctor_name = self.doctor.preferred_name or self.doctor.full_name or "Doctor"

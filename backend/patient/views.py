@@ -476,6 +476,17 @@ class PatientAppointmentsView(BasePatientAPIView):
                 hospital=slot.hospital,
             )
 
+            # Auto-activate a free AdviceChatThread for the patient
+            # Expiring 24 hours from the time of booking
+            expires_at = timezone.now() + timedelta(days=1)
+            AdviceChatThread.objects.create(
+                patient=patient_profile,
+                doctor=slot.doctor,
+                expires_at=expires_at,
+                is_active=True,
+                status=AdviceChatThread.Status.ACTIVE,
+            )
+
             slot.booked_count = current_booked + 1
             slot.remaining_count = max(slot.patient_limit - slot.booked_count, 0)
             slot.save(update_fields=["booked_count", "remaining_count"])
