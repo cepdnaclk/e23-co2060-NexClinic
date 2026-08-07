@@ -4,7 +4,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from doctor.models import Appointment, AppointmentAvailableSlot
-from patient.models import PatientMedicalRecord, PatientProfile
+from patient.models import PatientMedicalRecord, PatientProfile, Prescription
 from users.models import CustomUser
 
 
@@ -284,6 +284,14 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
         return instance
 
 
+class PrescriptionSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="medicine_name")
+
+    class Meta:
+        model = Prescription
+        fields = ["id", "name", "amount", "unit", "duration", "frequency", "timings", "notes"]
+
+
 class PatientMedicalRecordSerializer(serializers.ModelSerializer):
     appointmentId = serializers.SerializerMethodField()
     doctorName = serializers.SerializerMethodField()
@@ -291,6 +299,7 @@ class PatientMedicalRecordSerializer(serializers.ModelSerializer):
     createdAt = serializers.SerializerMethodField()
     updatedAt = serializers.SerializerMethodField()
     followUpDate = serializers.SerializerMethodField()
+    prescriptionItems = PrescriptionSerializer(source="prescription_items", many=True, read_only=True)
 
     class Meta:
         model = PatientMedicalRecord
@@ -304,6 +313,7 @@ class PatientMedicalRecordSerializer(serializers.ModelSerializer):
             "diagnosis",
             "comments",
             "prescriptions",
+            "prescriptionItems",
             "recommended_tests",
             "followUpDate",
             "follow_up_notes",
@@ -335,6 +345,9 @@ class PatientMedicalRecordUpsertSerializer(serializers.Serializer):
     diagnosis = serializers.CharField(required=False, allow_blank=True)
     comments = serializers.CharField(required=False, allow_blank=True)
     prescriptions = serializers.CharField(required=False, allow_blank=True)
+    prescriptionItems = serializers.ListField(
+        child=serializers.DictField(), required=False, allow_empty=True
+    )
     recommendedTests = serializers.CharField(required=False, allow_blank=True)
     followUpDate = serializers.DateField(required=False)
     followUpNotes = serializers.CharField(required=False, allow_blank=True)
@@ -345,6 +358,25 @@ class PatientMedicalRecordUpsertSerializer(serializers.Serializer):
                 "At least one medical record field must be provided."
             )
         return attrs
+
+    def validate_prescriptionItems(self, items):
+        serializer = PrescriptionItemUpsertSerializer(data=items, many=True)
+        serializer.is_valid(raise_exception=True)
+        return serializer.validated_data
+
+
+class PrescriptionItemUpsertSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255)
+    amount = serializers.DecimalField(
+        max_digits=10, decimal_places=3, required=False, allow_null=True
+    )
+    unit = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    duration = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    frequency = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    timings = serializers.ListField(
+        child=serializers.CharField(max_length=30), required=False, allow_empty=True
+    )
+    notes = serializers.CharField(required=False, allow_blank=True)
 
 
 def is_slot_in_past(slot_obj):
