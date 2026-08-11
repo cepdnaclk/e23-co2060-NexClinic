@@ -12,6 +12,7 @@ type Medication = {
   duration: string;
   prescribing_doctor: string;
   created_at: string;
+  is_prescription?: boolean;
 };
 
 export default function MedicationsPage() {
@@ -264,13 +265,20 @@ export default function MedicationsPage() {
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => removeMedication(med.id)}
-                          className="rounded-lg p-2 text-slate-400 dark:text-slate-500 transition hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400"
-                          aria-label="Remove medication"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {!med.is_prescription && (
+                          <button
+                            onClick={() => removeMedication(med.id)}
+                            className="rounded-lg p-2 text-slate-400 dark:text-slate-500 transition hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 dark:hover:text-rose-400"
+                            aria-label="Remove medication"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                        {med.is_prescription && (
+                          <div className="flex items-center self-start gap-1 text-xs font-semibold tracking-wide uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800/50">
+                            Prescription
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

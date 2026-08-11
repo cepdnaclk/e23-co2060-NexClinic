@@ -26,7 +26,7 @@ from .serializers import (
     PatientMedicationSerializer,
     is_slot_in_past,
 )
-from .models import PatientMedication
+from .models import PatientMedication, Prescription
 
 
 class BasePatientAPIView(APIView):
@@ -587,7 +587,29 @@ class PatientMedicationsView(BasePatientAPIView):
 
         medications = PatientMedication.objects.filter(patient=patient_profile)
         serializer = PatientMedicationSerializer(medications, many=True)
-        return Response({"medications": serializer.data})
+        meds_data = list(serializer.data)
+        
+        prescriptions = Prescription.objects.filter(patient=patient_profile).select_related('doctor')
+        for p in prescriptions:
+            dosage_str = ""
+            if p.amount is not None:
+                amount_str = f"{p.amount:f}".rstrip("0").rstrip(".") if "." in f"{p.amount:f}" else str(p.amount)
+                dosage_str = f"{amount_str} {p.unit}".strip()
+            elif p.unit:
+                dosage_str = p.unit
+                
+            meds_data.append({
+                "id": f"prescription_{p.id}",
+                "name": p.medicine_name,
+                "dosage": dosage_str,
+                "frequency": p.frequency,
+                "duration": p.duration,
+                "prescribing_doctor": p.doctor.full_name if p.doctor else "",
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "is_prescription": True,
+            })
+            
+        return Response({"medications": meds_data})
 
     def post(self, request, *args, **kwargs):
         patient_profile, error_response = self._get_patient_profile_or_response(request)
