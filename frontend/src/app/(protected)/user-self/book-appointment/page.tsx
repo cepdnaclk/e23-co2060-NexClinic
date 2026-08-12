@@ -141,9 +141,13 @@ const BookAppointmentPage = () => {
 
   // Derived options for SearchableSelect
   const hospitalOptions = useMemo(() => {
-    const hospitals = Array.from(new Set(availableSlots.map((s) => s.hospital)));
+    const filteredByDoctor = doctorId 
+      ? availableSlots.filter(s => s.doctorId === doctorId)
+      : availableSlots;
+      
+    const hospitals = Array.from(new Set(filteredByDoctor.map((s) => s.hospital)));
     return hospitals.map((h) => ({ value: h, label: h }));
-  }, [availableSlots]);
+  }, [availableSlots, doctorId]);
 
   const doctorOptions = useMemo(() => {
     const filteredByHospital = selectedHospital
@@ -284,6 +288,11 @@ const BookAppointmentPage = () => {
                   <Link href="/user-self/appointments" className="flex-1">
                     <button className="w-full rounded-2xl bg-green-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-700 active:scale-[0.98]">
                       View My Appointments
+                    </button>
+                  </Link>
+                  <Link href="/user-self/chats" className="flex-1">
+                    <button type="button" className="w-full rounded-2xl border border-green-600 text-green-600 bg-white px-6 py-3.5 text-sm font-semibold shadow-sm transition-all hover:bg-green-50 active:scale-[0.98]">
+                      Go to Chat
                     </button>
                   </Link>
                   <button

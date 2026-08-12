@@ -198,6 +198,12 @@ class AdviceChatMessageCreateView(BaseChatAPIView):
 		if error_response:
 			return error_response
 
+		if thread.is_expired():
+			return Response(
+				{"detail": "This consultation thread has expired. Please open a new consultation."},
+				status=status.HTTP_403_FORBIDDEN
+			)
+
 		serializer = AdviceChatMessageCreateSerializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 

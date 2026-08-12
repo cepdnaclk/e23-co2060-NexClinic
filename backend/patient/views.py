@@ -492,6 +492,30 @@ class PatientAppointmentsView(BasePatientAPIView):
                 appointment_fee=slot.doctor.appointment_fee,
             )
 
+            import uuid
+            
+            # Auto-activate a free AdviceChatThread for the patient
+            # Expiring 24 hours from the time of booking
+            expires_at = timezone.now() + timedelta(days=1)
+            
+            thread, created = AdviceChatThread.objects.get_or_create(
+                patient=patient_profile,
+                doctor=slot.doctor,
+                defaults={
+                    "thread_code": f"CHAT{uuid.uuid4().hex[:12].upper()}",
+                    "expires_at": expires_at,
+                    "is_active": True,
+                    "status": AdviceChatThread.Status.OPEN,
+                }
+            )
+            
+            if not created:
+                thread.expires_at = max(thread.expires_at or expires_at, expires_at)
+                thread.is_active = True
+                if thread.status == AdviceChatThread.Status.CLOSED:
+                    thread.status = AdviceChatThread.Status.OPEN
+                thread.save()
+
             # Appointment's post-save signal refreshes both counters from the
             # authoritative set of active bookings.
 

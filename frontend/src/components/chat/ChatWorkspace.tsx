@@ -119,7 +119,7 @@ export default function ChatWorkspace({
   }, [onPatientChatUnavailable]);
 
   const selectedThread = useMemo(
-    () => threads.find((thread) => thread.id === selectedThreadId) || null,
+    () => threads.find((thread) => String(thread.id) === String(selectedThreadId)) || null,
     [selectedThreadId, threads],
   );
 
@@ -421,7 +421,7 @@ export default function ChatWorkspace({
     if (role === "PATIENT" && defaultDoctorId) {
       params.set("doctor", defaultDoctorId);
     }
-    router.replace(`${pathname}?${params.toString()}`);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [router, pathname, role, defaultDoctorId]);
 
   useEffect(() => {
@@ -437,7 +437,7 @@ export default function ChatWorkspace({
 
   useEffect(() => {
     if (!selectedThreadId) return;
-    if (!threads.some((thread) => thread.id === selectedThreadId)) return;
+    if (!threads.some((thread) => String(thread.id) === String(selectedThreadId))) return;
     void loadMessages(selectedThreadId);
   }, [selectedThreadId, threads, loadMessages]);
 
@@ -500,16 +500,16 @@ export default function ChatWorkspace({
 
   useEffect(() => {
     if (!filteredThreads.length) return;
-    if (filteredThreads.some((thread) => thread.id === selectedThreadId)) return;
+    if (filteredThreads.some((thread) => String(thread.id) === String(selectedThreadId))) return;
     const threadId = filteredThreads[0].id;
-    setSelectedThreadId(threadId);
+    setSelectedThreadId(String(threadId));
     const currentSearch = typeof window !== "undefined" ? window.location.search : "";
     const params = new URLSearchParams(currentSearch);
-    params.set("thread", threadId);
+    params.set("thread", String(threadId));
     if (role === "PATIENT" && defaultDoctorId) {
       params.set("doctor", defaultDoctorId);
     }
-    router.replace(`${pathname}?${params.toString()}`);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [filteredThreads, selectedThreadId, router, pathname, role, defaultDoctorId]);
 
   const composerPlaceholder =
@@ -596,7 +596,7 @@ export default function ChatWorkspace({
               </div>
             ) : (
               filteredThreads.map((thread) => {
-                const isActive = thread.id === selectedThreadId;
+                const isActive = String(thread.id) === String(selectedThreadId);
                 const peerName = getPeerName(thread, role);
 
                 return (
