@@ -18,6 +18,7 @@ type AvailableSlot = {
   patientLimit: number;
   remainingCount: number;
   isFull: boolean;
+  appointmentFee: number;
 };
 
 const formatTimeForDisplay = (time: string): string => {
@@ -95,7 +96,8 @@ const BookAppointmentPage = () => {
             typeof candidate.bookedCount === "number" &&
             typeof candidate.patientLimit === "number" &&
             typeof candidate.remainingCount === "number" &&
-            typeof candidate.isFull === "boolean"
+            typeof candidate.isFull === "boolean" &&
+            typeof candidate.appointmentFee === "number"
           );
         }
       );
@@ -567,7 +569,7 @@ const BookAppointmentPage = () => {
 
       {showPaymentModal && (
         <MockPaymentGateway
-          amount="Rs. 3,500.00"
+          amount={selectedSlot?.appointmentFee ? `Rs. ${selectedSlot.appointmentFee.toFixed(2)}` : "Rs. 3,500.00"}
           onSuccess={handlePaymentSuccess}
           onCancel={() => setShowPaymentModal(false)}
           isProcessing={submitting}

@@ -107,6 +107,7 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
     patientLimit = serializers.SerializerMethodField()
     remainingCount = serializers.SerializerMethodField()
     isFull = serializers.SerializerMethodField()
+    appointmentFee = serializers.SerializerMethodField()
 
     class Meta:
         model = AppointmentAvailableSlot
@@ -121,6 +122,7 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
             "patientLimit",
             "remainingCount",
             "isFull",
+            "appointmentFee",
         ]
 
     def get_doctorId(self, obj):
@@ -175,6 +177,11 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
         )
         return booked >= obj.patient_limit
 
+    def get_appointmentFee(self, obj):
+        if obj.doctor:
+            return float(obj.doctor.appointment_fee)
+        return 3500.00
+
 
 class PatientAppointmentCancelSerializer(serializers.Serializer):
     reason = serializers.CharField(required=True, allow_blank=True)
@@ -206,15 +213,10 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
         max_length=100, required=False, allow_blank=True
     )
     emergencyContactEmail = serializers.EmailField(required=False, allow_blank=True)
-    insuranceProvider = serializers.CharField(
-        max_length=255, required=False, allow_blank=True
-    )
-    insurancePolicyNumber = serializers.CharField(
-        max_length=100, required=False, allow_blank=True
-    )
     profileImage = serializers.ImageField(required=False)
     medicalReports = serializers.FileField(required=False)
     medicalDocuments = serializers.FileField(required=False)
+    clearProfilePicture = serializers.BooleanField(required=False)
 
     def validate(self, attrs):
         if not attrs:
@@ -261,8 +263,6 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
             "emergencyContactPhone": "emergency_contact_phone",
             "emergencyContactRelation": "emergency_contact_relation",
             "emergencyContactEmail": "emergency_contact_email",
-            "insuranceProvider": "insurance_provider",
-            "insurancePolicyNumber": "insurance_policy_number",
             "profileImage": "profile_picture",
             "medicalReports": "medical_reports",
             "medicalDocuments": "medical_documents",
@@ -277,6 +277,11 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
         if "email" in validated_data:
             user.email = validated_data["email"]
             user.save(update_fields=["email"])
+
+        if validated_data.get("clearProfilePicture"):
+            instance.profile_picture = None
+            if "profile_picture" not in update_fields:
+                update_fields.append("profile_picture")
 
         if update_fields:
             instance.save(update_fields=sorted(set(update_fields)))

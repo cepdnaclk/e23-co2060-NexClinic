@@ -125,3 +125,118 @@ class E2EPrescriptionTests(TestCase):
         patient_record = medical_records[0]
         self.assertEqual(patient_record["prescriptions"], prescriptions_text)
         self.assertEqual(patient_record["diagnosis"], "Viral Infection")
+
+    def test_structured_prescription_and_medications_unification_flow(self):
+        # 1. Patient books appointment
+        self.client.force_authenticate(user=self.patient_user)
+        book_response = self.client.post(
+            "/api/patient/appointments/",
+            {"slot_id": self.slot.id, "reason": "Severe Cough"},
+            format="json",
+        )
+        self.assertEqual(book_response.status_code, status.HTTP_201_CREATED)
+        appointment_id = book_response.json()["appointment"]["id"]
+
+        # 2. Patient creates a self-added medication
+        add_med_response = self.client.post(
+            "/api/patient/medications/",
+            {
+                "name": "Vitamin C",
+                "dosage": "1000mg",
+                "frequency": "Once daily",
+                "duration": "30 days",
+                "prescribing_doctor": "Dr. Self",
+            },
+            format="json",
+        )
+        self.assertEqual(add_med_response.status_code, status.HTTP_201_CREATED)
+        self_med_id = add_med_response.json()["id"]
+
+        # 3. Doctor submits structured prescriptions
+        self.client.force_authenticate(user=self.doctor_user)
+        record_payload = {
+            "observations": "Clear symptoms of bronchitis.",
+            "diagnosis": "Acute Bronchitis",
+            "prescriptions": "Amoxicillin | Amount: 500 | Unit: mg | Duration: 5 days | Frequency: Twice daily | Timing: After meals | Notes: Drink plenty of water",
+            "prescriptionItems": [
+                {
+                    "name": "Amoxicillin",
+                    "amount": 500.0,
+                    "unit": "mg",
+                    "duration": "5 days",
+                    "frequency": "Twice daily",
+                    "timings": ["After meals"],
+                    "notes": "Drink plenty of water",
+                }
+            ],
+            "recommendedTests": "Chest X-Ray",
+        }
+        record_response = self.client.post(
+            f"/api/doctor/appointments/{appointment_id}/medical-record/",
+            record_payload,
+            format="json",
+        )
+        self.assertIn(record_response.status_code, [status.HTTP_201_CREATED, status.HTTP_200_OK])
+
+        # 4. Patient fetches their unified medications list
+        self.client.force_authenticate(user=self.patient_user)
+        meds_response = self.client.get("/api/patient/medications/")
+        self.assertEqual(meds_response.status_code, status.HTTP_200_OK)
+        
+        meds_data = meds_response.json()["medications"]
+        # Should have 2 items: 1 self-added, 1 doctor prescription
+        self.assertEqual(len(meds_data), 2)
+        
+        # Verify self-added medication properties
+        self_med = next(m for m in meds_data if m["id"] == self_med_id)
+        self.assertEqual(self_med["name"], "Vitamin C")
+        self.assertEqual(self_med.get("is_prescription"), None)
+        
+        # Verify doctor-prescribed medication properties
+        pres_med = next(m for m in meds_data if str(m["id"]).startswith("prescription_"))
+        self.assertEqual(pres_med["name"], "Amoxicillin")
+        self.assertEqual(pres_med["dosage"], "500 mg")
+        self.assertEqual(pres_med["is_prescription"], True)
+        self.assertEqual(pres_med["prescribing_doctor"], "Doctor E2E")
+
+        # 5. Verify patient cannot delete the official prescription (returns 404, no 500 error)
+        del_pres_response = self.client.delete(f"/api/patient/medications/{pres_med['id']}/")
+        self.assertEqual(del_pres_response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # 6. Verify patient can delete their own self-added medication
+        del_self_response = self.client.delete(f"/api/patient/medications/{self_med_id}/")
+        self.assertEqual(del_self_response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_doctor_cannot_prescribe_on_cancelled_appointment(self):
+        # 1. Patient books appointment
+        self.client.force_authenticate(user=self.patient_user)
+        book_response = self.client.post(
+            "/api/patient/appointments/",
+            {"slot_id": self.slot.id, "reason": "Checkup"},
+            format="json",
+        )
+        self.assertEqual(book_response.status_code, status.HTTP_201_CREATED)
+        appointment_id = book_response.json()["appointment"]["id"]
+
+        # 2. Patient cancels the appointment
+        cancel_response = self.client.patch(
+            f"/api/patient/appointments/{appointment_id}/cancel/",
+            {"reason": "Changed my mind"},
+            format="json",
+        )
+        self.assertEqual(cancel_response.status_code, status.HTTP_200_OK)
+
+        # 3. Doctor attempts to submit a medical record / prescription
+        self.client.force_authenticate(user=self.doctor_user)
+        record_payload = {
+            "observations": "Should not be allowed.",
+            "diagnosis": "N/A",
+            "prescriptions": "None",
+        }
+        record_response = self.client.post(
+            f"/api/doctor/appointments/{appointment_id}/medical-record/",
+            record_payload,
+            format="json",
+        )
+        self.assertEqual(record_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Cannot write a prescription", record_response.json()["detail"])

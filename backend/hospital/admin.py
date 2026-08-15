@@ -44,10 +44,13 @@ class HospitalAdminProfileAdmin(admin.ModelAdmin):
 	search_fields = ('full_name', 'user__email', 'employee_id')
 	actions = ('approve_hospital_admins', 'unapprove_hospital_admins')
 
+	def get_queryset(self, request):
+		return super().get_queryset(request).select_related('user').prefetch_related('user__hospital_app_admin_roles__hospital')
+
 	@admin.display(description='Hospital')
 	def hospital_name(self, obj):
-		role = HospitalAdmin.objects.filter(user=obj.user).select_related('hospital').first()
-		return role.hospital.name if role else '-'
+		roles = obj.user.hospital_app_admin_roles.all()
+		return roles[0].hospital.name if roles else '-'
 
 	@admin.display(description='Status')
 	def status_label(self, obj):

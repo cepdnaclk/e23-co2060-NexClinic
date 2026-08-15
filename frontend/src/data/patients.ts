@@ -20,8 +20,6 @@ export interface Patient {
   emergencyContactPhone: string;
   emergencyContactRelation: string;
   emergencyContactEmail: string;
-  insuranceProvider: string;
-  insurancePolicyNumber: string;
   profileImage?: string;
   lastUpdated?: string;
 }
@@ -49,8 +47,6 @@ const patients: Patient[] = [
     emergencyContactPhone: "+1 (555) 123-4568",
     emergencyContactRelation: "Spouse",
     emergencyContactEmail: "jane.doe@example.com",
-    insuranceProvider: "Blue Cross",
-    insurancePolicyNumber: "BC123456789",
     profileImage: "/images/user.png",
     lastUpdated: "2024-02-27",
   },

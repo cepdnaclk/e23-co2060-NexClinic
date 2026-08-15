@@ -34,10 +34,6 @@ type PatientProfileResponse = {
     relation: string;
     email: string;
   };
-  insurance: {
-    provider: string;
-    policyNumber: string;
-  };
 };
 
 const DRAFT_STORAGE_KEY = "patient-profile-draft";
@@ -63,8 +59,6 @@ const defaultFormData: Patient = {
   emergencyContactPhone: "",
   emergencyContactRelation: "",
   emergencyContactEmail: "",
-  insuranceProvider: "",
-  insurancePolicyNumber: "",
   profileImage: "/images/user.png",
   lastUpdated: new Date().toISOString().split("T")[0],
 };
@@ -388,28 +382,24 @@ export default function UserEditProfilePage() {
 
     try {
       const requestBody = new FormData();
-      requestBody.set("fullName", formData.name);
-      requestBody.set("email", formData.email);
-      requestBody.set("phone", formData.phone);
-      requestBody.set("dateOfBirth", formData.dateOfBirth);
-      requestBody.set("gender", formData.gender);
-      requestBody.set("address", formData.address);
-      requestBody.set("city", formData.city);
-      requestBody.set("postalCode", formData.postalCode);
-      requestBody.set("country", formData.country);
-      requestBody.set("bloodType", formData.bloodType);
-      requestBody.set("allergies", formData.allergies);
-      requestBody.set("medications", formData.medications);
-      requestBody.set("medicalReports", formData.medicalReports);
-      requestBody.set("medicalDocuments", formData.medicalDocuments);
-      requestBody.set("medicalHistory", formData.medicalHistory);
-      requestBody.set("emergencyContactName", formData.emergencyContactName);
-      requestBody.set("emergencyContactPhone", formData.emergencyContactPhone);
-      requestBody.set(
-        "emergencyContactRelation",
-        formData.emergencyContactRelation,
-      );
-      requestBody.set("emergencyContactEmail", formData.emergencyContactEmail);
+      if (formData.name) requestBody.set("fullName", formData.name);
+      if (formData.email) requestBody.set("email", formData.email);
+      if (formData.phone) requestBody.set("phone", formData.phone);
+      if (formData.dateOfBirth) requestBody.set("dateOfBirth", formData.dateOfBirth);
+      if (formData.gender) requestBody.set("gender", formData.gender);
+      
+      if (formData.address !== undefined) requestBody.set("address", formData.address);
+      if (formData.city !== undefined) requestBody.set("city", formData.city);
+      if (formData.postalCode !== undefined) requestBody.set("postalCode", formData.postalCode);
+      if (formData.country !== undefined) requestBody.set("country", formData.country);
+      if (formData.bloodType !== undefined) requestBody.set("bloodType", formData.bloodType);
+      if (formData.allergies !== undefined) requestBody.set("allergies", formData.allergies);
+      if (formData.medications !== undefined) requestBody.set("medications", formData.medications);
+      if (formData.medicalHistory !== undefined) requestBody.set("medicalHistory", formData.medicalHistory);
+      if (formData.emergencyContactName !== undefined) requestBody.set("emergencyContactName", formData.emergencyContactName);
+      if (formData.emergencyContactPhone !== undefined) requestBody.set("emergencyContactPhone", formData.emergencyContactPhone);
+      if (formData.emergencyContactRelation !== undefined) requestBody.set("emergencyContactRelation", formData.emergencyContactRelation);
+      if (formData.emergencyContactEmail !== undefined) requestBody.set("emergencyContactEmail", formData.emergencyContactEmail);
 
       if (selectedImageFile) {
         requestBody.set("profileImage", selectedImageFile);

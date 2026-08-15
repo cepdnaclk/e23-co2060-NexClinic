@@ -62,8 +62,6 @@ type PatientProfile = {
   allergies: string[];
   conditions: string[];
   currentMedications: string[];
-  insuranceProvider: string;
-  insurancePolicyNumber: string;
   comments: string;
   prescriptions: string;
   lastVisit: string;
@@ -104,8 +102,6 @@ type ApiPatientProfile = {
   allergies?: string[];
   conditions?: string[];
   currentMedications?: string[];
-  insuranceProvider?: string;
-  insurancePolicyNumber?: string;
   comments?: string;
   prescriptions?: string;
   lastVisit?: string;
@@ -650,8 +646,6 @@ function DoctorAppointmentsPage() {
       allergies: ["Not available"],
       conditions: ["Not available"],
       currentMedications: ["Not available"],
-      insuranceProvider: "Not available",
-      insurancePolicyNumber: "Not available",
       comments: "",
       prescriptions: "",
       lastVisit: "Not available",
@@ -716,10 +710,6 @@ function DoctorAppointmentsPage() {
             apiProfile.currentMedications.length > 0
             ? apiProfile.currentMedications
             : ["Not available"],
-        insuranceProvider:
-          apiProfile.insuranceProvider?.trim() || "Not available",
-        insurancePolicyNumber:
-          apiProfile.insurancePolicyNumber?.trim() || "Not available",
         comments: apiProfile.comments?.trim() || "",
         prescriptions: apiProfile.prescriptions?.trim() || "",
         lastVisit: apiProfile.lastVisit?.trim() || "Not available",
@@ -1764,20 +1754,6 @@ function DoctorAppointmentsPage() {
                   <p className="mt-3 text-sm text-slate-700">{selectedPatient.address}</p>
                   <p className="mt-1 text-sm text-slate-600">
                     {selectedPatient.city} • {selectedPatient.postalCode} • {selectedPatient.country}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2">
-                  <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Insurance
-                  </h4>
-                  <p className="mt-3 text-sm">
-                    <span className="font-semibold text-slate-900">Provider:</span>{" "}
-                    {selectedPatient.insuranceProvider}
-                  </p>
-                  <p className="mt-1 text-sm">
-                    <span className="font-semibold text-slate-900">Policy #:</span>{" "}
-                    {selectedPatient.insurancePolicyNumber}
                   </p>
                 </div>
               </div>

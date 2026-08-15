@@ -480,8 +480,6 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
     allergies = serializers.SerializerMethodField()
     conditions = serializers.SerializerMethodField()
     currentMedications = serializers.SerializerMethodField()
-    insuranceProvider = serializers.SerializerMethodField()
-    insurancePolicyNumber = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
     prescriptions = serializers.SerializerMethodField()
     lastVisit = serializers.SerializerMethodField()
@@ -566,13 +564,6 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
     def get_currentMedications(self, obj):
         medications = self._split_text_list(obj.medications)
         return medications if medications else ["Not available"]
-
-    def get_insuranceProvider(self, obj):
-        return obj.insurance_provider or "Not available"
-
-    def get_insurancePolicyNumber(self, obj):
-        return obj.insurance_policy_number or "Not available"
-
     def get_comments(self, obj):
         return getattr(obj, "doctor_comments", "") or ""
 

@@ -23,8 +23,10 @@ from .serializers import (
     PatientAppointmentCancelSerializer,
     PatientMedicalRecordSerializer,
     PatientProfileUpdateSerializer,
+    PatientMedicationSerializer,
     is_slot_in_past,
 )
+from .models import PatientMedication, Prescription
 
 
 class BasePatientAPIView(APIView):
@@ -95,8 +97,6 @@ class PatientProfileView(BasePatientAPIView):
         emergency_contact_phone = ""
         emergency_contact_relation = ""
         emergency_contact_email = ""
-        insurance_provider = ""
-        insurance_policy_number = ""
         medical_reports = ""
         medical_documents = ""
 
@@ -134,8 +134,6 @@ class PatientProfileView(BasePatientAPIView):
                 patient_profile.emergency_contact_relation or ""
             )
             emergency_contact_email = patient_profile.emergency_contact_email or ""
-            insurance_provider = patient_profile.insurance_provider or ""
-            insurance_policy_number = patient_profile.insurance_policy_number or ""
             medical_reports = PatientProfileView._build_file_url(
                 request, patient_profile.medical_reports
             )
@@ -210,10 +208,6 @@ class PatientProfileView(BasePatientAPIView):
                 "phone": emergency_contact_phone,
                 "relation": emergency_contact_relation,
                 "email": emergency_contact_email,
-            },
-            "insurance": {
-                "provider": insurance_provider,
-                "policyNumber": insurance_policy_number,
             },
             "chatSummary": {
                 "unreadChats": unread_chat_count,
@@ -599,3 +593,62 @@ class PatientAppointmentCancelView(BasePatientAPIView):
             {"message": "Appointment cancelled successfully.", "appointment": payload},
             status=status.HTTP_200_OK,
         )
+
+
+class PatientMedicationsView(BasePatientAPIView):
+    def get(self, request, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        medications = PatientMedication.objects.filter(patient=patient_profile)
+        serializer = PatientMedicationSerializer(medications, many=True)
+        meds_data = list(serializer.data)
+        
+        prescriptions = Prescription.objects.filter(patient=patient_profile).select_related('doctor')
+        for p in prescriptions:
+            dosage_str = ""
+            if p.amount is not None:
+                amount_str = f"{p.amount:f}".rstrip("0").rstrip(".") if "." in f"{p.amount:f}" else str(p.amount)
+                dosage_str = f"{amount_str} {p.unit}".strip()
+            elif p.unit:
+                dosage_str = p.unit
+                
+            meds_data.append({
+                "id": f"prescription_{p.id}",
+                "name": p.medicine_name,
+                "dosage": dosage_str,
+                "frequency": p.frequency,
+                "duration": p.duration,
+                "prescribing_doctor": p.doctor.full_name if p.doctor else "",
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "is_prescription": True,
+            })
+            
+        return Response({"medications": meds_data})
+
+    def post(self, request, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        serializer = PatientMedicationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(patient=patient_profile)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PatientMedicationDetailView(BasePatientAPIView):
+    def delete(self, request, medication_id, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        try:
+            med_id = int(medication_id)
+            medication = PatientMedication.objects.get(id=med_id, patient=patient_profile)
+            medication.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except (ValueError, TypeError, PatientMedication.DoesNotExist):
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)

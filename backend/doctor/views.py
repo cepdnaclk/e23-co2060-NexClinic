@@ -1228,6 +1228,12 @@ class DoctorAppointmentMedicalRecordView(VerifiedDoctorAPIView):
         if not appointment:
             return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+        if appointment.status in [Appointment.Status.CANCELLED, Appointment.Status.REJECTED]:
+            return Response(
+                {'detail': f'Cannot write a prescription for a {appointment.status.lower()} appointment.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         serializer = PatientMedicalRecordUpsertSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
