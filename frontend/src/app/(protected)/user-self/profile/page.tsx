@@ -67,6 +67,7 @@ export default function UserProfile() {
   const [profileData, setProfileData] = useState<PatientProfileResponse | null>(
     null,
   );
+  const [medicationsData, setMedicationsData] = useState<any[]>([]);
   const [profileImageVersion, setProfileImageVersion] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -77,25 +78,30 @@ export default function UserProfile() {
       setError("");
 
       try {
-        const response = await fetch("/api/patient/profile", {
-          method: "GET",
-          cache: "no-store",
-        });
+        const [profileRes, medsRes] = await Promise.all([
+          fetch("/api/patient/profile", { method: "GET", cache: "no-store" }),
+          fetch("/api/patient/medications/", { method: "GET", cache: "no-store" })
+        ]);
 
-        if (response.status === 401 || response.status === 403) {
+        if (profileRes.status === 401 || profileRes.status === 403) {
           handlePatientSessionExpired(router);
           return;
         }
 
-        if (!response.ok) {
-          const errorPayload = await response.json().catch(() => ({}));
+        if (!profileRes.ok) {
+          const errorPayload = await profileRes.json().catch(() => ({}));
           throw new Error(
             errorPayload?.error || "Failed to load profile details",
           );
         }
 
-        const data: PatientProfileResponse = await response.json();
+        const data: PatientProfileResponse = await profileRes.json();
         setProfileData(data);
+
+        if (medsRes.ok) {
+          const mData = await medsRes.json();
+          setMedicationsData(mData.medications || []);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load profile details",
@@ -319,19 +325,15 @@ export default function UserProfile() {
                 Current Medications
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {medications !== "None reported" && medications.trim() !== "" ? (
-                  medications
-                    .split(/[,;]+/)
-                    .map((s) => s.trim())
-                    .filter(Boolean)
-                    .map((m) => (
-                      <span key={m} className="rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 ring-1 ring-amber-200">
-                        {m}
+                {medicationsData && medicationsData.length > 0 ? (
+                  medicationsData.map((m: any) => (
+                      <span key={m.id} className="rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 ring-1 ring-amber-200">
+                        {m.name} {m.dosage && `(${m.dosage})`}
                       </span>
                     ))
                 ) : (
                   <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200">
-                    None reported
+                    None
                   </span>
                 )}
               </div>

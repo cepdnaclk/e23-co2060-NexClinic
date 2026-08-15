@@ -646,9 +646,8 @@ class PatientMedicationDetailView(BasePatientAPIView):
             return error_response
 
         try:
-            med_id = int(medication_id)
-            medication = PatientMedication.objects.get(id=med_id, patient=patient_profile)
+            medication = PatientMedication.objects.get(id=medication_id, patient=patient_profile)
             medication.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        except (ValueError, TypeError, PatientMedication.DoesNotExist):
+        except PatientMedication.DoesNotExist:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
