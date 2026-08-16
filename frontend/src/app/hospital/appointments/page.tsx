@@ -68,7 +68,11 @@ export default function HospitalAppointmentsPage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedHospitalId) return;
+    if (!selectedHospitalId) {
+      setAppointments([]);
+      setLoadingAppointments(false);
+      return;
+    }
 
     let mounted = true;
     (async () => {
