@@ -313,6 +313,14 @@ class HospitalAppointmentListView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        status_mapping = {
+            Appointment.Status.PENDING: "Pending",
+            Appointment.Status.ACCEPTED: "Confirmed",
+            Appointment.Status.COMPLETED: "Completed",
+            Appointment.Status.CANCELLED: "Cancelled",
+            Appointment.Status.REJECTED: "Rejected",
+        }
+
         appointments = (
             Appointment.objects.filter(
                 hospital=admin_role.hospital,
@@ -322,12 +330,72 @@ class HospitalAppointmentListView(APIView):
                     Appointment.Status.COMPLETED,
                 ],
             )
-            .select_related("patient", "patient__user", "doctor", "slot")
+            .values(
+                "id",
+                "patient_id",
+                "status",
+                "patient__full_name",
+                "patient__date_of_birth",
+                "patient__gender",
+                "patient__phone",
+                "doctor__full_name",
+                "doctor__preferred_name",
+                "doctor__specialization",
+                "doctor__user__email",
+                "slot__date",
+                "slot__start_time",
+            )
             .order_by("-slot__date", "-slot__start_time", "-requested_at")[:500]
         )
 
-        serializer = HospitalAppointmentSerializer(appointments, many=True)
-        return Response({"appointments": serializer.data}, status=status.HTTP_200_OK)
+        response_data = []
+        for appointment in appointments:
+            dob = appointment.get("patient__date_of_birth")
+            patient_age = None
+            if dob:
+                today = timezone.localdate()
+                patient_age = (
+                    today.year
+                    - dob.year
+                    - ((today.month, today.day) < (dob.month, dob.day))
+                )
+                patient_age = max(patient_age, 0)
+
+            doctor_name = (
+                appointment.get("doctor__full_name")
+                or appointment.get("doctor__preferred_name")
+                or appointment.get("doctor__user__email")
+                or "Doctor"
+            )
+            response_data.append(
+                {
+                    "id": appointment["id"],
+                    "patientId": str(appointment.get("patient_id") or ""),
+                    "patientName": appointment.get("patient__full_name") or "Unknown",
+                    "patientAge": patient_age,
+                    "patientGender": appointment.get("patient__gender") or "",
+                    "patientPhone": appointment.get("patient__phone") or "",
+                    "appointmentDate": (
+                        appointment["slot__date"].isoformat()
+                        if appointment.get("slot__date")
+                        else ""
+                    ),
+                    "appointmentTime": (
+                        appointment["slot__start_time"].strftime("%H:%M")
+                        if appointment.get("slot__start_time")
+                        else ""
+                    ),
+                    "doctorName": doctor_name,
+                    "department": appointment.get("doctor__specialization") or "",
+                    "statusLabel": status_mapping.get(
+                        appointment.get("status"),
+                        str(appointment.get("status") or "").title(),
+                    ),
+                    "status": appointment.get("status") or "",
+                }
+            )
+
+        return Response({"appointments": response_data}, status=status.HTTP_200_OK)
 
 
 class ManageHospitalDoctorView(APIView):
