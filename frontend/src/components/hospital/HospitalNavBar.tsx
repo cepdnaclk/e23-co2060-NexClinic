@@ -30,7 +30,7 @@ export default function HospitalNavBar() {
       localStorage.removeItem("userRole");
       localStorage.removeItem("userInfo");
       localStorage.removeItem("isAuthenticated");
-    } catch { }
+    } catch {}
 
     document.cookie = "authToken=; path=/; max-age=0; samesite=lax";
     document.cookie = "userRole=; path=/; max-age=0; samesite=lax";
@@ -44,8 +44,15 @@ export default function HospitalNavBar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo and Brand */}
           <div className="flex items-center justify-between w-full mr-8">
-            <Link href="/hospital/dashboard" className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between">
-              <img src="/images/logo-main.png" alt="NexClinic Logo" className="h-8 w-8 mr-4" />
+            <Link
+              href="/hospital/dashboard"
+              className="text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-between"
+            >
+              <img
+                src="/images/logo-main.png"
+                alt="NexClinic Logo"
+                className="h-8 w-8 mr-4"
+              />
               NexClinic
             </Link>
 
@@ -53,64 +60,81 @@ export default function HospitalNavBar() {
             <div className="hidden md:flex items-center gap-1.5 text-sm font-medium">
               <Link
                 href="/hospital/dashboard"
-                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/dashboard")
-                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                  : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
-                  }`}
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${
+                  isActive("/hospital/dashboard")
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                }`}
               >
                 Dashboard
               </Link>
               <Link
+                href="/hospital/appointments"
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${
+                  isActive("/hospital/appointments")
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                }`}
+              >
+                Appointments
+              </Link>
+              <Link
                 href="/hospital/doctors"
-                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/doctors")
-                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                  : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
-                  }`}
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${
+                  isActive("/hospital/doctors")
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                }`}
               >
                 Doctors
               </Link>
               <Link
                 href="/hospital/slots"
-                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/slots")
-                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                  : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
-                  }`}
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${
+                  isActive("/hospital/slots")
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                }`}
               >
                 Slots
               </Link>
               <Link
                 href="/hospital/reports"
-                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/reports")
-                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                  : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
-                  }`}
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${
+                  isActive("/hospital/reports")
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                }`}
               >
                 Reports
               </Link>
               <Link
                 href="/hospital/activity-logs"
-                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/activity-logs")
-                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                  : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
-                  }`}
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${
+                  isActive("/hospital/activity-logs")
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                }`}
               >
                 Activity Log
               </Link>
               <Link
                 href="/hospital/announcements"
-                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/announcements")
-                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                  : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
-                  }`}
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${
+                  isActive("/hospital/announcements")
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                }`}
               >
                 Announce
               </Link>
               <Link
                 href="/hospital/profile"
-                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/profile")
-                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                  : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
-                  }`}
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${
+                  isActive("/hospital/profile")
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                }`}
               >
                 My Profile
               </Link>
@@ -137,11 +161,26 @@ export default function HospitalNavBar() {
               onClick={() => setIsMobileMenuOpen((prev) => !prev)}
               aria-label="Toggle menu"
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 )}
               </svg>
             </button>
@@ -155,64 +194,81 @@ export default function HospitalNavBar() {
           <div className="space-y-1.5 px-4 py-4">
             <Link
               href="/hospital/dashboard"
-              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/dashboard")
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`}
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${
+                isActive("/hospital/dashboard")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
             >
               Dashboard
             </Link>
             <Link
+              href="/hospital/appointments"
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${
+                isActive("/hospital/appointments")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
+            >
+              Appointments
+            </Link>
+            <Link
               href="/hospital/doctors"
-              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/doctors")
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`}
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${
+                isActive("/hospital/doctors")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
             >
               Doctors
             </Link>
             <Link
               href="/hospital/slots"
-              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/slots")
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`}
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${
+                isActive("/hospital/slots")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
             >
               Slots
             </Link>
             <Link
               href="/hospital/reports"
-              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/reports")
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`}
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${
+                isActive("/hospital/reports")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
             >
               Reports
             </Link>
             <Link
               href="/hospital/activity-logs"
-              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/activity-logs")
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`}
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${
+                isActive("/hospital/activity-logs")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
             >
               Activity Log
             </Link>
             <Link
               href="/hospital/announcements"
-              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/announcements")
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`}
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${
+                isActive("/hospital/announcements")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
             >
               Announce
             </Link>
             <Link
               href="/hospital/profile"
-              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/profile")
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`}
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${
+                isActive("/hospital/profile")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
             >
               My Profile
             </Link>
