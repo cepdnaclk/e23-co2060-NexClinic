@@ -42,47 +42,103 @@ function AppointmentChart({
   const maximum = Math.max(1, ...doctors.map((doctor) => doctor[period]));
   const axisMaximum = maximum <= 5 ? 5 : Math.ceil(maximum / 5) * 5;
   const ticks = Array.from({ length: 6 }, (_, index) => Math.round((axisMaximum * (5 - index)) / 5));
+  const total = doctors.reduce((sum, doctor) => sum + doctor[period], 0);
+  const activeDoctors = doctors.filter((doctor) => doctor[period] > 0).length;
+  const periodStyles: Record<PeriodKey, {
+    badge: string;
+    glow: string;
+    bar: string;
+    value: string;
+  }> = {
+    daily: {
+      badge: "bg-emerald-50 text-emerald-700 ring-emerald-600/15",
+      glow: "from-emerald-100/70 via-teal-50/40",
+      bar: "from-emerald-600 via-emerald-500 to-teal-300",
+      value: "text-emerald-700",
+    },
+    weekly: {
+      badge: "bg-sky-50 text-sky-700 ring-sky-600/15",
+      glow: "from-sky-100/70 via-cyan-50/40",
+      bar: "from-sky-600 via-sky-500 to-cyan-300",
+      value: "text-sky-700",
+    },
+    monthly: {
+      badge: "bg-violet-50 text-violet-700 ring-violet-600/15",
+      glow: "from-violet-100/70 via-fuchsia-50/30",
+      bar: "from-violet-600 via-violet-500 to-fuchsia-300",
+      value: "text-violet-700",
+    },
+  };
+  const styles = periodStyles[period];
 
   return (
-    <article className="rounded-3xl border border-white/80 bg-white/90 p-6 shadow-sm">
-      <div className="mb-6">
-        <h3 className="text-lg font-bold text-slate-950">{title}</h3>
-        <p className="mt-1 text-xs font-medium text-slate-500">{subtitle}</p>
+    <article className="group relative overflow-hidden rounded-[1.75rem] border border-slate-200/70 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_65px_rgba(15,23,42,0.11)]">
+      <div className={`pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-br ${styles.glow} to-transparent opacity-80`} />
+      <div className="relative border-b border-slate-100/80 px-5 py-5 sm:px-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ring-1 ring-inset ${styles.badge}`}>
+              {title}
+            </span>
+            <p className="mt-3 text-xs font-medium text-slate-500">{subtitle}</p>
+          </div>
+          <div className="text-right">
+            <p className={`text-3xl font-black leading-none tabular-nums ${styles.value}`}>{total}</p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Appointments
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
+          <span className={`h-2 w-2 rounded-full ${activeDoctors > 0 ? "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]" : "bg-slate-300"}`} />
+          <span><strong className="font-bold text-slate-700">{activeDoctors}</strong> of {doctors.length} doctors have bookings</span>
+        </div>
       </div>
       {doctors.length === 0 ? (
-        <div className="flex min-h-40 items-center justify-center rounded-2xl bg-slate-50 text-sm text-slate-500">
-          No affiliated doctors found.
+        <div className="relative m-5 flex min-h-56 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 text-center">
+          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm">
+            <span className="text-xl font-black">+</span>
+          </div>
+          <p className="text-sm font-bold text-slate-700">No affiliated doctors</p>
+          <p className="mt-1 text-xs text-slate-500">Add a doctor to begin tracking appointments.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto pb-2">
-          <div className="flex min-w-[420px]">
-            <div className="flex h-64 w-9 shrink-0 flex-col justify-between pb-10 pr-2 text-right text-[10px] font-medium tabular-nums text-slate-400">
+        <div className="relative px-4 pb-5 pt-6 sm:px-5">
+          {total === 0 && (
+            <div className="pointer-events-none absolute inset-x-14 top-[42%] z-20 text-center">
+              <span className="rounded-full border border-slate-200 bg-white/95 px-3 py-1.5 text-[10px] font-semibold text-slate-500 shadow-sm">
+                No bookings in this period
+              </span>
+            </div>
+          )}
+          <div className="flex">
+            <div className="flex h-64 w-7 shrink-0 flex-col justify-between pb-12 pr-2 text-right text-[9px] font-semibold tabular-nums text-slate-400">
               {ticks.map((tick, index) => <span key={`${tick}-${index}`}>{tick}</span>)}
             </div>
-            <div className="relative h-64 min-w-0 flex-1 border-b border-l border-slate-200">
-              <div className="pointer-events-none absolute inset-x-0 top-0 bottom-10 flex flex-col justify-between">
+            <div className="relative h-64 min-w-0 flex-1 border-b border-l border-slate-200/80">
+              <div className="pointer-events-none absolute inset-x-0 top-0 bottom-12 flex flex-col justify-between">
                 {ticks.map((tick, index) => (
-                  <div key={`${tick}-${index}`} className="border-t border-dashed border-slate-200" />
+                  <div key={`${tick}-${index}`} className="border-t border-dashed border-slate-200/80" />
                 ))}
               </div>
               <div
-                className="absolute inset-x-2 top-0 bottom-10 grid items-end gap-2"
-                style={{ gridTemplateColumns: `repeat(${doctors.length}, minmax(32px, 1fr))` }}
+                className="absolute inset-x-1 top-0 bottom-12 grid items-end gap-2"
+                style={{ gridTemplateColumns: `repeat(${doctors.length}, minmax(22px, 1fr))` }}
               >
                 {doctors.map((doctor) => {
                   const count = doctor[period];
                   const barHeight = count === 0 ? 0 : Math.max(4, (count / axisMaximum) * 100);
                   return (
-                    <div key={doctor.id} className="group relative flex h-full items-end justify-center">
+                    <div key={doctor.id} className="group/bar relative flex h-full items-end justify-center">
                       <span
-                        className="absolute z-10 -translate-y-1 text-xs font-bold tabular-nums text-emerald-700"
-                        style={{ bottom: `${barHeight}%` }}
+                        className={`absolute z-10 -translate-y-2 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-black tabular-nums shadow-sm ${styles.value}`}
+                        style={{ bottom: count === 0 ? "0" : `${barHeight}%` }}
                       >
                         {count}
                       </span>
                       <div
-                        className="w-full max-w-12 rounded-t-md bg-gradient-to-t from-emerald-600 to-teal-400 shadow-[0_-4px_14px_rgba(16,185,129,0.18)] transition-all duration-500 group-hover:from-emerald-700 group-hover:to-teal-500"
-                        style={{ height: `${barHeight}%` }}
+                        className={`w-full max-w-10 rounded-t-xl bg-gradient-to-t ${styles.bar} shadow-[0_-6px_18px_rgba(15,23,42,0.12)] transition-all duration-500 group-hover/bar:brightness-105`}
+                        style={{ height: count === 0 ? "3px" : `${barHeight}%`, opacity: count === 0 ? 0.22 : 1 }}
                         role="img"
                         aria-label={`${doctor.name}: ${count} appointments`}
                         title={`${doctor.name}: ${count} appointments`}
@@ -92,18 +148,20 @@ function AppointmentChart({
                 })}
               </div>
               <div
-                className="absolute inset-x-2 bottom-0 grid h-10 items-start gap-2 pt-2"
-                style={{ gridTemplateColumns: `repeat(${doctors.length}, minmax(32px, 1fr))` }}
+                className="absolute inset-x-1 bottom-0 grid h-12 items-start gap-2 pt-2.5"
+                style={{ gridTemplateColumns: `repeat(${doctors.length}, minmax(22px, 1fr))` }}
               >
                 {doctors.map((doctor) => (
-                  <span key={doctor.id} className="truncate text-center text-[10px] font-semibold text-slate-500" title={doctor.name}>
-                    {doctor.name.replace(/^Dr\.?\s*/i, "Dr. ")}
-                  </span>
+                  <div key={doctor.id} className="min-w-0 text-center" title={doctor.name}>
+                    <span className="mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[8px] font-black text-slate-600 ring-2 ring-white">
+                      {doctor.name.replace(/^Dr\.?\s*/i, "").split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}
+                    </span>
+                    <span className="mt-1 block truncate text-[9px] font-semibold text-slate-500">
+                      {doctor.name.replace(/^Dr\.?\s*/i, "")}
+                    </span>
+                  </div>
                 ))}
               </div>
-              <span className="absolute -left-8 top-1/2 -rotate-90 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
-                Count
-              </span>
               <div className="sr-only">
                 {doctors.map((doctor) => (
                   <span key={doctor.id}>{doctor.name}: {doctor[period]} appointments. </span>
@@ -276,22 +334,31 @@ export default function HospitalAdminDashboard() {
         </div>
       </section>
 
-      <section>
-        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <section className="relative overflow-hidden rounded-[2rem] border border-emerald-100/70 bg-gradient-to-br from-emerald-50/70 via-white/50 to-sky-50/60 p-5 shadow-[0_20px_70px_rgba(15,118,110,0.07)] sm:p-7">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-200/25 blur-3xl" />
+        <div className="relative mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Appointments by Doctor</h2>
-            <p className="mt-1 text-sm text-slate-500">Active scheduled appointments; cancelled and rejected bookings are excluded.</p>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_5px_rgba(16,185,129,0.12)]" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-700">Live analytics</span>
+            </div>
+            <h2 className="text-2xl font-black tracking-tight text-slate-900">Appointments by Doctor</h2>
+            <p className="mt-1.5 text-sm text-slate-500">Compare active bookings across today, this week, and this month.</p>
+          </div>
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white bg-white/80 px-3 py-2 text-[11px] font-semibold text-slate-500 shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+            Cancelled and rejected excluded
           </div>
         </div>
         {analyticsError ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{analyticsError}</div>
         ) : !analytics ? (
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="relative grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {[0, 1, 2].map((item) => <div key={item} className="h-64 animate-pulse rounded-3xl bg-white/70" />)}
           </div>
         ) : (
-          <div className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-3">
+          <div className="relative space-y-6">
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               <AppointmentChart title="Daily" subtitle={analytics.periods.daily.start} period="daily" doctors={analytics.doctors} />
               <AppointmentChart title="Weekly" subtitle={`${analytics.periods.weekly.start} to ${analytics.periods.weekly.end}`} period="weekly" doctors={analytics.doctors} />
               <AppointmentChart title="Monthly" subtitle={`${analytics.periods.monthly.start} to ${analytics.periods.monthly.end}`} period="monthly" doctors={analytics.doctors} />

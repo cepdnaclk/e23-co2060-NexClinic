@@ -31,8 +31,6 @@ class PatientProfile(models.Model):
         max_length=100, blank=True, default=""
     )
     emergency_contact_email = models.EmailField(blank=True, default="")
-    insurance_provider = models.CharField(max_length=255, blank=True, default="")
-    insurance_policy_number = models.CharField(max_length=100, blank=True, default="")
     profile_picture = models.ImageField(
         upload_to="patient_profiles/", null=True, blank=True
     )
@@ -79,3 +77,58 @@ class PatientMedicalRecord(models.Model):
 
     def __str__(self):
         return f"{self.patient.full_name} - {self.visit_date} - {self.doctor_name}"
+
+
+class Prescription(models.Model):
+    medical_record = models.ForeignKey(
+        PatientMedicalRecord,
+        on_delete=models.CASCADE,
+        related_name="prescription_items",
+    )
+    patient = models.ForeignKey(
+        PatientProfile, on_delete=models.CASCADE, related_name="prescription_items"
+    )
+    doctor = models.ForeignKey(
+        "doctor.DoctorProfile",
+        on_delete=models.PROTECT,
+        related_name="prescription_items",
+    )
+    appointment = models.ForeignKey(
+        "doctor.Appointment",
+        on_delete=models.CASCADE,
+        related_name="prescription_items",
+    )
+    medicine_name = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    unit = models.CharField(max_length=30, blank=True, default="")
+    duration = models.CharField(max_length=100, blank=True, default="")
+    frequency = models.CharField(max_length=100, blank=True, default="")
+    timings = models.JSONField(default=list, blank=True)
+    notes = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"{self.medicine_name} - {self.patient.full_name}"
+
+
+class PatientMedication(models.Model):
+    patient = models.ForeignKey(
+        PatientProfile, on_delete=models.CASCADE, related_name="patient_medications"
+    )
+    name = models.CharField(max_length=255)
+    dosage = models.CharField(max_length=255)
+    frequency = models.CharField(max_length=255)
+    duration = models.CharField(max_length=255, blank=True, default="")
+    prescribing_doctor = models.CharField(max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.name} - {self.patient.full_name}"

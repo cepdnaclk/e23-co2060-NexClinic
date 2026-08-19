@@ -15,6 +15,10 @@ type AvailableSlot = {
   date: string;
   time: string;
   bookedCount: number;
+  patientLimit: number;
+  remainingCount: number;
+  isFull: boolean;
+  appointmentFee: number;
 };
 
 const formatTimeForDisplay = (time: string): string => {
@@ -89,11 +93,34 @@ const BookAppointmentPage = () => {
             typeof candidate.hospital === "string" &&
             typeof candidate.date === "string" &&
             typeof candidate.time === "string" &&
-            typeof candidate.bookedCount === "number"
+            typeof candidate.bookedCount === "number" &&
+            typeof candidate.patientLimit === "number" &&
+            typeof candidate.remainingCount === "number" &&
+            typeof candidate.isFull === "boolean" &&
+            typeof candidate.appointmentFee === "number"
           );
         }
       );
       setAvailableSlots(slots);
+
+      const params = new URLSearchParams(window.location.search);
+      const requestedDoctorId = params.get("doctor");
+      const requestedSlotId = params.get("slot");
+      const requestedSlot = requestedSlotId
+        ? slots.find((slot) => String(slot.id) === requestedSlotId)
+        : undefined;
+      const requestedDoctorSlot = requestedDoctorId
+        ? slots.find((slot) => slot.doctorId === requestedDoctorId)
+        : undefined;
+      const initialSlot = requestedSlot ?? requestedDoctorSlot;
+
+      if (initialSlot) {
+        setSelectedHospital(initialSlot.hospital);
+        setDoctorId(initialSlot.doctorId);
+        if (requestedSlot) {
+          setSlotId(String(requestedSlot.id));
+        }
+      }
 
       setSlotId((currentSlotId) =>
         slots.some((slot) => String(slot.id) === currentSlotId)
@@ -111,26 +138,18 @@ const BookAppointmentPage = () => {
   }, [router]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const initialDoctorFromQuery = params.get("doctor");
-    const initialSlotFromQuery = params.get("slot");
-    if (initialDoctorFromQuery) {
-      setDoctorId(initialDoctorFromQuery);
-    }
-    if (initialSlotFromQuery) {
-      setSlotId(initialSlotFromQuery);
-    }
-  }, []);
-
-  useEffect(() => {
     void loadAvailableSlots();
   }, [loadAvailableSlots]);
 
   // Derived options for SearchableSelect
   const hospitalOptions = useMemo(() => {
-    const hospitals = Array.from(new Set(availableSlots.map((s) => s.hospital)));
+    const filteredByDoctor = doctorId 
+      ? availableSlots.filter(s => s.doctorId === doctorId)
+      : availableSlots;
+      
+    const hospitals = Array.from(new Set(filteredByDoctor.map((s) => s.hospital)));
     return hospitals.map((h) => ({ value: h, label: h }));
-  }, [availableSlots]);
+  }, [availableSlots, doctorId]);
 
   const doctorOptions = useMemo(() => {
     const filteredByHospital = selectedHospital
@@ -271,6 +290,11 @@ const BookAppointmentPage = () => {
                   <Link href="/user-self/appointments" className="flex-1">
                     <button className="w-full rounded-2xl bg-green-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-700 active:scale-[0.98]">
                       View My Appointments
+                    </button>
+                  </Link>
+                  <Link href="/user-self/chats" className="flex-1">
+                    <button type="button" className="w-full rounded-2xl border border-green-600 text-green-600 bg-white px-6 py-3.5 text-sm font-semibold shadow-sm transition-all hover:bg-green-50 active:scale-[0.98]">
+                      Go to Chat
                     </button>
                   </Link>
                   <button
@@ -545,7 +569,7 @@ const BookAppointmentPage = () => {
 
       {showPaymentModal && (
         <MockPaymentGateway
-          amount="Rs. 3,500.00"
+          amount={selectedSlot?.appointmentFee ? `Rs. ${selectedSlot.appointmentFee.toFixed(2)}` : "Rs. 3,500.00"}
           onSuccess={handlePaymentSuccess}
           onCancel={() => setShowPaymentModal(false)}
           isProcessing={submitting}

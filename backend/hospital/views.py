@@ -11,7 +11,7 @@ from .serializers import (
     HospitalAppointmentSerializer,
 )
 from doctor.models import Appointment, AppointmentAvailableSlot
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 from datetime import timedelta
 import logging
@@ -255,6 +255,30 @@ class DoctorAppointmentAnalyticsView(APIView):
                     & active_appointments,
                     distinct=True,
                 ),
+                daily_income=Sum(
+                    "appointments__appointment_fee",
+                    filter=Q(
+                        appointments__hospital=admin_role.hospital,
+                        appointments__slot__date=today,
+                        appointments__status=Appointment.Status.COMPLETED,
+                    ),
+                ),
+                weekly_income=Sum(
+                    "appointments__appointment_fee",
+                    filter=Q(
+                        appointments__hospital=admin_role.hospital,
+                        appointments__slot__date__range=(week_start, week_end),
+                        appointments__status=Appointment.Status.COMPLETED,
+                    ),
+                ),
+                monthly_income=Sum(
+                    "appointments__appointment_fee",
+                    filter=Q(
+                        appointments__hospital=admin_role.hospital,
+                        appointments__slot__date__range=(month_start, month_end),
+                        appointments__status=Appointment.Status.COMPLETED,
+                    ),
+                ),
             )
             .order_by("full_name", "id")
         )
@@ -278,15 +302,9 @@ class DoctorAppointmentAnalyticsView(APIView):
                         "appointment_fee": float(doctor.appointment_fee),
                         "patient_count": doctor.patient_count,
                         "income": {
-                            "daily": float(
-                                doctor.appointment_fee * doctor.daily_completed_count
-                            ),
-                            "weekly": float(
-                                doctor.appointment_fee * doctor.weekly_completed_count
-                            ),
-                            "monthly": float(
-                                doctor.appointment_fee * doctor.monthly_completed_count
-                            ),
+                            "daily": float(doctor.daily_income or 0.0),
+                            "weekly": float(doctor.weekly_income or 0.0),
+                            "monthly": float(doctor.monthly_income or 0.0),
                         },
                     }
                     for doctor in doctors
@@ -396,7 +414,6 @@ class HospitalAppointmentListView(APIView):
             )
 
         return Response({"appointments": response_data}, status=status.HTTP_200_OK)
-
 
 class ManageHospitalDoctorView(APIView):
     permission_classes = [IsAuthenticated]

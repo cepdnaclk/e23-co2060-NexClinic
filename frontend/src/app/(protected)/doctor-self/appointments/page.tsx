@@ -62,8 +62,6 @@ type PatientProfile = {
   allergies: string[];
   conditions: string[];
   currentMedications: string[];
-  insuranceProvider: string;
-  insurancePolicyNumber: string;
   comments: string;
   prescriptions: string;
   lastVisit: string;
@@ -104,8 +102,6 @@ type ApiPatientProfile = {
   allergies?: string[];
   conditions?: string[];
   currentMedications?: string[];
-  insuranceProvider?: string;
-  insurancePolicyNumber?: string;
   comments?: string;
   prescriptions?: string;
   lastVisit?: string;
@@ -120,6 +116,156 @@ type MedicalRecordDraft = {
   recommendedTests: string;
   followUpDate: string;
   followUpNotes: string;
+};
+
+type MedicineTiming =
+  | "Before meals"
+  | "After meals"
+  | "Breakfast"
+  | "Lunch"
+  | "Night";
+
+type PrescriptionMedicine = {
+  id: string;
+  name: string;
+  dose: string;
+  unit: string;
+  duration: string;
+  frequency: string;
+  notes: string;
+  timings: MedicineTiming[];
+};
+
+const medicineOptions = [
+  "Amoxicillin",
+  "Azithromycin",
+  "Cetirizine",
+  "Losartan",
+  "Metformin",
+  "Omeprazole",
+  "Paracetamol",
+  "Salbutamol",
+  "Vitamin C",
+];
+
+const medicineTimings: MedicineTiming[] = [
+  "Before meals",
+  "After meals",
+  "Breakfast",
+  "Lunch",
+  "Night",
+];
+
+const medicineFrequencies = [
+  "Once daily",
+  "Twice daily",
+  "Three times daily",
+  "Every 4 hours",
+  "Every 6 hours",
+  "Every 8 hours",
+  "Every 12 hours",
+  "Every 24 hours",
+  "As needed",
+];
+
+const medicineUnits = [
+  "mg",
+  "g",
+  "mcg",
+  "mL",
+  "tablet",
+  "capsule",
+  "drop",
+  "puff",
+  "teaspoon",
+];
+
+const createPrescriptionMedicine = (): PrescriptionMedicine => ({
+  id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  name: "",
+  dose: "",
+  unit: "",
+  duration: "",
+  frequency: "",
+  notes: "",
+  timings: [],
+});
+
+const serializePrescription = (medicines: PrescriptionMedicine[]) =>
+  medicines
+    .filter(
+      (medicine) =>
+        medicine.name ||
+        medicine.dose ||
+        medicine.unit ||
+        medicine.duration ||
+        medicine.frequency ||
+        medicine.notes ||
+        medicine.timings.length,
+    )
+    .map(
+      (medicine) =>
+        `${medicine.name || "Medicine"} | Amount: ${medicine.dose || "Not specified"} | Unit: ${medicine.unit || "Not specified"} | Duration: ${
+          medicine.duration || "Not specified"
+        } | Frequency: ${medicine.frequency || "Not specified"} | Timing: ${
+          medicine.timings.join(", ") || "Not specified"
+        } | Notes: ${medicine.notes || "None"}`,
+    )
+    .join("\n");
+
+const parsePrescription = (value: string): PrescriptionMedicine[] => {
+  if (!value.trim()) return [createPrescriptionMedicine()];
+
+  const parsed = value.split("\n").filter(Boolean).map((line) => {
+    const parts = line.split("|").map((part) => part.trim());
+    const amountPart = parts.find((part) => part.startsWith("Amount:"));
+    const dosePart = parts.find((part) => part.startsWith("Dose:"));
+    const unitPart = parts.find((part) => part.startsWith("Unit:"));
+    const durationPart = parts.find((part) => part.startsWith("Duration:"));
+    const frequencyPart = parts.find((part) => part.startsWith("Frequency:"));
+    const notesPart = parts.find((part) => part.startsWith("Notes:"));
+    const timingPart = parts.find((part) => part.startsWith("Timing:"));
+    const timings = timingPart
+      ? timingPart
+          .replace("Timing:", "")
+          .split(",")
+          .map((timing) => timing.trim())
+          .filter((timing): timing is MedicineTiming =>
+            medicineTimings.includes(timing as MedicineTiming),
+          )
+      : [];
+
+    const legacyDose = dosePart?.replace("Dose:", "").trim() || "";
+    const legacyDoseMatch = legacyDose.match(
+      /^(.+?)\s+(mg|g|mcg|mL|ml|tablets?|capsules?|drops?|puffs?|teaspoons?)$/i,
+    );
+    const parsedAmount =
+      amountPart?.replace("Amount:", "").trim() ||
+      legacyDoseMatch?.[1] ||
+      legacyDose;
+    const parsedUnit =
+      unitPart?.replace("Unit:", "").trim() ||
+      legacyDoseMatch?.[2]?.replace(/s$/i, "") ||
+      "";
+
+    return {
+      id: createPrescriptionMedicine().id,
+      name: parts[0] || "",
+      dose: parsedAmount === "Not specified" ? "" : parsedAmount,
+      unit:
+        parsedUnit === "Not specified"
+          ? ""
+          : parsedUnit.toLowerCase() === "ml"
+            ? "mL"
+            : parsedUnit,
+      duration: durationPart?.replace("Duration:", "").trim() || "",
+      frequency: frequencyPart?.replace("Frequency:", "").trim() || "",
+      notes: notesPart?.replace("Notes:", "").trim() || "",
+      timings,
+    };
+  });
+
+  return parsed.length ? parsed : [createPrescriptionMedicine()];
 };
 
 const statusFilters: AppointmentStatusFilter[] = [
@@ -220,6 +366,11 @@ function DoctorAppointmentsPage() {
   });
   const [medicalRecordTarget, setMedicalRecordTarget] =
     useState<AppointmentItem | null>(null);
+  const [prescriptionTarget, setPrescriptionTarget] =
+    useState<AppointmentItem | null>(null);
+  const [prescriptionMedicines, setPrescriptionMedicines] = useState<
+    PrescriptionMedicine[]
+  >([createPrescriptionMedicine()]);
   const [medicalRecordDraft, setMedicalRecordDraft] =
     useState<MedicalRecordDraft>({
       observations: "",
@@ -237,6 +388,8 @@ function DoctorAppointmentsPage() {
   const [isSavingPatientNotes, setIsSavingPatientNotes] = useState(false);
   const [isLoadingMedicalRecord, setIsLoadingMedicalRecord] = useState(false);
   const [isSavingMedicalRecord, setIsSavingMedicalRecord] = useState(false);
+  const [isLoadingPrescription, setIsLoadingPrescription] = useState(false);
+  const [isSavingPrescription, setIsSavingPrescription] = useState(false);
   const [updatingAppointmentIds, setUpdatingAppointmentIds] = useState<
     string[]
   >([]);
@@ -493,8 +646,6 @@ function DoctorAppointmentsPage() {
       allergies: ["Not available"],
       conditions: ["Not available"],
       currentMedications: ["Not available"],
-      insuranceProvider: "Not available",
-      insurancePolicyNumber: "Not available",
       comments: "",
       prescriptions: "",
       lastVisit: "Not available",
@@ -559,10 +710,6 @@ function DoctorAppointmentsPage() {
             apiProfile.currentMedications.length > 0
             ? apiProfile.currentMedications
             : ["Not available"],
-        insuranceProvider:
-          apiProfile.insuranceProvider?.trim() || "Not available",
-        insurancePolicyNumber:
-          apiProfile.insurancePolicyNumber?.trim() || "Not available",
         comments: apiProfile.comments?.trim() || "",
         prescriptions: apiProfile.prescriptions?.trim() || "",
         lastVisit: apiProfile.lastVisit?.trim() || "Not available",
@@ -674,7 +821,6 @@ function DoctorAppointmentsPage() {
             observations: medicalRecordDraft.observations,
             diagnosis: medicalRecordDraft.diagnosis,
             comments: medicalRecordDraft.comments,
-            prescriptions: medicalRecordDraft.prescriptions,
             recommendedTests: medicalRecordDraft.recommendedTests,
             followUpDate: medicalRecordDraft.followUpDate || undefined,
             followUpNotes: medicalRecordDraft.followUpNotes,
@@ -714,6 +860,132 @@ function DoctorAppointmentsPage() {
       window.setTimeout(() => setToastMessage(""), 2200);
     } finally {
       setIsSavingMedicalRecord(false);
+    }
+  };
+
+  const openPrescription = async (appointment: AppointmentItem) => {
+    setPrescriptionTarget(appointment);
+    setPrescriptionMedicines([createPrescriptionMedicine()]);
+    setIsLoadingPrescription(true);
+
+    try {
+      const response = await fetch(
+        `/api/doctor/appointments/${appointment.id}/medical-record`,
+        { method: "GET", cache: "no-store" },
+      );
+
+      if (response.status === 401) {
+        handleDoctorSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(
+          payload?.error || payload?.detail || "Failed to load prescription",
+        );
+      }
+
+      setPrescriptionMedicines(
+        payload?.medicalRecord?.prescriptionItems?.length
+          ? payload.medicalRecord.prescriptionItems.map(
+              (item: {
+                id: string | number;
+                name: string;
+                amount: string | number | null;
+                unit: string;
+                duration: string;
+                frequency: string;
+                timings: MedicineTiming[];
+                notes: string;
+              }) => ({
+                id: String(item.id),
+                name: item.name || "",
+                dose: item.amount == null ? "" : String(item.amount),
+                unit: item.unit || "",
+                duration: item.duration || "",
+                frequency: item.frequency || "",
+                timings: item.timings || [],
+                notes: item.notes || "",
+              }),
+            )
+          : parsePrescription(payload?.medicalRecord?.prescriptions || ""),
+      );
+    } catch (error) {
+      setToastMessage(
+        error instanceof Error ? error.message : "Failed to load prescription.",
+      );
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } finally {
+      setIsLoadingPrescription(false);
+    }
+  };
+
+  const closePrescription = () => {
+    setPrescriptionTarget(null);
+    setPrescriptionMedicines([createPrescriptionMedicine()]);
+    setIsLoadingPrescription(false);
+    setIsSavingPrescription(false);
+  };
+
+  const savePrescription = async () => {
+    if (!prescriptionTarget) return;
+
+    setIsSavingPrescription(true);
+    try {
+      const response = await fetch(
+        `/api/doctor/appointments/${prescriptionTarget.id}/medical-record`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prescriptions: serializePrescription(prescriptionMedicines),
+            prescriptionItems: prescriptionMedicines
+              .filter(
+                (medicine) =>
+                  medicine.name ||
+                  medicine.dose ||
+                  medicine.unit ||
+                  medicine.duration ||
+                  medicine.frequency ||
+                  medicine.notes ||
+                  medicine.timings.length,
+              )
+              .map((medicine) => ({
+                name: medicine.name || "Medicine",
+                amount: medicine.dose ? Number(medicine.dose) : null,
+                unit: medicine.unit,
+                duration: medicine.duration,
+                frequency: medicine.frequency,
+                timings: medicine.timings,
+                notes: medicine.notes,
+              })),
+          }),
+        },
+      );
+
+      if (response.status === 401) {
+        handleDoctorSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(
+          payload?.error || payload?.detail || "Failed to save prescription",
+        );
+      }
+
+      setToastMessage("Prescription saved successfully.");
+      window.setTimeout(() => setToastMessage(""), 2200);
+      closePrescription();
+    } catch (error) {
+      setToastMessage(
+        error instanceof Error ? error.message : "Failed to save prescription.",
+      );
+      window.setTimeout(() => setToastMessage(""), 2200);
+    } finally {
+      setIsSavingPrescription(false);
     }
   };
 
@@ -1290,12 +1562,21 @@ function DoctorAppointmentsPage() {
                     )}
                     {(appointment.status === "Accepted" ||
                       appointment.status === "Completed") && (
+                      <>
                         <WhiteButton
                           className="px-4 py-2"
                           onClick={() => void openMedicalRecord(appointment)}
                         >
                           Medical Record
                         </WhiteButton>
+                        <button
+                          type="button"
+                          onClick={() => void openPrescription(appointment)}
+                          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                        >
+                          Prescription
+                        </button>
+                      </>
                       )}
                     <WhiteButton
                       className="px-4 py-2"
@@ -1365,6 +1646,13 @@ function DoctorAppointmentsPage() {
                       >
                         Medical Record
                       </WhiteButton>
+                      <button
+                        type="button"
+                        onClick={() => void openPrescription(appointment)}
+                        className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                      >
+                        Prescription
+                      </button>
                       <WhiteButton
                         className="px-4 py-2"
                         onClick={() =>
@@ -1466,20 +1754,6 @@ function DoctorAppointmentsPage() {
                   <p className="mt-3 text-sm text-slate-700">{selectedPatient.address}</p>
                   <p className="mt-1 text-sm text-slate-600">
                     {selectedPatient.city} • {selectedPatient.postalCode} • {selectedPatient.country}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2">
-                  <h4 className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Insurance
-                  </h4>
-                  <p className="mt-3 text-sm">
-                    <span className="font-semibold text-slate-900">Provider:</span>{" "}
-                    {selectedPatient.insuranceProvider}
-                  </p>
-                  <p className="mt-1 text-sm">
-                    <span className="font-semibold text-slate-900">Policy #:</span>{" "}
-                    {selectedPatient.insurancePolicyNumber}
                   </p>
                 </div>
               </div>
@@ -1595,13 +1869,227 @@ function DoctorAppointmentsPage() {
         </div>
       )}
 
+      {prescriptionTarget && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/55 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="prescription-title"
+        >
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-[2rem] border border-emerald-100 bg-white shadow-2xl">
+            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-br from-emerald-100/80 via-teal-50 to-transparent" />
+            <div className="relative border-b border-emerald-100 px-6 py-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6m7-3a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700">
+                      Doctor order
+                    </p>
+                    <h3 id="prescription-title" className="mt-1 text-xl font-bold text-slate-900">
+                      Prescription
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {prescriptionTarget.patientName} · {prescriptionTarget.date} · {prescriptionTarget.location}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={closePrescription}
+                  className="rounded-full p-2 text-slate-500 transition hover:bg-white hover:text-slate-800"
+                  aria-label="Close prescription dialog"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div className="relative p-6">
+              {isLoadingPrescription ? (
+                <div className="flex min-h-48 items-center justify-center text-sm text-slate-500">
+                  Loading prescription...
+                </div>
+              ) : (
+                <>
+                  {false && <><label htmlFor="prescription-details" className="text-sm font-bold text-slate-800">
+                    Medicines and instructions
+                  </label>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Include medicine name, dosage, frequency, duration, and special instructions.
+                  </p>
+                  <textarea
+                    id="prescription-details"
+                    value=""
+                    readOnly
+                    rows={9}
+                    className="mt-4 w-full rounded-2xl border border-emerald-200 bg-emerald-50/30 px-4 py-3 text-sm leading-relaxed text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                    placeholder={"Example:\nAmoxicillin 500 mg — one capsule every 8 hours for 5 days, after meals."}
+                  />
+                  <p className="mt-2 text-xs text-slate-500">
+                    Reopen this Prescription card at any time to update the instructions.
+                  </p></>}
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-800">Medicines</h4>
+                      <p className="mt-1 text-xs text-slate-500">Add each medicine with its dose and all applicable timings.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPrescriptionMedicines((items) => [...items, createPrescriptionMedicine()])}
+                      className="shrink-0 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700"
+                    >
+                      + Add Medicine
+                    </button>
+                  </div>
+                  <div className="mt-4 max-h-[52vh] space-y-4 overflow-y-auto pr-1">
+                    {prescriptionMedicines.map((medicine, index) => (
+                      <article key={medicine.id} className="rounded-2xl border border-emerald-100 bg-emerald-50/30 p-4">
+                        <div className="mb-4 flex items-center justify-between">
+                          <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">Medicine {index + 1}</p>
+                          {prescriptionMedicines.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setPrescriptionMedicines((items) => items.filter((item) => item.id !== medicine.id))}
+                              className="text-xs font-semibold text-rose-600 hover:text-rose-700"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <label htmlFor={`medicine-name-${medicine.id}`} className="text-xs font-semibold text-slate-700">Medicine name</label>
+                            <select
+                              id={`medicine-name-${medicine.id}`}
+                              value={medicine.name}
+                              onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, name: event.target.value } : item))}
+                              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                            >
+                              <option value="">Select medicine</option>
+                              {medicineOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <span className="text-xs font-semibold text-slate-700">Dose</span>
+                            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(7rem,0.7fr)] gap-2">
+                              <div>
+                                <label htmlFor={`medicine-dose-${medicine.id}`} className="sr-only">Amount</label>
+                                <input
+                                  id={`medicine-dose-${medicine.id}`}
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={medicine.dose}
+                                  onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, dose: event.target.value } : item))}
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                                  placeholder="Amount"
+                                />
+                              </div>
+                              <div>
+                                <label htmlFor={`medicine-unit-${medicine.id}`} className="sr-only">Unit</label>
+                                <select
+                                  id={`medicine-unit-${medicine.id}`}
+                                  value={medicine.unit}
+                                  onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, unit: event.target.value } : item))}
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                                >
+                                  <option value="">Unit</option>
+                                  {medicineUnits.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <label htmlFor={`medicine-duration-${medicine.id}`} className="text-xs font-semibold text-slate-700">Duration</label>
+                            <input
+                              id={`medicine-duration-${medicine.id}`}
+                              value={medicine.duration}
+                              onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, duration: event.target.value } : item))}
+                              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                              placeholder="e.g. 5 days"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor={`medicine-frequency-${medicine.id}`} className="text-xs font-semibold text-slate-700">Frequency</label>
+                            <select
+                              id={`medicine-frequency-${medicine.id}`}
+                              value={medicine.frequency}
+                              onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, frequency: event.target.value } : item))}
+                              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                            >
+                              <option value="">Select frequency</option>
+                              {medicineFrequencies.map((frequency) => (
+                                <option key={frequency} value={frequency}>{frequency}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <fieldset className="mt-4">
+                          <legend className="text-xs font-semibold text-slate-700">Timing (select all that apply)</legend>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {medicineTimings.map((timing) => {
+                              const checked = medicine.timings.includes(timing);
+                              return (
+                                <label key={timing} className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold ${checked ? "border-emerald-300 bg-emerald-100 text-emerald-800" : "border-slate-200 bg-white text-slate-600"}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, timings: checked ? item.timings.filter((value) => value !== timing) : [...item.timings, timing] } : item))}
+                                    className="h-4 w-4 accent-emerald-600"
+                                  />
+                                  {timing}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </fieldset>
+                        <div className="mt-4">
+                          <label htmlFor={`medicine-notes-${medicine.id}`} className="text-xs font-semibold text-slate-700">
+                            Additional notes <span className="font-normal text-slate-400">(optional)</span>
+                          </label>
+                          <textarea
+                            id={`medicine-notes-${medicine.id}`}
+                            value={medicine.notes}
+                            onChange={(event) => setPrescriptionMedicines((items) => items.map((item) => item.id === medicine.id ? { ...item, notes: event.target.value } : item))}
+                            rows={3}
+                            className="mt-2 w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-relaxed text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                            placeholder="Add special instructions, warnings, or other notes"
+                          />
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 bg-slate-50/70 px-6 py-4">
+              <WhiteButton disabled={isSavingPrescription} onClick={closePrescription}>
+                Cancel
+              </WhiteButton>
+              <GreenButton
+                disabled={isLoadingPrescription || isSavingPrescription}
+                onClick={() => void savePrescription()}
+              >
+                {isSavingPrescription ? "Saving..." : "Save Prescription"}
+              </GreenButton>
+            </div>
+          </div>
+        </div>
+      )}
+
       {medicalRecordTarget && (
         <div
           className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-900/55 p-4"
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-3xl rounded-[2rem] border border-white/80 bg-white p-6 shadow-2xl">
+          <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border border-white/80 bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-xl font-bold text-slate-900">
@@ -1666,8 +2154,7 @@ function DoctorAppointmentsPage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
+                  <div>
                       <label className="block text-sm font-semibold text-slate-700">
                         Comments
                       </label>
@@ -1679,16 +2166,33 @@ function DoctorAppointmentsPage() {
                             comments: event.target.value,
                           }))
                         }
-                        rows={4}
+                        rows={3}
                         className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
                         placeholder="Doctor comments, warnings, or clinical remarks"
                       />
+                  </div>
+
+                  {false && <section className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-4 shadow-sm">
+                    <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-200/40 blur-2xl" />
+                    <div className="relative flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6m7-3a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900">Prescription</h4>
+                        <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                          Add or update medicines, dosage, frequency, duration, and patient instructions.
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700">
-                        Prescriptions
+                    <div className="relative mt-4">
+                      <label htmlFor="appointment-prescription" className="sr-only">
+                        Prescription details
                       </label>
                       <textarea
+                        id="appointment-prescription"
                         value={medicalRecordDraft.prescriptions}
                         onChange={(event) =>
                           setMedicalRecordDraft((prev) => ({
@@ -1696,12 +2200,15 @@ function DoctorAppointmentsPage() {
                             prescriptions: event.target.value,
                           }))
                         }
-                        rows={4}
-                        className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-emerald-100"
-                        placeholder="Medicines, dosage, and usage instructions"
+                        rows={5}
+                        className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 shadow-inner outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                        placeholder={"Example:\nAmoxicillin 500 mg — one capsule every 8 hours for 5 days, after meals."}
                       />
+                      <p className="mt-2 text-[11px] font-medium text-emerald-700">
+                        The prescription remains editable when this medical record is reopened.
+                      </p>
                     </div>
-                  </div>
+                  </section>}
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>

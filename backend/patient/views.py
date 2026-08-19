@@ -7,14 +7,14 @@ from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import F
+from django.db.models import Count, F, Q
 
 from doctor.models import (
     Appointment,
     AppointmentAvailableSlot,
 )
 from chat.models import AdviceChatThread
-from hospital.models import DoctorHospitalVerification, Hospital
+from hospital.models import DoctorHospitalVerification
 
 from .serializers import (
     PatientAppointmentSerializer,
@@ -23,8 +23,10 @@ from .serializers import (
     PatientAppointmentCancelSerializer,
     PatientMedicalRecordSerializer,
     PatientProfileUpdateSerializer,
+    PatientMedicationSerializer,
     is_slot_in_past,
 )
+from .models import PatientMedication, Prescription
 
 
 class BasePatientAPIView(APIView):
@@ -95,8 +97,6 @@ class PatientProfileView(BasePatientAPIView):
         emergency_contact_phone = ""
         emergency_contact_relation = ""
         emergency_contact_email = ""
-        insurance_provider = ""
-        insurance_policy_number = ""
         medical_reports = ""
         medical_documents = ""
 
@@ -134,8 +134,6 @@ class PatientProfileView(BasePatientAPIView):
                 patient_profile.emergency_contact_relation or ""
             )
             emergency_contact_email = patient_profile.emergency_contact_email or ""
-            insurance_provider = patient_profile.insurance_provider or ""
-            insurance_policy_number = patient_profile.insurance_policy_number or ""
             medical_reports = PatientProfileView._build_file_url(
                 request, patient_profile.medical_reports
             )
@@ -210,10 +208,6 @@ class PatientProfileView(BasePatientAPIView):
                 "phone": emergency_contact_phone,
                 "relation": emergency_contact_relation,
                 "email": emergency_contact_email,
-            },
-            "insurance": {
-                "provider": insurance_provider,
-                "policyNumber": insurance_policy_number,
             },
             "chatSummary": {
                 "unreadChats": unread_chat_count,
@@ -316,6 +310,18 @@ class PatientAvailableAppointmentSlotsView(BasePatientAPIView):
                 doctor__hospital_app_verifications__hospital_id=F("hospital_id"),
                 doctor__hospital_app_verifications__status=DoctorHospitalVerification.Status.VERIFIED,
             )
+            .annotate(
+                active_booking_count=Count(
+                    "appointments",
+                    filter=Q(
+                        appointments__status__in=[
+                            Appointment.Status.PENDING,
+                            Appointment.Status.ACCEPTED,
+                        ]
+                    ),
+                )
+            )
+            .filter(active_booking_count__lt=F("patient_limit"))
             .order_by("date", "start_time")
         )
 
@@ -457,11 +463,12 @@ class PatientAppointmentsView(BasePatientAPIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            current_booked = (
-                slot.booked_count
-                if slot.booked_count is not None
-                else slot.appointments.count()
-            )
+            current_booked = slot.appointments.filter(
+                status__in=[
+                    Appointment.Status.PENDING,
+                    Appointment.Status.ACCEPTED,
+                ]
+            ).count()
             if current_booked >= slot.patient_limit:
                 return Response(
                     {"detail": "This slot is full."}, status=status.HTTP_400_BAD_REQUEST
@@ -473,12 +480,36 @@ class PatientAppointmentsView(BasePatientAPIView):
                 patient=patient_profile,
                 reason=reason,
                 status=Appointment.Status.ACCEPTED,  # auto-accepted
-                hospital=Hospital.objects.filter(name=slot.hospital).first(),
+                hospital=slot.hospital,
+                appointment_fee=slot.doctor.appointment_fee,
             )
 
-            slot.booked_count = current_booked + 1
-            slot.remaining_count = max(slot.patient_limit - slot.booked_count, 0)
-            slot.save(update_fields=["booked_count", "remaining_count"])
+            import uuid
+            
+            # Auto-activate a free AdviceChatThread for the patient
+            # Expiring 24 hours from the time of booking
+            expires_at = timezone.now() + timedelta(days=1)
+            
+            thread, created = AdviceChatThread.objects.get_or_create(
+                patient=patient_profile,
+                doctor=slot.doctor,
+                defaults={
+                    "thread_code": f"CHAT{uuid.uuid4().hex[:12].upper()}",
+                    "expires_at": expires_at,
+                    "is_active": True,
+                    "status": AdviceChatThread.Status.OPEN,
+                }
+            )
+            
+            if not created:
+                thread.expires_at = max(thread.expires_at or expires_at, expires_at)
+                thread.is_active = True
+                if thread.status == AdviceChatThread.Status.CLOSED:
+                    thread.status = AdviceChatThread.Status.OPEN
+                thread.save()
+
+            # Appointment's post-save signal refreshes both counters from the
+            # authoritative set of active bookings.
 
         payload = PatientAppointmentSerializer(appointment).data
         return Response(
@@ -562,3 +593,61 @@ class PatientAppointmentCancelView(BasePatientAPIView):
             {"message": "Appointment cancelled successfully.", "appointment": payload},
             status=status.HTTP_200_OK,
         )
+
+
+class PatientMedicationsView(BasePatientAPIView):
+    def get(self, request, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        medications = PatientMedication.objects.filter(patient=patient_profile)
+        serializer = PatientMedicationSerializer(medications, many=True)
+        meds_data = list(serializer.data)
+        
+        prescriptions = Prescription.objects.filter(patient=patient_profile).select_related('doctor')
+        for p in prescriptions:
+            dosage_str = ""
+            if p.amount is not None:
+                amount_str = f"{p.amount:f}".rstrip("0").rstrip(".") if "." in f"{p.amount:f}" else str(p.amount)
+                dosage_str = f"{amount_str} {p.unit}".strip()
+            elif p.unit:
+                dosage_str = p.unit
+                
+            meds_data.append({
+                "id": f"prescription_{p.id}",
+                "name": p.medicine_name,
+                "dosage": dosage_str,
+                "frequency": p.frequency,
+                "duration": p.duration,
+                "prescribing_doctor": p.doctor.full_name if p.doctor else "",
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "is_prescription": True,
+            })
+            
+        return Response({"medications": meds_data})
+
+    def post(self, request, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        serializer = PatientMedicationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(patient=patient_profile)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PatientMedicationDetailView(BasePatientAPIView):
+    def delete(self, request, medication_id, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        try:
+            medication = PatientMedication.objects.get(id=medication_id, patient=patient_profile)
+            medication.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except PatientMedication.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
