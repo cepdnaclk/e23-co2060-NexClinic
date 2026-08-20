@@ -24,10 +24,16 @@ from .serializers import (
     PatientMedicalRecordSerializer,
     PatientProfileUpdateSerializer,
     PatientMedicationSerializer,
+    MedicationReminderSerializer,
+    MedicationLogSerializer,
     is_slot_in_past,
 )
-from .models import PatientMedication, Prescription
-
+from .models import (
+    PatientMedication,
+    Prescription,
+    MedicationReminder,
+    MedicationLog,
+)
 
 class BasePatientAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -651,3 +657,131 @@ class PatientMedicationDetailView(BasePatientAPIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except PatientMedication.DoesNotExist:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class MedicationReminderView(BasePatientAPIView):
+    def get(self, request, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        reminders = MedicationReminder.objects.filter(patient=patient_profile, is_active=True)
+        serializer = MedicationReminderSerializer(reminders, many=True)
+        return Response({"reminders": serializer.data})
+
+    def post(self, request, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        serializer = MedicationReminderSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(patient=patient_profile)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MedicationReminderDetailView(BasePatientAPIView):
+    def patch(self, request, reminder_id, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        try:
+            reminder = MedicationReminder.objects.get(id=reminder_id, patient=patient_profile)
+        except MedicationReminder.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        serializer = MedicationReminderSerializer(reminder, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, reminder_id, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        try:
+            reminder = MedicationReminder.objects.get(id=reminder_id, patient=patient_profile)
+            reminder.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except MedicationReminder.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class MedicationLogView(BasePatientAPIView):
+    def get(self, request, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        date_str = request.query_params.get('date', timezone.localdate().isoformat())
+        try:
+            target_date = datetime.fromisoformat(date_str).date()
+        except ValueError:
+            target_date = timezone.localdate()
+
+        # Generate logs for today if they don't exist
+        active_reminders = MedicationReminder.objects.filter(
+            patient=patient_profile,
+            is_active=True,
+            start_date__lte=target_date
+        )
+
+        for reminder in active_reminders:
+            if reminder.end_date and reminder.end_date < target_date:
+                continue
+                
+            for time_str in reminder.schedule_times:
+                try:
+                    time_obj = datetime.strptime(time_str, "%H:%M").time()
+                    dt = timezone.make_aware(datetime.combine(target_date, time_obj))
+                    
+                    MedicationLog.objects.get_or_create(
+                        reminder=reminder,
+                        patient=patient_profile,
+                        scheduled_for=dt,
+                    )
+                except ValueError:
+                    pass
+
+        # Fetch all logs for the target date
+        logs = MedicationLog.objects.filter(
+            patient=patient_profile,
+            scheduled_for__date=target_date
+        ).select_related('reminder').order_by('scheduled_for')
+        
+        data = []
+        for log in logs:
+            log_data = MedicationLogSerializer(log).data
+            log_data['reminder'] = MedicationReminderSerializer(log.reminder).data
+            data.append(log_data)
+            
+        return Response({"logs": data})
+
+
+class MedicationLogDetailView(BasePatientAPIView):
+    def patch(self, request, log_id, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        try:
+            log = MedicationLog.objects.get(id=log_id, patient=patient_profile)
+        except MedicationLog.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        serializer = MedicationLogSerializer(log, data=request.data, partial=True)
+        if serializer.is_valid():
+            if serializer.validated_data.get('status') == MedicationLog.Status.TAKEN and not log.taken_at:
+                serializer.validated_data['taken_at'] = timezone.now()
+            serializer.save()
+            
+            # Re-fetch to return nested data
+            log_data = MedicationLogSerializer(log).data
+            log_data['reminder'] = MedicationReminderSerializer(log.reminder).data
+            
+            return Response(log_data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -132,3 +132,65 @@ class PatientMedication(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.patient.full_name}"
+
+
+class MedicationReminder(models.Model):
+    patient = models.ForeignKey(
+        PatientProfile, on_delete=models.CASCADE, related_name="medication_reminders"
+    )
+    prescription = models.ForeignKey(
+        Prescription,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="reminders",
+    )
+    self_medication = models.ForeignKey(
+        PatientMedication,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="reminders",
+    )
+    medicine_name = models.CharField(max_length=255)
+    dosage = models.CharField(max_length=255, blank=True, default="")
+    start_date = models.DateField(default=timezone.localdate)
+    end_date = models.DateField(null=True, blank=True)
+    schedule_times = models.JSONField(default=list)  # e.g., ["08:00", "20:00"]
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Reminder for {self.medicine_name} - {self.patient.full_name}"
+
+
+class MedicationLog(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        TAKEN = "TAKEN", "Taken"
+        MISSED = "MISSED", "Missed"
+        SKIPPED = "SKIPPED", "Skipped"
+
+    reminder = models.ForeignKey(
+        MedicationReminder, on_delete=models.CASCADE, related_name="logs"
+    )
+    patient = models.ForeignKey(
+        PatientProfile, on_delete=models.CASCADE, related_name="medication_logs"
+    )
+    scheduled_for = models.DateTimeField()
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING
+    )
+    taken_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-scheduled_for"]
+        unique_together = ["reminder", "scheduled_for"]
+
+    def __str__(self):
+        return f"{self.reminder.medicine_name} at {self.scheduled_for} - {self.status}"

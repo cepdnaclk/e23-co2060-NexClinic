@@ -4,7 +4,14 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from doctor.models import Appointment, AppointmentAvailableSlot
-from patient.models import PatientMedicalRecord, PatientProfile, Prescription, PatientMedication
+from patient.models import (
+    PatientMedicalRecord,
+    PatientProfile,
+    Prescription,
+    PatientMedication,
+    MedicationReminder,
+    MedicationLog,
+)
 from users.models import CustomUser
 
 
@@ -404,3 +411,38 @@ class PatientMedicationSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class MedicationReminderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicationReminder
+        fields = [
+            "id",
+            "patient",
+            "prescription",
+            "self_medication",
+            "medicine_name",
+            "dosage",
+            "start_date",
+            "end_date",
+            "schedule_times",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "patient", "created_at", "updated_at"]
+
+
+class MedicationLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicationLog
+        fields = [
+            "id",
+            "reminder",
+            "patient",
+            "scheduled_for",
+            "status",
+            "taken_at",
+            "created_at",
+        ]
+        read_only_fields = ["id", "patient", "created_at"]
