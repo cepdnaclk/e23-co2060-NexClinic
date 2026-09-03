@@ -2,7 +2,7 @@ from django.db import transaction
 from django.db import ProgrammingError
 
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -611,7 +611,7 @@ class PatientMedicationsView(BasePatientAPIView):
         serializer = PatientMedicationSerializer(medications, many=True)
         meds_data = list(serializer.data)
         
-        prescriptions = Prescription.objects.filter(patient=patient_profile).select_related('doctor')
+        prescriptions = Prescription.objects.filter(patient=patient_profile).select_related('doctor', 'appointment__hospital')
         for p in prescriptions:
             dosage_str = ""
             if p.amount is not None:
@@ -619,14 +619,25 @@ class PatientMedicationsView(BasePatientAPIView):
                 dosage_str = f"{amount_str} {p.unit}".strip()
             elif p.unit:
                 dosage_str = p.unit
+
+            doc_name = p.doctor.full_name if p.doctor else ""
+            doc_spec = p.doctor.specialization if p.doctor and hasattr(p.doctor, 'specialization') and p.doctor.specialization else ""
+            doc_display = f"{doc_name} ({doc_spec})" if doc_spec and doc_name else doc_name
+
+            duration_str = str(p.duration)
+            if duration_str and duration_str.isdigit():
+                duration_str = f"{duration_str} days"
                 
+            hospital_name = p.appointment.hospital.name if hasattr(p, 'appointment') and p.appointment and hasattr(p.appointment, 'hospital') and p.appointment.hospital else ""
+
             meds_data.append({
                 "id": f"prescription_{p.id}",
                 "name": p.medicine_name,
                 "dosage": dosage_str,
                 "frequency": p.frequency,
-                "duration": p.duration,
-                "prescribing_doctor": p.doctor.full_name if p.doctor else "",
+                "duration": duration_str,
+                "prescribing_doctor": doc_display,
+                "hospital": hospital_name,
                 "created_at": p.created_at.isoformat() if p.created_at else None,
                 "is_prescription": True,
             })
@@ -665,7 +676,7 @@ class MedicationReminderView(BasePatientAPIView):
         if error_response:
             return error_response
 
-        reminders = MedicationReminder.objects.filter(patient=patient_profile, is_active=True)
+        reminders = MedicationReminder.objects.filter(patient=patient_profile)
         serializer = MedicationReminderSerializer(reminders, many=True)
         return Response({"reminders": serializer.data})
 
@@ -734,7 +745,26 @@ class MedicationLogView(BasePatientAPIView):
             if reminder.end_date and reminder.end_date < target_date:
                 continue
                 
-            for time_str in reminder.schedule_times:
+            for schedule in reminder.schedule_times:
+                if not isinstance(schedule, dict):
+                    # Backward compatibility for old string-based schedule_times
+                    if isinstance(schedule, str):
+                        schedule = {"time": schedule, "days": [0,1,2,3,4,5,6], "is_active": True}
+                    else:
+                        continue
+                        
+                if not schedule.get("is_active", True):
+                    continue
+                    
+                days = schedule.get("days", [0,1,2,3,4,5,6])
+                # In Python, Monday is 0 and Sunday is 6
+                if target_date.weekday() not in days:
+                    continue
+                    
+                time_str = schedule.get("time")
+                if not time_str:
+                    continue
+                    
                 try:
                     time_obj = datetime.strptime(time_str, "%H:%M").time()
                     dt = timezone.make_aware(datetime.combine(target_date, time_obj))
