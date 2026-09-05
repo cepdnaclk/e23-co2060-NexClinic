@@ -37,8 +37,6 @@ export default function PatientProfileForm({
       emergencyContactName: '',
       emergencyContactPhone: '',
       emergencyContactRelation: '',
-      insuranceProvider: '',
-      insurancePolicyNumber: '',
       profileImage: '/images/user.png',
       lastUpdated: new Date().toISOString().split('T')[0],
     }
@@ -187,22 +185,7 @@ export default function PatientProfileForm({
           </section>
         </div>
 
-        {/* Insurance Information */}
-        <section className="bg-gray-50 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Insurance Information</h2>
-          <dl className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <dt className="text-sm font-semibold text-gray-600">Insurance Provider</dt>
-                <dd className="text-gray-900">{formData.insuranceProvider}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-semibold text-gray-600">Policy Number</dt>
-                <dd className="text-gray-900">{formData.insurancePolicyNumber}</dd>
-              </div>
-            </div>
-          </dl>
-        </section>
+
       </div>
     );
   }
@@ -469,38 +452,7 @@ export default function PatientProfileForm({
           </div>
         </section>
 
-        {/* Insurance Information */}
-        <section className="bg-gray-50 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Insurance Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Insurance Provider
-              </label>
-              <input
-                type="text"
-                name="insuranceProvider"
-                value={formData.insuranceProvider}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Blue Cross"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Policy Number
-              </label>
-              <input
-                type="text"
-                name="insurancePolicyNumber"
-                value={formData.insurancePolicyNumber}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="BC123456789"
-              />
-            </div>
-          </div>
-        </section>
+
 
         {/* Form Actions */}
         <div className="flex gap-4 pt-6 border-t">

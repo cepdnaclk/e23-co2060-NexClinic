@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from doctor.models import Appointment, AppointmentAvailableSlot, DoctorProfile
 from hospital.models import Hospital
-from patient.models import PatientMedicalRecord, PatientProfile
+from patient.models import PatientMedicalRecord, PatientProfile, Prescription
 from users.models import CustomUser
 
 SMALL_GIF = (
@@ -200,6 +200,7 @@ class DoctorMedicalRecordViewTests(TestCase):
             patient=self.patient_profile,
             hospital=self.hospital,
             status=Appointment.Status.ACCEPTED,
+            appointment_fee=self.doctor_profile.appointment_fee
         )
 
     def test_doctor_can_save_medical_record_and_patient_can_view_it(self):
@@ -212,6 +213,17 @@ class DoctorMedicalRecordViewTests(TestCase):
                 "diagnosis": "Viral upper respiratory infection",
                 "comments": "Rest and monitor symptoms.",
                 "prescriptions": "Paracetamol 500mg twice daily",
+                "prescriptionItems": [
+                    {
+                        "name": "Paracetamol",
+                        "amount": "500",
+                        "unit": "mg",
+                        "duration": "5 days",
+                        "frequency": "Twice daily",
+                        "timings": ["After meals"],
+                        "notes": "Drink plenty of water",
+                    }
+                ],
                 "recommendedTests": "CBC if symptoms worsen",
                 "followUpDate": (timezone.localdate() + timedelta(days=7)).isoformat(),
                 "followUpNotes": "Return sooner if breathing difficulty develops.",
@@ -223,6 +235,10 @@ class DoctorMedicalRecordViewTests(TestCase):
         self.assertTrue(
             PatientMedicalRecord.objects.filter(appointment=self.appointment).exists()
         )
+        prescription = Prescription.objects.get(appointment=self.appointment)
+        self.assertEqual(prescription.medicine_name, "Paracetamol")
+        self.assertEqual(str(prescription.amount), "500.000")
+        self.assertEqual(prescription.unit, "mg")
 
         self.client.force_authenticate(user=self.patient_user)
         profile_response = self.client.get("/api/patient/profile/")

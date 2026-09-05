@@ -143,12 +143,13 @@ class AppointmentBookingTests(TestCase):
             phone='8888',
             address='Test 2'
         )
-        appt2 = Appointment.objects.create(
+        appt = Appointment.objects.create(
             slot=self.slot,
             doctor=self.doctor,
             patient=patient2,
             hospital=self.hospital,
-            status=Appointment.Status.ACCEPTED
+            status=Appointment.Status.ACCEPTED,
+            appointment_fee=self.doctor.appointment_fee
         )
         self.slot.refresh_counts()
         self.assertEqual(self.slot.booked_count, 2)
@@ -187,7 +188,8 @@ class AppointmentCancellationTests(TestCase):
             doctor=self.doctor,
             patient=self.patient,
             hospital=self.hospital,
-            status=Appointment.Status.ACCEPTED
+            status=Appointment.Status.ACCEPTED,
+            appointment_fee=self.doctor.appointment_fee
         )
 
     def test_patient_cancels_appointment(self):

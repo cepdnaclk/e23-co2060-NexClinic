@@ -21,7 +21,7 @@ type Doctor = {
   chatFee: string;
   appointmentFee: string;
   availableForChat: boolean;
-  // nextAvailable: string;
+  nextAvailable: string;
   languages: string[];
 };
 
@@ -242,9 +242,13 @@ export default function DoctorsDirectory() {
                         >
                           {doctor.availableForChat ? 'Chat Now' : 'Offline'}
                         </GreenButton>
-                        <Link href={`/user-self/book-appointment?doctor=${doctor.id}`} className="w-full">
-                          <BlackButton className="w-full">Book Appointment</BlackButton>
-                        </Link>
+                        <div className={`w-full ${doctor.nextAvailable === 'Not available' ? 'opacity-60 cursor-not-allowed pointer-events-none' : ''}`}>
+                          <Link href={doctor.nextAvailable !== 'Not available' ? `/user-self/book-appointment?doctor=${doctor.id}` : '#'} className="w-full">
+                            <BlackButton className="w-full" disabled={doctor.nextAvailable === 'Not available'}>
+                              {doctor.nextAvailable !== 'Not available' ? 'Book Appointment' : 'No Slots Available'}
+                            </BlackButton>
+                          </Link>
+                        </div>
                       </>
                     ) : (
                       <>

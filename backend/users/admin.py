@@ -6,6 +6,16 @@ from .models import CustomUser, UserActivityLog
 
 from django import forms
 from django.contrib.auth.forms import UserChangeForm
+from hospital.models import HospitalAdmin, HospitalAdminProfile
+
+class HospitalAdminInline(admin.StackedInline):
+    model = HospitalAdmin
+    extra = 1
+
+class HospitalAdminProfileInline(admin.StackedInline):
+    model = HospitalAdminProfile
+    extra = 1
+
 
 class CustomUserCreationForm(forms.ModelForm):
     password1 = forms.CharField(
@@ -66,6 +76,14 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('email', 'username', 'role', 'doctor_profile__full_name', 'patient_profile__full_name')
     ordering = ('email',)
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('doctor_profile', 'patient_profile', 'hospital_admin_profile')
+
+    def get_inlines(self, request, obj=None):
+        if obj and obj.role == 'hospital_admin':
+            return [HospitalAdminInline, HospitalAdminProfileInline]
+        return super().get_inlines(request, obj)
+
     @admin.display(description='Name')
     def display_name(self, obj):
         doctor_profile = getattr(obj, 'doctor_profile', None)
@@ -75,6 +93,10 @@ class CustomUserAdmin(UserAdmin):
         patient_profile = getattr(obj, 'patient_profile', None)
         if patient_profile and patient_profile.full_name:
             return patient_profile.full_name
+
+        hospital_admin_profile = getattr(obj, 'hospital_admin_profile', None)
+        if hospital_admin_profile and hospital_admin_profile.full_name:
+            return hospital_admin_profile.full_name
 
         if obj.username:
             return obj.username

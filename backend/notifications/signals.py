@@ -7,6 +7,35 @@ from asgiref.sync import async_to_sync
 from .serializers import NotificationSerializer
 from .tasks import process_notification_delivery
 
+
+def _push_notification(instance):
+    """Deliver optional notification side effects without breaking core requests."""
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            group_name = f"user_{instance.recipient.id}_notifications"
+            serializer = NotificationSerializer(instance)
+            async_to_sync(channel_layer.group_send)(
+                group_name,
+                {
+                    'type': 'notify',
+                    'message': serializer.data
+                }
+            )
+    except Exception:
+        # A WebSocket outage must not make appointment booking fail.
+        pass
+
+    try:
+        process_notification_delivery.apply_async(
+            args=[str(instance.id)],
+            retry=False,
+        )
+    except Exception:
+        # Email/SMS is best-effort and can be retried by an operational worker.
+        pass
+
+
 @receiver(pre_save, sender=Appointment)
 def capture_old_appointment_status(sender, instance, **kwargs):
     if instance.pk:
@@ -50,18 +79,4 @@ def trigger_appointment_notification(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Notification)
 def push_notification_and_email(sender, instance, created, **kwargs):
     if created:
-        # 1. Trigger WebSocket Push
-        channel_layer = get_channel_layer()
-        if channel_layer:
-            group_name = f"user_{instance.recipient.id}_notifications"
-            serializer = NotificationSerializer(instance)
-            async_to_sync(channel_layer.group_send)(
-                group_name,
-                {
-                    'type': 'notify',
-                    'message': serializer.data
-                }
-            )
-        
-        # 2. Trigger Email/SMS Task
-        process_notification_delivery.delay(str(instance.id))
+        _push_notification(instance)

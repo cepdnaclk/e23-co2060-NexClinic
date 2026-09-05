@@ -44,6 +44,16 @@ function extractErrorMessage(payload: unknown): string {
           .join(" ");
         if (msgs) {
           errorMessages.push(`${cleanKey}${msgs}`);
+        } else {
+          // If the array contains objects, extract from them
+          const objMsgs = value
+            .filter((v) => typeof v === "object" && v !== null)
+            .map((v) => extractErrorMessage(v))
+            .filter(Boolean)
+            .join(" ");
+          if (objMsgs) {
+            errorMessages.push(`${cleanKey}${objMsgs}`);
+          }
         }
       } else if (value && typeof value === "object") {
         const nested = extractErrorMessage(value);

@@ -4,7 +4,14 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from doctor.models import Appointment, AppointmentAvailableSlot
-from patient.models import PatientMedicalRecord, PatientProfile
+from patient.models import (
+    PatientMedicalRecord,
+    PatientProfile,
+    Prescription,
+    PatientMedication,
+    MedicationReminder,
+    MedicationLog,
+)
 from users.models import CustomUser
 
 
@@ -107,6 +114,7 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
     patientLimit = serializers.SerializerMethodField()
     remainingCount = serializers.SerializerMethodField()
     isFull = serializers.SerializerMethodField()
+    appointmentFee = serializers.SerializerMethodField()
 
     class Meta:
         model = AppointmentAvailableSlot
@@ -121,6 +129,7 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
             "patientLimit",
             "remainingCount",
             "isFull",
+            "appointmentFee",
         ]
 
     def get_doctorId(self, obj):
@@ -175,6 +184,11 @@ class PatientAvailableSlotSerializer(serializers.ModelSerializer):
         )
         return booked >= obj.patient_limit
 
+    def get_appointmentFee(self, obj):
+        if obj.doctor:
+            return float(obj.doctor.appointment_fee)
+        return 3500.00
+
 
 class PatientAppointmentCancelSerializer(serializers.Serializer):
     reason = serializers.CharField(required=True, allow_blank=True)
@@ -206,15 +220,10 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
         max_length=100, required=False, allow_blank=True
     )
     emergencyContactEmail = serializers.EmailField(required=False, allow_blank=True)
-    insuranceProvider = serializers.CharField(
-        max_length=255, required=False, allow_blank=True
-    )
-    insurancePolicyNumber = serializers.CharField(
-        max_length=100, required=False, allow_blank=True
-    )
     profileImage = serializers.ImageField(required=False)
     medicalReports = serializers.FileField(required=False)
     medicalDocuments = serializers.FileField(required=False)
+    clearProfilePicture = serializers.BooleanField(required=False)
 
     def validate(self, attrs):
         if not attrs:
@@ -261,8 +270,6 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
             "emergencyContactPhone": "emergency_contact_phone",
             "emergencyContactRelation": "emergency_contact_relation",
             "emergencyContactEmail": "emergency_contact_email",
-            "insuranceProvider": "insurance_provider",
-            "insurancePolicyNumber": "insurance_policy_number",
             "profileImage": "profile_picture",
             "medicalReports": "medical_reports",
             "medicalDocuments": "medical_documents",
@@ -278,10 +285,23 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
             user.email = validated_data["email"]
             user.save(update_fields=["email"])
 
+        if validated_data.get("clearProfilePicture"):
+            instance.profile_picture = None
+            if "profile_picture" not in update_fields:
+                update_fields.append("profile_picture")
+
         if update_fields:
             instance.save(update_fields=sorted(set(update_fields)))
 
         return instance
+
+
+class PrescriptionSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="medicine_name")
+
+    class Meta:
+        model = Prescription
+        fields = ["id", "name", "amount", "unit", "duration", "frequency", "timings", "notes"]
 
 
 class PatientMedicalRecordSerializer(serializers.ModelSerializer):
@@ -291,6 +311,7 @@ class PatientMedicalRecordSerializer(serializers.ModelSerializer):
     createdAt = serializers.SerializerMethodField()
     updatedAt = serializers.SerializerMethodField()
     followUpDate = serializers.SerializerMethodField()
+    prescriptionItems = PrescriptionSerializer(source="prescription_items", many=True, read_only=True)
 
     class Meta:
         model = PatientMedicalRecord
@@ -304,6 +325,7 @@ class PatientMedicalRecordSerializer(serializers.ModelSerializer):
             "diagnosis",
             "comments",
             "prescriptions",
+            "prescriptionItems",
             "recommended_tests",
             "followUpDate",
             "follow_up_notes",
@@ -335,6 +357,9 @@ class PatientMedicalRecordUpsertSerializer(serializers.Serializer):
     diagnosis = serializers.CharField(required=False, allow_blank=True)
     comments = serializers.CharField(required=False, allow_blank=True)
     prescriptions = serializers.CharField(required=False, allow_blank=True)
+    prescriptionItems = serializers.ListField(
+        child=serializers.DictField(), required=False, allow_empty=True
+    )
     recommendedTests = serializers.CharField(required=False, allow_blank=True)
     followUpDate = serializers.DateField(required=False)
     followUpNotes = serializers.CharField(required=False, allow_blank=True)
@@ -346,8 +371,78 @@ class PatientMedicalRecordUpsertSerializer(serializers.Serializer):
             )
         return attrs
 
+    def validate_prescriptionItems(self, items):
+        serializer = PrescriptionItemUpsertSerializer(data=items, many=True)
+        serializer.is_valid(raise_exception=True)
+        return serializer.validated_data
+
+
+class PrescriptionItemUpsertSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255)
+    amount = serializers.DecimalField(
+        max_digits=10, decimal_places=3, required=False, allow_null=True
+    )
+    unit = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    duration = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    frequency = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    timings = serializers.ListField(
+        child=serializers.CharField(max_length=30), required=False, allow_empty=True
+    )
+    notes = serializers.CharField(required=False, allow_blank=True)
+
 
 def is_slot_in_past(slot_obj):
     naive_dt = datetime.combine(slot_obj.date, slot_obj.start_time)
     slot_dt = timezone.make_aware(naive_dt, timezone.get_current_timezone())
     return slot_dt < timezone.now()
+
+
+class PatientMedicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatientMedication
+        fields = [
+            "id",
+            "name",
+            "dosage",
+            "frequency",
+            "duration",
+            "prescribing_doctor",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class MedicationReminderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicationReminder
+        fields = [
+            "id",
+            "patient",
+            "prescription",
+            "self_medication",
+            "medicine_name",
+            "dosage",
+            "start_date",
+            "end_date",
+            "schedule_times",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "patient", "created_at", "updated_at"]
+
+
+class MedicationLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicationLog
+        fields = [
+            "id",
+            "reminder",
+            "patient",
+            "scheduled_for",
+            "status",
+            "taken_at",
+            "created_at",
+        ]
+        read_only_fields = ["id", "patient", "created_at"]

@@ -63,7 +63,7 @@ class SignalTests(TestCase):
             address='Test Address',
         )
 
-        appt = Appointment.objects.create(slot=slot, doctor=self.doctor, patient=patient, hospital=self.hospital, status=Appointment.Status.ACCEPTED)
+        appt = Appointment.objects.create(slot=slot, doctor=self.doctor, patient=patient, hospital=self.hospital, status=Appointment.Status.ACCEPTED, appointment_fee=self.doctor.appointment_fee)
         self.assertTrue(ActivityLog.objects.filter(action='appointment_booked').exists())
 
     def test_appointment_cancellation_creates_activitylog(self):
@@ -85,7 +85,7 @@ class SignalTests(TestCase):
             address='Cancel Address',
         )
 
-        appt = Appointment.objects.create(slot=slot, doctor=self.doctor, patient=patient, hospital=self.hospital, status=Appointment.Status.ACCEPTED)
+        appt = Appointment.objects.create(slot=slot, doctor=self.doctor, patient=patient, hospital=self.hospital, status=Appointment.Status.ACCEPTED, appointment_fee=self.doctor.appointment_fee)
         appt.status = Appointment.Status.CANCELLED
         appt.cancelled_by = 'PATIENT'
         appt.cancellation_reason = 'Personal emergency'
