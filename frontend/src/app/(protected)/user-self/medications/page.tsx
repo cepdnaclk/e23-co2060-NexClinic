@@ -71,6 +71,8 @@ export default function MedicationsPage() {
   const [reminderTimes, setReminderTimes] = useState<string[]>(["08:00"]);
   const [durationDays, setDurationDays] = useState<number | "">("");
   const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+  const [intervalHours, setIntervalHours] = useState<number | null>(null);
+  const [intervalStartTime, setIntervalStartTime] = useState<string>("08:00");
   const [isSubmittingReminder, setIsSubmittingReminder] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -284,18 +286,82 @@ export default function MedicationsPage() {
     }
   };
 
+  const generateIntervalTimes = (start: string, interval: number): string[] => {
+    if (!start || isNaN(interval) || interval <= 0) return [start || "08:00"];
+    const times: string[] = [];
+    const [startH, startM] = start.split(":").map(Number);
+    
+    const count = Math.floor(24 / interval);
+    for (let i = 0; i < count; i++) {
+      const h = (startH + (i * interval)) % 24;
+      times.push(`${h.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`);
+    }
+    return times.length > 0 ? times : [start];
+  };
+
+  const parseFrequency = (frequency: string): { times: string[], interval?: number } => {
+    if (!frequency) return { times: ["08:00"] };
+    const freq = frequency.toLowerCase();
+    
+    const intervalMatch = freq.match(/every\s+(\d+)\s*(hour|hr|h)s?/);
+    if (intervalMatch) {
+      const interval = parseInt(intervalMatch[1]);
+      if (interval > 0 && interval <= 24) {
+        return { times: generateIntervalTimes("08:00", interval), interval };
+      }
+    }
+    
+    if (freq.includes("four") || freq.includes("4")) {
+      return { times: ["08:00", "12:00", "16:00", "20:00"] };
+    } else if (freq.includes("thrice") || freq.includes("three") || freq.includes("3")) {
+      return { times: ["08:00", "14:00", "20:00"] };
+    } else if (freq.includes("twice") || freq.includes("two") || freq.includes("2")) {
+      return { times: ["08:00", "20:00"] };
+    }
+    
+    return { times: ["08:00"] };
+  };
+
   const openReminderModal = (med: Medication) => {
     setSelectedMed(med);
-    setReminderTimes(["08:00"]);
-
-    // Auto-fill duration if we can parse it from string
-    setDurationDays("");
-    if (med.duration) {
-      const num = parseInt(med.duration);
-      if (!isNaN(num)) setDurationDays(num);
+    const parsed = parseFrequency(med.frequency);
+    setReminderTimes(parsed.times);
+    
+    if (parsed.interval) {
+      setIntervalHours(parsed.interval);
+      setIntervalStartTime("08:00");
+    } else {
+      setIntervalHours(null);
+      setIntervalStartTime("08:00");
     }
 
-    setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
+    // Auto-fill duration and selected days
+    setDurationDays("");
+    let initialSelectedDays = [0, 1, 2, 3, 4, 5, 6];
+
+    if (med.duration) {
+      const num = parseInt(med.duration);
+      if (!isNaN(num) && num > 0) {
+        setDurationDays(num);
+        // If duration is less than a week, only select those specific days
+        if (num < 7) {
+          const startDate = med.created_at ? new Date(med.created_at) : new Date();
+          // Map JS getDay() (0=Su, 1=Mo) to our WEEKDAYS val (0=Mo, 6=Su)
+          const startDayVal = (startDate.getDay() + 6) % 7;
+          
+          initialSelectedDays = [];
+          for (let i = 0; i < num; i++) {
+            const dayVal = (startDayVal + i) % 7;
+            if (!initialSelectedDays.includes(dayVal)) {
+              initialSelectedDays.push(dayVal);
+            }
+          }
+          initialSelectedDays.sort();
+        }
+      }
+    }
+
+    setSelectedDays(initialSelectedDays);
     setIsReminderModalOpen(true);
   };
 
@@ -706,6 +772,32 @@ export default function MedicationsPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Notification Times</label>
+                
+                {intervalHours && (
+                  <div className="mb-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50">
+                    <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">
+                      Interval Schedule (Every {intervalHours} hours)
+                    </h4>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <label className="block text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">Starting Time</label>
+                        <input
+                          type="time"
+                          value={intervalStartTime}
+                          onChange={(e) => {
+                            setIntervalStartTime(e.target.value);
+                            setReminderTimes(generateIntervalTimes(e.target.value, intervalHours));
+                          }}
+                          className="w-full rounded-lg border border-blue-200 dark:border-blue-700/50 bg-white dark:bg-slate-800 dark:text-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-1"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                      Changing the starting time will automatically update the notification times below.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {reminderTimes.map((time, idx) => (
                     <div key={idx} className="flex items-center gap-2">
