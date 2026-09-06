@@ -216,17 +216,23 @@ export default function MedicationsPage() {
     }
   };
 
-  const markLogAsTaken = async (logId: number) => {
+  const toggleLogStatus = async (logId: number, currentStatus: string) => {
     try {
+      const newStatus = currentStatus === "TAKEN" ? "PENDING" : "TAKEN";
+      const payload: any = { status: newStatus };
+      if (newStatus === "PENDING") {
+        payload.taken_at = null;
+      }
+
       const response = await fetch(`/api/patient/logs/${logId}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "TAKEN" }),
+        body: JSON.stringify(payload),
       });
       if (response.ok) {
         const updatedLog = await response.json();
         setLogs(prev => prev.map(log => log.id === logId ? updatedLog : log));
-        toast.success("Marked as taken!");
+        toast.success(newStatus === "TAKEN" ? "Marked as taken!" : "Unmarked as taken");
       }
     } catch (error) {
       toast.error("Failed to update status");
@@ -606,8 +612,7 @@ export default function MedicationsPage() {
                     >
                       <div className="flex items-center gap-4">
                         <button
-                          onClick={() => log.status !== "TAKEN" && markLogAsTaken(log.id)}
-                          disabled={log.status === "TAKEN"}
+                          onClick={() => toggleLogStatus(log.id, log.status)}
                           className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${log.status === "TAKEN"
                               ? "bg-green-500 text-white"
                               : "bg-slate-100 text-slate-400 hover:bg-green-100 hover:text-green-500 dark:bg-slate-700"

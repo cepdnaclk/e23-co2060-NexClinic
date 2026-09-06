@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PatientMedicalRecord, PatientProfile, Prescription, PatientMedication, MedicationReminder
+from .models import PatientMedicalRecord, PatientProfile, Prescription, PatientMedication, MedicationReminder, MedicationLog
 
 
 @admin.register(PatientProfile)
@@ -67,14 +67,14 @@ class MedicationReminderAdmin(admin.ModelAdmin):
     list_filter = ("is_active", "start_date")
 
 
-# @admin.register(MedicationLog)
-# class MedicationLogAdmin(admin.ModelAdmin):
-#     list_display = (
-#         "reminder",
-#         "patient",
-#         "scheduled_for",
-#         "status",
-#         "taken_at",
-#     )
-#     search_fields = ("reminder__medicine_name", "patient__full_name")
-#     list_filter = ("status", "scheduled_for")
+@admin.register(MedicationLog)
+class MedicationLogAdmin(admin.ModelAdmin):
+    list_display = (
+        "reminder",
+        "patient",
+        "scheduled_for",
+        "status",
+        "taken_at",
+    )
+    search_fields = ("reminder__medicine_name", "patient__full_name")
+    list_filter = ("status", "scheduled_for")
