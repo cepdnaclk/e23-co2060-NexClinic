@@ -728,6 +728,24 @@ class MedicationLogView(BasePatientAPIView):
         if error_response:
             return error_response
 
+        status_param = request.query_params.get('status')
+        if status_param == "TAKEN":
+            logs = MedicationLog.objects.filter(
+                patient=patient_profile,
+                status=MedicationLog.Status.TAKEN
+            ).select_related('reminder').order_by('-taken_at', '-scheduled_for')
+            
+            data = []
+            for log in logs:
+                log_data = MedicationLogSerializer(log).data
+                if log.reminder:
+                    log_data['reminder'] = MedicationReminderSerializer(log.reminder).data
+                else:
+                    log_data['reminder'] = None
+                data.append(log_data)
+                
+            return Response({"logs": data})
+
         date_str = request.query_params.get('date', timezone.localdate().isoformat())
         try:
             target_date = datetime.fromisoformat(date_str).date()
@@ -786,7 +804,10 @@ class MedicationLogView(BasePatientAPIView):
         data = []
         for log in logs:
             log_data = MedicationLogSerializer(log).data
-            log_data['reminder'] = MedicationReminderSerializer(log.reminder).data
+            if log.reminder:
+                log_data['reminder'] = MedicationReminderSerializer(log.reminder).data
+            else:
+                log_data['reminder'] = None
             data.append(log_data)
             
         return Response({"logs": data})

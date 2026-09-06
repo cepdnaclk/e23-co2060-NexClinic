@@ -440,6 +440,8 @@ class MedicationLogSerializer(serializers.ModelSerializer):
             "id",
             "reminder",
             "patient",
+            "medicine_name",
+            "dosage",
             "scheduled_for",
             "status",
             "taken_at",

@@ -176,11 +176,13 @@ class MedicationLog(models.Model):
         SKIPPED = "SKIPPED", "Skipped"
 
     reminder = models.ForeignKey(
-        MedicationReminder, on_delete=models.CASCADE, related_name="logs"
+        MedicationReminder, on_delete=models.SET_NULL, related_name="logs", null=True, blank=True
     )
     patient = models.ForeignKey(
         PatientProfile, on_delete=models.CASCADE, related_name="medication_logs"
     )
+    medicine_name = models.CharField(max_length=255, blank=True)
+    dosage = models.CharField(max_length=255, blank=True)
     scheduled_for = models.DateTimeField()
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.PENDING
@@ -192,5 +194,12 @@ class MedicationLog(models.Model):
         ordering = ["-scheduled_for"]
         unique_together = ["reminder", "scheduled_for"]
 
+    def save(self, *args, **kwargs):
+        if self.reminder and not self.medicine_name:
+            self.medicine_name = self.reminder.medicine_name
+            self.dosage = self.reminder.dosage
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.reminder.medicine_name} at {self.scheduled_for} - {self.status}"
+        name = self.medicine_name or (self.reminder.medicine_name if self.reminder else "Unknown")
+        return f"{name} at {self.scheduled_for} - {self.status}"

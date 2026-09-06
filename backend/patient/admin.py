@@ -70,11 +70,11 @@ class MedicationReminderAdmin(admin.ModelAdmin):
 @admin.register(MedicationLog)
 class MedicationLogAdmin(admin.ModelAdmin):
     list_display = (
-        "reminder",
+        "medicine_name",
         "patient",
         "scheduled_for",
         "status",
         "taken_at",
     )
-    search_fields = ("reminder__medicine_name", "patient__full_name")
+    search_fields = ("medicine_name", "reminder__medicine_name", "patient__full_name")
     list_filter = ("status", "scheduled_for")

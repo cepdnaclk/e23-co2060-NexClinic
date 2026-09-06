@@ -51,10 +51,11 @@ const WEEKDAYS = [
 ];
 
 export default function MedicationsPage() {
-  const [activeTab, setActiveTab] = useState<"library" | "tracker">("library");
+  const [activeTab, setActiveTab] = useState<"library" | "tracker" | "past">("library");
 
   const [medications, setMedications] = useState<Medication[]>([]);
   const [logs, setLogs] = useState<MedLog[]>([]);
+  const [pastLogs, setPastLogs] = useState<MedLog[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
 
   // Library Form state
@@ -113,8 +114,20 @@ export default function MedicationsPage() {
     }
   };
 
+  const fetchPastLogs = async () => {
+    try {
+      const response = await fetch("/api/patient/logs/?status=TAKEN");
+      if (response.ok) {
+        const data = await response.json();
+        setPastLogs(data.logs);
+      }
+    } catch (error) {
+      console.error("Failed to fetch past logs", error);
+    }
+  };
+
   useEffect(() => {
-    Promise.all([fetchMedications(), fetchLogs(), fetchReminders()]).finally(() => {
+    Promise.all([fetchMedications(), fetchLogs(), fetchReminders(), fetchPastLogs()]).finally(() => {
       setIsLoading(false);
     });
   }, []);
@@ -232,6 +245,7 @@ export default function MedicationsPage() {
       if (response.ok) {
         const updatedLog = await response.json();
         setLogs(prev => prev.map(log => log.id === logId ? updatedLog : log));
+        fetchPastLogs();
         toast.success(newStatus === "TAKEN" ? "Marked as taken!" : "Unmarked as taken");
       }
     } catch (error) {
@@ -435,6 +449,16 @@ export default function MedicationsPage() {
                 >
                   <CalendarCheck size={16} />
                   Daily Tracker
+                </button>
+                <button
+                  onClick={() => setActiveTab("past")}
+                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${activeTab === "past"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    }`}
+                >
+                  <Clock size={16} />
+                  Past Medications
                 </button>
               </div>
             </div>
@@ -721,6 +745,67 @@ export default function MedicationsPage() {
               )}
             </div>
 
+          </div>
+        )}
+
+        {activeTab === "past" && (
+          <div className="space-y-6">
+            <div className="rounded-[1.75rem] border border-green-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Past Medications</h2>
+                <p className="mt-1 text-slate-500 dark:text-slate-400">History of all medications you have taken.</p>
+              </div>
+
+              {isLoading ? (
+                <div className="animate-pulse space-y-4">
+                  {[1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>)}
+                </div>
+              ) : pastLogs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-center p-8">
+                  <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-4 mb-4">
+                    <Clock className="text-slate-400 dark:text-slate-500" size={32} />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">No past medications</h3>
+                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-sm">
+                    Medications you mark as taken in your Daily Tracker will appear here.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pastLogs.map((log) => {
+                    const name = log.reminder?.medicine_name || (log as any).medicine_name || "Unknown Medication";
+                    const dosage = log.reminder?.dosage || (log as any).dosage || "";
+                    return (
+                      <div
+                        key={log.id}
+                        className="flex items-center justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-5 transition-all hover:border-green-200 dark:hover:border-green-800"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-500 dark:bg-green-900/30">
+                            <CheckCircle2 size={24} />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                              {name} <span className="text-sm font-normal text-slate-500">({dosage})</span>
+                            </h3>
+                            <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-1">
+                              <CalendarCheck size={14} />
+                              Scheduled for {new Date(log.scheduled_for).toLocaleDateString()} at {formatTime(log.scheduled_for)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {log.taken_at && (
+                          <div className="text-right text-sm text-green-600 dark:text-green-400 font-medium">
+                            Taken {new Date(log.taken_at).toLocaleDateString()} <br /> at {formatTime(log.taken_at)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
