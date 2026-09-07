@@ -25,6 +25,9 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     requestedAt = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
+    appointmentFee = serializers.FloatField(source="appointment_fee", read_only=True)
+    cancellationReason = serializers.CharField(source="cancellation_reason", read_only=True)
+    cancelledBy = serializers.CharField(source="cancelled_by", read_only=True)
 
     class Meta:
         model = Appointment
@@ -40,6 +43,9 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
             "status",
             "requestedAt",
             "category",
+            "appointmentFee",
+            "cancellationReason",
+            "cancelledBy",
         ]
 
     def get_slotId(self, obj):
@@ -77,11 +83,12 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         mapping = {
-            Appointment.Status.PENDING: "Confirmed",
+            Appointment.Status.PENDING: "Pending",
             Appointment.Status.ACCEPTED: "Confirmed",
             Appointment.Status.REJECTED: "Rejected",
             Appointment.Status.COMPLETED: "Completed",
             Appointment.Status.CANCELLED: "Cancelled",
+            Appointment.Status.CANCELLATION_REQUESTED: "Cancellation Requested",
         }
         return mapping.get(obj.status, obj.status)
 

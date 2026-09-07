@@ -129,6 +129,7 @@ class Appointment(models.Model):
         REJECTED = "REJECTED", "Rejected"
         COMPLETED = "COMPLETED", "Completed"
         CANCELLED = "CANCELLED", "Cancelled"
+        CANCELLATION_REQUESTED = "CANCELLATION_REQUESTED", "Cancellation Requested"
 
     slot = models.ForeignKey(AppointmentAvailableSlot, on_delete=models.PROTECT, related_name="appointments")
         
@@ -140,7 +141,7 @@ class Appointment(models.Model):
     # The hospital where the appointment will take place. Nullable for backwards compatibility.
     hospital = models.ForeignKey('hospital.Hospital', null=True, blank=True, on_delete=models.PROTECT, related_name='appointments')
     appointment_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING )
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING )
 
     # Cancellation metadata
     cancelled_by = models.CharField(max_length=20, choices=[('PATIENT', 'Patient'), ('ADMIN', 'Admin')], null=True, blank=True)

@@ -558,23 +558,27 @@ class AdminAppointmentCancelView(HospitalAdminAPIView):
         if appointment.status == Appointment.Status.CANCELLED:
             return Response({'detail': 'Appointment is already cancelled.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if timezone.now() > appointment.slot.date_start:
+            return Response(
+                {"detail": "Cannot cancel an appointment that has already started or passed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = AdminAppointmentCancelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         reason = serializer.validated_data['reason']
 
         with transaction.atomic():
-            locked_slot = AppointmentAvailableSlot.objects.select_for_update().filter(id=appointment.slot_id).first()
-
             appointment.status = Appointment.Status.CANCELLED
             appointment.cancelled_by = 'ADMIN'
             appointment.cancellation_reason = reason
             appointment.cancelled_at = timezone.now()
             appointment.save(update_fields=['status', 'cancelled_by', 'cancellation_reason', 'cancelled_at', 'updated_at'])
 
-            if locked_slot and locked_slot.booked_count > 0:
-                locked_slot.booked_count -= 1
-                locked_slot.remaining_count = max(locked_slot.patient_limit - locked_slot.booked_count, 0)
-                locked_slot.save(update_fields=['booked_count', 'remaining_count'])
+            chat_thread = AdviceChatThread.objects.filter(doctor=appointment.doctor, patient=appointment.patient).first()
+            if chat_thread and chat_thread.status != AdviceChatThread.Status.CLOSED:
+                chat_thread.status = AdviceChatThread.Status.CLOSED
+                chat_thread.save(update_fields=['status'])
 
         payload = DoctorAppointmentSerializer(appointment).data
         return Response({'message': 'Appointment cancelled successfully.', 'appointment': payload}, status=status.HTTP_200_OK)

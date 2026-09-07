@@ -10,4 +10,7 @@ export interface Appointment {
     status: string;
     requestedAt: string;
     category: "upcoming" | "previous";
+    appointmentFee?: number;
+    cancellationReason?: string;
+    cancelledBy?: string;
 }

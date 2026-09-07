@@ -5,6 +5,9 @@ import {
   fetchAdminHospitals,
   type HospitalAdminItem,
 } from "@/lib/api/hospitalSlots";
+import ConfirmationDialog from "@/components/modals/ConfirmationDialog";
+import SlideOverDrawer from "@/components/modals/SlideOverDrawer";
+import { User, Calendar, Clock, Activity, Phone, AlertCircle } from "lucide-react";
 
 type AppointmentStatus = "Pending" | "Confirmed" | "Completed";
 
@@ -21,12 +24,16 @@ interface AppointmentItem {
   department: string;
   statusLabel: AppointmentStatus | string;
   status: string;
+  cancellationReason?: string;
+  cancelledBy?: string;
 }
 
 const statusStyles: Record<string, string> = {
   Confirmed: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   Pending: "bg-amber-50 text-amber-700 ring-amber-200",
   Completed: "bg-slate-100 text-slate-700 ring-slate-200",
+  Cancelled: "bg-rose-50 text-rose-700 ring-rose-200",
+  "Cancellation Requested": "bg-orange-50 text-orange-700 ring-orange-200",
 };
 
 export default function HospitalAppointmentsPage() {
@@ -40,6 +47,53 @@ export default function HospitalAppointmentsPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All");
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentItem | null>(null);
+
+  const [acceptDialog, setAcceptDialog] = useState<{isOpen: boolean, appointmentId: number | null}>({isOpen: false, appointmentId: null});
+  const [cancelDialog, setCancelDialog] = useState<{isOpen: boolean, appointmentId: number | null, reason: string}>({isOpen: false, appointmentId: null, reason: ""});
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleAcceptCancellation = async () => {
+    if (!acceptDialog.appointmentId) return;
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`/api/hospital/appointments/${acceptDialog.appointmentId}/accept-cancellation/`, {
+        method: "PATCH",
+      });
+      if (!response.ok) throw new Error("Failed to accept cancellation");
+      setAppointments(prev => prev.map(a => a.id === acceptDialog.appointmentId ? { ...a, statusLabel: "Cancelled", status: "CANCELLED" } : a));
+      if (selectedAppointment?.id === acceptDialog.appointmentId) {
+        setSelectedAppointment(prev => prev ? { ...prev, statusLabel: "Cancelled", status: "CANCELLED" } : null);
+      }
+    } catch (err) {
+      alert("Error: " + (err instanceof Error ? err.message : "Unknown error"));
+    } finally {
+      setIsProcessing(false);
+      setAcceptDialog({isOpen: false, appointmentId: null});
+    }
+  };
+
+  const handleCancelAppointment = async () => {
+    if (!cancelDialog.appointmentId) return;
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`/api/hospital/appointments/${cancelDialog.appointmentId}/cancel/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: cancelDialog.reason }),
+      });
+      if (!response.ok) throw new Error("Failed to cancel appointment");
+      setAppointments(prev => prev.map(a => a.id === cancelDialog.appointmentId ? { ...a, statusLabel: "Cancelled", status: "CANCELLED", cancellationReason: cancelDialog.reason, cancelledBy: "ADMIN" } : a));
+      if (selectedAppointment?.id === cancelDialog.appointmentId) {
+        setSelectedAppointment(prev => prev ? { ...prev, statusLabel: "Cancelled", status: "CANCELLED", cancellationReason: cancelDialog.reason, cancelledBy: "ADMIN" } : null);
+      }
+    } catch (err) {
+      alert("Error: " + (err instanceof Error ? err.message : "Unknown error"));
+    } finally {
+      setIsProcessing(false);
+      setCancelDialog({isOpen: false, appointmentId: null, reason: ""});
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -193,8 +247,24 @@ export default function HospitalAppointmentsPage() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-4">
-          <label className="lg:col-span-2">
+        <div className="mt-6 flex flex-wrap gap-2">
+          {["All", "Pending", "Confirmed", "Completed", "Cancellation Requested", "Cancelled"].map((status) => (
+            <button
+              key={status}
+              onClick={() => setSelectedStatus(status)}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                selectedStatus === status
+                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          <label>
             <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">
               Search
             </span>
@@ -217,22 +287,6 @@ export default function HospitalAppointmentsPage() {
               onChange={(event) => setSelectedDate(event.target.value)}
               className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
             />
-          </label>
-
-          <label>
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Appointment Status
-            </span>
-            <select
-              value={selectedStatus}
-              onChange={(event) => setSelectedStatus(event.target.value)}
-              className="block w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Pending">Pending</option>
-              <option value="Confirmed">Confirmed</option>
-              <option value="Completed">Completed</option>
-            </select>
           </label>
 
           <label>
@@ -307,21 +361,20 @@ export default function HospitalAppointmentsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-[1100px] w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+          <div className="overflow-x-auto max-h-[600px]">
+            <table className="min-w-[1100px] w-full text-left text-sm relative border-collapse">
+              <thead className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-md text-xs uppercase tracking-wider text-slate-500 shadow-sm">
                 <tr>
-                  <th className="px-6 py-4 font-semibold">Patient Name</th>
-                  <th className="px-4 py-4 font-semibold">Patient ID</th>
-                  <th className="px-4 py-4 font-semibold">Age</th>
-                  <th className="px-4 py-4 font-semibold">Gender</th>
-                  <th className="px-4 py-4 font-semibold">Contact Number</th>
-                  <th className="px-4 py-4 font-semibold">Appointment Date</th>
-                  <th className="px-4 py-4 font-semibold">Appointment Time</th>
-                  <th className="px-4 py-4 font-semibold">
-                    Doctor / Department
-                  </th>
-                  <th className="px-6 py-4 font-semibold">Status</th>
+                  <th className="px-6 py-4 font-semibold border-b border-slate-200">Patient Name</th>
+                  <th className="px-4 py-4 font-semibold border-b border-slate-200">Patient ID</th>
+                  <th className="px-4 py-4 font-semibold border-b border-slate-200">Age</th>
+                  <th className="px-4 py-4 font-semibold border-b border-slate-200">Gender</th>
+                  <th className="px-4 py-4 font-semibold border-b border-slate-200">Contact Number</th>
+                  <th className="px-4 py-4 font-semibold border-b border-slate-200">Date</th>
+                  <th className="px-4 py-4 font-semibold border-b border-slate-200">Time</th>
+                  <th className="px-4 py-4 font-semibold border-b border-slate-200">Doctor / Dept</th>
+                  <th className="px-6 py-4 font-semibold border-b border-slate-200">Status</th>
+                  <th className="px-6 py-4 font-semibold border-b border-slate-200 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -367,6 +420,21 @@ export default function HospitalAppointmentsPage() {
                       >
                         {appointment.statusLabel}
                       </span>
+                      {appointment.cancellationReason && (
+                        <div className="mt-2 max-w-[150px] text-[10px] text-slate-500 line-clamp-2" title={appointment.cancellationReason}>
+                          Reason: {appointment.cancellationReason}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedAppointment(appointment)}
+                          className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 hover:text-emerald-800"
+                        >
+                          View Details
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -375,6 +443,180 @@ export default function HospitalAppointmentsPage() {
           </div>
         )}
       </section>
+
+      <ConfirmationDialog
+        isOpen={acceptDialog.isOpen}
+        title="Accept Cancellation"
+        message="Are you sure you want to accept this cancellation request from the patient?"
+        confirmText="Accept"
+        confirmButtonClass="bg-orange-500 hover:bg-orange-600"
+        isLoading={isProcessing}
+        onConfirm={handleAcceptCancellation}
+        onCancel={() => setAcceptDialog({isOpen: false, appointmentId: null})}
+      />
+
+      {cancelDialog.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-black">Cancel Appointment</h2>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-700 mb-3">Please provide a reason for cancelling this appointment.</p>
+              <textarea
+                className="w-full rounded-lg border border-slate-300 p-3 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                rows={3}
+                placeholder="Reason (optional)"
+                value={cancelDialog.reason}
+                onChange={(e) => setCancelDialog(prev => ({...prev, reason: e.target.value}))}
+              />
+            </div>
+            <div className="border-t border-gray-200 p-6 flex gap-3">
+              <button
+                onClick={() => setCancelDialog({isOpen: false, appointmentId: null, reason: ""})}
+                disabled={isProcessing}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-60"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleCancelAppointment}
+                disabled={isProcessing}
+                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-60"
+              >
+                {isProcessing ? "Processing..." : "Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <SlideOverDrawer
+        isOpen={!!selectedAppointment}
+        onClose={() => setSelectedAppointment(null)}
+        title="Appointment Details"
+      >
+        {selectedAppointment && (
+          <div className="space-y-8 pb-8 animate-in slide-in-from-right-4 duration-300">
+            {/* Header Badge */}
+            <div className="flex items-center justify-between">
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${
+                  statusStyles[selectedAppointment.statusLabel] ||
+                  "bg-slate-100 text-slate-700 ring-slate-200"
+                }`}
+              >
+                {selectedAppointment.statusLabel}
+              </span>
+              <span className="text-xs font-medium text-slate-500">
+                ID: #{selectedAppointment.id}
+              </span>
+            </div>
+
+            {/* Patient Info Card */}
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5 shadow-sm">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
+                <User className="h-4 w-4 text-emerald-500" />
+                Patient Information
+              </h3>
+              <div className="grid grid-cols-2 gap-y-4 text-sm">
+                <div>
+                  <div className="text-xs font-medium text-slate-400">Name</div>
+                  <div className="mt-1 font-semibold text-slate-900">{selectedAppointment.patientName}</div>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-slate-400">System ID</div>
+                  <div className="mt-1 font-medium text-slate-700">{selectedAppointment.patientId}</div>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-slate-400">Age / Gender</div>
+                  <div className="mt-1 font-medium text-slate-700">
+                    {selectedAppointment.patientAge ?? "N/A"} • {selectedAppointment.patientGender || "N/A"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-slate-400">Contact</div>
+                  <div className="mt-1 flex items-center gap-1.5 font-medium text-slate-700">
+                    <Phone className="h-3 w-3 text-slate-400" />
+                    {selectedAppointment.patientPhone || "N/A"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Appointment Details Card */}
+            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm ring-1 ring-slate-900/5">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
+                <Activity className="h-4 w-4 text-emerald-500" />
+                Clinical Details
+              </h3>
+              <div className="space-y-4 text-sm">
+                <div className="flex justify-between border-b border-slate-50 pb-3">
+                  <span className="text-slate-500">Doctor</span>
+                  <span className="font-semibold text-slate-900">{selectedAppointment.doctorName}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-50 pb-3">
+                  <span className="text-slate-500">Department</span>
+                  <span className="font-medium text-slate-700">{selectedAppointment.department || "General"}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-50 pb-3">
+                  <span className="text-slate-500">Date</span>
+                  <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                    <Calendar className="h-3 w-3 text-emerald-500" />
+                    {selectedAppointment.appointmentDate}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Time</span>
+                  <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                    <Clock className="h-3 w-3 text-emerald-500" />
+                    {selectedAppointment.appointmentTime}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Cancellation Details if present */}
+            {selectedAppointment.cancellationReason && (
+              <div className="rounded-2xl border border-red-100 bg-red-50/50 p-5 shadow-sm">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-red-800">
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                  Cancellation Info
+                </h3>
+                <div className="text-sm text-red-700">
+                  <span className="font-semibold block mb-1">Reason:</span>
+                  <p className="bg-white/60 p-3 rounded-lg border border-red-100">
+                    {selectedAppointment.cancellationReason}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="pt-4 flex flex-col gap-3 border-t border-slate-100">
+              {selectedAppointment.status === "CANCELLATION_REQUESTED" && (
+                <button
+                  onClick={() => setAcceptDialog({isOpen: true, appointmentId: selectedAppointment.id})}
+                  className="w-full rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                >
+                  Accept Cancellation Request
+                </button>
+              )}
+              
+              {(selectedAppointment.status === "PENDING" || selectedAppointment.status === "ACCEPTED") && (
+                <button
+                  onClick={() => setCancelDialog({isOpen: true, appointmentId: selectedAppointment.id, reason: ""})}
+                  className="w-full rounded-xl border-2 border-rose-100 bg-white py-3 text-sm font-bold text-rose-600 shadow-sm transition hover:bg-rose-50 hover:border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={new Date(`${selectedAppointment.appointmentDate}T${selectedAppointment.appointmentTime}`) < new Date()}
+                  title={new Date(`${selectedAppointment.appointmentDate}T${selectedAppointment.appointmentTime}`) < new Date() ? "Cannot cancel an expired appointment" : ""}
+                >
+                  Cancel Appointment
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </SlideOverDrawer>
     </div>
   );
 }
