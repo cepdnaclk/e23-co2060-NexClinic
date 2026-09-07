@@ -356,3 +356,8 @@ CELERY_BEAT_SCHEDULE = {
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Text.lk SMS Settings
+TEXT_LK_API_TOKEN = os.getenv("TEXT_LK_API_TOKEN", "")
+TEXT_LK_SENDER_ID = os.getenv("TEXT_LK_SENDER_ID", "TextLKDemo")
+

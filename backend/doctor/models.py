@@ -85,7 +85,7 @@ class AppointmentAvailableSlot(models.Model):
 
     def save(self, *args, **kwargs):
         # Keep day_of_week consistent even if the client does not send it.
-        if not self.day_of_week and hasattr(self, 'date_start'):
+        if not self.day_of_week and getattr(self, 'date_start', None):
             self.day_of_week = self.date_start.strftime('%A')
         super().save(*args, **kwargs)
     
