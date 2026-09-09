@@ -1168,7 +1168,7 @@ export default function Home() {
                                 <li><Link href="#services" className="hover:text-green-600 transition-colors">Services</Link></li>
                                 <li><Link href="#about" className="hover:text-green-600 transition-colors">About Us</Link></li>
                                 <li><Link href="#faq" className="hover:text-green-600 transition-colors">FAQ</Link></li>
-                                <li><Link href="#help" className="hover:text-green-600 transition-colors">Help & Support</Link></li>
+                                <li><Link href="/help" className="hover:text-green-600 transition-colors">Help & Support</Link></li>
                             </ul>
                         </div>
 
