@@ -239,14 +239,14 @@ export default function Home() {
                     </div>
 
                     <div className="mt-10 grid gap-6 lg:grid-cols-2">
-                        <article className="group relative overflow-hidden rounded-[1.5rem] border border-orange-200 bg-[linear-gradient(135deg,#fff7ed,#ecfdf5)] p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
+                        <section id="patient-portal" aria-labelledby="patient-portal-title" className="group relative overflow-hidden rounded-[1.5rem] border border-orange-200 bg-[linear-gradient(135deg,#fff7ed,#ecfdf5)] p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
                             <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-orange-200/60 blur-2xl" />
                             <div className="relative flex h-full flex-col">
                                 <div className="flex items-start justify-between gap-4">
                                     <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-xl text-white shadow-lg shadow-emerald-600/20">+</span>
                                     <span className="rounded-full border border-orange-200 bg-white/70 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-700">For patients</span>
                                 </div>
-                                <h3 className="mt-8 text-2xl font-extrabold text-slate-950 sm:text-3xl">Your care, in your hands.</h3>
+                                <h3 id="patient-portal-title" className="mt-8 text-2xl font-extrabold text-slate-950 sm:text-3xl">Your care, in your hands.</h3>
                                 <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 sm:text-base">
                                     Discover trusted doctors, compare available times, book appointments, and keep track of your health information.
                                 </p>
@@ -256,21 +256,29 @@ export default function Home() {
                                     <p className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Manage appointments</p>
                                     <p className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Access your records</p>
                                 </div>
+                                <div className="mt-7 rounded-2xl border border-orange-100 bg-white/75 p-4">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-orange-700">How to get started</p>
+                                    <ol className="mt-3 grid gap-2 text-sm text-slate-700">
+                                        <li><span className="mr-2 font-bold text-orange-600">01</span>Create your patient account.</li>
+                                        <li><span className="mr-2 font-bold text-orange-600">02</span>Search for a doctor by specialty.</li>
+                                        <li><span className="mr-2 font-bold text-orange-600">03</span>Select a time and confirm your appointment.</li>
+                                    </ol>
+                                </div>
                                 <div className="mt-8 flex flex-wrap gap-3">
                                     <Link href="/doctors" className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700">Find a doctor</Link>
                                     <Link href="/register" className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white/80 px-5 py-3 text-sm font-bold text-emerald-800 transition-colors hover:bg-white">Create account</Link>
                                 </div>
                             </div>
-                        </article>
+                        </section>
 
-                        <article className="group relative overflow-hidden rounded-[1.5rem] border border-sky-200 bg-[linear-gradient(135deg,#172554,#164e63)] p-6 text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
+                        <section id="doctor-portal" aria-labelledby="doctor-portal-title" className="group relative overflow-hidden rounded-[1.5rem] border border-sky-200 bg-[linear-gradient(135deg,#172554,#164e63)] p-6 text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
                             <div className="absolute -bottom-20 -right-12 h-56 w-56 rounded-full bg-sky-400/25 blur-3xl" />
                             <div className="relative flex h-full flex-col">
                                 <div className="flex items-start justify-between gap-4">
                                     <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-xl text-emerald-300 ring-1 ring-white/15">✚</span>
                                     <span className="rounded-full border border-sky-200/30 bg-sky-100/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-200">For doctors</span>
                                 </div>
-                                <h3 className="mt-8 text-2xl font-extrabold sm:text-3xl">Make every consultation count.</h3>
+                                <h3 id="doctor-portal-title" className="mt-8 text-2xl font-extrabold sm:text-3xl">Make every consultation count.</h3>
                                 <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-300 sm:text-base">
                                     Build your professional presence, manage availability, connect with patients, and keep your clinical workflow organized.
                                 </p>
@@ -280,12 +288,20 @@ export default function Home() {
                                     <p className="flex items-center gap-2"><span className="text-emerald-300">✓</span> Review patient requests</p>
                                     <p className="flex items-center gap-2"><span className="text-emerald-300">✓</span> Continue patient care</p>
                                 </div>
+                                <div className="mt-7 rounded-2xl border border-sky-200/20 bg-white/10 p-4 backdrop-blur-sm">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-sky-200">How to get started</p>
+                                    <ol className="mt-3 grid gap-2 text-sm text-slate-200">
+                                        <li><span className="mr-2 font-bold text-sky-300">01</span>Register with your professional details.</li>
+                                        <li><span className="mr-2 font-bold text-sky-300">02</span>Complete your profile and verification.</li>
+                                        <li><span className="mr-2 font-bold text-sky-300">03</span>Set availability and start managing care.</li>
+                                    </ol>
+                                </div>
                                 <div className="mt-8 flex flex-wrap gap-3">
                                     <Link href="/doctor/login" className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-400">Doctor sign in</Link>
                                     <Link href="/doctor/register" className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-white/15">Join NexClinic</Link>
                                 </div>
                             </div>
-                        </article>
+                        </section>
                     </div>
                 </div>
             </section>
@@ -871,7 +887,7 @@ export default function Home() {
                     {/* Visual grids backdrop */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(0,173,133,0.12),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,173,133,0.15),transparent_50%)] pointer-events-none" />
 
-                    <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between z-10">
+                    <div className="relative z-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
                         <div>
                             <span className="text-xs font-semibold uppercase tracking-widest text-green-300">Ready to Begin?</span>
                             <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
@@ -881,7 +897,25 @@ export default function Home() {
                                 Join NexClinic. Move from quick search to verified consults without queues or manual confirmations.
                             </p>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto shrink-0">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <a href="tel:+94112345678" className="rounded-2xl border border-white/10 bg-white/10 p-4 transition-colors hover:bg-white/15">
+                                <span className="block text-[10px] font-bold uppercase tracking-wider text-green-300">Call us</span>
+                                <span className="mt-1 block text-sm font-semibold">+94 11 234 5678</span>
+                            </a>
+                            <a href="mailto:support@nexclinic.com" className="rounded-2xl border border-white/10 bg-white/10 p-4 transition-colors hover:bg-white/15">
+                                <span className="block text-[10px] font-bold uppercase tracking-wider text-green-300">Email support</span>
+                                <span className="mt-1 block break-all text-sm font-semibold">support@nexclinic.com</span>
+                            </a>
+                            <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                                <span className="block text-[10px] font-bold uppercase tracking-wider text-green-300">Visit us</span>
+                                <span className="mt-1 block text-sm font-semibold">Colombo, Sri Lanka</span>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                                <span className="block text-[10px] font-bold uppercase tracking-wider text-green-300">Support hours</span>
+                                <span className="mt-1 block text-sm font-semibold">Mon-Fri, 8:30 AM-5:00 PM</span>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-3 sm:flex-row lg:col-span-2">
                             <Link
                                 id="btn-start-booking"
                                 href="/doctors"
