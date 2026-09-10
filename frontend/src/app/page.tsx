@@ -103,11 +103,11 @@ export default function Home() {
     }, []);
 
     return (
-        <main className="relative min-h-screen w-full overflow-hidden bg-[#f7faf8] text-slate-900 scroll-smooth">
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#fffaf5] text-slate-900 scroll-smooth">
             {/* A quiet canvas keeps the photography and calls to action in focus. */}
             <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(15,118,110,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,118,110,0.045)_1px,transparent_1px)] bg-[size:42px_42px]" />
-                <div className="absolute -top-56 right-[-10rem] h-[32rem] w-[32rem] rounded-full bg-emerald-100/50 blur-[100px]" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(14,116,144,0.055)_1px,transparent_1px),linear-gradient(to_bottom,rgba(14,116,144,0.055)_1px,transparent_1px)] bg-[size:42px_42px]" />
+                <div className="absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(ellipse_at_top_left,rgba(251,191,36,0.22),transparent_55%),radial-gradient(ellipse_at_top_right,rgba(45,212,191,0.22),transparent_52%)]" />
             </div>
 
             {/* Sticky Navigation bar container */}
@@ -116,18 +116,18 @@ export default function Home() {
             </header>
 
             {/* HERO SECTION */}
-            <section className="relative mt-16 overflow-hidden border-b border-emerald-100/70 pt-12 pb-12 lg:pt-20 lg:pb-16">
+            <section className="relative mt-16 overflow-hidden border-b border-orange-100/80 bg-[linear-gradient(135deg,rgba(255,251,235,0.92),rgba(236,253,245,0.72)_55%,rgba(224,242,254,0.75))] pt-12 pb-12 lg:pt-20 lg:pb-16">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
+                    <div className="grid items-start gap-8 lg:grid-cols-12 lg:gap-12">
                         {/* Hero Left Content */}
-                        <div className="lg:col-span-7 flex flex-col justify-center text-left">
+                        <div className="flex flex-col justify-center text-left lg:col-span-7 lg:pt-16 xl:pt-20">
                             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700 shadow-sm backdrop-blur-sm">
                                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                                 Care that keeps moving
                             </span>
-                            <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-[-0.03em] text-slate-950 sm:text-5xl md:text-6xl lg:text-[4.5rem]">
+                            <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-[1.04] tracking-[-0.03em] text-slate-950 sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.35rem]">
                                 The next step in your <br className="hidden sm:block" />
-                                <span className="text-emerald-600">
+                                <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 bg-clip-text text-transparent">
                                     better health journey.
                                 </span>
                             </h1>
@@ -159,8 +159,8 @@ export default function Home() {
                         {/* Hero Right Media Grid */}
                         <div className="relative mt-6 w-full lg:col-span-5 lg:mt-0">
                             {/* Background glow graphic decor */}
-                            <div className="absolute -inset-5 rounded-[2rem] bg-emerald-200/40 blur-2xl" />
-                            <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] border border-white/70 shadow-2xl shadow-emerald-950/10">
+                            <div className="absolute -inset-5 rounded-[2rem] bg-gradient-to-br from-orange-200/50 via-emerald-200/50 to-sky-200/50 blur-2xl" />
+                            <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] border border-white/80 shadow-2xl shadow-teal-950/15">
                                 <img src="/images/main-bg.jpg" alt="A team of healthcare professionals" className="h-full w-full object-cover" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/10 to-transparent" />
                                 <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between text-white">
@@ -174,7 +174,7 @@ export default function Home() {
 
                             <div className="relative z-10 grid gap-4 px-4 pb-4 pt-4 sm:gap-6 sm:px-6 sm:pb-6 sm:pt-6">
                                 {/* Insights Panel */}
-                                <div className="relative mt-36 overflow-hidden rounded-2xl border border-white/70 bg-white/90 p-5 shadow-lg shadow-slate-950/10 backdrop-blur-md transition-all duration-300 hover:shadow-xl sm:mt-44 sm:p-6">
+                                <div className="relative mt-32 overflow-hidden rounded-2xl border border-white/70 bg-white/90 p-5 shadow-lg shadow-slate-950/10 backdrop-blur-md transition-all duration-300 hover:shadow-xl sm:mt-40 sm:p-6">
                                     <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-to-bl from-green-500/10 to-transparent rounded-bl-full" />
                                     <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700">Appointments</p>
                                     <h3 className="mt-2 text-lg sm:text-xl font-bold text-slate-900">Find an available doctor and choose a suitable time</h3>
@@ -214,11 +214,78 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-100 shadow-sm sm:grid-cols-4">
-                        <div className="bg-white px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-slate-950 sm:text-2xl">24/7</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:text-xs">Care access</p></div>
-                        <div className="bg-white px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-slate-950 sm:text-2xl">6+</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:text-xs">Specialties</p></div>
-                        <div className="bg-white px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-slate-950 sm:text-2xl">1 place</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:text-xs">For your care</p></div>
-                        <div className="bg-white px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-slate-950 sm:text-2xl">Secure</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:text-xs">By design</p></div>
+                    <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/80 bg-white/80 shadow-sm sm:grid-cols-4">
+                        <div className="bg-amber-50 px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-amber-900 sm:text-2xl">24/7</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-amber-700 sm:text-xs">Care access</p></div>
+                        <div className="bg-emerald-50 px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-emerald-900 sm:text-2xl">6+</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 sm:text-xs">Specialties</p></div>
+                        <div className="bg-sky-50 px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-sky-900 sm:text-2xl">1 place</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-sky-700 sm:text-xs">For your care</p></div>
+                        <div className="bg-orange-50 px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-orange-900 sm:text-2xl">Secure</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-orange-700 sm:text-xs">By design</p></div>
+                    </div>
+                </div>
+            </section>
+
+            {/* PATIENT AND DOCTOR PORTALS */}
+            <section id="care-paths" className="border-b border-sky-100/80 bg-[linear-gradient(180deg,#ffffff_0%,#f0fdfa_100%)] py-16 sm:py-24">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="mx-auto max-w-2xl text-center">
+                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 sm:text-xs">
+                            Built for every care journey
+                        </span>
+                        <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">
+                            Choose your NexClinic portal
+                        </h2>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
+                            One connected platform, with focused tools for the people receiving care and the professionals providing it.
+                        </p>
+                    </div>
+
+                    <div className="mt-10 grid gap-6 lg:grid-cols-2">
+                        <article className="group relative overflow-hidden rounded-[1.5rem] border border-orange-200 bg-[linear-gradient(135deg,#fff7ed,#ecfdf5)] p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
+                            <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-orange-200/60 blur-2xl" />
+                            <div className="relative flex h-full flex-col">
+                                <div className="flex items-start justify-between gap-4">
+                                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-xl text-white shadow-lg shadow-emerald-600/20">+</span>
+                                    <span className="rounded-full border border-orange-200 bg-white/70 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-700">For patients</span>
+                                </div>
+                                <h3 className="mt-8 text-2xl font-extrabold text-slate-950 sm:text-3xl">Your care, in your hands.</h3>
+                                <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 sm:text-base">
+                                    Discover trusted doctors, compare available times, book appointments, and keep track of your health information.
+                                </p>
+                                <div className="mt-6 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
+                                    <p className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Find the right specialist</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Book available slots</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Manage appointments</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Access your records</p>
+                                </div>
+                                <div className="mt-8 flex flex-wrap gap-3">
+                                    <Link href="/doctors" className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700">Find a doctor</Link>
+                                    <Link href="/register" className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white/80 px-5 py-3 text-sm font-bold text-emerald-800 transition-colors hover:bg-white">Create account</Link>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article className="group relative overflow-hidden rounded-[1.5rem] border border-sky-200 bg-[linear-gradient(135deg,#172554,#164e63)] p-6 text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
+                            <div className="absolute -bottom-20 -right-12 h-56 w-56 rounded-full bg-sky-400/25 blur-3xl" />
+                            <div className="relative flex h-full flex-col">
+                                <div className="flex items-start justify-between gap-4">
+                                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-xl text-emerald-300 ring-1 ring-white/15">✚</span>
+                                    <span className="rounded-full border border-sky-200/30 bg-sky-100/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-200">For doctors</span>
+                                </div>
+                                <h3 className="mt-8 text-2xl font-extrabold sm:text-3xl">Make every consultation count.</h3>
+                                <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-300 sm:text-base">
+                                    Build your professional presence, manage availability, connect with patients, and keep your clinical workflow organized.
+                                </p>
+                                <div className="mt-6 grid gap-3 text-sm text-slate-200 sm:grid-cols-2">
+                                    <p className="flex items-center gap-2"><span className="text-emerald-300">✓</span> Manage your profile</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-300">✓</span> Set appointment slots</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-300">✓</span> Review patient requests</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-300">✓</span> Continue patient care</p>
+                                </div>
+                                <div className="mt-8 flex flex-wrap gap-3">
+                                    <Link href="/doctor/login" className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-400">Doctor sign in</Link>
+                                    <Link href="/doctor/register" className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-white/15">Join NexClinic</Link>
+                                </div>
+                            </div>
+                        </article>
                     </div>
                 </div>
             </section>
