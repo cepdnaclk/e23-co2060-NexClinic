@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from main.validators import validate_public_file
+from main.storage_backends import public_storage
 from django.core.exceptions import ValidationError
 
 class DoctorProfile(models.Model):
@@ -16,7 +18,11 @@ class DoctorProfile(models.Model):
     address = models.TextField(blank=True, default="")
     is_verified = models.BooleanField(default=False)
     experience_years = models.IntegerField(default=1)
-    profile_picture = models.ImageField(upload_to='doctor_profiles/', null=True, blank=True)
+    profile_picture = models.ImageField(
+        upload_to='doctor_profiles/', null=True, blank=True,
+        validators=[validate_public_file],
+        storage=public_storage
+    )
     location = models.CharField(max_length=255, default="Colombo, Sri Lanka")
     qualifications = models.TextField(default="MBBS, MD")
     verified_hospitals = models.ManyToManyField('hospital.Hospital', related_name='verified_doctors', blank=True)
@@ -130,6 +136,7 @@ class Appointment(models.Model):
         COMPLETED = "COMPLETED", "Completed"
         CANCELLED = "CANCELLED", "Cancelled"
         CANCELLATION_REQUESTED = "CANCELLATION_REQUESTED", "Cancellation Requested"
+        EXPIRED = "EXPIRED", "Expired"
 
     slot = models.ForeignKey(AppointmentAvailableSlot, on_delete=models.PROTECT, related_name="appointments")
         

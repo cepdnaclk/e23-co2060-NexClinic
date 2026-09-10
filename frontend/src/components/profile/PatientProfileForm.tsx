@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Patient } from '@/data/patients';
 import BlackButton from '../buttons/BlackButton';
+import { validatePublicUpload } from '@/lib/fileValidation';
 
 interface PatientProfileFormProps {
   patient?: Patient;
@@ -59,12 +60,17 @@ export default function PatientProfileForm({
     if (onSubmit) {
       onSubmit(formData);
     }
-    setEditMode(false);
-  };
+
 
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const error = validatePublicUpload(file);
+      if (error) {
+        alert(error);
+        e.target.value = ''; // clear input
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData((prev) => ({

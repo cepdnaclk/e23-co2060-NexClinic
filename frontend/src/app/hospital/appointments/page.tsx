@@ -8,6 +8,7 @@ import {
 import ConfirmationDialog from "@/components/modals/ConfirmationDialog";
 import SlideOverDrawer from "@/components/modals/SlideOverDrawer";
 import { User, Calendar, Clock, Activity, Phone, AlertCircle } from "lucide-react";
+import { AppointmentTabs, AppointmentCategory } from "@/components/appointments/AppointmentTabs";
 
 type AppointmentStatus = "Pending" | "Confirmed" | "Completed";
 
@@ -46,7 +47,7 @@ export default function HospitalAppointmentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("All");
+  const [activeTab, setActiveTab] = useState<AppointmentCategory>("ALL");
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentItem | null>(null);
 
   const [acceptDialog, setAcceptDialog] = useState<{isOpen: boolean, appointmentId: number | null}>({isOpen: false, appointmentId: null});
@@ -173,10 +174,50 @@ export default function HospitalAppointmentsPage() {
     return Array.from(unique).sort((left, right) => left.localeCompare(right));
   }, [appointments]);
 
+  const categorized = useMemo(() => {
+    const buckets: Record<AppointmentCategory, AppointmentItem[]> = {
+      ALL: [],
+      UPCOMING: [],
+      COMPLETED: [],
+      CANCELLED: [],
+      EXPIRED: [],
+    };
+    
+    appointments.forEach(appt => {
+      buckets.ALL.push(appt);
+      
+      const st = (appt.status || "").toUpperCase();
+      const isPast = new Date(`${appt.appointmentDate}T${appt.appointmentTime}`) < new Date();
+      
+      if (st === "COMPLETED") {
+        buckets.COMPLETED.push(appt);
+      } else if (st === "CANCELLED" || st === "REJECTED" || st === "CANCELLATION_REQUESTED") {
+        buckets.CANCELLED.push(appt);
+      } else if (st === "EXPIRED" || ((st === "PENDING" || st === "ACCEPTED" || st === "CONFIRMED") && isPast)) {
+        buckets.EXPIRED.push(appt);
+      } else {
+        buckets.UPCOMING.push(appt);
+      }
+    });
+    
+    return buckets;
+  }, [appointments]);
+
+  const counts = useMemo(() => {
+    return {
+      ALL: categorized.ALL.length,
+      UPCOMING: categorized.UPCOMING.length,
+      COMPLETED: categorized.COMPLETED.length,
+      CANCELLED: categorized.CANCELLED.length,
+      EXPIRED: categorized.EXPIRED.length,
+    };
+  }, [categorized]);
+
   const filteredAppointments = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
+    const items = categorized[activeTab] || [];
 
-    return appointments.filter((appointment) => {
+    return items.filter((appointment) => {
       const searchableFields = [appointment.patientName, appointment.patientId]
         .join(" ")
         .toLowerCase();
@@ -185,17 +226,15 @@ export default function HospitalAppointmentsPage() {
         !selectedDate || appointment.appointmentDate === selectedDate;
       const matchesDepartment =
         !selectedDepartment || appointment.department === selectedDepartment;
-      const matchesStatus =
-        selectedStatus === "All" || appointment.statusLabel === selectedStatus;
 
-      return matchesSearch && matchesDate && matchesDepartment && matchesStatus;
+      return matchesSearch && matchesDate && matchesDepartment;
     });
   }, [
-    appointments,
+    categorized,
+    activeTab,
     searchQuery,
     selectedDate,
     selectedDepartment,
-    selectedStatus,
   ]);
 
   const visibleCount = filteredAppointments.length;
@@ -247,20 +286,12 @@ export default function HospitalAppointmentsPage() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-2">
-          {["All", "Pending", "Confirmed", "Completed", "Cancellation Requested", "Cancelled"].map((status) => (
-            <button
-              key={status}
-              onClick={() => setSelectedStatus(status)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                selectedStatus === status
-                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {status}
-            </button>
-          ))}
+        <div className="mt-6">
+          <AppointmentTabs 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+            counts={counts} 
+          />
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -416,9 +447,13 @@ export default function HospitalAppointmentsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${statusStyles[appointment.statusLabel] || "bg-slate-100 text-slate-700 ring-slate-200"}`}
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${
+                          appointment.status === "EXPIRED" 
+                            ? "bg-slate-100 text-slate-700 ring-slate-200" 
+                            : statusStyles[appointment.statusLabel] || "bg-slate-100 text-slate-700 ring-slate-200"
+                        }`}
                       >
-                        {appointment.statusLabel}
+                        {appointment.status === "EXPIRED" ? "Expired" : appointment.statusLabel}
                       </span>
                       {appointment.cancellationReason && (
                         <div className="mt-2 max-w-[150px] text-[10px] text-slate-500 line-clamp-2" title={appointment.cancellationReason}>
@@ -502,11 +537,13 @@ export default function HospitalAppointmentsPage() {
             <div className="flex items-center justify-between">
               <span
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${
-                  statusStyles[selectedAppointment.statusLabel] ||
-                  "bg-slate-100 text-slate-700 ring-slate-200"
+                  selectedAppointment.status === "EXPIRED" 
+                    ? "bg-slate-100 text-slate-700 ring-slate-200"
+                    : statusStyles[selectedAppointment.statusLabel] ||
+                      "bg-slate-100 text-slate-700 ring-slate-200"
                 }`}
               >
-                {selectedAppointment.statusLabel}
+                {selectedAppointment.status === "EXPIRED" ? "Expired" : selectedAppointment.statusLabel}
               </span>
               <span className="text-xs font-medium text-slate-500">
                 ID: #{selectedAppointment.id}

@@ -7,14 +7,11 @@ import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
 import ConfirmationDialog from "@/components/modals/ConfirmationDialog";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
+import { AppointmentTabs, AppointmentCategory } from "@/components/appointments/AppointmentTabs";
+import { Clock } from "lucide-react";
 
-type AppointmentStatus =
-  | "Accepted"
-  | "Rejected"
-  | "Completed"
-  | "Cancelled";
-type AppointmentCategory = "upcoming" | "previous";
-type AppointmentStatusFilter = "All" | AppointmentStatus;
+type AppointmentStatus = string;
+type AppointmentItemCategory = "upcoming" | "previous";
 type DateFilter = "all" | "today" | "next7" | "custom";
 
 type AppointmentItem = {
@@ -29,7 +26,7 @@ type AppointmentItem = {
   location: string;
   requestedAt: string;
   status: AppointmentStatus;
-  category: AppointmentCategory;
+  category: AppointmentItemCategory;
 };
 
 type AppointmentSlot = {
@@ -268,20 +265,16 @@ const parsePrescription = (value: string): PrescriptionMedicine[] => {
   return parsed.length ? parsed : [createPrescriptionMedicine()];
 };
 
-const statusFilters: AppointmentStatusFilter[] = [
-  "All",
-  "Accepted",
-  "Rejected",
-  "Completed",
-  "Cancelled",
-];
 const appointmentStatuses: AppointmentStatus[] = [
   "Accepted",
   "Rejected",
   "Completed",
   "Cancelled",
+  "Expired",
+  "Pending",
+  "Confirmed"
 ];
-const appointmentCategories: AppointmentCategory[] = [
+const appointmentCategories: AppointmentItemCategory[] = [
   "upcoming",
   "previous",
 ];
@@ -395,8 +388,7 @@ function DoctorAppointmentsPage() {
     string[]
   >([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState<AppointmentStatusFilter>("All");
+  const [activeTab, setActiveTab] = useState<AppointmentCategory>("ALL");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [customDate, setCustomDate] = useState("");
   const [reminderSentIds, setReminderSentIds] = useState<string[]>([]);
@@ -468,9 +460,6 @@ function DoctorAppointmentsPage() {
         item.patientName.toLowerCase().includes(normalizedSearch) ||
         item.id.toLowerCase().includes(normalizedSearch);
 
-      const matchesStatus =
-        statusFilter === "All" || item.status === statusFilter;
-
       const appointmentDay = new Date(`${item.date}T00:00:00`);
       let matchesDate = true;
 
@@ -486,18 +475,56 @@ function DoctorAppointmentsPage() {
         matchesDate = customDate ? item.date === customDate : true;
       }
 
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && matchesDate;
     });
-  }, [appointments, searchTerm, statusFilter, dateFilter, customDate]);
+  }, [appointments, searchTerm, dateFilter, customDate]);
 
-  const upcoming = useMemo(
-    () => filteredAppointments.filter((item) => item.category === "upcoming"),
-    [filteredAppointments],
-  );
-  const previous = useMemo(
-    () => filteredAppointments.filter((item) => item.category === "previous"),
-    [filteredAppointments],
-  );
+  // Bucketing logic based on strictly defined rules
+  const categorized = useMemo(() => {
+    const buckets: Record<AppointmentCategory, AppointmentItem[]> = {
+      ALL: [],
+      UPCOMING: [],
+      COMPLETED: [],
+      CANCELLED: [],
+      EXPIRED: [],
+    };
+    
+    filteredAppointments.forEach(appt => {
+      buckets.ALL.push(appt);
+      
+      const st = appt.status.toUpperCase();
+      const isPast = new Date(`${appt.date}T${appt.time}`) < new Date();
+      
+      if (st === "COMPLETED") {
+        buckets.COMPLETED.push(appt);
+      } else if (st === "CANCELLED" || st === "REJECTED" || st === "CANCELLATION_REQUESTED") {
+        buckets.CANCELLED.push(appt);
+      } else if (st === "EXPIRED" || ((st === "PENDING" || st === "ACCEPTED" || st === "CONFIRMED") && isPast)) {
+        buckets.EXPIRED.push(appt);
+      } else if ((st === "PENDING" || st === "ACCEPTED" || st === "CONFIRMED") && !isPast) {
+        buckets.UPCOMING.push(appt);
+      } else {
+        // Fallback for any other state
+        buckets.UPCOMING.push(appt);
+      }
+    });
+    
+    return buckets;
+  }, [filteredAppointments]);
+
+  const counts = useMemo(() => {
+    return {
+      ALL: categorized.ALL.length,
+      UPCOMING: categorized.UPCOMING.length,
+      COMPLETED: categorized.COMPLETED.length,
+      CANCELLED: categorized.CANCELLED.length,
+      EXPIRED: categorized.EXPIRED.length,
+    };
+  }, [categorized]);
+
+  const visibleItems = useMemo(() => {
+    return categorized[activeTab] || [];
+  }, [categorized, activeTab]);
 
   const isReminderSuggested = (appointment: AppointmentItem): boolean => {
     const appointmentDateTime = parseAppointmentDateTime(
@@ -516,9 +543,9 @@ function DoctorAppointmentsPage() {
     return diffMs > 0 && diffMs <= twentyFourHours;
   };
 
-  const reminderQueueCount = upcoming.filter(
+  const reminderQueueCount = categorized.UPCOMING.filter(
     (item) =>
-      item.status === "Accepted" &&
+      (item.status === "Accepted" || item.status === "Confirmed") &&
       isReminderSuggested(item) &&
       !reminderSentIds.includes(item.id),
   ).length;
@@ -559,7 +586,7 @@ function DoctorAppointmentsPage() {
       }
 
       if (action === "complete" && selectedAppointmentId === appointmentId) {
-        const sortedUpcoming = [...upcoming].sort((a, b) => {
+        const sortedUpcoming = [...categorized.UPCOMING].sort((a, b) => {
           return (parseAppointmentDateTime(a.date, a.time)?.getTime() || 0) - (parseAppointmentDateTime(b.date, b.time)?.getTime() || 0);
         });
         const currentIndex = sortedUpcoming.findIndex(a => a.id === appointmentId);
@@ -1370,10 +1397,12 @@ function DoctorAppointmentsPage() {
         </section>
 
         <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
-          <h2 className="text-xl font-bold text-emerald-700">
-            Find And Filter
-          </h2>
-          <div className="my-4 flex w-full border-t border-emerald-100"></div>
+          <AppointmentTabs 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+            counts={counts} 
+          />
+          <div className="my-6 flex w-full border-t border-emerald-100"></div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             <div className="flex flex-col gap-2">
@@ -1391,29 +1420,6 @@ function DoctorAppointmentsPage() {
                 placeholder="Ex: Nimali or REQ-901"
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="status-filter"
-                className="text-sm font-semibold text-slate-700"
-              >
-                Status
-              </label>
-              <select
-                id="status-filter"
-                value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(event.target.value as AppointmentStatusFilter)
-                }
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-              >
-                {statusFilters.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -1485,13 +1491,38 @@ function DoctorAppointmentsPage() {
                </div>
             </div>
 
+            {(() => {
+              const nextUp = [...categorized.UPCOMING].sort((a, b) => {
+                return (parseAppointmentDateTime(a.date, a.time)?.getTime() || 0) - (parseAppointmentDateTime(b.date, b.time)?.getTime() || 0);
+              })[0];
+
+              if (!nextUp) return null;
+
+              return (
+                <div className="rounded-[2rem] border border-emerald-500/30 bg-emerald-500/5 p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-emerald-800 flex items-center gap-2">
+                      <Clock className="w-4 h-4" /> Next Appointment
+                    </h3>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Coming Up</span>
+                  </div>
+                  <div className="bg-white rounded-xl p-3 border border-emerald-100 cursor-pointer hover:border-emerald-300 transition shadow-sm" onClick={() => setSelectedAppointmentId(nextUp.id)}>
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="font-bold text-slate-900 truncate pr-2">{nextUp.patientName}</p>
+                    </div>
+                    <p className="text-sm text-slate-500">{nextUp.date} • {formatTimeForDisplay(nextUp.time)}</p>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-sm flex-1 max-h-[700px] overflow-y-auto">
               <h2 className="text-lg font-bold text-emerald-700 mb-4">Appointments</h2>
               <div className="space-y-3">
-                {filteredAppointments.length === 0 ? (
+                {visibleItems.length === 0 ? (
                   <p className="text-sm text-slate-500">No appointments found.</p>
                 ) : (
-                  [...filteredAppointments].sort((a, b) => {
+                  [...visibleItems].sort((a, b) => {
                       return (parseAppointmentDateTime(a.date, a.time)?.getTime() || 0) - (parseAppointmentDateTime(b.date, b.time)?.getTime() || 0);
                   }).map(appt => {
                     const isSelected = selectedAppointmentId === appt.id;
@@ -1503,7 +1534,7 @@ function DoctorAppointmentsPage() {
                       >
                         <div className="flex justify-between items-start mb-1">
                           <p className="font-semibold text-slate-900 truncate">{appt.patientName}</p>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${appt.status === "Completed" ? 'bg-slate-200 text-slate-600' : appt.status === "Accepted" ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${appt.status === "Completed" ? 'bg-slate-200 text-slate-600' : appt.status === "Accepted" ? 'bg-emerald-100 text-emerald-700' : appt.status === "Expired" || appt.status === "EXPIRED" ? 'bg-gray-100 text-gray-600' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
                         </div>
                         <p className="text-sm text-slate-500">{appt.date} • {formatTimeForDisplay(appt.time)}</p>
                       </button>
@@ -1516,7 +1547,7 @@ function DoctorAppointmentsPage() {
 
           <div className="lg:w-2/3">
             {(() => {
-               const selected = filteredAppointments.find(a => a.id === selectedAppointmentId);
+               const selected = visibleItems.find(a => a.id === selectedAppointmentId);
                if (!selected) {
                  return (
                    <div className="h-full min-h-[400px] rounded-[2rem] border border-dashed border-emerald-200 bg-white/50 flex flex-col items-center justify-center p-8 text-center">

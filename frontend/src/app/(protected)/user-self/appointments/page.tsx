@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
 import AppointmentModal from "@/components/modals/AppointmentModal";
 import MockPaymentGateway from "@/components/payment/MockPaymentGateway";
+import { AppointmentTabs, AppointmentCategory } from "@/components/appointments/AppointmentTabs";
 import { Appointment } from "@/types/appointment";
 
 type SortBy = "date" | "doctor" | "status" | "requestedAt";
 type SortOrder = "asc" | "desc";
 type ViewMode = "grid" | "list";
-type SectionFilter = "all" | "upcoming" | "previous";
 
 type ApiAppointment = Omit<Appointment, "id" | "slotId" | "doctorId"> & {
   id: string | number;
@@ -69,47 +69,22 @@ const normalizeAppointment = (appointment: ApiAppointment): Appointment => ({
 });
 
 const statusPillClass = (status: string) => {
-  if (status === "Confirmed") {
+  if (status === "Confirmed" || status === "ACCEPTED") {
     return "bg-emerald-100 text-emerald-700 border border-emerald-200";
   }
-  if (status === "Completed") {
+  if (status === "Completed" || status === "COMPLETED") {
     return "bg-slate-100 text-slate-700 border border-slate-200";
   }
   if (status === "PENDING" || status === "Pending") {
     return "bg-amber-100 text-amber-800 border border-amber-200";
   }
-  if (status === "Cancellation Requested") {
+  if (status === "Cancellation Requested" || status === "CANCELLATION_REQUESTED") {
     return "bg-orange-100 text-orange-800 border border-orange-200";
   }
+  if (status === "EXPIRED" || status === "Expired") {
+    return "bg-gray-100 text-gray-600 border border-gray-200";
+  }
   return "bg-rose-100 text-rose-800 border border-rose-200";
-};
-
-const sectionMeta: {
-  key: SectionFilter;
-  label: string;
-  emptyText: string;
-}[] = [
-    {
-      key: "all",
-      label: "All",
-      emptyText: "No appointments found.",
-    },
-    {
-      key: "upcoming",
-      label: "Upcoming",
-      emptyText: "No upcoming appointments.",
-    },
-    {
-      key: "previous",
-      label: "History",
-      emptyText: "No appointment history yet.",
-    },
-  ];
-
-const getSectionTitle = (section: SectionFilter) => {
-  if (section === "upcoming") return "Upcoming Appointments";
-  if (section === "previous") return "Appointment History";
-  return "All Appointments";
 };
 
 const PatientAppointmentPage = () => {
@@ -121,8 +96,7 @@ const PatientAppointmentPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
-  const [activeSection, setActiveSection] =
-    useState<SectionFilter>("all");
+  const [activeTab, setActiveTab] = useState<AppointmentCategory>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [cancellingIds, setCancellingIds] = useState<string[]>([]);
   const [selectedAppointment, setSelectedAppointment] =
@@ -346,44 +320,49 @@ const PatientAppointmentPage = () => {
     });
   }, [appointments, searchTerm]);
 
-  const upcoming = useMemo(
-    () =>
-      sortAppointments(
-        filteredAppointments.filter((item) => item.category === "upcoming"),
-        sortBy,
-        sortOrder
-      ),
-    [filteredAppointments, sortBy, sortOrder],
-  );
-  const previous = useMemo(
-    () =>
-      sortAppointments(
-        filteredAppointments.filter((item) => item.category === "previous"),
-        sortBy,
-        sortOrder
-      ),
-    [filteredAppointments, sortBy, sortOrder],
-  );
+  // Bucketing logic based on strictly defined rules
+  const categorized = useMemo(() => {
+    const buckets: Record<AppointmentCategory, Appointment[]> = {
+      ALL: [],
+      UPCOMING: [],
+      COMPLETED: [],
+      CANCELLED: [],
+      EXPIRED: [],
+    };
+    
+    filteredAppointments.forEach(appt => {
+      buckets.ALL.push(appt);
+      
+      const st = appt.status.toUpperCase();
+      const isPast = new Date(`${appt.date}T${appt.time}`) < new Date();
+      
+      if (st === "COMPLETED") {
+        buckets.COMPLETED.push(appt);
+      } else if (st === "CANCELLED" || st === "REJECTED" || st === "CANCELLATION_REQUESTED") {
+        buckets.CANCELLED.push(appt);
+      } else if (st === "EXPIRED" || ((st === "PENDING" || st === "ACCEPTED" || st === "CONFIRMED") && isPast)) {
+        buckets.EXPIRED.push(appt);
+      } else if ((st === "PENDING" || st === "ACCEPTED" || st === "CONFIRMED") && !isPast) {
+        buckets.UPCOMING.push(appt);
+      }
+    });
+    
+    return buckets;
+  }, [filteredAppointments]);
 
-  const allSorted = useMemo(
-    () => sortAppointments(filteredAppointments, sortBy, sortOrder),
-    [filteredAppointments, sortBy, sortOrder],
-  );
-
-  const sectionCounts = useMemo(
-    () => ({
-      all: filteredAppointments.length,
-      upcoming: upcoming.length,
-      previous: previous.length,
-    }),
-    [filteredAppointments.length, upcoming.length, previous.length],
-  );
+  const counts = useMemo(() => {
+    return {
+      ALL: categorized.ALL.length,
+      UPCOMING: categorized.UPCOMING.length,
+      COMPLETED: categorized.COMPLETED.length,
+      CANCELLED: categorized.CANCELLED.length,
+      EXPIRED: categorized.EXPIRED.length,
+    };
+  }, [categorized]);
 
   const visibleItems = useMemo(() => {
-    if (activeSection === "upcoming") return upcoming;
-    if (activeSection === "previous") return previous;
-    return allSorted;
-  }, [activeSection, upcoming, previous, allSorted]);
+    return sortAppointments(categorized[activeTab] || [], sortBy, sortOrder);
+  }, [categorized, activeTab, sortBy, sortOrder]);
 
   const nextAppointment = useMemo(() => {
     const now = new Date().getTime();
@@ -713,25 +692,12 @@ const PatientAppointmentPage = () => {
             </div>
           )}
 
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {sectionMeta.map((section) => (
-              <button
-                key={section.key}
-                type="button"
-                onClick={() => setActiveSection(section.key)}
-                className={`rounded-2xl border px-3 py-3 text-left transition ${activeSection === section.key
-                    ? "border-emerald-300 bg-emerald-50 shadow-sm"
-                    : "border-emerald-100 bg-white hover:border-emerald-200"
-                  }`}
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  {section.label}
-                </p>
-                <p className="mt-1 text-2xl font-bold text-slate-900">
-                  {sectionCounts[section.key]}
-                </p>
-              </button>
-            ))}
+          <div className="mt-8">
+            <AppointmentTabs 
+              activeTab={activeTab} 
+              onTabChange={setActiveTab} 
+              counts={counts} 
+            />
           </div>
 
           <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between rounded-2xl bg-slate-50 p-4 border border-slate-100">

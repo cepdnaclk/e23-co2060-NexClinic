@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { User } from "lucide-react";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
 
 type PatientProfilePayload = {
@@ -65,6 +66,7 @@ export default function UserDashboard() {
   const [appointments, setAppointments] = useState<DashboardAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const loadDashboardData = async (showLoading: boolean) => {
@@ -202,11 +204,18 @@ export default function UserDashboard() {
             <div className="flex flex-col gap-5 xl:flex-row xl:items-stretch xl:justify-between">
               <div className="flex-1 rounded-[1.75rem] border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur sm:p-5 lg:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <img
-                    src={profileImage || "/images/user.png"}
-                    alt={displayName}
-                    className="mx-auto h-[92px] w-[92px] shrink-0 rounded-full border-4 border-green-500 object-cover sm:mx-0"
-                  />
+                  {profileImage && !imageError ? (
+                    <img
+                      src={profileImage}
+                      alt={displayName}
+                      className="mx-auto h-[92px] w-[92px] shrink-0 rounded-full border-4 border-green-500 object-cover sm:mx-0"
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <div className="mx-auto flex h-[92px] w-[92px] shrink-0 items-center justify-center rounded-full border-4 border-green-500 bg-emerald-50 text-emerald-500 sm:mx-0">
+                      <User className="h-10 w-10" />
+                    </div>
+                  )}
 
                   <div className="min-w-0 flex-1 text-center sm:text-left">
                     <h1 className="mt-3 break-words text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
