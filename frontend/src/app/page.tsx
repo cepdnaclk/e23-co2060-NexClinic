@@ -4,12 +4,6 @@ import { useEffect, useState } from "react";
 import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
 import Link from "next/link";
 
-type HighlightCard = {
-    title: string;
-    description: string;
-    icon: React.ReactNode;
-};
-
 interface NewsArticle {
     id: number;
     url: string;
@@ -19,6 +13,15 @@ interface NewsArticle {
     date: string;
     imageUrl: string;
     readTime: string;
+}
+
+interface NewsApiArticle {
+    url: string;
+    title: string;
+    description: string;
+    source: { name: string };
+    publishedAt: string;
+    image?: string;
 }
 
 const highlightCards = [
@@ -78,7 +81,7 @@ export default function Home() {
                 const response = await fetch(`https://gnews.io/api/v4/top-headlines?category=health&lang=en&apikey=${API_KEY}`);
                 const data = await response.json();
                 if (data && data.articles) {
-                    const formattedArticles = data.articles.slice(0, 3).map((article: any, index: number) => ({
+                    const formattedArticles = data.articles.slice(0, 3).map((article: NewsApiArticle, index: number) => ({
                         id: index,
                         url: article.url,
                         title: article.title,
@@ -100,13 +103,11 @@ export default function Home() {
     }, []);
 
     return (
-        <main className="relative min-h-screen w-full overflow-hidden bg-slate-50/50 text-slate-900 scroll-smooth">
-            {/* Design System Blur Backdrops (Mesh Gradients in Green/Teal) */}
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#f7faf8] text-slate-900 scroll-smooth">
+            {/* A quiet canvas keeps the photography and calls to action in focus. */}
             <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-                <div className="absolute -top-40 -left-40 h-[400px] w-[400px] sm:h-[600px] sm:w-[600px] rounded-full bg-green-100/40 blur-[80px] sm:blur-[120px]" />
-                <div className="absolute top-[30%] -right-40 h-[300px] w-[300px] sm:h-[500px] sm:w-[500px] rounded-full bg-green-50/40 blur-[80px] sm:blur-[100px]" />
-                <div className="absolute bottom-10 left-[20%] h-[400px] w-[400px] sm:h-[600px] sm:w-[600px] rounded-full bg-green-100/20 blur-[90px] sm:blur-[130px]" />
-                <img className="absolute inset-0 h-full w-full object-cover opacity-[0.02] mix-blend-overlay" src="/images/hexagons.png" alt="" aria-hidden="true" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(15,118,110,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,118,110,0.045)_1px,transparent_1px)] bg-[size:42px_42px]" />
+                <div className="absolute -top-56 right-[-10rem] h-[32rem] w-[32rem] rounded-full bg-emerald-100/50 blur-[100px]" />
             </div>
 
             {/* Sticky Navigation bar container */}
@@ -115,29 +116,29 @@ export default function Home() {
             </header>
 
             {/* HERO SECTION */}
-            <section className="relative mt-16 overflow-hidden pt-12 pb-16 lg:pt-20 lg:pb-24">
+            <section className="relative mt-16 overflow-hidden border-b border-emerald-100/70 pt-12 pb-12 lg:pt-20 lg:pb-16">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
                         {/* Hero Left Content */}
                         <div className="lg:col-span-7 flex flex-col justify-center text-left">
-                            <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-green-100 bg-green-50/80 px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700 backdrop-blur-sm">
-                                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                                Connected Care Platform
+                            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700 shadow-sm backdrop-blur-sm">
+                                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                Care that keeps moving
                             </span>
-                            <h1 className="mt-4 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight lg:leading-[1.15]">
-                                Your Health Journey, <br />
-                                <span className="bg-gradient-to-r from-green-600 via-green-500 to-teal-500 bg-clip-text text-transparent">
-                                    Smarter with NexClinic
+                            <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-[-0.03em] text-slate-950 sm:text-5xl md:text-6xl lg:text-[4.5rem]">
+                                The next step in your <br className="hidden sm:block" />
+                                <span className="text-emerald-600">
+                                    better health journey.
                                 </span>
                             </h1>
-                            <p className="mt-4 sm:mt-6 max-w-2xl text-sm sm:text-base md:text-lg leading-relaxed text-slate-600">
-                                Browse doctor profiles, check available appointment slots, and manage your healthcare appointments in one place.
+                            <p className="mt-5 max-w-xl text-sm leading-relaxed text-slate-600 sm:text-base md:text-lg">
+                                Find the right specialist, book a convenient appointment, and keep every part of your care in one clear, connected place.
                             </p>
                             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 w-full sm:w-auto">
                                 <Link
                                     id="hero-find-doctors"
                                     href="/doctors"
-                                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-green-500/10 transition-all duration-300 hover:-translate-y-0.5 hover:bg-green-600 hover:shadow-lg hover:shadow-green-500/20 active:scale-[0.98]"
+                                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-700/20 active:scale-[0.98]"
                                 >
                                     Find Doctors Now
                                     <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -147,7 +148,7 @@ export default function Home() {
                                 <Link
                                     id="hero-explore-news"
                                     href="/news-articles"
-                                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-green-300 hover:bg-green-50/20 hover:text-green-700 active:scale-[0.98]"
+                                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white/80 px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-[0.98]"
                                 >
                                     Explore Health News
                                 </Link>
@@ -156,13 +157,24 @@ export default function Home() {
                         </div>
 
                         {/* Hero Right Media Grid */}
-                        <div className="lg:col-span-5 relative mt-6 lg:mt-0 w-full">
+                        <div className="relative mt-6 w-full lg:col-span-5 lg:mt-0">
                             {/* Background glow graphic decor */}
-                            <div className="absolute inset-0 -m-4 sm:-m-8 bg-gradient-to-tr from-green-500/10 to-teal-500/5 rounded-3xl blur-2xl -z-10" />
+                            <div className="absolute -inset-5 rounded-[2rem] bg-emerald-200/40 blur-2xl" />
+                            <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] border border-white/70 shadow-2xl shadow-emerald-950/10">
+                                <img src="/images/main-bg.jpg" alt="A team of healthcare professionals" className="h-full w-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/10 to-transparent" />
+                                <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between text-white">
+                                    <div>
+                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Your care team</p>
+                                        <p className="mt-1 text-lg font-bold">Connected around you</p>
+                                    </div>
+                                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl backdrop-blur-md">+</span>
+                                </div>
+                            </div>
 
-                            <div className="grid gap-4 sm:gap-6 max-w-md sm:max-w-none mx-auto">
+                            <div className="relative z-10 grid gap-4 px-4 pb-4 pt-4 sm:gap-6 sm:px-6 sm:pb-6 sm:pt-6">
                                 {/* Insights Panel */}
-                                <div className="relative overflow-hidden rounded-2xl border border-white/60 bg-white/80 p-5 sm:p-6 shadow-lg shadow-slate-100/50 backdrop-blur-md transition-all duration-300 hover:shadow-xl">
+                                <div className="relative mt-36 overflow-hidden rounded-2xl border border-white/70 bg-white/90 p-5 shadow-lg shadow-slate-950/10 backdrop-blur-md transition-all duration-300 hover:shadow-xl sm:mt-44 sm:p-6">
                                     <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-to-bl from-green-500/10 to-transparent rounded-bl-full" />
                                     <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700">Appointments</p>
                                     <h3 className="mt-2 text-lg sm:text-xl font-bold text-slate-900">Find an available doctor and choose a suitable time</h3>
@@ -200,6 +212,13 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-100 shadow-sm sm:grid-cols-4">
+                        <div className="bg-white px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-slate-950 sm:text-2xl">24/7</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:text-xs">Care access</p></div>
+                        <div className="bg-white px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-slate-950 sm:text-2xl">6+</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:text-xs">Specialties</p></div>
+                        <div className="bg-white px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-slate-950 sm:text-2xl">1 place</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:text-xs">For your care</p></div>
+                        <div className="bg-white px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-slate-950 sm:text-2xl">Secure</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:text-xs">By design</p></div>
                     </div>
                 </div>
             </section>
