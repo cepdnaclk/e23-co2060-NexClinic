@@ -4,19 +4,6 @@ import { useEffect, useState } from "react";
 import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
 import Link from "next/link";
 
-type HighlightCard = {
-    title: string;
-    description: string;
-    icon: React.ReactNode;
-};
-
-type Story = {
-    title: string;
-    location: string;
-    summary: string;
-    image: string;
-};
-
 interface NewsArticle {
     id: number;
     url: string;
@@ -28,37 +15,19 @@ interface NewsArticle {
     readTime: string;
 }
 
-// Animated Stats Counter component
-function StatsCounter({ target, suffix = "", duration = 1500 }: { target: number; suffix?: string; duration?: number }) {
-    const [count, setCount] = useState(0);
-
-    useEffect(() => {
-        let start = 0;
-        const end = target;
-        if (end === 0) return;
-
-        // Dynamic step time to ensure the animation completes roughly in 'duration' ms
-        const increment = Math.ceil(end / (duration / 16)); // 16ms is ~1 frame at 60fps
-        const timer = setInterval(() => {
-            start += increment;
-            if (start >= end) {
-                setCount(end);
-                clearInterval(timer);
-            } else {
-                setCount(start);
-            }
-        }, 16);
-
-        return () => clearInterval(timer);
-    }, [target, duration]);
-
-    return <span>{count.toLocaleString()}{suffix}</span>;
+interface NewsApiArticle {
+    url: string;
+    title: string;
+    description: string;
+    source: { name: string };
+    publishedAt: string;
+    image?: string;
 }
 
 const highlightCards = [
     {
         title: "Smart Appointment Booking",
-        description: "Book your doctor in minutes with clear schedules and real-time slot visibility.",
+        description: "Browse available appointment slots and choose a suitable time.",
         icon: (
             <svg className="h-6 w-6 text-green-600 transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -69,8 +38,8 @@ const highlightCards = [
         ),
     },
     {
-        title: "Verified Specialists",
-        description: "Consult trusted doctors with complete professional profiles and transparent ratings.",
+        title: "Doctor Profiles",
+        description: "Review the professional information available on registered doctor profiles.",
         icon: (
             <svg className="h-6 w-6 text-green-600 transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
@@ -99,27 +68,6 @@ const highlightCards = [
     },
 ];
 
-const quickStories: Story[] = [
-    {
-        title: "Early Detection AI Tool Improves Cancer Screening Outcomes",
-        location: "Colombo, Sri Lanka",
-        summary: "Hospitals report better triage speed and confidence with new diagnostic support models.",
-        image: "/images/doc.jpg",
-    },
-    {
-        title: "Cardiac Rehab Program Helps Patients Recover 35% Faster",
-        location: "Kandy, Sri Lanka",
-        summary: "A multidisciplinary recovery plan combines tele-consultation and in-person checkups.",
-        image: "/images/doc2.jpg",
-    },
-    {
-        title: "Digital Mental Wellness Clinics Expand to Rural Communities",
-        location: "Galle, Sri Lanka",
-        summary: "Community-led sessions with doctors reduce waiting time and improve continuity of care.",
-        image: "/images/HealthDoc.avif",
-    },
-];
-
 const API_KEY = '3ad27a1f2e6ec9457e36de238ce09fcf';
 
 export default function Home() {
@@ -133,7 +81,7 @@ export default function Home() {
                 const response = await fetch(`https://gnews.io/api/v4/top-headlines?category=health&lang=en&apikey=${API_KEY}`);
                 const data = await response.json();
                 if (data && data.articles) {
-                    const formattedArticles = data.articles.slice(0, 3).map((article: any, index: number) => ({
+                    const formattedArticles = data.articles.slice(0, 3).map((article: NewsApiArticle, index: number) => ({
                         id: index,
                         url: article.url,
                         title: article.title,
@@ -155,13 +103,11 @@ export default function Home() {
     }, []);
 
     return (
-        <main className="relative min-h-screen w-full overflow-hidden bg-slate-50/50 text-slate-900 scroll-smooth">
-            {/* Design System Blur Backdrops (Mesh Gradients in Green/Teal) */}
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#fffaf5] text-slate-900 scroll-smooth">
+            {/* A quiet canvas keeps the photography and calls to action in focus. */}
             <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-                <div className="absolute -top-40 -left-40 h-[400px] w-[400px] sm:h-[600px] sm:w-[600px] rounded-full bg-green-100/40 blur-[80px] sm:blur-[120px]" />
-                <div className="absolute top-[30%] -right-40 h-[300px] w-[300px] sm:h-[500px] sm:w-[500px] rounded-full bg-green-50/40 blur-[80px] sm:blur-[100px]" />
-                <div className="absolute bottom-10 left-[20%] h-[400px] w-[400px] sm:h-[600px] sm:w-[600px] rounded-full bg-green-100/20 blur-[90px] sm:blur-[130px]" />
-                <img className="absolute inset-0 h-full w-full object-cover opacity-[0.02] mix-blend-overlay" src="/images/hexagons.png" alt="" aria-hidden="true" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(14,116,144,0.055)_1px,transparent_1px),linear-gradient(to_bottom,rgba(14,116,144,0.055)_1px,transparent_1px)] bg-[size:42px_42px]" />
+                <div className="absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(ellipse_at_top_left,rgba(251,191,36,0.22),transparent_55%),radial-gradient(ellipse_at_top_right,rgba(45,212,191,0.22),transparent_52%)]" />
             </div>
 
             {/* Sticky Navigation bar container */}
@@ -170,29 +116,29 @@ export default function Home() {
             </header>
 
             {/* HERO SECTION */}
-            <section className="relative mt-16 overflow-hidden pt-12 pb-16 lg:pt-20 lg:pb-24">
+            <section className="relative mt-16 overflow-hidden border-b border-orange-100/80 bg-[linear-gradient(135deg,rgba(255,251,235,0.92),rgba(236,253,245,0.72)_55%,rgba(224,242,254,0.75))] pt-12 pb-12 lg:pt-20 lg:pb-16">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
+                    <div className="grid items-start gap-8 lg:grid-cols-12 lg:gap-12">
                         {/* Hero Left Content */}
-                        <div className="lg:col-span-7 flex flex-col justify-center text-left">
-                            <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-green-100 bg-green-50/80 px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700 backdrop-blur-sm">
-                                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                                Connected Care Platform
+                        <div className="flex flex-col justify-center text-left lg:col-span-7 lg:pt-16 xl:pt-20">
+                            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700 shadow-sm backdrop-blur-sm">
+                                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                Care that keeps moving
                             </span>
-                            <h1 className="mt-4 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight lg:leading-[1.15]">
-                                Your Health Journey, <br />
-                                <span className="bg-gradient-to-r from-green-600 via-green-500 to-teal-500 bg-clip-text text-transparent">
-                                    Smarter with NexClinic
+                            <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-[1.04] tracking-[-0.03em] text-slate-950 sm:text-5xl md:text-6xl lg:text-[4rem] xl:text-[4.35rem]">
+                                The next step in your <br className="hidden sm:block" />
+                                <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 bg-clip-text text-transparent">
+                                    better health journey.
                                 </span>
                             </h1>
-                            <p className="mt-4 sm:mt-6 max-w-2xl text-sm sm:text-base md:text-lg leading-relaxed text-slate-600">
-                                Discover verified specialists, book appointments instantly, and stay informed with trusted medical updates in one seamless, secure clinical experience built for you.
+                            <p className="mt-5 max-w-xl text-sm leading-relaxed text-slate-600 sm:text-base md:text-lg">
+                                Find the right specialist, book a convenient appointment, and keep every part of your care in one clear, connected place.
                             </p>
                             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 w-full sm:w-auto">
                                 <Link
                                     id="hero-find-doctors"
                                     href="/doctors"
-                                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-green-500/10 transition-all duration-300 hover:-translate-y-0.5 hover:bg-green-600 hover:shadow-lg hover:shadow-green-500/20 active:scale-[0.98]"
+                                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-700/20 active:scale-[0.98]"
                                 >
                                     Find Doctors Now
                                     <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -202,45 +148,37 @@ export default function Home() {
                                 <Link
                                     id="hero-explore-news"
                                     href="/news-articles"
-                                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-green-300 hover:bg-green-50/20 hover:text-green-700 active:scale-[0.98]"
+                                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white/80 px-6 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-[0.98]"
                                 >
                                     Explore Health News
                                 </Link>
                             </div>
 
-                            {/* Hero Small Stats */}
-                            <div className="mt-8 sm:mt-12 grid grid-cols-3 gap-4 sm:gap-6 border-t border-slate-100 pt-6 sm:pt-8">
-                                <div>
-                                    <p className="text-2xl sm:text-3xl font-black text-slate-900">
-                                        <StatsCounter target={500} suffix="+" />
-                                    </p>
-                                    <p className="mt-0.5 text-xs sm:text-sm font-medium text-slate-500">Verified Doctors</p>
-                                </div>
-                                <div>
-                                    <p className="text-2xl sm:text-3xl font-black text-slate-900">24/7</p>
-                                    <p className="mt-0.5 text-xs sm:text-sm font-medium text-slate-500">Booking Access</p>
-                                </div>
-                                <div>
-                                    <p className="text-2xl sm:text-3xl font-black text-slate-900">
-                                        <StatsCounter target={98} suffix="%" />
-                                    </p>
-                                    <p className="mt-0.5 text-xs sm:text-sm font-medium text-slate-500">Patient Success</p>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Hero Right Media Grid */}
-                        <div className="lg:col-span-5 relative mt-6 lg:mt-0 w-full">
+                        <div className="relative mt-6 w-full lg:col-span-5 lg:mt-0">
                             {/* Background glow graphic decor */}
-                            <div className="absolute inset-0 -m-4 sm:-m-8 bg-gradient-to-tr from-green-500/10 to-teal-500/5 rounded-3xl blur-2xl -z-10" />
+                            <div className="absolute -inset-5 rounded-[2rem] bg-gradient-to-br from-orange-200/50 via-emerald-200/50 to-sky-200/50 blur-2xl" />
+                            <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] border border-white/80 shadow-2xl shadow-teal-950/15">
+                                <img src="/images/main-bg.jpg" alt="A team of healthcare professionals" className="h-full w-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/10 to-transparent" />
+                                <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between text-white">
+                                    <div>
+                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Your care team</p>
+                                        <p className="mt-1 text-lg font-bold">Connected around you</p>
+                                    </div>
+                                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl backdrop-blur-md">+</span>
+                                </div>
+                            </div>
 
-                            <div className="grid gap-4 sm:gap-6 max-w-md sm:max-w-none mx-auto">
+                            <div className="relative z-10 grid gap-4 px-4 pb-4 pt-4 sm:gap-6 sm:px-6 sm:pb-6 sm:pt-6">
                                 {/* Insights Panel */}
-                                <div className="relative overflow-hidden rounded-2xl border border-white/60 bg-white/80 p-5 sm:p-6 shadow-lg shadow-slate-100/50 backdrop-blur-md transition-all duration-300 hover:shadow-xl">
+                                <div className="relative mt-32 overflow-hidden rounded-2xl border border-white/70 bg-white/90 p-5 shadow-lg shadow-slate-950/10 backdrop-blur-md transition-all duration-300 hover:shadow-xl sm:mt-40 sm:p-6">
                                     <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-to-bl from-green-500/10 to-transparent rounded-bl-full" />
-                                    <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700">Today&apos;s care insight</p>
-                                    <h3 className="mt-2 text-lg sm:text-xl font-bold text-slate-900">Tele-consultations reduce waiting times by up to 42%</h3>
-                                    <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-600">NexClinic makes it simpler for patients to get faster access to certified specialist guidance without geographical constraints.</p>
+                                    <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700">Appointments</p>
+                                    <h3 className="mt-2 text-lg sm:text-xl font-bold text-slate-900">Find an available doctor and choose a suitable time</h3>
+                                    <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-600">Browse doctor profiles and appointment slots provided through NexClinic.</p>
                                 </div>
 
                                 {/* Floating Graphics - Secondary Grid */}
@@ -250,7 +188,7 @@ export default function Home() {
                                             <img src="/images/HealthDoc.avif" alt="Online consultation" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
                                             <span className="absolute bottom-2 left-3 inline-flex items-center gap-1 rounded bg-green-500 px-1.5 py-0.5 text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-white">
-                                                Live Status
+                                    Online Care
                                             </span>
                                         </div>
                                         <div className="p-3 sm:p-4">
@@ -268,28 +206,102 @@ export default function Home() {
                                         </div>
                                         <div className="p-3 sm:p-4">
                                             <h4 className="font-bold text-sm text-slate-900 group-hover:text-green-600 transition-colors">Smart Reminders</h4>
-                                            <p className="mt-1 text-[10px] sm:text-xs leading-relaxed text-slate-500">Never miss scheduled checkups with automated booking alerts.</p>
+                                            <p className="mt-1 text-[10px] sm:text-xs leading-relaxed text-slate-500">View appointment information and notifications from your account.</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/80 bg-white/80 shadow-sm sm:grid-cols-4">
+                        <div className="bg-amber-50 px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-amber-900 sm:text-2xl">24/7</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-amber-700 sm:text-xs">Care access</p></div>
+                        <div className="bg-emerald-50 px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-emerald-900 sm:text-2xl">6+</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 sm:text-xs">Specialties</p></div>
+                        <div className="bg-sky-50 px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-sky-900 sm:text-2xl">1 place</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-sky-700 sm:text-xs">For your care</p></div>
+                        <div className="bg-orange-50 px-4 py-4 sm:px-6"><p className="text-xl font-extrabold text-orange-900 sm:text-2xl">Secure</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-orange-700 sm:text-xs">By design</p></div>
+                    </div>
                 </div>
             </section>
 
-            {/* TRUSTED BY / PARTNERS */}
-            <section className="border-y border-slate-100 bg-white/40 py-6 backdrop-blur-sm">
+            {/* PATIENT AND DOCTOR PORTALS */}
+            <section id="care-paths" className="border-b border-sky-100/80 bg-[linear-gradient(180deg,#ffffff_0%,#f0fdfa_100%)] py-16 sm:py-24">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <p className="text-center text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-slate-400">
-                        Partnering with Sri Lanka&apos;s Leading Healthcare Networks
-                    </p>
-                    <div className="mt-4 flex flex-wrap items-center justify-center gap-6 sm:gap-12 opacity-50 grayscale transition-all duration-300 hover:opacity-85 hover:grayscale-0">
-                        <span className="text-sm sm:text-base font-bold tracking-tight text-slate-800 transition-colors hover:text-green-600 cursor-default">LANKA HOSPITALS</span>
-                        <span className="text-sm sm:text-base font-bold tracking-tight text-slate-800 transition-colors hover:text-green-600 cursor-default">ASIRI HEALTH</span>
-                        <span className="text-sm sm:text-base font-bold tracking-tight text-slate-800 transition-colors hover:text-green-600 cursor-default">DURDANS CLINIC</span>
-                        <span className="text-sm sm:text-base font-bold tracking-tight text-slate-800 transition-colors hover:text-green-600 cursor-default">NAWALOKA MED</span>
-                        <span className="text-sm sm:text-base font-bold tracking-tight text-slate-800 transition-colors hover:text-green-600 cursor-default">CENTRAL CLINIC</span>
+                    <div className="mx-auto max-w-2xl text-center">
+                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 sm:text-xs">
+                            Built for every care journey
+                        </span>
+                        <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">
+                            Choose your NexClinic portal
+                        </h2>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
+                            One connected platform, with focused tools for the people receiving care and the professionals providing it.
+                        </p>
+                    </div>
+
+                    <div className="mt-10 grid gap-6 lg:grid-cols-2">
+                        <section id="patient-portal" aria-labelledby="patient-portal-title" className="group relative overflow-hidden rounded-[1.5rem] border border-orange-200 bg-[linear-gradient(135deg,#fff7ed,#ecfdf5)] p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
+                            <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-orange-200/60 blur-2xl" />
+                            <div className="relative flex h-full flex-col">
+                                <div className="flex items-start justify-between gap-4">
+                                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-xl text-white shadow-lg shadow-emerald-600/20">+</span>
+                                    <span className="rounded-full border border-orange-200 bg-white/70 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-700">For patients</span>
+                                </div>
+                                <h3 id="patient-portal-title" className="mt-8 text-2xl font-extrabold text-slate-950 sm:text-3xl">Your care, in your hands.</h3>
+                                <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-600 sm:text-base">
+                                    Discover trusted doctors, compare available times, book appointments, and keep track of your health information.
+                                </p>
+                                <div className="mt-6 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
+                                    <p className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Find the right specialist</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Book available slots</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Manage appointments</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-600">✓</span> Access your records</p>
+                                </div>
+                                <div className="mt-7 rounded-2xl border border-orange-100 bg-white/75 p-4">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-orange-700">How to get started</p>
+                                    <ol className="mt-3 grid gap-2 text-sm text-slate-700">
+                                        <li><span className="mr-2 font-bold text-orange-600">01</span>Create your patient account.</li>
+                                        <li><span className="mr-2 font-bold text-orange-600">02</span>Search for a doctor by specialty.</li>
+                                        <li><span className="mr-2 font-bold text-orange-600">03</span>Select a time and confirm your appointment.</li>
+                                    </ol>
+                                </div>
+                                <div className="mt-8 flex flex-wrap gap-3">
+                                    <Link href="/doctors" className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700">Find a doctor</Link>
+                                    <Link href="/register" className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-white/80 px-5 py-3 text-sm font-bold text-emerald-800 transition-colors hover:bg-white">Create account</Link>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="doctor-portal" aria-labelledby="doctor-portal-title" className="group relative overflow-hidden rounded-[1.5rem] border border-sky-200 bg-[linear-gradient(135deg,#172554,#164e63)] p-6 text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-8">
+                            <div className="absolute -bottom-20 -right-12 h-56 w-56 rounded-full bg-sky-400/25 blur-3xl" />
+                            <div className="relative flex h-full flex-col">
+                                <div className="flex items-start justify-between gap-4">
+                                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-xl text-emerald-300 ring-1 ring-white/15">✚</span>
+                                    <span className="rounded-full border border-sky-200/30 bg-sky-100/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-200">For doctors</span>
+                                </div>
+                                <h3 id="doctor-portal-title" className="mt-8 text-2xl font-extrabold sm:text-3xl">Make every consultation count.</h3>
+                                <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-300 sm:text-base">
+                                    Build your professional presence, manage availability, connect with patients, and keep your clinical workflow organized.
+                                </p>
+                                <div className="mt-6 grid gap-3 text-sm text-slate-200 sm:grid-cols-2">
+                                    <p className="flex items-center gap-2"><span className="text-emerald-300">✓</span> Manage your profile</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-300">✓</span> Set appointment slots</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-300">✓</span> Review patient requests</p>
+                                    <p className="flex items-center gap-2"><span className="text-emerald-300">✓</span> Continue patient care</p>
+                                </div>
+                                <div className="mt-7 rounded-2xl border border-sky-200/20 bg-white/10 p-4 backdrop-blur-sm">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-sky-200">How to get started</p>
+                                    <ol className="mt-3 grid gap-2 text-sm text-slate-200">
+                                        <li><span className="mr-2 font-bold text-sky-300">01</span>Register with your professional details.</li>
+                                        <li><span className="mr-2 font-bold text-sky-300">02</span>Complete your profile and verification.</li>
+                                        <li><span className="mr-2 font-bold text-sky-300">03</span>Set availability and start managing care.</li>
+                                    </ol>
+                                </div>
+                                <div className="mt-8 flex flex-wrap gap-3">
+                                    <Link href="/doctor/login" className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-emerald-400">Doctor sign in</Link>
+                                    <Link href="/doctor/register" className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-white/15">Join NexClinic</Link>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </section>
@@ -306,10 +318,10 @@ export default function Home() {
                                 Redefining access to specialized clinical care
                             </h2>
                             <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-600">
-                                NexClinic was founded to solve clinical scheduling inefficiencies by bridging the communication gap between patients, verified medical specialists, and premier hospitals. We believe healthcare access should be immediate, convenient, and built on trust.
+                                NexClinic provides tools for patients, doctors, and hospitals to coordinate appointments and manage related information.
                             </p>
                             <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600">
-                                Our dashboard enables users to access high-quality diagnosis advice, check doctor availability instantly, book slots securely, and store consultations with absolute data confidentiality.
+                                The dashboard lets users browse doctors, review available slots, book appointments, and access their account information.
                             </p>
 
                             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -319,7 +331,7 @@ export default function Home() {
                                 </div>
                                 <div className="rounded-xl bg-white border border-slate-100 p-4 shadow-sm transition-all duration-300 hover:border-green-100 hover:shadow-md">
                                     <h4 className="font-bold text-sm text-slate-900">Hospital Integrated</h4>
-                                    <p className="mt-1 text-xs text-slate-500">Direct integration with clinic schedules ensures zero double-bookings.</p>
+                                    <p className="mt-1 text-xs text-slate-500">Hospital staff can publish and manage doctor schedules through the platform.</p>
                                 </div>
                             </div>
                         </div>
@@ -330,14 +342,14 @@ export default function Home() {
                                 <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-green-200">Our Core Mission</span>
                                 <h3 className="mt-2 text-xl sm:text-2xl font-bold">To empower health journeys through digital transparency</h3>
                                 <p className="mt-2 text-xs sm:text-sm leading-relaxed text-green-50">
-                                    We aim to place clinical power back into patients&apos; hands by offering clear doctor profiles, honest rating reviews, and immediate scheduling access.
+                                    We aim to make doctor information and appointment scheduling easier to access.
                                 </p>
                             </div>
 
                             <div className="group relative overflow-hidden rounded-2xl border border-green-100 bg-gradient-to-br from-teal-600 to-teal-700 p-6 sm:p-8 text-white shadow-lg transition-all duration-300 hover:shadow-xl active:scale-[0.99]">
                                 <div className="absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
                                 <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-teal-200">Our Shared Vision</span>
-                                <h3 className="mt-2 text-xl sm:text-2xl font-bold">A boundaryless, immediate medical support ecosystem</h3>
+                                <h3 className="mt-2 text-xl sm:text-2xl font-bold">Simpler coordination between patients and care providers</h3>
                                 <p className="mt-2 text-xs sm:text-sm leading-relaxed text-teal-50">
                                     We visualize a future where scheduling virtual or in-person specialist consultation is as easy as sending a message, ensuring early detection and care.
                                 </p>
@@ -371,7 +383,7 @@ export default function Home() {
                             </div>
                             <h3 className="mt-5 text-lg sm:text-xl font-bold text-slate-900 transition-colors group-hover:text-green-600">Experienced Doctors</h3>
                             <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
-                                Access a network of over 500+ verified medical specialists, each with detailed credentials, histories, and patient ratings.
+                                Browse registered doctor profiles and the professional information available for each doctor.
                             </p>
                         </div>
 
@@ -419,7 +431,7 @@ export default function Home() {
                             </div>
                             <h3 className="mt-5 text-lg sm:text-xl font-bold text-slate-900 transition-colors group-hover:text-green-600">Reliable Healthcare</h3>
                             <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600">
-                                Dedicated support systems, automatic follow-ups, and trusted clinical news portals keep you fully informed.
+                                Appointment information and account notifications help you keep track of scheduled care.
                             </p>
                         </div>
 
@@ -645,41 +657,6 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* STATISTICS SECTION */}
-            <section className="relative overflow-hidden bg-slate-900 py-12 text-white lg:py-20">
-                {/* Background glow graphic */}
-                <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_50%,rgba(0,173,133,0.15),transparent_60%)]" />
-
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-2 gap-6 sm:gap-8 md:grid-cols-4 text-center">
-                        <div className="p-2 border-r border-slate-800 last:border-0">
-                            <p className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
-                                <StatsCounter target={10000} suffix="+" />
-                            </p>
-                            <p className="mt-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Active Patients</p>
-                        </div>
-                        <div className="p-2 border-r border-slate-800 last:border-0">
-                            <p className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
-                                <StatsCounter target={500} suffix="+" />
-                            </p>
-                            <p className="mt-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Verified Specialists</p>
-                        </div>
-                        <div className="p-2 border-r border-slate-800 last:border-0">
-                            <p className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
-                                <StatsCounter target={25} suffix="+" />
-                            </p>
-                            <p className="mt-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Partner Hospitals</p>
-                        </div>
-                        <div className="p-2 border-r border-slate-800 last:border-0">
-                            <p className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
-                                <StatsCounter target={50000} suffix="+" />
-                            </p>
-                            <p className="mt-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Appointments Booked</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             {/* HEALTH DESK / ARTICLES (News and articles section from original code) */}
             {/* <section id="health-desk" className="py-16 sm:py-24 bg-white">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -740,94 +717,6 @@ export default function Home() {
                     </div>
                 </div>
             </section> */}
-
-            {/* TESTIMONIALS SECTION */}
-            <section className="py-16 sm:py-24 border-t border-slate-100 bg-slate-50/30">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3.5 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700">
-                            Patient Stories
-                        </span>
-                        <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900">
-                            What our patients say about NexClinic
-                        </h2>
-                        <p className="mt-3 text-xs sm:text-sm text-slate-600">
-                            Read clinical recovery reviews and scheduling experiences from patients we support.
-                        </p>
-                    </div>
-
-                    <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-3 max-w-md md:max-w-none mx-auto">
-                        {/* Testimonial 1 */}
-                        <div className="rounded-2xl border border-slate-100 bg-white p-6 sm:p-8 shadow-sm transition-all duration-300 hover:shadow-md hover:border-green-100 text-left">
-                            <div className="flex items-center gap-1 text-yellow-500">
-                                {[...Array(5)].map((_, i) => (
-                                    <svg key={i} className="h-4 w-4 sm:h-5 sm:w-5 fill-current" viewBox="0 0 24 24">
-                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                                    </svg>
-                                ))}
-                            </div>
-                            <blockquote className="mt-4 text-xs sm:text-sm italic leading-relaxed text-slate-600">
-                                &quot;Booking an appointment on NexClinic was incredibly simple. I found a verified cardiologist, checked their live availability, and scheduled a consult in under 2 minutes!&quot;
-                            </blockquote>
-                            <div className="mt-6 flex items-center gap-3">
-                                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-green-50 text-xs font-bold text-green-600">
-                                    PD
-                                </div>
-                                <div>
-                                    <p className="text-xs sm:text-sm font-bold text-slate-950">Priyantha D.</p>
-                                    <p className="text-[10px] sm:text-xs text-slate-500">Colombo, Sri Lanka</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Testimonial 2 */}
-                        <div className="rounded-2xl border border-slate-100 bg-white p-6 sm:p-8 shadow-sm transition-all duration-300 hover:shadow-md hover:border-green-100 text-left">
-                            <div className="flex items-center gap-1 text-yellow-500">
-                                {[...Array(5)].map((_, i) => (
-                                    <svg key={i} className="h-4 w-4 sm:h-5 sm:w-5 fill-current" viewBox="0 0 24 24">
-                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                                    </svg>
-                                ))}
-                            </div>
-                            <blockquote className="mt-4 text-xs sm:text-sm italic leading-relaxed text-slate-600">
-                                &quot;The platform is fast, clean, and highly secure. I can see my consultations history, prescriptions, and get alerts for regular checks. The visual layout is excellent.&quot;
-                            </blockquote>
-                            <div className="mt-6 flex items-center gap-3">
-                                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-green-100/60 text-xs font-bold text-green-700">
-                                    MK
-                                </div>
-                                <div>
-                                    <p className="text-xs sm:text-sm font-bold text-slate-950">Minoli K.</p>
-                                    <p className="text-[10px] sm:text-xs text-slate-500">Kandy, Sri Lanka</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Testimonial 3 */}
-                        <div className="rounded-2xl border border-slate-100 bg-white p-6 sm:p-8 shadow-sm transition-all duration-300 hover:shadow-md hover:border-green-100 text-left">
-                            <div className="flex items-center gap-1 text-yellow-500">
-                                {[...Array(5)].map((_, i) => (
-                                    <svg key={i} className="h-4 w-4 sm:h-5 sm:w-5 fill-current" viewBox="0 0 24 24">
-                                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                                    </svg>
-                                ))}
-                            </div>
-                            <blockquote className="mt-4 text-xs sm:text-sm italic leading-relaxed text-slate-600">
-                                &quot;As a busy professional, the quick telemedicine consultations have saved me hours of waiting in clinic lobbies. Verification ratings make choosing a specialist easy.&quot;
-                            </blockquote>
-                            <div className="mt-6 flex items-center gap-3">
-                                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-green-50 text-xs font-bold text-green-600">
-                                    RS
-                                </div>
-                                <div>
-                                    <p className="text-xs sm:text-sm font-bold text-slate-950">Roshan S.</p>
-                                    <p className="text-[10px] sm:text-xs text-slate-500">Galle, Sri Lanka</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
             {/* FAQ SECTION */}
             <section id="faq" className="py-16 sm:py-24 bg-white">
@@ -901,7 +790,7 @@ export default function Home() {
                                 </div>
                             </summary>
                             <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600 transition-all duration-300">
-                                All registered medical professionals are vetted through their institutional registrations and professional medical councils. A doctor&apos;s active status is marked verified only after official verification by our clinical team.
+                                Doctor profiles display the verification status recorded by the platform. Review the profile details before booking.
                             </p>
                         </details>
 
@@ -916,84 +805,9 @@ export default function Home() {
                                 </div>
                             </summary>
                             <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600 transition-all duration-300">
-                                Patients can reschedule or cancel scheduled slots up to 24 hours prior to the appointment. Refund and cancellation rules are specified transparently on each doctor profile page.
+                                Open your appointments page to see the actions currently available for a booking. Availability depends on the appointment&apos;s status.
                             </p>
                         </details>
-                    </div>
-                </div>
-            </section>
-
-            {/* HELP & SUPPORT + EMERGENCY INFORMATION */}
-            <section id="help" className="py-16 sm:py-24 border-t border-slate-100 bg-slate-50/30">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-                        {/* Help Desk info */}
-                        <div className="flex flex-col justify-center text-left">
-                            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-green-50 px-3.5 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-green-700">
-                                Help & Support
-                            </span>
-                            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900">
-                                We are here to support your health journey
-                            </h2>
-                            <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-600">
-                                Need help registering, updating account details, or managing active bookings? Contact our friendly support desk anytime.
-                            </p>
-
-                            <div className="mt-6 sm:mt-8 space-y-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-100 shadow-sm text-green-600 transition-transform duration-300 hover:scale-105">
-                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] sm:text-xs font-medium text-slate-500">Phone Consultation Support</p>
-                                        <p className="text-sm sm:text-base font-bold text-slate-900 hover:text-green-600 transition-colors cursor-pointer">+94 (11) 234-5678</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-100 shadow-sm text-green-600 transition-transform duration-300 hover:scale-105">
-                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] sm:text-xs font-medium text-slate-500">Email Support Desk</p>
-                                        <p className="text-sm sm:text-base font-bold text-slate-900 hover:text-green-600 transition-colors cursor-pointer">support@nexclinic.lk</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-8">
-                                <Link
-                                    href="/help"
-                                    className="inline-flex items-center justify-center rounded-xl bg-white border border-slate-200 px-6 py-3 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
-                                >
-                                    Visit Help Center
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Critical Emergency Banner */}
-                        <div className="relative overflow-hidden rounded-[2rem] border border-red-100 bg-gradient-to-br from-red-50 to-red-100/50 p-6 sm:p-8 shadow-md text-left">
-                            <div className="absolute top-4 right-4 h-2.5 w-2.5 rounded-full bg-red-600 animate-ping" />
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-600 text-white shadow-lg shadow-red-500/20 transition-transform duration-300 hover:scale-105">
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                            </div>
-                            <h3 className="mt-5 text-xl sm:text-2xl font-extrabold text-red-950">In Case of a Medical Emergency</h3>
-                            <p className="mt-3 text-xs sm:text-sm leading-relaxed text-red-900">
-                                NexClinic is an appointment scheduling platform for standard clinical care. If you are experiencing a life-threatening medical emergency (such as severe chest pain, major breathing difficulties, or acute trauma):
-                            </p>
-                            <div className="mt-6 rounded-xl bg-red-600 p-4 text-center text-white shadow-md transition-all duration-300 hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/20">
-                                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-red-100">National Emergency Services Hotline</p>
-                                <p className="mt-0.5 text-2xl sm:text-3xl font-black">Call 1990 Immediately</p>
-                            </div>
-                            <p className="mt-3 text-[10px] sm:text-xs font-semibold text-red-600/80">
-                                Or visit the emergency department of your nearest local hospital. Do not wait for an online consult.
-                            </p>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -1067,48 +881,13 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* NEWSLETTER / UPDATES */}
-            <section className="py-12 sm:py-16 bg-white border-t border-slate-100">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="relative rounded-[2rem] border border-green-100 bg-gradient-to-r from-green-50 to-teal-50/20 p-6 sm:p-10 shadow-inner overflow-hidden text-left">
-                        <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-green-100/30 blur-2xl pointer-events-none" />
-                        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between relative z-10">
-                            <div>
-                                <span className="inline-flex items-center gap-1 rounded bg-green-100 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-green-700">
-                                    Weekly Health Brief
-                                </span>
-                                <h3 className="mt-2 text-xl sm:text-2xl font-bold text-slate-900">Receive medical briefings & clinic updates</h3>
-                                <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-xl">
-                                    Subscribe to our weekly brief summarizing health findings verified by NexClinic physicians.
-                                </p>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto shrink-0">
-                                <input
-                                    id="newsletter-email-input"
-                                    type="email"
-                                    placeholder="Enter your email address"
-                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs sm:text-sm focus:border-green-500 focus:outline-none shadow-sm w-full sm:w-[260px] transition-colors"
-                                />
-                                <button
-                                    id="newsletter-subscribe-button"
-                                    type="button"
-                                    className="rounded-xl bg-green-500 hover:bg-green-600 px-5 py-3 text-xs sm:text-sm font-bold text-white transition-all duration-300 shadow-md shadow-green-500/10 active:scale-[0.98]"
-                                >
-                                    Subscribe
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             {/* STRONG CALL TO ACTION */}
             <section id="contact" className="relative mx-auto mb-16 max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="relative rounded-[2rem] border border-white/60 bg-gradient-to-r from-slate-900 via-slate-800 to-green-950 p-8 sm:p-12 md:p-16 text-white shadow-2xl overflow-hidden text-left">
                     {/* Visual grids backdrop */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(0,173,133,0.12),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,173,133,0.15),transparent_50%)] pointer-events-none" />
 
-                    <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between z-10">
+                    <div className="relative z-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
                         <div>
                             <span className="text-xs font-semibold uppercase tracking-widest text-green-300">Ready to Begin?</span>
                             <h2 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
@@ -1118,7 +897,25 @@ export default function Home() {
                                 Join NexClinic. Move from quick search to verified consults without queues or manual confirmations.
                             </p>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto shrink-0">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <a href="tel:+94112345678" className="rounded-2xl border border-white/10 bg-white/10 p-4 transition-colors hover:bg-white/15">
+                                <span className="block text-[10px] font-bold uppercase tracking-wider text-green-300">Call us</span>
+                                <span className="mt-1 block text-sm font-semibold">+94 11 234 5678</span>
+                            </a>
+                            <a href="mailto:support@nexclinic.com" className="rounded-2xl border border-white/10 bg-white/10 p-4 transition-colors hover:bg-white/15">
+                                <span className="block text-[10px] font-bold uppercase tracking-wider text-green-300">Email support</span>
+                                <span className="mt-1 block break-all text-sm font-semibold">support@nexclinic.com</span>
+                            </a>
+                            <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                                <span className="block text-[10px] font-bold uppercase tracking-wider text-green-300">Visit us</span>
+                                <span className="mt-1 block text-sm font-semibold">Colombo, Sri Lanka</span>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                                <span className="block text-[10px] font-bold uppercase tracking-wider text-green-300">Support hours</span>
+                                <span className="mt-1 block text-sm font-semibold">Mon-Fri, 8:30 AM-5:00 PM</span>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-3 sm:flex-row lg:col-span-2">
                             <Link
                                 id="btn-start-booking"
                                 href="/doctors"
@@ -1149,14 +946,8 @@ export default function Home() {
                                 NexClinic
                             </Link>
                             <p className="mt-4 text-xs sm:text-sm leading-relaxed text-slate-500 max-w-sm">
-                                NexClinic is a smart digital healthcare platform connecting patients with specialized verified doctor networks in Sri Lanka.
+                                NexClinic provides appointment and account-management tools for patients, doctors, and hospitals.
                             </p>
-                            <div className="mt-6 flex items-center gap-4 text-xs sm:text-sm text-slate-400">
-                                <span className="hover:text-green-600 transition-colors cursor-pointer">FB</span>
-                                <span className="hover:text-green-600 transition-colors cursor-pointer">TW</span>
-                                <span className="hover:text-green-600 transition-colors cursor-pointer">IG</span>
-                                <span className="hover:text-green-600 transition-colors cursor-pointer">LN</span>
-                            </div>
                         </div>
 
                         {/* Navigation Map */}
@@ -1168,7 +959,7 @@ export default function Home() {
                                 <li><Link href="#services" className="hover:text-green-600 transition-colors">Services</Link></li>
                                 <li><Link href="#about" className="hover:text-green-600 transition-colors">About Us</Link></li>
                                 <li><Link href="#faq" className="hover:text-green-600 transition-colors">FAQ</Link></li>
-                                <li><Link href="#help" className="hover:text-green-600 transition-colors">Help & Support</Link></li>
+                                <li><Link href="/help" className="hover:text-green-600 transition-colors">Help & Support</Link></li>
                             </ul>
                         </div>
 
@@ -1183,20 +974,10 @@ export default function Home() {
                             </ul>
                         </div>
 
-                        {/* Legal */}
-                        <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-950">Legal Copy</h4>
-                            <ul className="mt-4 space-y-2 text-xs sm:text-sm text-slate-500">
-                                <li><span className="hover:text-green-600 transition-colors cursor-pointer">Privacy & Policy</span></li>
-                                <li><span className="hover:text-green-600 transition-colors cursor-pointer">Terms of Services</span></li>
-                                <li><span className="hover:text-green-600 transition-colors cursor-pointer">HIPAA Compliance Disclosure</span></li>
-                                <li><span className="hover:text-green-600 transition-colors cursor-pointer">Emergency care rules</span></li>
-                            </ul>
-                        </div>
                     </div>
 
                     <div className="mt-12 border-t border-slate-200/60 pt-8 text-center text-xs text-slate-400">
-                        <p>© {new Date().getFullYear()} NexClinic Healthcare. All rights reserved. V1.0.0 Sri Lanka.</p>
+                        <p>© {new Date().getFullYear()} NexClinic.</p>
                     </div>
                 </div>
             </footer>

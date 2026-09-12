@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
 import MockPaymentGateway from "@/components/payment/MockPaymentGateway";
+import { validatePrivateUpload } from '@/lib/fileValidation';
 
 type Role = "PATIENT" | "DOCTOR";
 
@@ -768,11 +769,25 @@ export default function ChatWorkspace({
                       <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">{timeLeft}</span>
                     )}
                     <label className={`flex items-center justify-center w-10 h-10 rounded-full transition cursor-pointer ${attachmentFile ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'} ${isExpired || selectedThread.status === "CLOSED" ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
+
                       <input 
                         type="file" 
                         className="hidden" 
                         disabled={isExpired || selectedThread.status === "CLOSED"}
-                        onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const error = validatePrivateUpload(file);
+                            if (error) {
+                              alert(error);
+                              e.target.value = ''; // clear input
+                              return;
+                            }
+                            setAttachmentFile(file);
+                          } else {
+                            setAttachmentFile(null);
+                          }
+                        }}
                       />
                       📎
                     </label>
