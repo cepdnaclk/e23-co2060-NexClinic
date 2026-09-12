@@ -198,5 +198,5 @@ class AdviceChatThreadApiTests(TestCase):
 			{"action": "reopen"},
 			format="json",
 		)
-		self.assertEqual(reopen_response.status_code, status.HTTP_200_OK)
-		self.assertEqual(reopen_response.json()["thread"]["status"], "OPEN")
+		self.assertEqual(reopen_response.status_code, status.HTTP_403_FORBIDDEN)
+		self.assertEqual(reopen_response.json()["detail"], "Patients must pay to reopen a consultation.")

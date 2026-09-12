@@ -198,7 +198,7 @@ class AdviceChatMessageCreateView(BaseChatAPIView):
 		if error_response:
 			return error_response
 
-		if thread.is_expired():
+		if thread.is_expired:
 			return Response(
 				{"detail": "This consultation thread has expired. Please open a new consultation."},
 				status=status.HTTP_403_FORBIDDEN

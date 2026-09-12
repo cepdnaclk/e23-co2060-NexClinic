@@ -21,8 +21,9 @@ def doctor_verification_handler(sender, instance, created, **kwargs):
             return
 
         # Send email (best effort)
+        import threading
         try:
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [doctor_user.email])
+            threading.Thread(target=send_mail, args=(subject, message, settings.DEFAULT_FROM_EMAIL, [doctor_user.email])).start()
         except Exception:
             pass
 
@@ -69,8 +70,9 @@ def appointment_notifications(sender, instance, created, **kwargs):
                 f"Your appointment with {instance.doctor.preferred_name} at {instance.slot.date} "
                 f"{instance.slot.start_time} has been confirmed."
             )
+            import threading
             try:
-                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [patient_email])
+                threading.Thread(target=send_mail, args=(subject, message, settings.DEFAULT_FROM_EMAIL, [patient_email])).start()
             except Exception:
                 pass
 
@@ -92,8 +94,9 @@ def appointment_notifications(sender, instance, created, **kwargs):
                 f"Your appointment with {instance.doctor.preferred_name} on {instance.slot.date} "
                 f"has been cancelled. Reason: {instance.cancellation_reason or 'Not provided'}"
             )
+            import threading
             try:
-                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [patient_email])
+                threading.Thread(target=send_mail, args=(subject, message, settings.DEFAULT_FROM_EMAIL, [patient_email])).start()
             except Exception:
                 pass
 

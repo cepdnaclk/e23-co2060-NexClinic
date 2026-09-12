@@ -1,6 +1,8 @@
+import uuid
 from django.db import models
 from django.conf import settings
-import uuid
+from main.validators import validate_public_file
+from main.storage_backends import public_storage
 
 class Notification(models.Model):
     class NotificationType(models.TextChoices):
@@ -17,7 +19,11 @@ class Notification(models.Model):
     notification_type = models.CharField(max_length=50, choices=NotificationType.choices, default=NotificationType.OTHER)
     title = models.CharField(max_length=255)
     message = models.TextField()
-    attachment = models.FileField(upload_to='notifications/attachments/', null=True, blank=True)
+    attachment = models.FileField(
+        upload_to='notifications/attachments/', null=True, blank=True,
+        validators=[validate_public_file],
+        storage=public_storage
+    )
     
     is_read = models.BooleanField(default=False)
     action_url = models.CharField(max_length=255, null=True, blank=True)
@@ -43,7 +49,11 @@ class Announcement(models.Model):
     
     title = models.CharField(max_length=255)
     message = models.TextField()
-    attachment = models.FileField(upload_to='notifications/attachments/', null=True, blank=True)
+    attachment = models.FileField(
+        upload_to='notifications/attachments/', null=True, blank=True,
+        validators=[validate_public_file],
+        storage=public_storage
+    )
     
     target_specialization = models.CharField(max_length=100, null=True, blank=True, help_text="If set, announcement targets only this specialization")
     is_draft = models.BooleanField(default=False)

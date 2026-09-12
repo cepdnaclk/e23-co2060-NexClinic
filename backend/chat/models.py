@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.db import models
+from main.validators import validate_private_file
+from main.storage_backends import private_storage
 
 from doctor.models import DoctorProfile
 from patient.models import PatientProfile
@@ -68,7 +70,11 @@ class AdviceChatMessage(models.Model):
 	sender_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_chat_messages")
 	sender_role = models.CharField(max_length=20, choices=SenderRole.choices)
 	message_text = models.TextField()
-	attachment = models.FileField(upload_to="chat_attachments/", null=True, blank=True)
+	attachment = models.FileField(
+		upload_to='chat_attachments/', null=True, blank=True,
+		validators=[validate_private_file],
+		storage=private_storage
+	)
 	is_read = models.BooleanField(default=False)
 	sent_at = models.DateTimeField(auto_now_add=True)
 

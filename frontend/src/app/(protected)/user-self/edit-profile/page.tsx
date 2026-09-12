@@ -6,6 +6,7 @@ import GreenButton from "@/components/buttons/GreenButton";
 import BlackButton from "@/components/buttons/BlackButton";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
 import { Patient } from "@/data/patients";
+import { User } from "lucide-react";
 
 type PatientProfileResponse = {
   patient: {
@@ -142,6 +143,7 @@ export default function UserEditProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -206,7 +208,7 @@ export default function UserEditProfilePage() {
   const profileImage = useMemo(() => {
     const imageSrc = formData.profileImage?.trim();
     if (!imageSrc) {
-      return "/images/user.png";
+      return undefined;
     }
 
     if (imageSrc.startsWith("/images/") || imageSrc.startsWith("data:")) {
@@ -321,6 +323,7 @@ export default function UserEditProfilePage() {
     reader.onloadend = () => {
       setSelectedImageFile(file);
       setRemovePhoto(false);
+      setImageError(false);
       setFormData((previous) => ({
         ...previous,
         profileImage: reader.result as string,
@@ -332,9 +335,10 @@ export default function UserEditProfilePage() {
   const handleRemovePhoto = () => {
     setSelectedImageFile(null);
     setRemovePhoto(true);
+    setImageError(false);
     setFormData((previous) => ({
       ...previous,
-      profileImage: "/images/user.png",
+      profileImage: "",
     }));
   };
 
@@ -363,9 +367,9 @@ export default function UserEditProfilePage() {
     setFormData((previous) =>
       previous
         ? {
-            ...previous,
-            bloodType: checked ? "" : previous.bloodType || "O+",
-          }
+          ...previous,
+          bloodType: checked ? "" : previous.bloodType || "O+",
+        }
         : previous,
     );
   };
@@ -387,7 +391,7 @@ export default function UserEditProfilePage() {
       if (formData.phone) requestBody.set("phone", formData.phone);
       if (formData.dateOfBirth) requestBody.set("dateOfBirth", formData.dateOfBirth);
       if (formData.gender) requestBody.set("gender", formData.gender);
-      
+
       if (formData.address !== undefined) requestBody.set("address", formData.address);
       if (formData.city !== undefined) requestBody.set("city", formData.city);
       if (formData.postalCode !== undefined) requestBody.set("postalCode", formData.postalCode);
@@ -634,11 +638,18 @@ export default function UserEditProfilePage() {
                 <div className="flex items-center gap-4">
                   <div className="rounded-[1.75rem] bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-1 shadow-xl shadow-emerald-200/40">
                     <div className="relative overflow-hidden rounded-[1.5rem] bg-white p-1">
-                      <img
-                        src={profileImage}
-                        alt="Patient profile preview"
-                        className="h-[120px] w-[120px] rounded-[1.25rem] object-cover"
-                      />
+                      {profileImage && !imageError ? (
+                        <img
+                          src={profileImage}
+                          alt="Patient profile preview"
+                          className="h-[120px] w-[120px] rounded-[1.25rem] object-cover"
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <div className="flex h-[120px] w-[120px] items-center justify-center rounded-[1.25rem] bg-emerald-50 text-emerald-500">
+                          <User className="h-16 w-16" />
+                        </div>
+                      )}
                       <div className="absolute inset-0 flex items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-emerald-600/0 via-emerald-600/0 to-emerald-950/20 text-3xl font-bold text-white opacity-0 transition-opacity duration-200 hover:opacity-100">
                         {initials}
                       </div>

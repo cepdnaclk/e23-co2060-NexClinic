@@ -197,7 +197,7 @@ class E2EPrescriptionTests(TestCase):
         self.assertEqual(pres_med["name"], "Amoxicillin")
         self.assertEqual(pres_med["dosage"], "500 mg")
         self.assertEqual(pres_med["is_prescription"], True)
-        self.assertEqual(pres_med["prescribing_doctor"], "Doctor E2E")
+        self.assertEqual(pres_med["prescribing_doctor"], "Doctor E2E (General)")
 
         # 5. Verify patient cannot delete the official prescription (returns 404, no 500 error)
         del_pres_response = self.client.delete(f"/api/patient/medications/{pres_med['id']}/")
@@ -240,3 +240,4 @@ class E2EPrescriptionTests(TestCase):
         )
         self.assertEqual(record_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("Cannot write a prescription", record_response.json()["detail"])
+

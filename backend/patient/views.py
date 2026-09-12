@@ -485,7 +485,7 @@ class PatientAppointmentsView(BasePatientAPIView):
                 doctor=slot.doctor,
                 patient=patient_profile,
                 reason=reason,
-                status=Appointment.Status.ACCEPTED,  # auto-accepted
+                status=Appointment.Status.PENDING,  # PENDING until payment
                 hospital=slot.hospital,
                 appointment_fee=slot.doctor.appointment_fee,
             )
@@ -566,14 +566,14 @@ class PatientAppointmentCancelView(BasePatientAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        with transaction.atomic():
-            locked_slot = (
-                AppointmentAvailableSlot.objects.select_for_update()
-                .filter(id=appointment.slot_id)
-                .first()
+        if timezone.now() > appointment.slot.date_start:
+            return Response(
+                {"detail": "Cannot cancel an appointment that has already started or passed."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-            appointment.status = Appointment.Status.CANCELLED
+        with transaction.atomic():
+            appointment.status = Appointment.Status.CANCELLATION_REQUESTED
             appointment.cancelled_by = "PATIENT"
             appointment.cancellation_reason = cancel_reason
             appointment.cancelled_at = timezone.now()
@@ -587,16 +587,58 @@ class PatientAppointmentCancelView(BasePatientAPIView):
                 ]
             )
 
-            if locked_slot and locked_slot.booked_count > 0:
-                locked_slot.booked_count -= 1
-                locked_slot.remaining_count = max(
-                    locked_slot.patient_limit - locked_slot.booked_count, 0
-                )
-                locked_slot.save(update_fields=["booked_count", "remaining_count"])
+            chat_thread = AdviceChatThread.objects.filter(doctor=appointment.doctor, patient=appointment.patient).first()
+            if chat_thread and chat_thread.status != AdviceChatThread.Status.CLOSED:
+                chat_thread.status = AdviceChatThread.Status.CLOSED
+                chat_thread.save(update_fields=['status'])
 
         payload = PatientAppointmentSerializer(appointment).data
         return Response(
-            {"message": "Appointment cancelled successfully.", "appointment": payload},
+            {"message": "Cancellation requested successfully.", "appointment": payload},
+            status=status.HTTP_200_OK,
+        )
+
+
+class PatientAppointmentConfirmPaymentView(BasePatientAPIView):
+    def patch(self, request, appointment_id, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        appointment = (
+            Appointment.objects.filter(
+                id=appointment_id,
+                patient=patient_profile,
+            )
+            .select_related("slot", "doctor", "doctor__user")
+            .first()
+        )
+
+        if not appointment:
+            return Response(
+                {"detail": "Appointment not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if appointment.status != Appointment.Status.PENDING:
+            return Response(
+                {
+                    "detail": f"Cannot confirm payment for an appointment in {appointment.status} state."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            appointment.status = Appointment.Status.ACCEPTED
+            appointment.save(
+                update_fields=[
+                    "status",
+                    "updated_at",
+                ]
+            )
+
+        payload = PatientAppointmentSerializer(appointment).data
+        return Response(
+            {"message": "Payment confirmed and appointment accepted.", "appointment": payload},
             status=status.HTTP_200_OK,
         )
 
@@ -666,7 +708,7 @@ class PatientMedicationDetailView(BasePatientAPIView):
             medication = PatientMedication.objects.get(id=medication_id, patient=patient_profile)
             medication.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        except PatientMedication.DoesNotExist:
+        except (PatientMedication.DoesNotExist, ValueError):
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
