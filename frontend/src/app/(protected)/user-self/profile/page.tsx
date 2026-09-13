@@ -144,7 +144,7 @@ export default function UserProfile() {
     ? null
     : profileImageSrc.startsWith("/images/") || profileImageSrc.startsWith("data:")
       ? profileImageSrc
-      : `${profileImageSrc}${profileImageVersion ? `?v=${profileImageVersion}` : ""}`;
+      : `${profileImageSrc}${profileImageVersion ? (profileImageSrc.includes("?") ? "&" : "?") + `v=${profileImageVersion}` : ""}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white pb-6">

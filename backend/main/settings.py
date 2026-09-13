@@ -206,6 +206,7 @@ if USE_S3:
     AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "ap-south-1")
     AWS_PUBLIC_STORAGE_BUCKET_NAME = os.getenv("AWS_PUBLIC_STORAGE_BUCKET_NAME", "nexclinic-public")
     AWS_PRIVATE_STORAGE_BUCKET_NAME = os.getenv("AWS_PRIVATE_STORAGE_BUCKET_NAME", "nexclinic-private")
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
     
     # We no longer set DEFAULT_FILE_STORAGE here because we will explicitly
     # assign `storage=public_storage` or `storage=private_storage` on our models

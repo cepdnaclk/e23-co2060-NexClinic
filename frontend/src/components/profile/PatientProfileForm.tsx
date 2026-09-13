@@ -60,6 +60,7 @@ export default function PatientProfileForm({
     if (onSubmit) {
       onSubmit(formData);
     }
+  };
 
 
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

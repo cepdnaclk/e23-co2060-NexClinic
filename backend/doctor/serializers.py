@@ -15,7 +15,7 @@ from hospital.models import (
     SlotTemplate,
     DoctorSlotTemplateAssignment,
 )
-from patient.serializers import PatientMedicalRecordSerializer
+from patient.serializers import PatientMedicalRecordSerializer, PatientMedicalDocumentSerializer
 
 VALID_WEEK_DAYS = {
     "monday": "Monday",
@@ -484,6 +484,7 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
     prescriptions = serializers.SerializerMethodField()
     lastVisit = serializers.SerializerMethodField()
     medicalRecords = serializers.SerializerMethodField()
+    medicalDocuments = serializers.SerializerMethodField()
 
     @staticmethod
     def _split_text_list(raw_value):
@@ -598,6 +599,10 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
             queryset = queryset.filter(doctor=doctor_profile)
 
         return PatientMedicalRecordSerializer(queryset[:10], many=True).data
+
+    def get_medicalDocuments(self, obj):
+        queryset = obj.medical_documents.all().order_by("-uploaded_at")
+        return PatientMedicalDocumentSerializer(queryset, many=True, context=self.context).data
 
 
 class DoctorPatientProfileUpdateSerializer(serializers.Serializer):

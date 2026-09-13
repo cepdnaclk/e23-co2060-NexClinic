@@ -1212,7 +1212,7 @@ class DoctorPatientProfileView(VerifiedDoctorAPIView):
 
         serializer = DoctorPatientProfileSerializer(
             appointment.patient,
-            context={'doctor_profile': doctor_profile},
+            context={'doctor_profile': doctor_profile, 'request': request},
         )
         return Response({'patient': serializer.data}, status=status.HTTP_200_OK)
 

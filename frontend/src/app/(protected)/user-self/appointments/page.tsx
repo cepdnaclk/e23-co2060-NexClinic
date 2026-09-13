@@ -779,20 +779,20 @@ const PatientAppointmentPage = () => {
 
           <div className="mt-5">
             <h3 className="mb-3 text-xl font-semibold text-slate-900">
-              {getSectionTitle(activeSection)}
+              {activeTab === "ALL" 
+                ? "All Appointments" 
+                : activeTab === "UPCOMING" 
+                  ? "Upcoming Appointments" 
+                  : activeTab === "COMPLETED" 
+                    ? "Completed Appointments" 
+                    : activeTab === "CANCELLED"
+                      ? "Cancelled Appointments"
+                      : "Expired Appointments"}
             </h3>
             {viewMode === "grid" ? (
-              renderCards(
-                visibleItems,
-                sectionMeta.find((item) => item.key === activeSection)?.emptyText ||
-                "No appointments found.",
-              )
+              renderCards(visibleItems, "No appointments found.")
             ) : (
-              renderLists(
-                visibleItems,
-                sectionMeta.find((item) => item.key === activeSection)?.emptyText ||
-                "No appointments found.",
-              )
+              renderLists(visibleItems, "No appointments found.")
             )}
           </div>
         </div>

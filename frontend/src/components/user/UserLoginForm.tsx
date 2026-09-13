@@ -48,10 +48,10 @@ function UserLoginForm() {
                 setLoading(false);
                 return;
             }
-            
+
             const { token, refreshToken, user } = response.data;
             const role = user?.role || "PATIENT";
-            
+
             // Store tokens in localStorage
             localStorage.setItem("authToken", token);
             localStorage.setItem("refreshToken", refreshToken);
@@ -63,7 +63,7 @@ function UserLoginForm() {
             const secureFlag = window.location.protocol === "https:" ? "; secure" : "";
             document.cookie = `authToken=${token}; path=/; max-age=86400; samesite=lax${secureFlag}`;
             document.cookie = `userRole=${role}; path=/; max-age=86400; samesite=lax${secureFlag}`;
-            
+
             router.push("/user-self/dashboard");
         } catch (err: any) {
             const backendError = err.response?.data?.error || err.response?.data?.detail;
@@ -78,7 +78,7 @@ function UserLoginForm() {
                 setError("An error occurred. Please try again later.");
             }
             console.error("Login error:", err);
-            
+
             setPassword("");
         } finally {
             if (!showOtpField) {
@@ -99,10 +99,10 @@ function UserLoginForm() {
                 email: username,
                 otp: otp,
             });
-            
+
             const { token, refreshToken, user } = response.data;
             const role = user?.role || "PATIENT";
-            
+
             // Store tokens in localStorage
             localStorage.setItem("authToken", token);
             localStorage.setItem("refreshToken", refreshToken);
@@ -114,9 +114,9 @@ function UserLoginForm() {
             const secureFlag = window.location.protocol === "https:" ? "; secure" : "";
             document.cookie = `authToken=${token}; path=/; max-age=86400; samesite=lax${secureFlag}`;
             document.cookie = `userRole=${role}; path=/; max-age=86400; samesite=lax${secureFlag}`;
-            
+
             setSuccessMessage("Identity verified successfully! Redirecting...");
-            
+
             setTimeout(() => {
                 router.push("/user-self/dashboard");
             }, 1000);
@@ -163,7 +163,7 @@ function UserLoginForm() {
                     {showOtpField ? "Secure Verification" : "Welcome Back"}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {showOtpField ? "We sent a code to your registered email" : "Please sign in to your patient account"}
+                    {showOtpField ? "We sent a code to your registered email" : "Please sign in to your account"}
                 </p>
             </div>
 

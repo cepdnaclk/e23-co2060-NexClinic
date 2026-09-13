@@ -177,7 +177,7 @@ function DoctorNavBar() {
                                     : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
                                     }`}
                             >
-                                Slots
+                                Schedules
                             </Link>
                             <Link
                                 href="/doctor-self/chats"
@@ -279,7 +279,7 @@ function DoctorNavBar() {
                                 : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                                 }`}
                         >
-                            Slots
+                            Schedules
                         </Link>
                         <Link
                             href="/doctor-self/chats"

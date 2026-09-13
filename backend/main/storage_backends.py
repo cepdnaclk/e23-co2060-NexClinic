@@ -13,6 +13,16 @@ if getattr(settings, 'USE_S3', False):
         def bucket_name(self):
             return getattr(settings, 'AWS_PUBLIC_STORAGE_BUCKET_NAME', 'nexclinic-public')
 
+        @property
+        def custom_domain(self):
+            import re
+            endpoint = getattr(settings, 'AWS_S3_ENDPOINT_URL', '')
+            match = re.search(r'//([^.]+)\.storage\.supabase\.co', endpoint)
+            if match:
+                project_ref = match.group(1)
+                return f"{project_ref}.supabase.co/storage/v1/object/public/{self.bucket_name}"
+            return None
+
     class PrivateMediaStorage(S3Boto3Storage):
         location = ''
         file_overwrite = False
