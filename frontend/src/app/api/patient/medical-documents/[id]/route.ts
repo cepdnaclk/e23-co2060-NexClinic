@@ -5,12 +5,13 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:800
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     return await proxyBackendWithRefresh({
       request,
-      endpoint: `${BACKEND_URL}/api/patient/medical-documents/${params.id}/`,
+      endpoint: `${BACKEND_URL}/api/patient/medical-documents/${id}/`,
       method: "GET",
       failureMessage: "Failed to fetch medical document",
     });
@@ -25,12 +26,13 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
     return await proxyBackendWithRefresh({
       request,
-      endpoint: `${BACKEND_URL}/api/patient/medical-documents/${params.id}/`,
+      endpoint: `${BACKEND_URL}/api/patient/medical-documents/${id}/`,
       method: "DELETE",
       failureMessage: "Failed to delete medical document",
     });
