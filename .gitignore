@@ -42,6 +42,7 @@ frontend/build/
 frontend/coverage/
 frontend/.vercel/
 frontend/*.tsbuildinfo
+frontend/next-env.d.ts
 
 # JS logs and caches
 npm-debug.log*
