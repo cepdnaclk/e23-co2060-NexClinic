@@ -391,11 +391,14 @@ class HospitalAppointmentListView(APIView):
                 or appointment.get("doctor__user__email")
                 or "Doctor"
             )
+            p_name = appointment.get("patient__full_name") or "Unknown"
+            p_id = appointment.get("patient_id")
+            
             response_data.append(
                 {
                     "id": appointment["id"],
-                    "patientId": str(appointment.get("patient_id") or ""),
-                    "patientName": appointment.get("patient__full_name") or "Unknown",
+                    "patientId": str(p_id or ""),
+                    "patientName": f"{p_name} (ID: P-{p_id})" if p_id else p_name,
                     "patientAge": patient_age,
                     "patientGender": appointment.get("patient__gender") or "",
                     "patientPhone": appointment.get("patient__phone") or "",
