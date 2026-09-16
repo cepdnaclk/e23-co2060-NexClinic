@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
 
 type Faq = { question: string; answer: string; category: string };
@@ -29,7 +29,6 @@ export default function HelpPage() {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [sent, setSent] = useState(false);
 
   const visibleFaqs = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -39,12 +38,6 @@ export default function HelpPage() {
       return categoryMatches && queryMatches;
     });
   }, [activeCategory, query]);
-
-  function submitMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSent(true);
-    event.currentTarget.reset();
-  }
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -139,35 +132,23 @@ export default function HelpPage() {
                 {isOpen && <p className="px-5 pb-5 text-sm leading-6 text-slate-600 sm:px-6 sm:pb-6">{faq.answer}</p>}
               </div>;
             })}
-            {visibleFaqs.length === 0 && <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center"><p className="font-bold">No matching answers found</p><p className="mt-2 text-sm text-slate-500">Try another phrase or send our team a message below.</p></div>}
+            {visibleFaqs.length === 0 && <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center"><p className="font-bold">No matching answers found</p><p className="mt-2 text-sm text-slate-500">Try another phrase or contact our support team below.</p></div>}
           </div>
         </div>
       </section>
 
       <section className="border-y border-slate-200 bg-white py-20">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-[2rem] bg-gradient-to-br from-green-600 to-teal-700 p-7 text-white sm:p-10">
             <span className="text-xs font-bold uppercase tracking-[0.18em] text-green-100">Contact support</span>
             <h2 className="mt-3 text-3xl font-extrabold">Still need a hand?</h2>
-            <p className="mt-3 max-w-md text-sm leading-6 text-green-50/90">Send us a message and include any booking reference that may help us understand your question.</p>
+            <p className="mt-3 max-w-md text-sm leading-6 text-green-50/90">Reach our support team by email or phone. Include any booking reference that may help us understand your question.</p>
             <div className="mt-9 space-y-4">
               <a href="mailto:support@nexclinic.lk" className="flex items-center gap-4 rounded-2xl bg-white/10 p-4 transition hover:bg-white/15"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15"><MailIcon /></span><span><span className="block text-xs text-green-100">Email us</span><span className="text-sm font-bold">support@nexclinic.lk</span></span></a>
               <a href="tel:+94112678900" className="flex items-center gap-4 rounded-2xl bg-white/10 p-4 transition hover:bg-white/15"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15"><PhoneIcon /></span><span><span className="block text-xs text-green-100">Call support · Mon–Fri, 8am–6pm</span><span className="text-sm font-bold">+94 11 267 8900</span></span></a>
             </div>
           </div>
 
-          <form onSubmit={submitMessage} className="rounded-[2rem] border border-slate-200 bg-slate-50 p-7 sm:p-10">
-            <h2 className="text-2xl font-extrabold">Send us a message</h2>
-            <p className="mt-2 text-sm text-slate-500">We usually respond within one business day.</p>
-            <div className="mt-7 grid gap-4 sm:grid-cols-2">
-              <Input label="Your name" name="name" placeholder="Full name" />
-              <Input label="Email address" name="email" type="email" placeholder="you@example.com" />
-              <label className="sm:col-span-2"><span className="mb-2 block text-xs font-bold text-slate-700">How can we help?</span><select name="topic" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-green-500 focus:ring-4 focus:ring-green-100"><option>Appointment support</option><option>Account and sign-in</option><option>Consultation issue</option><option>Payment question</option><option>Other</option></select></label>
-              <label className="sm:col-span-2"><span className="mb-2 block text-xs font-bold text-slate-700">Message</span><textarea required name="message" rows={4} placeholder="Tell us what happened..." className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-green-500 focus:ring-4 focus:ring-green-100" /></label>
-            </div>
-            {sent && <p role="status" className="mt-4 rounded-xl bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">Thanks — your message has been prepared for the support team.</p>}
-            <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-green-600">Send message <ArrowIcon /></button>
-          </form>
         </div>
       </section>
 
@@ -189,7 +170,6 @@ export default function HelpPage() {
   );
 }
 
-function Input({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) { return <label><span className="mb-2 block text-xs font-bold text-slate-700">{label}</span><input required {...props} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-green-500 focus:ring-4 focus:ring-green-100" /></label>; }
 function SearchIcon() { return <svg className="h-5 w-5 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>; }
 function CalendarIcon() { return <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>; }
 function UserIcon() { return <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>; }
