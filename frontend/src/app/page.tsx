@@ -765,21 +765,6 @@ export default function Home() {
                         </details>
 
                         {/* FAQ 3 */}
-                        <details id="faq-online" className="group border border-slate-100 rounded-2xl bg-slate-50/50 p-5 sm:p-6 transition-all duration-300 hover:border-green-100 hover:bg-white [&_summary::-webkit-details-marker]:hidden">
-                            <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-slate-900 focus:outline-none select-none">
-                                <h3 className="text-sm sm:text-base md:text-lg font-bold text-left">Can I consult doctors online?</h3>
-                                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl bg-white shadow-sm border border-slate-100 text-slate-600 transition-transform duration-300 group-open:rotate-180">
-                                    <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                    </svg>
-                                </div>
-                            </summary>
-                            <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600 transition-all duration-300">
-                                Yes. NexClinic supports both tele-consultation (online video/audio sessions) and standard in-person checkups. You can select your preferred consult method during the slot booking phase.
-                            </p>
-                        </details>
-
-                        {/* FAQ 4 */}
                         <details id="faq-verification" className="group border border-slate-100 rounded-2xl bg-slate-50/50 p-5 sm:p-6 transition-all duration-300 hover:border-green-100 hover:bg-white [&_summary::-webkit-details-marker]:hidden">
                             <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-slate-900 focus:outline-none select-none">
                                 <h3 className="text-sm sm:text-base md:text-lg font-bold text-left">How are doctors verified on NexClinic?</h3>
@@ -794,7 +779,7 @@ export default function Home() {
                             </p>
                         </details>
 
-                        {/* FAQ 5 */}
+                        {/* FAQ 4 */}
                         <details id="faq-cancellation" className="group border border-slate-100 rounded-2xl bg-slate-50/50 p-5 sm:p-6 transition-all duration-300 hover:border-green-100 hover:bg-white [&_summary::-webkit-details-marker]:hidden">
                             <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-slate-900 focus:outline-none select-none">
                                 <h3 className="text-sm sm:text-base md:text-lg font-bold text-left">What is NexClinic&apos;s cancellation policy?</h3>
