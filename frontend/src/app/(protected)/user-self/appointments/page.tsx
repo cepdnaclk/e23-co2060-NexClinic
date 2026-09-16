@@ -12,6 +12,14 @@ type SortBy = "date" | "doctor" | "status" | "requestedAt";
 type SortOrder = "asc" | "desc";
 type ViewMode = "grid" | "list";
 
+const sectionDetails: Record<AppointmentCategory, { title: string; emptyText: string }> = {
+  ALL: { title: "All Appointments", emptyText: "No appointments found." },
+  UPCOMING: { title: "Upcoming Appointments", emptyText: "No upcoming appointments found." },
+  COMPLETED: { title: "Completed Appointments", emptyText: "No completed appointments found." },
+  CANCELLED: { title: "Cancelled Appointments", emptyText: "No cancelled appointments found." },
+  EXPIRED: { title: "Expired Appointments", emptyText: "No expired appointments found." },
+};
+
 type ApiAppointment = Omit<Appointment, "id" | "slotId" | "doctorId"> & {
   id: string | number;
   slotId: string | number;
@@ -779,19 +787,17 @@ const PatientAppointmentPage = () => {
 
           <div className="mt-5">
             <h3 className="mb-3 text-xl font-semibold text-slate-900">
-              {getSectionTitle(activeSection)}
+              {sectionDetails[activeTab].title}
             </h3>
             {viewMode === "grid" ? (
               renderCards(
                 visibleItems,
-                sectionMeta.find((item) => item.key === activeSection)?.emptyText ||
-                "No appointments found.",
+                sectionDetails[activeTab].emptyText,
               )
             ) : (
               renderLists(
                 visibleItems,
-                sectionMeta.find((item) => item.key === activeSection)?.emptyText ||
-                "No appointments found.",
+                sectionDetails[activeTab].emptyText,
               )
             )}
           </div>
