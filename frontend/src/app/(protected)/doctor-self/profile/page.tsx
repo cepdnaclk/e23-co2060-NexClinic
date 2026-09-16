@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { User } from "lucide-react";
 import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
 import ToggleSwitch from "@/components/buttons/ToggleSwitch";
@@ -45,6 +46,7 @@ function DoctorProfilePage() {
     const [loading, setLoading] = useState(true);
     const [isSavingAvailability, setIsSavingAvailability] = useState(false);
     const [error, setError] = useState("");
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -148,7 +150,7 @@ function DoctorProfilePage() {
     const email = profileData?.doctor.email || "Not available";
     const phone = profileData?.doctor.phone || "Not available";
     const isVerified = profileData?.doctor.isVerified ?? false;
-    const profileImage = profileData?.doctor.profileImage || profileData?.doctor.photo || "/images/user.png";
+    const profileImage = profileData?.doctor.profileImage || profileData?.doctor.photo;
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.16),_transparent_26%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)] pb-8">
@@ -172,7 +174,13 @@ function DoctorProfilePage() {
                                 <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center">
                                     <div className="mx-auto shrink-0 rounded-[2rem] bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-[4px] shadow-[0_18px_45px_rgba(16,185,129,0.26)] sm:mx-0">
                                         <div className="relative overflow-hidden rounded-[1.75rem] bg-white p-1">
-                                            <img src={profileImage} alt="Doctor Profile" className="h-28 w-28 rounded-[1.5rem] object-cover sm:h-36 sm:w-36" />
+                                            {profileImage && !imageError ? (
+                                                <img src={profileImage} alt="Doctor Profile" className="h-28 w-28 rounded-[1.5rem] object-cover sm:h-36 sm:w-36" onError={() => setImageError(true)} />
+                                            ) : (
+                                                <div className="flex h-28 w-28 items-center justify-center rounded-[1.5rem] bg-emerald-50 text-emerald-500 sm:h-36 sm:w-36">
+                                                    <User className="h-12 w-12 sm:h-16 sm:w-16" />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

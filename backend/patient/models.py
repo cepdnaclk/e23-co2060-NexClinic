@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from main.validators import validate_public_file, validate_private_file
+from main.storage_backends import public_storage, private_storage
 
 
 # Patient registration model
@@ -32,13 +34,19 @@ class PatientProfile(models.Model):
     )
     emergency_contact_email = models.EmailField(blank=True, default="")
     profile_picture = models.ImageField(
-        upload_to="patient_profiles/", null=True, blank=True
+        upload_to="patient_profiles/", null=True, blank=True,
+        validators=[validate_public_file],
+        storage=public_storage
     )
     medical_reports = models.FileField(
-        upload_to="patient_reports/", null=True, blank=True
+        upload_to="patient_reports/", null=True, blank=True,
+        validators=[validate_private_file],
+        storage=private_storage
     )
     medical_documents = models.FileField(
-        upload_to="patient_documents/", null=True, blank=True
+        upload_to="patient_documents/", null=True, blank=True,
+        validators=[validate_private_file],
+        storage=private_storage
     )
 
     def __str__(self):

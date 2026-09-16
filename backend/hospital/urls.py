@@ -11,6 +11,8 @@ from .views import (
     CreateHospitalDoctorView,
     HospitalAdminProfileView,
     ManageDoctorFeesView,
+    HospitalAppointmentCancelRequestAcceptView,
+    HospitalAppointmentCancelView,
 )
 
 urlpatterns = [
@@ -39,5 +41,15 @@ urlpatterns = [
         "doctor-fees/<int:doctor_id>/",
         ManageDoctorFeesView.as_view(),
         name="manage-doctor-fees",
+    ),
+    path(
+        "appointments/<int:appointment_id>/accept-cancellation/",
+        HospitalAppointmentCancelRequestAcceptView.as_view(),
+        name="hospital-appointment-accept-cancellation",
+    ),
+    path(
+        "appointments/<int:appointment_id>/cancel/",
+        HospitalAppointmentCancelView.as_view(),
+        name="hospital-appointment-cancel",
     ),
 ]

@@ -7,14 +7,11 @@ import GreenButton from "@/components/buttons/GreenButton";
 import WhiteButton from "@/components/buttons/WhiteButton";
 import ConfirmationDialog from "@/components/modals/ConfirmationDialog";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
+import { AppointmentTabs, AppointmentCategory } from "@/components/appointments/AppointmentTabs";
+import { Clock } from "lucide-react";
 
-type AppointmentStatus =
-  | "Accepted"
-  | "Rejected"
-  | "Completed"
-  | "Cancelled";
-type AppointmentCategory = "upcoming" | "previous";
-type AppointmentStatusFilter = "All" | AppointmentStatus;
+type AppointmentStatus = string;
+type AppointmentItemCategory = "upcoming" | "previous";
 type DateFilter = "all" | "today" | "next7" | "custom";
 
 type AppointmentItem = {
@@ -29,7 +26,7 @@ type AppointmentItem = {
   location: string;
   requestedAt: string;
   status: AppointmentStatus;
-  category: AppointmentCategory;
+  category: AppointmentItemCategory;
 };
 
 type AppointmentSlot = {
@@ -268,20 +265,16 @@ const parsePrescription = (value: string): PrescriptionMedicine[] => {
   return parsed.length ? parsed : [createPrescriptionMedicine()];
 };
 
-const statusFilters: AppointmentStatusFilter[] = [
-  "All",
-  "Accepted",
-  "Rejected",
-  "Completed",
-  "Cancelled",
-];
 const appointmentStatuses: AppointmentStatus[] = [
   "Accepted",
   "Rejected",
   "Completed",
   "Cancelled",
+  "Expired",
+  "Pending",
+  "Confirmed"
 ];
-const appointmentCategories: AppointmentCategory[] = [
+const appointmentCategories: AppointmentItemCategory[] = [
   "upcoming",
   "previous",
 ];
@@ -357,6 +350,7 @@ const normalizeAppointment = (item: ApiAppointment): AppointmentItem => {
 function DoctorAppointmentsPage() {
   const router = useRouter();
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<PatientProfile | null>(
     null,
   );
@@ -394,8 +388,7 @@ function DoctorAppointmentsPage() {
     string[]
   >([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState<AppointmentStatusFilter>("All");
+  const [activeTab, setActiveTab] = useState<AppointmentCategory>("ALL");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [customDate, setCustomDate] = useState("");
   const [reminderSentIds, setReminderSentIds] = useState<string[]>([]);
@@ -467,9 +460,6 @@ function DoctorAppointmentsPage() {
         item.patientName.toLowerCase().includes(normalizedSearch) ||
         item.id.toLowerCase().includes(normalizedSearch);
 
-      const matchesStatus =
-        statusFilter === "All" || item.status === statusFilter;
-
       const appointmentDay = new Date(`${item.date}T00:00:00`);
       let matchesDate = true;
 
@@ -485,18 +475,56 @@ function DoctorAppointmentsPage() {
         matchesDate = customDate ? item.date === customDate : true;
       }
 
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && matchesDate;
     });
-  }, [appointments, searchTerm, statusFilter, dateFilter, customDate]);
+  }, [appointments, searchTerm, dateFilter, customDate]);
 
-  const upcoming = useMemo(
-    () => filteredAppointments.filter((item) => item.category === "upcoming"),
-    [filteredAppointments],
-  );
-  const previous = useMemo(
-    () => filteredAppointments.filter((item) => item.category === "previous"),
-    [filteredAppointments],
-  );
+  // Bucketing logic based on strictly defined rules
+  const categorized = useMemo(() => {
+    const buckets: Record<AppointmentCategory, AppointmentItem[]> = {
+      ALL: [],
+      UPCOMING: [],
+      COMPLETED: [],
+      CANCELLED: [],
+      EXPIRED: [],
+    };
+    
+    filteredAppointments.forEach(appt => {
+      buckets.ALL.push(appt);
+      
+      const st = appt.status.toUpperCase();
+      const isPast = new Date(`${appt.date}T${appt.time}`) < new Date();
+      
+      if (st === "COMPLETED") {
+        buckets.COMPLETED.push(appt);
+      } else if (st === "CANCELLED" || st === "REJECTED" || st === "CANCELLATION_REQUESTED") {
+        buckets.CANCELLED.push(appt);
+      } else if (st === "EXPIRED" || ((st === "PENDING" || st === "ACCEPTED" || st === "CONFIRMED") && isPast)) {
+        buckets.EXPIRED.push(appt);
+      } else if ((st === "PENDING" || st === "ACCEPTED" || st === "CONFIRMED") && !isPast) {
+        buckets.UPCOMING.push(appt);
+      } else {
+        // Fallback for any other state
+        buckets.UPCOMING.push(appt);
+      }
+    });
+    
+    return buckets;
+  }, [filteredAppointments]);
+
+  const counts = useMemo(() => {
+    return {
+      ALL: categorized.ALL.length,
+      UPCOMING: categorized.UPCOMING.length,
+      COMPLETED: categorized.COMPLETED.length,
+      CANCELLED: categorized.CANCELLED.length,
+      EXPIRED: categorized.EXPIRED.length,
+    };
+  }, [categorized]);
+
+  const visibleItems = useMemo(() => {
+    return categorized[activeTab] || [];
+  }, [categorized, activeTab]);
 
   const isReminderSuggested = (appointment: AppointmentItem): boolean => {
     const appointmentDateTime = parseAppointmentDateTime(
@@ -515,9 +543,9 @@ function DoctorAppointmentsPage() {
     return diffMs > 0 && diffMs <= twentyFourHours;
   };
 
-  const reminderQueueCount = upcoming.filter(
+  const reminderQueueCount = categorized.UPCOMING.filter(
     (item) =>
-      item.status === "Accepted" &&
+      (item.status === "Accepted" || item.status === "Confirmed") &&
       isReminderSuggested(item) &&
       !reminderSentIds.includes(item.id),
   ).length;
@@ -555,6 +583,18 @@ function DoctorAppointmentsPage() {
           payload?.detail ||
           "Failed to update appointment status",
         );
+      }
+
+      if (action === "complete" && selectedAppointmentId === appointmentId) {
+        const sortedUpcoming = [...categorized.UPCOMING].sort((a, b) => {
+          return (parseAppointmentDateTime(a.date, a.time)?.getTime() || 0) - (parseAppointmentDateTime(b.date, b.time)?.getTime() || 0);
+        });
+        const currentIndex = sortedUpcoming.findIndex(a => a.id === appointmentId);
+        if (currentIndex !== -1 && currentIndex + 1 < sortedUpcoming.length) {
+          setSelectedAppointmentId(sortedUpcoming[currentIndex + 1].id);
+        } else {
+          setSelectedAppointmentId(null);
+        }
       }
 
       const updatedAppointment = payload?.appointment
@@ -1357,10 +1397,12 @@ function DoctorAppointmentsPage() {
         </section>
 
         <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
-          <h2 className="text-xl font-bold text-emerald-700">
-            Find And Filter
-          </h2>
-          <div className="my-4 flex w-full border-t border-emerald-100"></div>
+          <AppointmentTabs 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+            counts={counts} 
+          />
+          <div className="my-6 flex w-full border-t border-emerald-100"></div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             <div className="flex flex-col gap-2">
@@ -1378,29 +1420,6 @@ function DoctorAppointmentsPage() {
                 placeholder="Ex: Nimali or REQ-901"
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="status-filter"
-                className="text-sm font-semibold text-slate-700"
-              >
-                Status
-              </label>
-              <select
-                id="status-filter"
-                value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(event.target.value as AppointmentStatusFilter)
-                }
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-              >
-                {statusFilters.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -1444,230 +1463,179 @@ function DoctorAppointmentsPage() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
-            <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
-            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Upcoming Appointments
-            </p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">
-              {isLoadingAppointments ? "..." : upcoming.length}
-            </p>
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="lg:w-1/3 flex flex-col gap-4">
+            <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-sm">
+               <p className="text-xs font-semibold uppercase tracking-[0.15em] text-emerald-600 mb-3">Quick Date Select</p>
+               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                 {Array.from({ length: 14 }).map((_, i) => {
+                   const d = new Date();
+                   d.setDate(d.getDate() + i);
+                   const dateStr = d.toISOString().split('T')[0];
+                   const isSelected = dateFilter === 'custom' && customDate === dateStr;
+                   return (
+                     <button 
+                       key={dateStr}
+                       onClick={() => {
+                         setDateFilter('custom');
+                         setCustomDate(dateStr);
+                         setSelectedAppointmentId(null);
+                       }}
+                       className={`flex flex-col items-center justify-center min-w-[60px] p-2 rounded-xl border ${isSelected ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-300'}`}
+                     >
+                       <span className="text-xs font-semibold">{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                       <span className="text-lg font-bold">{d.getDate()}</span>
+                     </button>
+                   );
+                 })}
+               </div>
+            </div>
+
+            {(() => {
+              const nextUp = [...categorized.UPCOMING].sort((a, b) => {
+                return (parseAppointmentDateTime(a.date, a.time)?.getTime() || 0) - (parseAppointmentDateTime(b.date, b.time)?.getTime() || 0);
+              })[0];
+
+              if (!nextUp) return null;
+
+              return (
+                <div className="rounded-[2rem] border border-emerald-500/30 bg-emerald-500/5 p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-emerald-800 flex items-center gap-2">
+                      <Clock className="w-4 h-4" /> Next Appointment
+                    </h3>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Coming Up</span>
+                  </div>
+                  <div className="bg-white rounded-xl p-3 border border-emerald-100 cursor-pointer hover:border-emerald-300 transition shadow-sm" onClick={() => setSelectedAppointmentId(nextUp.id)}>
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="font-bold text-slate-900 truncate pr-2">{nextUp.patientName}</p>
+                    </div>
+                    <p className="text-sm text-slate-500">{nextUp.date} • {formatTimeForDisplay(nextUp.time)}</p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-sm flex-1 max-h-[700px] overflow-y-auto">
+              <h2 className="text-lg font-bold text-emerald-700 mb-4">Appointments</h2>
+              <div className="space-y-3">
+                {visibleItems.length === 0 ? (
+                  <p className="text-sm text-slate-500">No appointments found.</p>
+                ) : (
+                  [...visibleItems].sort((a, b) => {
+                      return (parseAppointmentDateTime(a.date, a.time)?.getTime() || 0) - (parseAppointmentDateTime(b.date, b.time)?.getTime() || 0);
+                  }).map(appt => {
+                    const isSelected = selectedAppointmentId === appt.id;
+                    return (
+                      <button
+                        key={appt.id}
+                        onClick={() => setSelectedAppointmentId(appt.id)}
+                        className={`w-full text-left p-4 rounded-[1.5rem] border transition ${isSelected ? 'border-emerald-400 bg-emerald-50 ring-2 ring-emerald-100 shadow-md' : 'border-slate-200 bg-white hover:border-emerald-200 shadow-sm'}`}
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="font-semibold text-slate-900 truncate">{appt.patientName}</p>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${appt.status === "Completed" ? 'bg-slate-200 text-slate-600' : appt.status === "Accepted" ? 'bg-emerald-100 text-emerald-700' : appt.status === "Expired" || appt.status === "EXPIRED" ? 'bg-gray-100 text-gray-600' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
+                        </div>
+                        <p className="text-sm text-slate-500">{appt.date} • {formatTimeForDisplay(appt.time)}</p>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </div>
           </div>
-          <div className="rounded-[2rem] border border-white/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
-            <div className="h-1.5 w-14 rounded-full bg-gradient-to-r from-sky-500 to-cyan-500" />
-            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Previous Appointments
-            </p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">
-              {isLoadingAppointments ? "..." : previous.length}
-            </p>
+
+          <div className="lg:w-2/3">
+            {(() => {
+               const selected = visibleItems.find(a => a.id === selectedAppointmentId);
+               if (!selected) {
+                 return (
+                   <div className="h-full min-h-[400px] rounded-[2rem] border border-dashed border-emerald-200 bg-white/50 flex flex-col items-center justify-center p-8 text-center">
+                     <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mb-4 text-emerald-600">
+                       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                       </svg>
+                     </div>
+                     <h3 className="text-lg font-bold text-slate-700">Select an Appointment</h3>
+                     <p className="mt-2 text-sm text-slate-500 max-w-sm">Choose an appointment from the list to view details, update status, and manage medical records.</p>
+                   </div>
+                 );
+               }
+
+               return (
+                 <div className="rounded-[2rem] border border-white/80 bg-white p-6 md:p-8 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-start border-b border-emerald-100 pb-6 mb-6 gap-4">
+                      <div>
+                        <h2 className="text-3xl font-bold text-slate-900">{selected.patientName}</h2>
+                        <p className="mt-2 text-slate-500 font-medium text-lg">{selected.date} at {formatTimeForDisplay(selected.time)}</p>
+                        <p className="mt-1 text-slate-500 text-sm">{selected.location}</p>
+                      </div>
+                      <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${selected.status === "Completed" ? 'bg-slate-200 text-slate-600' : selected.status === "Accepted" ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {selected.status}
+                      </span>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-8 mb-8">
+                      <div>
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-emerald-600 mb-3">Reason for Visit</h3>
+                        <p className="text-slate-800 text-lg">{selected.reason}</p>
+                      </div>
+                      
+                      {selected.status === "Accepted" && isReminderSuggested(selected) && !reminderSentIds.includes(selected.id) && (
+                        <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200">
+                          <h3 className="text-sm font-bold text-amber-800 mb-1">Reminder Suggested</h3>
+                          <p className="text-sm text-amber-700 mb-3">Appointment is within 24 hours.</p>
+                          <button onClick={() => sendReminder(selected.id)} className="text-xs font-bold bg-white border border-amber-200 text-amber-700 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition">
+                            Send SMS Reminder
+                          </button>
+                        </div>
+                      )}
+                      {reminderSentIds.includes(selected.id) && (
+                        <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-200">
+                          <p className="text-sm font-bold text-emerald-800">✓ Reminder Sent</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-emerald-600 mb-4">Actions</h3>
+                    <div className="flex flex-wrap gap-3">
+                      {selected.status === "Accepted" && (
+                        <>
+                          <GreenButton className="px-6 py-2.5 text-sm" disabled={isUpdatingAppointment(selected.id)} onClick={() => void setStatus(selected.id, "complete")}>
+                            Mark Completed
+                          </GreenButton>
+                          <WhiteButton className="px-6 py-2.5 text-sm text-rose-600 hover:text-rose-700 hover:bg-rose-50" disabled={isUpdatingAppointment(selected.id)} onClick={() => openConfirm(selected, "cancel")}>
+                            Cancel
+                          </WhiteButton>
+                        </>
+                      )}
+                      <WhiteButton className="px-6 py-2.5 text-sm" onClick={() => openRescheduleModal(selected)}>
+                        Reschedule
+                      </WhiteButton>
+                      
+                      {(selected.status === "Accepted" || selected.status === "Completed") && (
+                        <>
+                          <WhiteButton className="px-6 py-2.5 text-sm border-emerald-200" onClick={() => void openMedicalRecord(selected)}>
+                            Medical Record
+                          </WhiteButton>
+                          <button
+                            type="button"
+                            onClick={() => void openPrescription(selected)}
+                            className="rounded-xl border border-emerald-200 bg-emerald-50 px-6 py-2.5 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                          >
+                            Prescription
+                          </button>
+                        </>
+                      )}
+                      <WhiteButton className="px-6 py-2.5 text-sm" onClick={() => void openPatientProfile(selected.patientId)}>
+                        View Profile
+                      </WhiteButton>
+                    </div>
+                 </div>
+               );
+            })()}
           </div>
         </div>
-
-        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <h2 className="text-xl font-bold text-emerald-700">
-              Upcoming Appointments
-            </h2>
-            <span className="text-sm text-slate-500">
-              {reminderQueueCount} reminder{reminderQueueCount === 1 ? "" : "s"}{" "}
-              due in next 24 hours
-            </span>
-          </div>
-          <div className="my-4 flex w-full border-t border-emerald-100"></div>
-
-          {upcoming.length === 0 ? (
-            renderNoDataMessage("No upcoming appointments scheduled.")
-          ) : (
-            <div className="space-y-3">
-              {upcoming.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-emerald-50/60 p-4 shadow-sm"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-slate-900">
-                        {appointment.patientName}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {appointment.reason}
-                      </p>
-                    </div>
-                    <span
-                      className={`w-max rounded-full px-3 py-1 text-xs font-semibold ${appointment.status === "Accepted"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-amber-100 text-amber-700"
-                        }`}
-                    >
-                      {appointment.status}
-                    </span>
-                  </div>
-
-                  <p className="mt-2 text-sm text-slate-500">
-                    {appointment.date} •{" "}
-                    {formatTimeForDisplay(appointment.time)}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {appointment.location}
-                  </p>
-
-                  {appointment.status === "Accepted" &&
-                    isReminderSuggested(appointment) &&
-                    !reminderSentIds.includes(appointment.id) && (
-                      <p className="mt-2 text-xs font-semibold text-amber-700">
-                        Reminder recommended: this appointment is within the
-                        next 24 hours.
-                      </p>
-                    )}
-
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {appointment.status === "Accepted" && (
-                      <>
-                        <GreenButton
-                          className="px-4 py-2"
-                          disabled={isUpdatingAppointment(appointment.id)}
-                          onClick={() =>
-                            void setStatus(appointment.id, "complete")
-                          }
-                        >
-                          Mark Completed
-                        </GreenButton>
-                        <WhiteButton
-                          className="px-4 py-2"
-                          disabled={isUpdatingAppointment(appointment.id)}
-                          onClick={() => openConfirm(appointment, "cancel")}
-                        >
-                          Cancel Appointment
-                        </WhiteButton>
-                      </>
-                    )}
-                    <WhiteButton
-                      className="px-4 py-2"
-                      onClick={() => openRescheduleModal(appointment)}
-                    >
-                      Reschedule
-                    </WhiteButton>
-                    {appointment.status === "Accepted" && (
-                      <WhiteButton
-                        className="px-4 py-2"
-                        disabled={reminderSentIds.includes(appointment.id)}
-                        onClick={() => sendReminder(appointment.id)}
-                      >
-                        {reminderSentIds.includes(appointment.id)
-                          ? "Reminder Sent"
-                          : "Send Reminder"}
-                      </WhiteButton>
-                    )}
-                    {(appointment.status === "Accepted" ||
-                      appointment.status === "Completed") && (
-                      <>
-                        <WhiteButton
-                          className="px-4 py-2"
-                          onClick={() => void openMedicalRecord(appointment)}
-                        >
-                          Medical Record
-                        </WhiteButton>
-                        <button
-                          type="button"
-                          onClick={() => void openPrescription(appointment)}
-                          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
-                        >
-                          Prescription
-                        </button>
-                      </>
-                      )}
-                    <WhiteButton
-                      className="px-4 py-2"
-                      onClick={() =>
-                        void openPatientProfile(appointment.patientId)
-                      }
-                    >
-                      View Patient Profile
-                    </WhiteButton>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <h2 className="text-xl font-bold text-emerald-700">
-              Previous Appointments
-            </h2>
-            <span className="text-sm text-slate-500">
-              Completed or closed records
-            </span>
-          </div>
-          <div className="my-4 flex w-full border-t border-emerald-100"></div>
-
-          {previous.length === 0 ? (
-            renderNoDataMessage("No appointment history yet.")
-          ) : (
-            <div className="space-y-3">
-              {previous.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-white to-sky-50/60 p-4 shadow-sm"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-slate-900">
-                        {appointment.patientName}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {appointment.reason}
-                      </p>
-                    </div>
-                    <span
-                      className={`w-max rounded-full px-3 py-1 text-xs font-semibold ${appointment.status === "Completed"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-slate-200 text-slate-700"
-                        }`}
-                    >
-                      {appointment.status}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-500">
-                    {appointment.date} •{" "}
-                    {formatTimeForDisplay(appointment.time)}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {appointment.location}
-                  </p>
-                  <div className="mt-3">
-                    <div className="flex flex-wrap gap-2">
-                      <WhiteButton
-                        className="px-4 py-2"
-                        onClick={() => void openMedicalRecord(appointment)}
-                      >
-                        Medical Record
-                      </WhiteButton>
-                      <button
-                        type="button"
-                        onClick={() => void openPrescription(appointment)}
-                        className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
-                      >
-                        Prescription
-                      </button>
-                      <WhiteButton
-                        className="px-4 py-2"
-                        onClick={() =>
-                          void openPatientProfile(appointment.patientId)
-                        }
-                      >
-                        View Patient Profile
-                      </WhiteButton>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
       </div>
 
       {selectedPatient && (

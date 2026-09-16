@@ -2,6 +2,7 @@ from celery import shared_task
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import Notification
+import requests
 
 @shared_task
 def process_notification_delivery(notification_id):
@@ -38,16 +39,36 @@ def process_notification_delivery(notification_id):
         # 2. SMS Fallback for critical notifications
         sms_status = "Not applicable"
         if is_critical:
-            # Mock SMS Delivery
             phone = getattr(recipient, 'phone', 'Unknown')
             if hasattr(recipient, 'doctor_profile'):
                 phone = recipient.doctor_profile.phone
             elif hasattr(recipient, 'patient_profile'):
                 phone = recipient.patient_profile.phone
                 
-            sms_status = f"Mock SMS sent to {phone}"
-            print(f"[SMS FALLBACK] Sending SMS to {phone}: {notification.title}")
-            
+            if phone != 'Unknown' and getattr(settings, 'TEXT_LK_API_TOKEN', None):
+                try:
+                    url = "https://app.text.lk/api/http/sms/send"
+                    headers = {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    }
+                    payload = {
+                        "api_token": settings.TEXT_LK_API_TOKEN,
+                        "recipient": phone,
+                        "sender_id": settings.TEXT_LK_SENDER_ID,
+                        "type": "plain",
+                        "message": message
+                    }
+                    response = requests.post(url, headers=headers, json=payload)
+                    response.raise_for_status()
+                    sms_status = f"SMS sent to {phone}"
+                    print(f"[SMS FALLBACK] Successfully sent SMS to {phone}")
+                except Exception as e:
+                    sms_status = f"SMS failed ({e})"
+                    print(f"[SMS FALLBACK ERROR] Failed to send SMS to {phone}: {e}")
+            else:
+                sms_status = "SMS skipped (No phone/API token)"
+                
         return f"{email_status} | {sms_status}"
         
     except Notification.DoesNotExist:

@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "chat",
     "channels",
     "notifications",
+    "storages",
 ]
 
 AUTH_USER_MODEL = "users.CustomUser"
@@ -194,6 +195,22 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Media files
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Supabase Storage Configuration
+USE_S3 = _env_bool("USE_S3", False)
+
+if USE_S3:
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "ap-south-1")
+    AWS_PUBLIC_STORAGE_BUCKET_NAME = os.getenv("AWS_PUBLIC_STORAGE_BUCKET_NAME", "nexclinic-public")
+    AWS_PRIVATE_STORAGE_BUCKET_NAME = os.getenv("AWS_PRIVATE_STORAGE_BUCKET_NAME", "nexclinic-private")
+    
+    # We no longer set DEFAULT_FILE_STORAGE here because we will explicitly
+    # assign `storage=public_storage` or `storage=private_storage` on our models
+    # depending on whether the file needs to be publicly accessible or privately signed.
+
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -350,9 +367,19 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=2, minute=0, day_of_week="mon"),
         "args": (),
     },
+    "expire_past_appointments_every_hour": {
+        "task": "doctor.tasks.expire_past_appointments",
+        "schedule": crontab(minute=0), # Run every hour at minute 0
+        "args": (),
+    },
 }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Text.lk SMS Settings
+TEXT_LK_API_TOKEN = os.getenv("TEXT_LK_API_TOKEN", "")
+TEXT_LK_SENDER_ID = os.getenv("TEXT_LK_SENDER_ID", "TextLKDemo")
+

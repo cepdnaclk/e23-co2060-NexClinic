@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { User } from "lucide-react";
 
 interface LinkedHospital {
   id: string | number;
@@ -58,12 +59,6 @@ export default function HospitalAdminProfilePage() {
   }, []);
 
   const displayName = adminInfo?.full_name || adminInfo?.designation || "Hospital Administrator";
-  const initials = displayName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase();
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-300">
@@ -73,8 +68,8 @@ export default function HospitalAdminProfilePage() {
         
         <div className="relative flex flex-col sm:flex-row items-center gap-6">
           {/* Avatar Icon */}
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-emerald-600 text-white text-2xl font-bold shadow-lg shadow-emerald-500/20">
-            {initials}
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-500 shadow-lg shadow-emerald-500/20">
+            <User className="h-10 w-10" />
           </div>
 
           <div className="text-center sm:text-left min-w-0 flex-1">

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import BlackButton from "@/components/buttons/BlackButton";
 import GreenButton from "@/components/buttons/GreenButton";
 import { handleDoctorSessionExpired } from "@/lib/doctorSession";
+import { User } from "lucide-react";
 
 type DoctorFormData = {
   fullName: string;
@@ -155,7 +156,7 @@ const defaultFormData: DoctorFormData = {
   hospitals: [],
   languages: [],
   availabilityForOnlineAdvice: false,
-  profileImage: "/images/user.png",
+  profileImage: "",
 };
 
 function splitCommaSeparated(value: string) {
@@ -190,7 +191,7 @@ function mapProfileToForm(data: DoctorProfileData): DoctorFormData {
     languages: data.profileDetails.languages || [],
     availabilityForOnlineAdvice:
       Boolean(data.profileDetails.availabilityForOnlineAdvice),
-    profileImage: data.doctor.profileImage || defaultFormData.profileImage,
+    profileImage: data.doctor.profileImage || "",
   };
 }
 
@@ -374,6 +375,7 @@ export default function EditDoctorProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [imageError, setImageError] = useState(false);
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
 
   const [activeHospitals, setActiveHospitals] = useState<ActiveHospital[]>([]);
@@ -541,7 +543,7 @@ export default function EditDoctorProfilePage() {
   }, [router]);
 
   const profileImage = useMemo(() => {
-    return formData.profileImage.trim() ? formData.profileImage : defaultFormData.profileImage;
+    return formData.profileImage.trim() ? formData.profileImage : undefined;
   }, [formData.profileImage]);
 
   const initials = useMemo(() => {
@@ -603,6 +605,7 @@ export default function EditDoctorProfilePage() {
         profileImage: String(reader.result || ""),
       }));
       setRemovePhoto(false);
+      setImageError(false);
     };
     reader.readAsDataURL(file);
   };
@@ -698,6 +701,7 @@ export default function EditDoctorProfilePage() {
     setSelectedImageFile(null);
     setFormData((previous) => ({ ...previous, profileImage: "" }));
     setRemovePhoto(true);
+    setImageError(false);
   };
 
   const handleSubmitProfile = async () => {
@@ -963,16 +967,18 @@ export default function EditDoctorProfilePage() {
                 <div className="flex items-center gap-5 rounded-[2rem] border border-emerald-100/80 bg-gradient-to-br from-white via-emerald-50/90 to-teal-50/80 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
                   <div className="relative shrink-0 rounded-[1.75rem] bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-[3px] shadow-xl shadow-emerald-200/40">
                     <div className="relative overflow-hidden rounded-[1.5rem] bg-white p-1">
-                      <img
-                        src={profileImage}
-                        alt="Doctor profile preview"
-                        className="h-[144px] w-[144px] rounded-[1.25rem] object-cover"
-                      />
-                      {!profileImage.startsWith("data:") && !profileImage.trim() ? (
-                        <div className="absolute inset-0 flex items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-700 text-4xl font-bold text-white">
-                          {initials}
+                      {profileImage && !imageError ? (
+                        <img
+                          src={profileImage}
+                          alt="Doctor profile preview"
+                          className="h-[144px] w-[144px] rounded-[1.25rem] object-cover"
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <div className="flex h-[144px] w-[144px] items-center justify-center rounded-[1.25rem] bg-emerald-50 text-emerald-500">
+                          <User className="h-20 w-20" />
                         </div>
-                      ) : null}
+                      )}
                       <div className="absolute left-3 top-3 rounded-full border border-white/30 bg-white/20 px-2.5 py-1 text-[11px] font-semibold tracking-[0.18em] text-white backdrop-blur-sm">
                         PROFILE
                       </div>

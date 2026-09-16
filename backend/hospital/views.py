@@ -13,7 +13,9 @@ from .serializers import (
 from doctor.models import Appointment, AppointmentAvailableSlot
 from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
+from django.db import transaction
 from datetime import timedelta
+from chat.models import AdviceChatThread
 import logging
 
 logger = logging.getLogger(__name__)
@@ -337,6 +339,7 @@ class HospitalAppointmentListView(APIView):
             Appointment.Status.COMPLETED: "Completed",
             Appointment.Status.CANCELLED: "Cancelled",
             Appointment.Status.REJECTED: "Rejected",
+            Appointment.Status.CANCELLATION_REQUESTED: "Cancellation Requested",
         }
 
         appointments = (
@@ -346,6 +349,7 @@ class HospitalAppointmentListView(APIView):
                     Appointment.Status.PENDING,
                     Appointment.Status.ACCEPTED,
                     Appointment.Status.COMPLETED,
+                    Appointment.Status.CANCELLATION_REQUESTED,
                 ],
             )
             .values(
@@ -362,6 +366,8 @@ class HospitalAppointmentListView(APIView):
                 "doctor__user__email",
                 "slot__date",
                 "slot__start_time",
+                "cancellation_reason",
+                "cancelled_by",
             )
             .order_by("-slot__date", "-slot__start_time", "-requested_at")[:500]
         )
@@ -410,6 +416,8 @@ class HospitalAppointmentListView(APIView):
                         str(appointment.get("status") or "").title(),
                     ),
                     "status": appointment.get("status") or "",
+                    "cancellationReason": appointment.get("cancellation_reason") or "",
+                    "cancelledBy": appointment.get("cancelled_by") or "",
                 }
             )
 
@@ -730,4 +738,96 @@ class ManageDoctorFeesView(APIView):
                 "chat_fee": float(doctor.chat_fee),
                 "appointment_fee": float(doctor.appointment_fee),
             }
+        )
+
+class HospitalAppointmentCancelRequestAcceptView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, appointment_id):
+        admin_role = (
+            HospitalAdmin.objects.filter(user=request.user, is_active=True)
+            .select_related("hospital")
+            .first()
+        )
+        if not admin_role:
+            return Response(
+                {"detail": "You are not a hospital admin."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        appointment = get_object_or_404(
+            Appointment, id=appointment_id, hospital=admin_role.hospital
+        )
+
+        if appointment.status != Appointment.Status.CANCELLATION_REQUESTED:
+            return Response(
+                {"detail": "Appointment is not in a cancellation requested state."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            appointment.status = Appointment.Status.CANCELLED
+            appointment.save(update_fields=["status", "updated_at"])
+
+            chat_thread = AdviceChatThread.objects.filter(doctor=appointment.doctor, patient=appointment.patient).first()
+            if chat_thread and chat_thread.status != AdviceChatThread.Status.CLOSED:
+                chat_thread.status = AdviceChatThread.Status.CLOSED
+                chat_thread.save(update_fields=['status'])
+
+        return Response(
+            {"detail": "Cancellation request accepted."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class HospitalAppointmentCancelView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, appointment_id):
+        admin_role = (
+            HospitalAdmin.objects.filter(user=request.user, is_active=True)
+            .select_related("hospital")
+            .first()
+        )
+        if not admin_role:
+            return Response(
+                {"detail": "You are not a hospital admin."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        appointment = get_object_or_404(
+            Appointment, id=appointment_id, hospital=admin_role.hospital
+        )
+
+        if appointment.status in [Appointment.Status.COMPLETED, Appointment.Status.CANCELLED, Appointment.Status.REJECTED]:
+            return Response(
+                {"detail": "Appointment is already completed or cancelled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        reason = request.data.get("reason", "")
+
+        with transaction.atomic():
+            appointment.status = Appointment.Status.CANCELLED
+            appointment.cancelled_by = "ADMIN"
+            appointment.cancellation_reason = reason
+            appointment.cancelled_at = timezone.now()
+            appointment.save(
+                update_fields=[
+                    "status",
+                    "cancelled_by",
+                    "cancellation_reason",
+                    "cancelled_at",
+                    "updated_at",
+                ]
+            )
+
+            chat_thread = AdviceChatThread.objects.filter(doctor=appointment.doctor, patient=appointment.patient).first()
+            if chat_thread and chat_thread.status != AdviceChatThread.Status.CLOSED:
+                chat_thread.status = AdviceChatThread.Status.CLOSED
+                chat_thread.save(update_fields=['status'])
+
+        return Response(
+            {"detail": "Appointment cancelled successfully."},
+            status=status.HTTP_200_OK,
         )

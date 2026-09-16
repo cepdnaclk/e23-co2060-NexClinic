@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { User } from "lucide-react";
 import GreenButton from "@/components/buttons/GreenButton";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
 
@@ -71,6 +72,7 @@ export default function UserProfile() {
   const [profileImageVersion, setProfileImageVersion] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -139,7 +141,7 @@ export default function UserProfile() {
   const emergencyEmail = profileData?.emergencyContact.email || "Not specified";
   const profileImageSrc = profileData?.patient.profileImage?.trim();
   const profileImage = !profileImageSrc
-    ? "/images/user.png"
+    ? null
     : profileImageSrc.startsWith("/images/") || profileImageSrc.startsWith("data:")
       ? profileImageSrc
       : `${profileImageSrc}${profileImageVersion ? `?v=${profileImageVersion}` : ""}`;
@@ -175,11 +177,18 @@ export default function UserProfile() {
               <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-8">
                 <div className="mx-auto shrink-0 rounded-[2rem] bg-gradient-to-br from-emerald-600 via-emerald-600 to-emerald-700 p-1 shadow-xl shadow-emerald-200/50 lg:mx-0">
                   <div className="rounded-[1.75rem] bg-white p-2">
-                    <img
-                      src={profileImage}
-                      alt="Patient profile photo"
-                      className="h-[136px] w-[136px] rounded-[1.5rem] object-cover"
-                    />
+                    {profileImage && !imageError ? (
+                      <img
+                        src={profileImage}
+                        alt="Patient profile photo"
+                        className="h-[136px] w-[136px] rounded-[1.5rem] object-cover"
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <div className="flex h-[136px] w-[136px] items-center justify-center rounded-[1.5rem] bg-emerald-50 text-emerald-500">
+                        <User className="h-16 w-16" />
+                      </div>
+                    )}
                   </div>
                 </div>
 
