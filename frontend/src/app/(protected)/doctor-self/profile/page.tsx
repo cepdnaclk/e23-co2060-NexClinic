@@ -216,6 +216,9 @@ function DoctorProfilePage() {
                                     <Link href="/doctor-self/appointment-slots">
                                         <WhiteButton className="rounded-full px-6 py-3">Manage Slots</WhiteButton>
                                     </Link>
+                                    <Link href="/help" className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white px-6 py-3 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50">
+                                        Help
+                                    </Link>
                                 </div>
                             </div>
                         </div>

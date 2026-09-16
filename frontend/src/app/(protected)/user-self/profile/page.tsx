@@ -162,12 +162,20 @@ export default function UserProfile() {
               details in one place.
             </p>
           </div>
-          <GreenButton
-            className="w-full rounded-full px-6 py-3 sm:w-auto"
-            onClick={() => router.push("/user-self/edit-profile")}
-          >
-            Edit Profile
-          </GreenButton>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <Link
+              href="/help"
+              className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white px-6 py-3 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
+            >
+              Help
+            </Link>
+            <GreenButton
+              className="w-full rounded-full px-6 py-3 sm:w-auto"
+              onClick={() => router.push("/user-self/edit-profile")}
+            >
+              Edit Profile
+            </GreenButton>
+          </div>
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
