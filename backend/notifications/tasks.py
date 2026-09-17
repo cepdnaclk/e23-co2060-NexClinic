@@ -1,7 +1,8 @@
 from celery import shared_task
-from django.core.mail import send_mail
 from django.conf import settings
 from .models import Notification
+from .mail_utils import send_templated_email
+from .email_templates import EMAIL_TEMPLATES
 import requests
 
 @shared_task
@@ -13,23 +14,37 @@ def process_notification_delivery(notification_id):
         # Determine if critical
         is_critical = notification.notification_type in [
             Notification.NotificationType.SYSTEM_ALERT, 
-            Notification.NotificationType.APPOINTMENT_UPDATE
+            Notification.NotificationType.APPOINTMENT_UPDATE,
+            Notification.NotificationType.MEDICATION_REMINDER
         ]
         
         # Check DND preferences
         if getattr(recipient, 'dnd_enabled', False) and not is_critical:
             return f"Notification {notification_id} delivery suppressed due to DND."
             
-        subject = f"NexClinic Notification: {notification.title}"
-        message = f"You have a new notification:\n\n{notification.title}\n{notification.message}\n\nLogin to NexClinic to view details."
+        context = {
+            "title": notification.title,
+            "message": notification.message
+        }
+        
+        template_name = "general_notification"
+        
+        # Check if a specific template exists for this notification type
+        type_mapping = {
+            Notification.NotificationType.MEDICATION_REMINDER: "medication_reminder",
+            Notification.NotificationType.SYSTEM_ALERT: "system_alert"
+        }
+        
+        if notification.notification_type in type_mapping:
+            if type_mapping[notification.notification_type] in EMAIL_TEMPLATES:
+                template_name = type_mapping[notification.notification_type]
         
         # 1. Send Email
         try:
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[recipient.email],
+            send_templated_email(
+                template_name=template_name,
+                context=context,
+                recipients=[recipient.email],
                 fail_silently=True,
             )
             email_status = "Email sent"
@@ -57,7 +72,7 @@ def process_notification_delivery(notification_id):
                         "recipient": phone,
                         "sender_id": settings.TEXT_LK_SENDER_ID,
                         "type": "plain",
-                        "message": message
+                        "message": f"NexClinic Notification:\n{notification.title}\n{notification.message}"
                     }
                     response = requests.post(url, headers=headers, json=payload)
                     response.raise_for_status()

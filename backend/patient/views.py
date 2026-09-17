@@ -184,6 +184,7 @@ class PatientProfileView(BasePatientAPIView):
 
         return {
             "patient": {
+                "id": f"P-{patient_profile.id}" if patient_profile else "",
                 "fullName": full_name,
                 "email": user.email,
                 "phone": phone,

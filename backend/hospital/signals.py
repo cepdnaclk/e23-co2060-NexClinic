@@ -1,9 +1,9 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
 from .models import ActivityLog, DoctorHospitalVerification
+from notifications.mail_utils import send_templated_email
 
 # Import lazily to avoid circular imports
 
@@ -12,18 +12,30 @@ def doctor_verification_handler(sender, instance, created, **kwargs):
     # Notify doctor when verification status changes
     try:
         doctor_user = instance.doctor.user
-        subject = f"Your verification status at {instance.hospital.name} changed"
+        
+        template_name = None
+        context = {
+            "hospital_name": instance.hospital.name,
+            "doctor_email": doctor_user.email,
+        }
+        
         if instance.status == DoctorHospitalVerification.Status.VERIFIED:
-            message = f"Hello {doctor_user.email},\n\nYour profile has been verified for {instance.hospital.name}."
+            template_name = "doctor_verification_verified"
         elif instance.status == DoctorHospitalVerification.Status.REJECTED:
-            message = f"Hello {doctor_user.email},\n\nYour verification was rejected for {instance.hospital.name}. Reason: {instance.rejection_reason}"
-        else:
+            template_name = "doctor_verification_rejected"
+            context["rejection_reason"] = instance.rejection_reason
+            
+        if not template_name:
             return
 
         # Send email (best effort)
         import threading
         try:
-            threading.Thread(target=send_mail, args=(subject, message, settings.DEFAULT_FROM_EMAIL, [doctor_user.email])).start()
+            threading.Thread(
+                target=send_templated_email, 
+                args=(template_name, context, [doctor_user.email]),
+                kwargs={"fail_silently": True}
+            ).start()
         except Exception:
             pass
 
@@ -64,15 +76,20 @@ def appointment_notifications(sender, instance, created, **kwargs):
         # Booking created and accepted
         if created and instance.status == Appointment.Status.ACCEPTED:
             patient_email = instance.patient.user.email
-            subject = "Appointment confirmed"
-            message = (
-                f"Hello {instance.patient.full_name},\n\n"
-                f"Your appointment with {instance.doctor.preferred_name} at {instance.slot.date} "
-                f"{instance.slot.start_time} has been confirmed."
-            )
+            context = {
+                "patient_name": instance.patient.full_name,
+                "doctor_name": instance.doctor.preferred_name,
+                "date": instance.slot.date,
+                "time": instance.slot.start_time,
+                "appointment_number": instance.id
+            }
             import threading
             try:
-                threading.Thread(target=send_mail, args=(subject, message, settings.DEFAULT_FROM_EMAIL, [patient_email])).start()
+                threading.Thread(
+                    target=send_templated_email, 
+                    args=("appointment_confirmed", context, [patient_email]),
+                    kwargs={"fail_silently": True}
+                ).start()
             except Exception:
                 pass
 
@@ -88,15 +105,19 @@ def appointment_notifications(sender, instance, created, **kwargs):
         # Cancellation by admin or patient
         if not created and instance.status == Appointment.Status.CANCELLED:
             patient_email = instance.patient.user.email
-            subject = "Appointment cancelled"
-            message = (
-                f"Hello {instance.patient.full_name},\n\n"
-                f"Your appointment with {instance.doctor.preferred_name} on {instance.slot.date} "
-                f"has been cancelled. Reason: {instance.cancellation_reason or 'Not provided'}"
-            )
+            context = {
+                "patient_name": instance.patient.full_name,
+                "doctor_name": instance.doctor.preferred_name,
+                "date": instance.slot.date,
+                "cancellation_reason": instance.cancellation_reason or 'Not provided'
+            }
             import threading
             try:
-                threading.Thread(target=send_mail, args=(subject, message, settings.DEFAULT_FROM_EMAIL, [patient_email])).start()
+                threading.Thread(
+                    target=send_templated_email, 
+                    args=("appointment_cancelled", context, [patient_email]),
+                    kwargs={"fail_silently": True}
+                ).start()
             except Exception:
                 pass
 

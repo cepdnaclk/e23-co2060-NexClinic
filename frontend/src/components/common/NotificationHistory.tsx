@@ -16,6 +16,7 @@ export default function NotificationHistory() {
         { id: "SYSTEM_ALERT", label: "Alerts" },
         { id: "HOSPITAL_ANNOUNCEMENT", label: "Announcements" },
         { id: "APPOINTMENT_UPDATE", label: "Appointments" },
+        { id: "MEDICATION_REMINDER", label: "Medications" },
     ];
 
     const filteredNotifications = useMemo(() => {
@@ -88,6 +89,8 @@ export default function NotificationHistory() {
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                                     ) : notification.notification_type === 'APPOINTMENT_UPDATE' ? (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    ) : notification.notification_type === 'MEDICATION_REMINDER' ? (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
                                     ) : (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     )}
@@ -118,6 +121,12 @@ export default function NotificationHistory() {
                                         <button className="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-50 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
                                             View Appointment
                                         </button>
+                                    )}
+
+                                    {notification.notification_type === 'MEDICATION_REMINDER' && (
+                                        <a href={notification.action_url} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-emerald-50 text-xs font-medium text-emerald-600 hover:bg-emerald-100 transition-colors dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50">
+                                            View Medications
+                                        </a>
                                     )}
                                     
                                     {!notification.is_read && (

@@ -205,6 +205,7 @@ class MedicationLog(models.Model):
         max_length=20, choices=Status.choices, default=Status.PENDING
     )
     taken_at = models.DateTimeField(null=True, blank=True)
+    notification_sent = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

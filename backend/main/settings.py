@@ -373,6 +373,11 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute=0), # Run every hour at minute 0
         "args": (),
     },
+    "generate_medication_reminders": {
+        "task": "patient.tasks.generate_medication_logs_and_notify",
+        "schedule": crontab(minute="*/15"), # Run every 15 minutes
+        "args": (),
+    },
 }
 
 # Default primary key field type

@@ -86,7 +86,7 @@ function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
     emergencyContactPhone: profile.emergencyContact.phone || "",
     emergencyContactRelation: profile.emergencyContact.relation || "",
     emergencyContactEmail: profile.emergencyContact.email || "",
-    profileImage: profile.patient.profileImage || defaultFormData.profileImage,
+    profileImage: (!profile.patient.profileImage || profile.patient.profileImage === "null") ? defaultFormData.profileImage : profile.patient.profileImage,
   };
 }
 
@@ -199,7 +199,7 @@ export default function UserEditProfilePage() {
 
   const profileImage = useMemo(() => {
     const imageSrc = formData.profileImage?.trim();
-    if (!imageSrc) {
+    if (!imageSrc || imageSrc === "null") {
       return undefined;
     }
 

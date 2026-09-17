@@ -10,6 +10,7 @@ import { handlePatientSessionExpired } from "@/lib/patientSession";
 
 type PatientProfileResponse = {
   patient: {
+    id: string;
     fullName: string;
     email: string;
     phone: string;
@@ -122,6 +123,7 @@ export default function UserProfile() {
     );
   }, []);
 
+  const patientId = profileData?.patient.id || "Unknown";
   const patientName = profileData?.patient.fullName || "Patient";
   const patientEmail = profileData?.patient.email || "Not available";
   const patientPhone = profileData?.patient.phone || "Not available";
@@ -140,7 +142,7 @@ export default function UserProfile() {
     profileData?.emergencyContact.relation || "Not specified";
   const emergencyEmail = profileData?.emergencyContact.email || "Not specified";
   const profileImageSrc = profileData?.patient.profileImage?.trim();
-  const profileImage = !profileImageSrc
+  const profileImage = !profileImageSrc || profileImageSrc === "null"
     ? null
     : profileImageSrc.startsWith("/images/") || profileImageSrc.startsWith("data:")
       ? profileImageSrc
@@ -195,6 +197,9 @@ export default function UserProfile() {
                 <div className="min-w-0 flex-1 text-center lg:text-left">
                   <h2 className="mt-4 break-words text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                     {patientName}
+                    <span className="ml-3 inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20 align-middle">
+                      ID: {patientId}
+                    </span>
                   </h2>
                   <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
                     {patientEmail}
