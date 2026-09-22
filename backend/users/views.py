@@ -22,11 +22,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.encoding import force_str, force_bytes
 from .models import PendingUser, UserOTP
 from .utils import generate_otp, hash_otp, send_otp_email, send_admin_notification_email, verify_otp
+from notifications.mail_utils import send_templated_email
 
 from django.utils import timezone
 from django.db import transaction
@@ -526,19 +526,15 @@ class PasswordResetRequestView(APIView):
             frontend_base_url = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000').rstrip('/')
             reset_link = f"{frontend_base_url}/reset-password?uid={uid}&token={token}&role={role}"
 
-            subject = 'Reset your NexClinic password'
-            message = (
-                'We received a request to reset your password.\n\n'
-                f'Click this link to set a new password:\n{reset_link}\n\n'
-                'If you did not request this, you can safely ignore this email.'
-            )
+            context = {
+                "reset_link": reset_link
+            }
 
             try:
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
+                send_templated_email(
+                    template_name="password_reset",
+                    context=context,
+                    recipients=[user.email],
                     fail_silently=False,
                 )
                 logger.info(

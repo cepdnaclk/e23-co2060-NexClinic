@@ -191,7 +191,7 @@ function mapProfileToForm(data: DoctorProfileData): DoctorFormData {
     languages: data.profileDetails.languages || [],
     availabilityForOnlineAdvice:
       Boolean(data.profileDetails.availabilityForOnlineAdvice),
-    profileImage: data.doctor.profileImage || "",
+    profileImage: (!data.doctor.profileImage || data.doctor.profileImage === "null") ? "" : data.doctor.profileImage,
   };
 }
 
@@ -543,7 +543,7 @@ export default function EditDoctorProfilePage() {
   }, [router]);
 
   const profileImage = useMemo(() => {
-    return formData.profileImage.trim() ? formData.profileImage : undefined;
+    return (formData.profileImage.trim() && formData.profileImage !== "null") ? formData.profileImage : undefined;
   }, [formData.profileImage]);
 
   const initials = useMemo(() => {

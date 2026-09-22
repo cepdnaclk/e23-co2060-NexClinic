@@ -25,8 +25,6 @@ type PatientProfileResponse = {
     bloodType: string;
     allergies: string;
     medications: string;
-    medicalReports: string;
-    medicalDocuments: string;
     medicalHistory: string;
   };
   emergencyContact: {
@@ -53,14 +51,14 @@ const defaultFormData: Patient = {
   bloodType: "",
   allergies: "",
   medications: "",
-  medicalReports: "",
-  medicalDocuments: "",
   medicalHistory: "",
   emergencyContactName: "",
   emergencyContactPhone: "",
   emergencyContactRelation: "",
   emergencyContactEmail: "",
   profileImage: "/images/user.png",
+  medicalReports: "",
+  medicalDocuments: "",
   lastUpdated: new Date().toISOString().split("T")[0],
 };
 
@@ -83,14 +81,12 @@ function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
     bloodType: profile.health.bloodType || "",
     allergies: profile.health.allergies || "",
     medications: profile.health.medications || "",
-    medicalReports: profile.health.medicalReports || "",
-    medicalDocuments: profile.health.medicalDocuments || "",
     medicalHistory: profile.health.medicalHistory || "",
     emergencyContactName: profile.emergencyContact.name || "",
     emergencyContactPhone: profile.emergencyContact.phone || "",
     emergencyContactRelation: profile.emergencyContact.relation || "",
     emergencyContactEmail: profile.emergencyContact.email || "",
-    profileImage: profile.patient.profileImage || defaultFormData.profileImage,
+    profileImage: (!profile.patient.profileImage || profile.patient.profileImage === "null") ? defaultFormData.profileImage : profile.patient.profileImage,
   };
 }
 
@@ -133,11 +129,7 @@ export default function UserEditProfilePage() {
   const [profileImageVersion, setProfileImageVersion] = useState("");
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [removePhoto, setRemovePhoto] = useState(false);
-  const [selectedMedicalReportFile, setSelectedMedicalReportFile] = useState<File | null>(null);
-  const [selectedMedicalDocumentFile, setSelectedMedicalDocumentFile] = useState<File | null>(null);
   const [bloodTypeUnknown, setBloodTypeUnknown] = useState(false);
-  const [medicalReportLabel, setMedicalReportLabel] = useState("No file selected");
-  const [medicalDocumentLabel, setMedicalDocumentLabel] = useState("No file selected");
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -207,7 +199,7 @@ export default function UserEditProfilePage() {
 
   const profileImage = useMemo(() => {
     const imageSrc = formData.profileImage?.trim();
-    if (!imageSrc) {
+    if (!imageSrc || imageSrc === "null") {
       return undefined;
     }
 
@@ -216,21 +208,13 @@ export default function UserEditProfilePage() {
     }
 
     return profileImageVersion
-      ? `${imageSrc}?v=${profileImageVersion}`
+      ? `${imageSrc}${imageSrc.includes("?") ? "&" : "?"}v=${profileImageVersion}`
       : imageSrc;
   }, [formData.profileImage, profileImageVersion]);
 
-  const getAttachmentLabel = (url: string) => {
-    if (!url.trim()) {
-      return "No file uploaded";
-    }
-
-    try {
-      return decodeURIComponent(url.split("/").pop() || "Uploaded file");
-    } catch {
-      return "Uploaded file";
-    }
-  };
+  useEffect(() => {
+    setImageError(false);
+  }, [profileImage]);
 
   const initials = useMemo(() => {
     const parts = formData.name.trim().split(/\s+/).filter(Boolean);
@@ -342,26 +326,6 @@ export default function UserEditProfilePage() {
     }));
   };
 
-  const handleMedicalReportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    setSelectedMedicalReportFile(file);
-    setMedicalReportLabel(file.name);
-  };
-
-  const handleMedicalDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    setSelectedMedicalDocumentFile(file);
-    setMedicalDocumentLabel(file.name);
-  };
-
   const handleBloodTypeToggle = (checked: boolean) => {
     setBloodTypeUnknown(checked);
     setFormData((previous) =>
@@ -411,14 +375,6 @@ export default function UserEditProfilePage() {
         requestBody.set("clearProfilePicture", "true");
       }
 
-      if (selectedMedicalReportFile) {
-        requestBody.set("medicalReports", selectedMedicalReportFile);
-      }
-
-      if (selectedMedicalDocumentFile) {
-        requestBody.set("medicalDocuments", selectedMedicalDocumentFile);
-      }
-
       const response = await fetch("/api/patient/profile", {
         method: "PATCH",
         body: requestBody,
@@ -444,10 +400,6 @@ export default function UserEditProfilePage() {
       setProfile(updatedProfile);
       setFormData(nextFormData);
       setSelectedImageFile(null);
-      setSelectedMedicalReportFile(null);
-      setSelectedMedicalDocumentFile(null);
-      setMedicalReportLabel(getAttachmentLabel(updatedProfile.health.medicalReports));
-      setMedicalDocumentLabel(getAttachmentLabel(updatedProfile.health.medicalDocuments));
       const imageVersion = Date.now().toString();
       window.localStorage.setItem("patient-profile-image-updated-at", imageVersion);
       setProfileImageVersion(imageVersion);
@@ -494,10 +446,6 @@ export default function UserEditProfilePage() {
       setBloodTypeUnknown(!mappedProfile.bloodType);
       setSelectedImageFile(null);
       setRemovePhoto(false);
-      setSelectedMedicalReportFile(null);
-      setSelectedMedicalDocumentFile(null);
-      setMedicalReportLabel(getAttachmentLabel(profile.health.medicalReports));
-      setMedicalDocumentLabel(getAttachmentLabel(profile.health.medicalDocuments));
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       window.localStorage.removeItem("patient-profile-draft-saved-at");
       setDraftSavedAt(null);
@@ -855,7 +803,7 @@ export default function UserEditProfilePage() {
                   <section>
                     <SectionHeader
                       title="Health snapshot"
-                      description="Capture allergies, current medication, and attach reports or documents for easy review."
+                      description="Capture allergies, current medication, and other clinically important history."
                     />
 
                     <div className="mt-5 space-y-4">
@@ -880,38 +828,6 @@ export default function UserEditProfilePage() {
                           placeholder="List current medications"
                         />
                       </FieldCard>
-
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <FieldCard label="Upload reports">
-                          <div className="space-y-3">
-                            <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                              Choose report file
-                              <input
-                                type="file"
-                                className="hidden"
-                                accept=".pdf,.doc,.docx,image/*"
-                                onChange={handleMedicalReportUpload}
-                              />
-                            </label>
-                            <p className="text-sm text-slate-600">{medicalReportLabel}</p>
-                          </div>
-                        </FieldCard>
-
-                        <FieldCard label="Upload documents">
-                          <div className="space-y-3">
-                            <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">
-                              Choose document file
-                              <input
-                                type="file"
-                                className="hidden"
-                                accept=".pdf,.doc,.docx,image/*"
-                                onChange={handleMedicalDocumentUpload}
-                              />
-                            </label>
-                            <p className="text-sm text-slate-600">{medicalDocumentLabel}</p>
-                          </div>
-                        </FieldCard>
-                      </div>
 
                       <FieldCard label="Medical history">
                         <textarea

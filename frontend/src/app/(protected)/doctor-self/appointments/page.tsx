@@ -63,6 +63,15 @@ type PatientProfile = {
   prescriptions: string;
   lastVisit: string;
   medicalRecords: MedicalRecord[];
+  medicalDocuments: MedicalDocument[];
+};
+
+type MedicalDocument = {
+  id: string;
+  name: string;
+  description: string;
+  fileUrl: string;
+  uploadedAt: string;
 };
 
 type MedicalRecord = {
@@ -103,6 +112,7 @@ type ApiPatientProfile = {
   prescriptions?: string;
   lastVisit?: string;
   medicalRecords?: MedicalRecord[];
+  medicalDocuments?: MedicalDocument[];
 };
 
 type MedicalRecordDraft = {
@@ -690,6 +700,7 @@ function DoctorAppointmentsPage() {
       prescriptions: "",
       lastVisit: "Not available",
       medicalRecords: [],
+      medicalDocuments: [],
     };
 
     setSelectedPatient(fallbackProfile);
@@ -755,6 +766,9 @@ function DoctorAppointmentsPage() {
         lastVisit: apiProfile.lastVisit?.trim() || "Not available",
         medicalRecords: Array.isArray(apiProfile.medicalRecords)
           ? apiProfile.medicalRecords
+          : [],
+        medicalDocuments: Array.isArray(apiProfile.medicalDocuments)
+          ? apiProfile.medicalDocuments
           : [],
       };
 
@@ -1640,7 +1654,8 @@ function DoctorAppointmentsPage() {
 
       {selectedPatient && (
         <div
-          className="fixed inset-0 z-50 flex justify-end bg-slate-900/45"
+          className="fixed inset-0 flex justify-end bg-slate-900/45"
+          style={{ zIndex: 100 }}
           role="dialog"
           aria-modal="true"
         >
@@ -1779,32 +1794,29 @@ function DoctorAppointmentsPage() {
 
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                 <h4 className="font-semibold text-amber-800">
-                  Medical Records
+                  Medical Records History
                 </h4>
                 {selectedPatient.medicalRecords.length === 0 ? (
-                  <p className="mt-2 text-amber-700">
-                    No medical records have been saved yet for this patient.
+                  <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-slate-500">
+                    No medical records found.
                   </p>
                 ) : (
-                  <div className="mt-3 space-y-3">
+                  <div className="space-y-4">
                     {selectedPatient.medicalRecords.map((record) => (
                       <div
                         key={record.id}
-                        className="rounded-xl border border-amber-200 bg-white p-3 text-sm text-slate-700"
+                        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                       >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="font-semibold text-slate-900">
-                            {record.visit_date}
-                          </p>
-                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-700">
-                            {record.doctorName}
-                          </p>
-                        </div>
-                        <p className="mt-1 text-slate-600">
-                          {record.hospitalName}
+                        <p className="font-semibold text-slate-900">
+                          {new Date(record.visit_date).toLocaleDateString()}
                         </p>
+                        {record.hospitalName && (
+                          <p className="text-sm text-slate-500">
+                            {record.hospitalName} • Dr. {record.doctorName}
+                          </p>
+                        )}
                         {record.observations && (
-                          <p className="mt-2">
+                          <p className="mt-2 text-sm">
                             <span className="font-semibold text-slate-900">
                               Observations:
                             </span>{" "}
@@ -1812,7 +1824,7 @@ function DoctorAppointmentsPage() {
                           </p>
                         )}
                         {record.diagnosis && (
-                          <p className="mt-1">
+                          <p className="mt-1 text-sm">
                             <span className="font-semibold text-slate-900">
                               Diagnosis:
                             </span>{" "}
@@ -1820,13 +1832,52 @@ function DoctorAppointmentsPage() {
                           </p>
                         )}
                         {record.prescriptions && (
-                          <p className="mt-1">
+                          <p className="mt-1 text-sm">
                             <span className="font-semibold text-slate-900">
                               Prescriptions:
                             </span>{" "}
-                            {record.prescriptions}
+                            <span className="whitespace-pre-line">{record.prescriptions}</span>
                           </p>
                         )}
+                        {record.recommended_tests && (
+                          <p className="mt-1 text-sm">
+                            <span className="font-semibold text-slate-900">
+                              Recommended Tests:
+                            </span>{" "}
+                            {record.recommended_tests}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <h4 className="font-semibold text-emerald-800 mb-4">
+                  Medical Documents
+                </h4>
+                {(!selectedPatient.medicalDocuments || selectedPatient.medicalDocuments.length === 0) ? (
+                  <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-slate-500">
+                    No medical documents uploaded yet.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {selectedPatient.medicalDocuments.map((doc: any) => (
+                      <div key={doc.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div>
+                          <p className="font-bold text-slate-900">{doc.name || "Document"}</p>
+                          <p className="text-xs text-slate-500 mb-1">{new Date(doc.uploadedAt).toLocaleString()}</p>
+                          {doc.description && <p className="text-sm text-slate-600 line-clamp-2">{doc.description}</p>}
+                        </div>
+                        <a
+                          href={doc.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                        >
+                          View File
+                        </a>
                       </div>
                     ))}
                   </div>
@@ -1839,7 +1890,8 @@ function DoctorAppointmentsPage() {
 
       {prescriptionTarget && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/55 p-4"
+          className="fixed inset-0 flex items-center justify-center bg-slate-900/55 p-4"
+          style={{ zIndex: 90 }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="prescription-title"
@@ -2053,7 +2105,8 @@ function DoctorAppointmentsPage() {
 
       {medicalRecordTarget && (
         <div
-          className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-900/55 p-4"
+          className="fixed inset-0 flex items-center justify-center bg-slate-900/55 p-4"
+          style={{ zIndex: 80 }}
           role="dialog"
           aria-modal="true"
         >
@@ -2300,7 +2353,8 @@ function DoctorAppointmentsPage() {
 
       {rescheduleTarget && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/55 p-4"
+          className="fixed inset-0 flex items-center justify-center bg-slate-900/55 p-4"
+          style={{ zIndex: 90 }}
           role="dialog"
           aria-modal="true"
         >

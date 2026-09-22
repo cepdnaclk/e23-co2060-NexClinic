@@ -113,7 +113,8 @@ export default function UserDashboard() {
         const patient = profileMissing ? {} : profilePayload.patient || {};
         setFullName(patient.fullName || "");
         setEmail(patient.email || "");
-        setProfileImage(patient.profileImage || undefined);
+        const profileImg = patient.profileImage;
+        setProfileImage(profileImg && profileImg !== "null" ? profileImg : undefined);
 
         const liveAppointments = Array.isArray(appointmentsPayload.appointments)
           ? appointmentsPayload.appointments

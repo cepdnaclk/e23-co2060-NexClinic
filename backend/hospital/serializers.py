@@ -116,7 +116,8 @@ class HospitalAppointmentSerializer(serializers.ModelSerializer):
         return str(obj.patient_id)
 
     def get_patientName(self, obj):
-        return obj.patient.full_name if obj.patient else "Unknown"
+        name = obj.patient.full_name if obj.patient else "Unknown"
+        return f"{name} (ID: P-{obj.patient_id})" if obj.patient_id else name
 
     def get_patientAge(self, obj):
         dob = getattr(obj.patient, "date_of_birth", None)

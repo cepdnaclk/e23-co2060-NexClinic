@@ -885,7 +885,7 @@ class DoctorDashboardView(APIView):
             upcoming_appointments.append(
                 {
                     "id": str(appointment.id),
-                    "patientName": appointment.patient.full_name,
+                    "patientName": f"{appointment.patient.full_name} (ID: P-{appointment.patient.id})",
                     "type": "In-Person Appointment",
                     "date": date_label,
                     "time": start_time,
@@ -910,7 +910,7 @@ class DoctorDashboardView(APIView):
             recent_chats.append(
                 {
                     "id": str(thread.id),
-                    "patientName": thread.patient.full_name,
+                    "patientName": f"{thread.patient.full_name} (ID: P-{thread.patient.id})",
                     "lastMessage": last_message.message_text if last_message else "",
                     "unreadCount": unread_count,
                     "time": thread.last_message_at.strftime("%b %d, %I:%M %p") if thread.last_message_at else thread.started_at.strftime("%b %d, %I:%M %p"),
@@ -1212,7 +1212,7 @@ class DoctorPatientProfileView(VerifiedDoctorAPIView):
 
         serializer = DoctorPatientProfileSerializer(
             appointment.patient,
-            context={'doctor_profile': doctor_profile},
+            context={'doctor_profile': doctor_profile, 'request': request},
         )
         return Response({'patient': serializer.data}, status=status.HTTP_200_OK)
 

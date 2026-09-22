@@ -9,6 +9,7 @@ class Notification(models.Model):
         SYSTEM_ALERT = "SYSTEM_ALERT", "System Alert"
         HOSPITAL_ANNOUNCEMENT = "HOSPITAL_ANNOUNCEMENT", "Hospital Announcement"
         APPOINTMENT_UPDATE = "APPOINTMENT_UPDATE", "Appointment Update"
+        MEDICATION_REMINDER = "MEDICATION_REMINDER", "Medication Reminder"
         OTHER = "OTHER", "Other"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

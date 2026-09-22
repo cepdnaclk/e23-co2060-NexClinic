@@ -15,7 +15,7 @@ from hospital.models import (
     SlotTemplate,
     DoctorSlotTemplateAssignment,
 )
-from patient.serializers import PatientMedicalRecordSerializer
+from patient.serializers import PatientMedicalRecordSerializer, PatientMedicalDocumentSerializer
 
 VALID_WEEK_DAYS = {
     "monday": "Monday",
@@ -409,9 +409,9 @@ class DoctorAppointmentSerializer(serializers.ModelSerializer):
 
     def get_patientName(self, obj):
         if obj.patient and obj.patient.full_name:
-            return obj.patient.full_name
+            return f"{obj.patient.full_name} (ID: P-{obj.patient.id})"
         if obj.patient and obj.patient.user:
-            return obj.patient.user.email
+            return f"{obj.patient.user.email} (ID: P-{obj.patient.id})"
         return "Unknown"
 
     def get_patientAge(self, obj):
@@ -484,6 +484,7 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
     prescriptions = serializers.SerializerMethodField()
     lastVisit = serializers.SerializerMethodField()
     medicalRecords = serializers.SerializerMethodField()
+    medicalDocuments = serializers.SerializerMethodField()
 
     @staticmethod
     def _split_text_list(raw_value):
@@ -499,9 +500,9 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
 
     def get_fullName(self, obj):
         if obj.full_name:
-            return obj.full_name
+            return f"{obj.full_name} (ID: P-{obj.id})"
         if obj.user and obj.user.email:
-            return obj.user.email
+            return f"{obj.user.email} (ID: P-{obj.id})"
         return "Not available"
 
     def get_email(self, obj):
@@ -598,6 +599,10 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
             queryset = queryset.filter(doctor=doctor_profile)
 
         return PatientMedicalRecordSerializer(queryset[:10], many=True).data
+
+    def get_medicalDocuments(self, obj):
+        queryset = obj.medical_documents.all().order_by("-uploaded_at")
+        return PatientMedicalDocumentSerializer(queryset, many=True, context=self.context).data
 
 
 class DoctorPatientProfileUpdateSerializer(serializers.Serializer):

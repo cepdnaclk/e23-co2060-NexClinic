@@ -11,6 +11,9 @@ from .views import (
     MedicationReminderDetailView,
     MedicationLogView,
     MedicationLogDetailView,
+    PatientMedicalDocumentView,
+    PatientMedicalDocumentDetailView,
+    PatientMedicalDocumentDownloadView,
 )
 
 urlpatterns = [
@@ -25,4 +28,7 @@ urlpatterns = [
     path("reminders/<int:reminder_id>/", MedicationReminderDetailView.as_view(), name="patient-reminder-detail"),
     path("logs/", MedicationLogView.as_view(), name="patient-logs"),
     path("logs/<int:log_id>/", MedicationLogDetailView.as_view(), name="patient-log-detail"),
+    path("medical-documents/", PatientMedicalDocumentView.as_view(), name="patient-medical-documents"),
+    path("medical-documents/<int:document_id>/", PatientMedicalDocumentDetailView.as_view(), name="patient-medical-document-detail"),
+    path("medical-documents/<int:document_id>/download/", PatientMedicalDocumentDownloadView.as_view(), name="patient-medical-document-download"),
 ]

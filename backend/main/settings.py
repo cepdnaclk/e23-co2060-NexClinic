@@ -206,6 +206,7 @@ if USE_S3:
     AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "ap-south-1")
     AWS_PUBLIC_STORAGE_BUCKET_NAME = os.getenv("AWS_PUBLIC_STORAGE_BUCKET_NAME", "nexclinic-public")
     AWS_PRIVATE_STORAGE_BUCKET_NAME = os.getenv("AWS_PRIVATE_STORAGE_BUCKET_NAME", "nexclinic-private")
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
     
     # We no longer set DEFAULT_FILE_STORAGE here because we will explicitly
     # assign `storage=public_storage` or `storage=private_storage` on our models
@@ -370,6 +371,11 @@ CELERY_BEAT_SCHEDULE = {
     "expire_past_appointments_every_hour": {
         "task": "doctor.tasks.expire_past_appointments",
         "schedule": crontab(minute=0), # Run every hour at minute 0
+        "args": (),
+    },
+    "generate_medication_reminders": {
+        "task": "patient.tasks.generate_medication_logs_and_notify",
+        "schedule": crontab(minute="*/15"), # Run every 15 minutes
         "args": (),
     },
 }

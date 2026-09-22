@@ -36,7 +36,8 @@ class AdviceChatThreadSerializer(serializers.ModelSerializer):
 		return obj.doctor.preferred_name or obj.doctor.full_name or "Doctor"
 
 	def get_patientName(self, obj):
-		return obj.patient.full_name or "Patient"
+		name = obj.patient.full_name or "Patient"
+		return f"{name} (ID: P-{obj.patient.id})"
 
 	def get_unreadCount(self, obj):
 		request = self.context.get("request")

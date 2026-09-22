@@ -28,9 +28,9 @@ function UserLogin() {
                     <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white text-center">
                         NexClinic
                     </h1>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5 text-center">
+                    {/* <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5 text-center">
                         Patient Portal Access
-                    </p>
+                    </p> */}
                 </div>
 
                 <UserLoginForm />

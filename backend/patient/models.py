@@ -38,19 +38,28 @@ class PatientProfile(models.Model):
         validators=[validate_public_file],
         storage=public_storage
     )
-    medical_reports = models.FileField(
-        upload_to="patient_reports/", null=True, blank=True,
-        validators=[validate_private_file],
-        storage=private_storage
-    )
-    medical_documents = models.FileField(
-        upload_to="patient_documents/", null=True, blank=True,
-        validators=[validate_private_file],
-        storage=private_storage
-    )
-
     def __str__(self):
         return f"{self.full_name} ({self.user.email})"
+
+
+class PatientMedicalDocument(models.Model):
+    patient = models.ForeignKey(
+        PatientProfile, on_delete=models.CASCADE, related_name="medical_documents"
+    )
+    file = models.FileField(
+        upload_to="patient_documents/",
+        validators=[validate_private_file],
+        storage=private_storage,
+    )
+    name = models.CharField(max_length=255, blank=True, default="")
+    description = models.TextField(blank=True, default="")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+
+    def __str__(self):
+        return self.name or f"Document {self.id} for {self.patient.full_name}"
 
 
 class PatientMedicalRecord(models.Model):
@@ -184,21 +193,31 @@ class MedicationLog(models.Model):
         SKIPPED = "SKIPPED", "Skipped"
 
     reminder = models.ForeignKey(
-        MedicationReminder, on_delete=models.CASCADE, related_name="logs"
+        MedicationReminder, on_delete=models.SET_NULL, related_name="logs", null=True, blank=True
     )
     patient = models.ForeignKey(
         PatientProfile, on_delete=models.CASCADE, related_name="medication_logs"
     )
+    medicine_name = models.CharField(max_length=255, blank=True)
+    dosage = models.CharField(max_length=255, blank=True)
     scheduled_for = models.DateTimeField()
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.PENDING
     )
     taken_at = models.DateTimeField(null=True, blank=True)
+    notification_sent = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-scheduled_for"]
         unique_together = ["reminder", "scheduled_for"]
 
+    def save(self, *args, **kwargs):
+        if self.reminder and not self.medicine_name:
+            self.medicine_name = self.reminder.medicine_name
+            self.dosage = self.reminder.dosage
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.reminder.medicine_name} at {self.scheduled_for} - {self.status}"
+        name = self.medicine_name or (self.reminder.medicine_name if self.reminder else "Unknown")
+        return f"{name} at {self.scheduled_for} - {self.status}"

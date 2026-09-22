@@ -150,7 +150,8 @@ function DoctorProfilePage() {
     const email = profileData?.doctor.email || "Not available";
     const phone = profileData?.doctor.phone || "Not available";
     const isVerified = profileData?.doctor.isVerified ?? false;
-    const profileImage = profileData?.doctor.profileImage || profileData?.doctor.photo;
+    const rawProfileImage = profileData?.doctor.profileImage || profileData?.doctor.photo;
+    const profileImage = (!rawProfileImage || rawProfileImage === "null") ? undefined : rawProfileImage;
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.16),_transparent_26%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)] pb-8">

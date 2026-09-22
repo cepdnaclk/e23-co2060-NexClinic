@@ -51,10 +51,11 @@ const WEEKDAYS = [
 ];
 
 export default function MedicationsPage() {
-  const [activeTab, setActiveTab] = useState<"library" | "tracker">("library");
+  const [activeTab, setActiveTab] = useState<"library" | "tracker" | "past">("library");
 
   const [medications, setMedications] = useState<Medication[]>([]);
   const [logs, setLogs] = useState<MedLog[]>([]);
+  const [pastLogs, setPastLogs] = useState<MedLog[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
 
   // Library Form state
@@ -71,6 +72,8 @@ export default function MedicationsPage() {
   const [reminderTimes, setReminderTimes] = useState<string[]>(["08:00"]);
   const [durationDays, setDurationDays] = useState<number | "">("");
   const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+  const [intervalHours, setIntervalHours] = useState<number | null>(null);
+  const [intervalStartTime, setIntervalStartTime] = useState<string>("08:00");
   const [isSubmittingReminder, setIsSubmittingReminder] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -111,8 +114,20 @@ export default function MedicationsPage() {
     }
   };
 
+  const fetchPastLogs = async () => {
+    try {
+      const response = await fetch("/api/patient/logs/?status=TAKEN");
+      if (response.ok) {
+        const data = await response.json();
+        setPastLogs(data.logs);
+      }
+    } catch (error) {
+      console.error("Failed to fetch past logs", error);
+    }
+  };
+
   useEffect(() => {
-    Promise.all([fetchMedications(), fetchLogs(), fetchReminders()]).finally(() => {
+    Promise.all([fetchMedications(), fetchLogs(), fetchReminders(), fetchPastLogs()]).finally(() => {
       setIsLoading(false);
     });
   }, []);
@@ -214,17 +229,24 @@ export default function MedicationsPage() {
     }
   };
 
-  const markLogAsTaken = async (logId: number) => {
+  const toggleLogStatus = async (logId: number, currentStatus: string) => {
     try {
+      const newStatus = currentStatus === "TAKEN" ? "PENDING" : "TAKEN";
+      const payload: any = { status: newStatus };
+      if (newStatus === "PENDING") {
+        payload.taken_at = null;
+      }
+
       const response = await fetch(`/api/patient/logs/${logId}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "TAKEN" }),
+        body: JSON.stringify(payload),
       });
       if (response.ok) {
         const updatedLog = await response.json();
         setLogs(prev => prev.map(log => log.id === logId ? updatedLog : log));
-        toast.success("Marked as taken!");
+        fetchPastLogs();
+        toast.success(newStatus === "TAKEN" ? "Marked as taken!" : "Unmarked as taken");
       }
     } catch (error) {
       toast.error("Failed to update status");
@@ -284,18 +306,82 @@ export default function MedicationsPage() {
     }
   };
 
+  const generateIntervalTimes = (start: string, interval: number): string[] => {
+    if (!start || isNaN(interval) || interval <= 0) return [start || "08:00"];
+    const times: string[] = [];
+    const [startH, startM] = start.split(":").map(Number);
+    
+    const count = Math.floor(24 / interval);
+    for (let i = 0; i < count; i++) {
+      const h = (startH + (i * interval)) % 24;
+      times.push(`${h.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`);
+    }
+    return times.length > 0 ? times : [start];
+  };
+
+  const parseFrequency = (frequency: string): { times: string[], interval?: number } => {
+    if (!frequency) return { times: ["08:00"] };
+    const freq = frequency.toLowerCase();
+    
+    const intervalMatch = freq.match(/every\s+(\d+)\s*(hour|hr|h)s?/);
+    if (intervalMatch) {
+      const interval = parseInt(intervalMatch[1]);
+      if (interval > 0 && interval <= 24) {
+        return { times: generateIntervalTimes("08:00", interval), interval };
+      }
+    }
+    
+    if (freq.includes("four") || freq.includes("4")) {
+      return { times: ["08:00", "12:00", "16:00", "20:00"] };
+    } else if (freq.includes("thrice") || freq.includes("three") || freq.includes("3")) {
+      return { times: ["08:00", "14:00", "20:00"] };
+    } else if (freq.includes("twice") || freq.includes("two") || freq.includes("2")) {
+      return { times: ["08:00", "20:00"] };
+    }
+    
+    return { times: ["08:00"] };
+  };
+
   const openReminderModal = (med: Medication) => {
     setSelectedMed(med);
-    setReminderTimes(["08:00"]);
-
-    // Auto-fill duration if we can parse it from string
-    setDurationDays("");
-    if (med.duration) {
-      const num = parseInt(med.duration);
-      if (!isNaN(num)) setDurationDays(num);
+    const parsed = parseFrequency(med.frequency);
+    setReminderTimes(parsed.times);
+    
+    if (parsed.interval) {
+      setIntervalHours(parsed.interval);
+      setIntervalStartTime("08:00");
+    } else {
+      setIntervalHours(null);
+      setIntervalStartTime("08:00");
     }
 
-    setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
+    // Auto-fill duration and selected days
+    setDurationDays("");
+    let initialSelectedDays = [0, 1, 2, 3, 4, 5, 6];
+
+    if (med.duration) {
+      const num = parseInt(med.duration);
+      if (!isNaN(num) && num > 0) {
+        setDurationDays(num);
+        // If duration is less than a week, only select those specific days
+        if (num < 7) {
+          const startDate = med.created_at ? new Date(med.created_at) : new Date();
+          // Map JS getDay() (0=Su, 1=Mo) to our WEEKDAYS val (0=Mo, 6=Su)
+          const startDayVal = (startDate.getDay() + 6) % 7;
+          
+          initialSelectedDays = [];
+          for (let i = 0; i < num; i++) {
+            const dayVal = (startDayVal + i) % 7;
+            if (!initialSelectedDays.includes(dayVal)) {
+              initialSelectedDays.push(dayVal);
+            }
+          }
+          initialSelectedDays.sort();
+        }
+      }
+    }
+
+    setSelectedDays(initialSelectedDays);
     setIsReminderModalOpen(true);
   };
 
@@ -363,6 +449,16 @@ export default function MedicationsPage() {
                 >
                   <CalendarCheck size={16} />
                   Daily Tracker
+                </button>
+                <button
+                  onClick={() => setActiveTab("past")}
+                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${activeTab === "past"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    }`}
+                >
+                  <Clock size={16} />
+                  Past Medications
                 </button>
               </div>
             </div>
@@ -540,8 +636,7 @@ export default function MedicationsPage() {
                     >
                       <div className="flex items-center gap-4">
                         <button
-                          onClick={() => log.status !== "TAKEN" && markLogAsTaken(log.id)}
-                          disabled={log.status === "TAKEN"}
+                          onClick={() => toggleLogStatus(log.id, log.status)}
                           className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${log.status === "TAKEN"
                               ? "bg-green-500 text-white"
                               : "bg-slate-100 text-slate-400 hover:bg-green-100 hover:text-green-500 dark:bg-slate-700"
@@ -652,6 +747,67 @@ export default function MedicationsPage() {
 
           </div>
         )}
+
+        {activeTab === "past" && (
+          <div className="space-y-6">
+            <div className="rounded-[1.75rem] border border-green-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Past Medications</h2>
+                <p className="mt-1 text-slate-500 dark:text-slate-400">History of all medications you have taken.</p>
+              </div>
+
+              {isLoading ? (
+                <div className="animate-pulse space-y-4">
+                  {[1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>)}
+                </div>
+              ) : pastLogs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-center p-8">
+                  <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-4 mb-4">
+                    <Clock className="text-slate-400 dark:text-slate-500" size={32} />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">No past medications</h3>
+                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-sm">
+                    Medications you mark as taken in your Daily Tracker will appear here.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pastLogs.map((log) => {
+                    const name = log.reminder?.medicine_name || (log as any).medicine_name || "Unknown Medication";
+                    const dosage = log.reminder?.dosage || (log as any).dosage || "";
+                    return (
+                      <div
+                        key={log.id}
+                        className="flex items-center justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-5 transition-all hover:border-green-200 dark:hover:border-green-800"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-500 dark:bg-green-900/30">
+                            <CheckCircle2 size={24} />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                              {name} <span className="text-sm font-normal text-slate-500">({dosage})</span>
+                            </h3>
+                            <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-1">
+                              <CalendarCheck size={14} />
+                              Scheduled for {new Date(log.scheduled_for).toLocaleDateString()} at {formatTime(log.scheduled_for)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {log.taken_at && (
+                          <div className="text-right text-sm text-green-600 dark:text-green-400 font-medium">
+                            Taken {new Date(log.taken_at).toLocaleDateString()} <br /> at {formatTime(log.taken_at)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Reminder Setup Modal */}
@@ -706,6 +862,32 @@ export default function MedicationsPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Notification Times</label>
+                
+                {intervalHours && (
+                  <div className="mb-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50">
+                    <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">
+                      Interval Schedule (Every {intervalHours} hours)
+                    </h4>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <label className="block text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">Starting Time</label>
+                        <input
+                          type="time"
+                          value={intervalStartTime}
+                          onChange={(e) => {
+                            setIntervalStartTime(e.target.value);
+                            setReminderTimes(generateIntervalTimes(e.target.value, intervalHours));
+                          }}
+                          className="w-full rounded-lg border border-blue-200 dark:border-blue-700/50 bg-white dark:bg-slate-800 dark:text-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-1"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                      Changing the starting time will automatically update the notification times below.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {reminderTimes.map((time, idx) => (
                     <div key={idx} className="flex items-center gap-2">
