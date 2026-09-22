@@ -348,16 +348,22 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 
 # Channels configuration
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-        # Uncomment the following to use Redis once you have Redis running:
-        # "BACKEND": "channels_redis.core.RedisChannelLayer",
-        # "CONFIG": {
-        #     "hosts": [os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0').replace('/0', '/1')],
-        # },
+# Use Redis in production, otherwise fallback to InMemory for local development
+if os.getenv("RENDER") or os.getenv("USE_REDIS_CHANNELS"):
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0').replace('/0', '/1')],
+            },
+        }
     }
-}
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
 
 # Schedule: weekly regeneration of slots (run every Monday at 02:00)
 from celery.schedules import crontab
@@ -375,7 +381,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "generate_medication_reminders": {
         "task": "patient.tasks.generate_medication_logs_and_notify",
-        "schedule": crontab(minute="*/15"), # Run every 15 minutes
+        "schedule": crontab(minute="*/5"), # Run every 5 minutes
         "args": (),
     },
 }
