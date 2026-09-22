@@ -182,7 +182,7 @@ export default function UserDashboard() {
   const sortedAppointments = useMemo(() => {
     return [...appointments]
       .sort((a, b) =>
-        `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
+        `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`),
       )
       .map((item) => ({
         id: item.id,
@@ -194,7 +194,22 @@ export default function UserDashboard() {
       }));
   }, [appointments]);
 
-  const nextAppointment = sortedAppointments[0];
+  const nextAppointment = useMemo(() => {
+    const upcoming = appointments.filter((a) => a.category === "upcoming");
+    if (upcoming.length === 0) return null;
+    
+    upcoming.sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+    
+    const item = upcoming[0];
+    return {
+      id: item.id,
+      doctor: item.doctorName,
+      status: item.status,
+      statusClass: statusTheme(item.status),
+      type: item.type || "Consultation",
+      time: `${item.date} - ${item.time}`,
+    };
+  }, [appointments]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white">
