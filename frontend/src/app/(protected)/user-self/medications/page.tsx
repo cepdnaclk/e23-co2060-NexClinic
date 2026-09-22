@@ -429,7 +429,7 @@ export default function MedicationsPage() {
               </div>
 
               {/* Tab Switcher */}
-              <div className="flex rounded-xl bg-slate-100/80 dark:bg-slate-800/80 p-1 backdrop-blur-sm">
+              <div className="flex w-full overflow-x-auto sm:w-auto rounded-xl bg-slate-100/80 dark:bg-slate-800/80 p-1 backdrop-blur-sm scrollbar-hide">
                 <button
                   onClick={() => setActiveTab("library")}
                   className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${activeTab === "library"
@@ -520,13 +520,13 @@ export default function MedicationsPage() {
                         <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-2">{date}</h3>
                         {meds.map((med) => (
                           <div key={med.id} className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 transition-all hover:border-green-200 dark:hover:border-green-500/50 hover:shadow-md">
-                            <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-4">
+                            <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                          <div className="flex items-start gap-4 w-full">
                             <div className="rounded-xl bg-green-50 dark:bg-green-900/30 p-3 text-green-600 dark:text-green-400">
                               <Pill size={24} />
                             </div>
                             <div>
-                              <div className="flex items-center gap-3">
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">{med.name}</h3>
                                 <span className="rounded-full bg-slate-100 dark:bg-slate-700 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
                                   {med.dosage}
@@ -564,7 +564,7 @@ export default function MedicationsPage() {
                             </div>
                           </div>
 
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0 justify-end sm:justify-start">
                             {!med.is_prescription && (
                               <button
                                 onClick={() => removeMedication(med.id)}
@@ -629,12 +629,12 @@ export default function MedicationsPage() {
                   {logs.map((log) => (
                     <div
                       key={log.id}
-                      className={`flex items-center justify-between overflow-hidden rounded-2xl border p-5 transition-all ${log.status === "TAKEN"
+                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 overflow-hidden rounded-2xl border p-5 transition-all ${log.status === "TAKEN"
                           ? "border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-900/10"
                           : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
                         }`}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-start sm:items-center gap-4 w-full">
                         <button
                           onClick={() => toggleLogStatus(log.id, log.status)}
                           className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${log.status === "TAKEN"
@@ -656,7 +656,7 @@ export default function MedicationsPage() {
                       </div>
 
                       {log.status === "TAKEN" && log.taken_at && (
-                        <div className="text-right text-sm text-green-600 dark:text-green-400 font-medium">
+                        <div className="text-left sm:text-right text-sm text-green-600 dark:text-green-400 font-medium sm:ml-auto pl-14 sm:pl-0">
                           Taken at {formatTime(log.taken_at)}
                         </div>
                       )}
@@ -711,8 +711,8 @@ export default function MedicationsPage() {
 
                         <div className="space-y-3">
                           {reminder.schedule_times.map((schedule, idx) => (
-                            <div key={idx} className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-slate-900 p-3">
-                              <div className="flex items-center gap-3">
+                            <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-slate-900 p-3">
+                              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                                 <Clock size={16} className={schedule.is_active ? 'text-green-500' : 'text-slate-400'} />
                                 <span className={`font-semibold ${schedule.is_active ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 line-through'}`}>
                                   {schedule.time}
@@ -727,7 +727,7 @@ export default function MedicationsPage() {
                               </div>
                               <button
                                 onClick={() => toggleReminderTime(reminder, idx)}
-                                className={`p-1.5 rounded-lg transition-colors ${schedule.is_active
+                                className={`p-1.5 rounded-lg transition-colors flex-shrink-0 self-end sm:self-auto ${schedule.is_active
                                     ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-400'
                                     : 'bg-slate-200 text-slate-500 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-400'
                                   }`}
@@ -778,9 +778,9 @@ export default function MedicationsPage() {
                     return (
                       <div
                         key={log.id}
-                        className="flex items-center justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-5 transition-all hover:border-green-200 dark:hover:border-green-800"
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-5 transition-all hover:border-green-200 dark:hover:border-green-800"
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-start sm:items-center gap-4 w-full">
                           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-500 dark:bg-green-900/30">
                             <CheckCircle2 size={24} />
                           </div>
@@ -796,8 +796,11 @@ export default function MedicationsPage() {
                         </div>
 
                         {log.taken_at && (
-                          <div className="text-right text-sm text-green-600 dark:text-green-400 font-medium">
-                            Taken {new Date(log.taken_at).toLocaleDateString()} <br /> at {formatTime(log.taken_at)}
+                          <div className="text-left sm:text-right text-sm text-green-600 dark:text-green-400 font-medium sm:ml-auto pl-14 sm:pl-0">
+                            Taken {new Date(log.taken_at).toLocaleDateString()} <br className="hidden sm:block" />
+                            <span className="sm:hidden"> at </span>
+                            <span className="hidden sm:inline">at </span>
+                            {formatTime(log.taken_at)}
                           </div>
                         )}
                       </div>

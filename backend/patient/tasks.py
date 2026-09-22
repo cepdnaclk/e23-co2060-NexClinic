@@ -55,8 +55,8 @@ def generate_medication_logs_and_notify():
             except ValueError:
                 pass
 
-    # 2. Check for upcoming pending medications within the next 30 minutes
-    time_threshold = now + timedelta(minutes=30)
+    # 2. Check for upcoming pending medications within the next 60 minutes
+    time_threshold = now + timedelta(minutes=60)
     
     upcoming_logs = MedicationLog.objects.filter(
         status=MedicationLog.Status.PENDING,
