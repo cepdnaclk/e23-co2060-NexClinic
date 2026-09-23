@@ -9,8 +9,10 @@ from .serializers import (
     HospitalSerializer,
     HospitalAdminProfileSerializer,
     HospitalAppointmentSerializer,
+    HospitalAdminPatientProfileSerializer,
 )
 from doctor.models import Appointment, AppointmentAvailableSlot
+from patient.models import PatientProfile
 from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 from django.db import transaction
@@ -834,3 +836,76 @@ class HospitalAppointmentCancelView(APIView):
             {"detail": "Appointment cancelled successfully."},
             status=status.HTTP_200_OK,
         )
+
+
+class HospitalAdminPatientProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+            
+        patient = get_object_or_404(PatientProfile, id=patient_id)
+        
+        has_appointment = Appointment.objects.filter(
+            patient=patient, hospital=admin_role.hospital
+        ).exists()
+        
+        if not has_appointment:
+            return Response({"detail": "You do not have permission to view this patient."}, status=status.HTTP_403_FORBIDDEN)
+            
+        serializer = HospitalAdminPatientProfileSerializer(patient)
+        return Response(serializer.data)
+
+
+class HospitalAdminPatientLogsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+            
+        patient = get_object_or_404(PatientProfile, id=patient_id)
+        
+        has_appointment = Appointment.objects.filter(
+            patient=patient, hospital=admin_role.hospital
+        ).exists()
+        
+        if not has_appointment:
+            return Response({"detail": "You do not have permission to view this patient."}, status=status.HTTP_403_FORBIDDEN)
+            
+        logs = ActivityLog.objects.filter(
+            hospital_id=admin_role.hospital.id,
+            user=patient.user
+        ).order_by("-created_at")[:500]
+        
+        serializer = ActivityLogSerializer(logs, many=True)
+        return Response(serializer.data)
+
+
+class HospitalAdminPatientAppointmentsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+            
+        patient = get_object_or_404(PatientProfile, id=patient_id)
+        
+        has_appointment = Appointment.objects.filter(
+            patient=patient, hospital=admin_role.hospital
+        ).exists()
+        
+        if not has_appointment:
+            return Response({"detail": "You do not have permission to view this patient."}, status=status.HTTP_403_FORBIDDEN)
+            
+        appointments = Appointment.objects.filter(
+            hospital=admin_role.hospital,
+            patient=patient
+        ).order_by("-slot__date", "-slot__start_time")
+        
+        serializer = HospitalAppointmentSerializer(appointments, many=True)
+        return Response(serializer.data)
