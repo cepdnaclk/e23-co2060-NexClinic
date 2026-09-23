@@ -29,11 +29,13 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
     appointmentFee = serializers.FloatField(source="appointment_fee", read_only=True)
     cancellationReason = serializers.CharField(source="cancellation_reason", read_only=True)
     cancelledBy = serializers.CharField(source="cancelled_by", read_only=True)
+    queueNumber = serializers.IntegerField(source="queue_number", read_only=True)
 
     class Meta:
         model = Appointment
         fields = [
             "id",
+            "queueNumber",
             "slotId",
             "doctorId",
             "doctorName",

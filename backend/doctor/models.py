@@ -173,6 +173,15 @@ class Appointment(models.Model):
         self.full_clean()  # This will call the clean() method to validate the model
         super().save(*args, **kwargs)
 
+    @property
+    def queue_number(self):
+        if not self.id:
+            return None
+        return Appointment.objects.filter(
+            slot=self.slot,
+            id__lte=self.id
+        ).count()
+
     def __str__(self):
         return f"Appointment for {self.patient.full_name} with {self.doctor.preferred_name} on {self.slot.date} from {self.slot.start_time} to {self.slot.end_time} - Status: {self.status}"    
     

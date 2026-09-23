@@ -1,5 +1,6 @@
 export interface Appointment {
     id: string;
+    queueNumber?: number;
     slotId: string;
     doctorId: string;
     doctorName: string;

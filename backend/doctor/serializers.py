@@ -386,11 +386,13 @@ class DoctorAppointmentSerializer(serializers.ModelSerializer):
     requestedAt = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
+    queueNumber = serializers.IntegerField(source="queue_number", read_only=True)
 
     class Meta:
         model = Appointment
         fields = [
             "id",
+            "queueNumber",
             "patientId",
             "patientName",
             "patientAge",
