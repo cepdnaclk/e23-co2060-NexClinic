@@ -100,7 +100,7 @@ function VerifyOtpPageContent() {
             </div>
             <div className="flex w-[320px] flex-col gap-4 rounded-xl bg-white p-6 shadow-md">
                 <div className="text-center text-2xl font-bold text-gray-900">
-                    <p>Verify Your Email</p>
+                    <p>Verify Your Account (Email/SMS)</p>
                 </div>
                 <form className="flex flex-col gap-4" onSubmit={handleVerify}>
                     <input

@@ -163,7 +163,7 @@ function UserLoginForm() {
                     {showOtpField ? "Secure Verification" : "Welcome Back"}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {showOtpField ? "We sent a code to your registered email" : "Please sign in to your account"}
+                    {showOtpField ? "We sent a code to your registered email and mobile number (SMS)" : "Please sign in to your account"}
                 </p>
             </div>
 

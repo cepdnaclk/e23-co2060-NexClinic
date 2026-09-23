@@ -25,7 +25,7 @@ from django.core.exceptions import ValidationError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.encoding import force_str, force_bytes
 from .models import PendingUser, UserOTP
-from .utils import generate_otp, hash_otp, send_otp_email, send_admin_notification_email, verify_otp
+from .utils import generate_otp, hash_otp, send_otp_email, send_admin_notification_email, verify_otp, send_otp_sms
 from notifications.mail_utils import send_templated_email
 
 from django.utils import timezone
@@ -136,6 +136,8 @@ class PatientLoginView(APIView):
         try:
             send_otp_email(user.email, otp_code)
             logger.info('patient_login.otp_sent email=%s', user.email)
+            if hasattr(user, 'patient_profile') and user.patient_profile.phone:
+                send_otp_sms(user.patient_profile.phone, otp_code)
         except Exception as e:
             logger.error('patient_login.otp_email_failed email=%s error=%s', user.email, str(e))
             return Response({'error': 'Unable to send OTP email. Please try again later.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -265,6 +267,8 @@ class LoginResendOTPView(APIView):
         try:
             send_otp_email(user.email, otp_code)
             logger.info('patient_login.otp_resent email=%s', user.email)
+            if hasattr(user, 'patient_profile') and user.patient_profile.phone:
+                send_otp_sms(user.patient_profile.phone, otp_code)
         except Exception as e:
             logger.error('patient_login.otp_resend_failed email=%s error=%s', user.email, str(e))
             return Response({'error': 'Unable to send OTP email. Please try again later.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -472,6 +476,8 @@ class ResendOTPView(APIView):
         pending_user.expires_at = timezone.now() + timezone.timedelta(minutes=10)
         try:
             send_otp_email(pending_user.email, otp_code)
+            if pending_user.profile_data and pending_user.profile_data.get('phone'):
+                send_otp_sms(pending_user.profile_data.get('phone'), otp_code)
         except Exception:
             return Response(
                 {'error': 'Unable to send OTP email at the moment. Please try again later.'},

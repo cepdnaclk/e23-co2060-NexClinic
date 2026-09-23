@@ -4,6 +4,7 @@ import logging
 from notifications.mail_utils import send_templated_email
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,37 @@ def send_otp_email(email, otp):
         recipients=[email],
         fail_silently=False,
     )
+
+def send_otp_sms(phone, otp):
+    if not phone or phone == 'Unknown':
+        return False
+        
+    api_token = getattr(settings, 'TEXT_LK_API_TOKEN', None)
+    sender_id = getattr(settings, 'TEXT_LK_SENDER_ID', '')
+    
+    if not api_token:
+        return False
+        
+    try:
+        url = "https://app.text.lk/api/http/sms/send"
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "api_token": api_token,
+            "recipient": phone,
+            "sender_id": sender_id,
+            "type": "plain",
+            "message": f"Your NexClinic OTP is: {otp}. It is valid for 10 minutes."
+        }
+        response = requests.post(url, headers=headers, json=payload, timeout=5)
+        response.raise_for_status()
+        logger.info('send_otp_sms.success phone=%s', phone)
+        return True
+    except Exception as e:
+        logger.error('send_otp_sms.error phone=%s error=%s', phone, str(e))
+        return False
 
 
 def send_doctor_account_credentials_email(email, password, doctor_name):

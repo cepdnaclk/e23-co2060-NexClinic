@@ -51,9 +51,9 @@ def process_notification_delivery(notification_id):
         except Exception as e:
             email_status = f"Email failed ({e})"
             
-        # 2. SMS Fallback for critical notifications
+        # 2. SMS Fallback for critical notifications and medication reminders
         sms_status = "Not applicable"
-        if is_critical:
+        if is_critical or notification.notification_type == Notification.NotificationType.MEDICATION_REMINDER:
             phone = getattr(recipient, 'phone', 'Unknown')
             if hasattr(recipient, 'doctor_profile'):
                 phone = recipient.doctor_profile.phone
