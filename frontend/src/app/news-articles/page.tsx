@@ -19,7 +19,7 @@ interface NewsArticle {
     readTime: string;
 }
 
-const API_KEY = '3ad27a1f2e6ec9457e36de238ce09fcf';
+const API_KEY = 'c580d271da8e8ba099b5e907a594a12f';
 
 export default function NewsArticlesPage() {
     const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -145,11 +145,10 @@ export default function NewsArticlesPage() {
                                                 <button
                                                     key={index}
                                                     onClick={() => setSpotlightIndex(index)}
-                                                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                                                        index === spotlightIndex
+                                                    className={`h-1.5 rounded-full transition-all duration-300 ${index === spotlightIndex
                                                             ? 'w-4 bg-emerald-500'
                                                             : 'w-1.5 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600'
-                                                    }`}
+                                                        }`}
                                                     aria-label={`Go to spotlight ${index + 1}`}
                                                 />
                                             ))}
