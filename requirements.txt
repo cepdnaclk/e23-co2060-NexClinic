@@ -23,7 +23,7 @@ cryptography==49.0.0
 daphne==4.0.0
 dj-database-url==3.1.2
 Django==6.0.1
-django-anymail[resend]==15.0
+django-anymail[brevo]==15.0
 django-cors-headers==4.3.1
 django-filter==25.2
 djangorestframework==3.16.1
