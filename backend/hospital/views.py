@@ -838,6 +838,21 @@ class HospitalAppointmentCancelView(APIView):
         )
 
 
+class HospitalAdminPatientListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+            
+        # Get unique patients who have booked appointments at this hospital
+        patients = PatientProfile.objects.filter(appointments__hospital=admin_role.hospital).distinct()
+        
+        serializer = HospitalAdminPatientProfileSerializer(patients, many=True)
+        return Response(serializer.data)
+
+
 class HospitalAdminPatientProfileView(APIView):
     permission_classes = [IsAuthenticated]
 

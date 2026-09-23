@@ -86,6 +86,15 @@ export default function HospitalNavBar() {
                 Doctors
               </Link>
               <Link
+                href="/hospital/patients"
+                className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/patients")
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
+                  }`}
+              >
+                Patients
+              </Link>
+              <Link
                 href="/hospital/slots"
                 className={`relative px-4 py-2 rounded-xl transition-all duration-200 ${isActive("/hospital/slots")
                     ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
@@ -210,6 +219,15 @@ export default function HospitalNavBar() {
                 }`}
             >
               Doctors
+            </Link>
+            <Link
+              href="/hospital/patients"
+              className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/hospital/patients")
+                  ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+            >
+              Patients
             </Link>
             <Link
               href="/hospital/slots"

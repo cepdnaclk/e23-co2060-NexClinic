@@ -40,6 +40,7 @@ interface AppointmentItem {
   department: string;
   statusLabel: string;
   status: string;
+  queueNumber?: number;
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -62,6 +63,7 @@ export default function PatientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"appointments" | "logs">("appointments");
+  const [logSearch, setLogSearch] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -136,6 +138,16 @@ export default function PatientDetailPage() {
   }
 
   if (!profile) return null;
+
+  const filteredLogs = logs.filter((log) => {
+    if (!logSearch.trim()) return true;
+    const q = logSearch.toLowerCase();
+    return (
+      formatAction(log.action).toLowerCase().includes(q) ||
+      log.model_name.toLowerCase().includes(q) ||
+      log.object_id.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -229,6 +241,7 @@ export default function PatientDetailPage() {
               <table className="w-full text-left text-sm text-slate-600">
                 <thead className="bg-slate-50/50 text-xs uppercase text-slate-500">
                   <tr>
+                    <th className="px-6 py-4 font-semibold">Queue No.</th>
                     <th className="px-6 py-4 font-semibold">Date & Time</th>
                     <th className="px-6 py-4 font-semibold">Doctor</th>
                     <th className="px-6 py-4 font-semibold">Department</th>
@@ -245,6 +258,15 @@ export default function PatientDetailPage() {
                   ) : (
                     appointments.map((appt) => (
                       <tr key={appt.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {appt.queueNumber ? (
+                            <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-sm">
+                              {appt.queueNumber}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-sm">-</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="font-medium text-slate-900">{appt.appointmentDate}</div>
                           <div className="text-slate-500 text-xs mt-0.5">{appt.appointmentTime}</div>
@@ -270,8 +292,18 @@ export default function PatientDetailPage() {
           )}
 
           {activeTab === "logs" && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
+            <div className="flex flex-col">
+              <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
+                <input
+                  type="text"
+                  placeholder="Search logs by action, record type, or record ID..."
+                  value={logSearch}
+                  onChange={(e) => setLogSearch(e.target.value)}
+                  className="w-full max-w-md rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-600">
                 <thead className="bg-slate-50/50 text-xs uppercase text-slate-500">
                   <tr>
                     <th className="px-6 py-4 font-semibold">Time</th>
@@ -281,14 +313,14 @@ export default function PatientDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {logs.length === 0 ? (
+                  {filteredLogs.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
-                        No activity logs found for this patient.
+                        {logSearch ? "No activity logs match your search." : "No activity logs found for this patient."}
                       </td>
                     </tr>
                   ) : (
-                    logs.map((log) => (
+                    filteredLogs.map((log) => (
                       <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           {new Date(log.created_at).toLocaleString()}
@@ -307,6 +339,7 @@ export default function PatientDetailPage() {
                   )}
                 </tbody>
               </table>
+            </div>
             </div>
           )}
         </div>
