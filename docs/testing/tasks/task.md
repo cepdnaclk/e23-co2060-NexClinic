@@ -1,0 +1,30 @@
+# NexClinic QA Testing Tasks
+
+- `[/]` Phase 2: Test Infrastructure & Test Data
+  - `[x]` Generate test data plan and get user approval
+  - `[ ]` Configure backend for Google SMTP (based on user feedback)
+  - `[ ]` Ensure Django `TestCase` is fully set up
+  - `[ ]` Ensure Playwright is configured properly on the frontend
+  - `[ ]` Create testing directories (`docs/testing/`)
+- `[ ]` Phase 3: Backend Tests
+  - `[ ]` Implement Authentication tests
+  - `[ ]` Implement API validation tests
+  - `[ ]` Implement RBAC & Authorization tests
+  - `[ ]` Implement Appointment Lifecycle tests
+  - `[ ]` Implement Payment Lifecycle tests
+  - `[ ]` Implement File Uploads tests
+- `[x]` Phase 4: Frontend E2E Tests (Playwright)
+  - `[x]` Configure playwright.config.ts for Mobile Chrome, Edge, and Chromium
+  - `[x]` Implement Patient Workflow E2E
+  - `[x]` Implement Doctor Workflow E2E
+  - `[x]` Generate comprehensive test documentation and artifact (`e2e_test_report.md`)
+- `[ ]` Phase 5: Security Testing
+  - `[ ]` Test for IDOR/BOLA
+  - `[ ]` Test token validation
+  - `[x]` Audit dependencies
+- `[ ]` Phase 6: Performance & Load Testing
+  - `[ ]` Create k6 scripts for core flows
+  - `[ ]` Execute k6 load tests
+- `[ ]` Phase 7: Final Regression & Reporting
+  - `[ ]` Re-run all suites
+  - `[ ]` Generate final reports

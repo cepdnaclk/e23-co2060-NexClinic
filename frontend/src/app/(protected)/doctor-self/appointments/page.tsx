@@ -27,6 +27,7 @@ type AppointmentItem = {
   requestedAt: string;
   status: AppointmentStatus;
   category: AppointmentItemCategory;
+  queueNumber?: number;
 };
 
 type AppointmentSlot = {
@@ -40,6 +41,7 @@ type AppointmentSlot = {
 type ApiAppointment = Omit<AppointmentItem, "id" | "patientId"> & {
   id: string | number;
   patientId: string | number;
+  queueNumber?: number;
 };
 
 type PatientProfile = {
@@ -1522,7 +1524,9 @@ function DoctorAppointmentsPage() {
                   </div>
                   <div className="bg-white rounded-xl p-3 border border-emerald-100 cursor-pointer hover:border-emerald-300 transition shadow-sm" onClick={() => setSelectedAppointmentId(nextUp.id)}>
                     <div className="flex justify-between items-start mb-1">
-                      <p className="font-bold text-slate-900 truncate pr-2">{nextUp.patientName}</p>
+                      <p className="font-bold text-slate-900 truncate pr-2">
+                        {nextUp.patientName} {nextUp.queueNumber ? <span className="text-emerald-600 font-mono">#{nextUp.queueNumber}</span> : ''}
+                      </p>
                     </div>
                     <p className="text-sm text-slate-500">{nextUp.date} • {formatTimeForDisplay(nextUp.time)}</p>
                   </div>
@@ -1547,7 +1551,9 @@ function DoctorAppointmentsPage() {
                         className={`w-full text-left p-4 rounded-[1.5rem] border transition ${isSelected ? 'border-emerald-400 bg-emerald-50 ring-2 ring-emerald-100 shadow-md' : 'border-slate-200 bg-white hover:border-emerald-200 shadow-sm'}`}
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <p className="font-semibold text-slate-900 truncate">{appt.patientName}</p>
+                          <p className="font-semibold text-slate-900 truncate">
+                            {appt.patientName} {appt.queueNumber ? <span className="text-emerald-600 font-mono">#{appt.queueNumber}</span> : ''}
+                          </p>
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${appt.status === "Completed" ? 'bg-slate-200 text-slate-600' : appt.status === "Accepted" ? 'bg-emerald-100 text-emerald-700' : appt.status === "Expired" || appt.status === "EXPIRED" ? 'bg-gray-100 text-gray-600' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
                         </div>
                         <p className="text-sm text-slate-500">{appt.date} • {formatTimeForDisplay(appt.time)}</p>
@@ -1580,7 +1586,9 @@ function DoctorAppointmentsPage() {
                  <div className="rounded-[2rem] border border-white/80 bg-white p-6 md:p-8 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-start border-b border-emerald-100 pb-6 mb-6 gap-4">
                       <div>
-                        <h2 className="text-3xl font-bold text-slate-900">{selected.patientName}</h2>
+                        <h2 className="text-3xl font-bold text-slate-900">
+                          {selected.patientName} {selected.queueNumber ? <span className="text-2xl text-emerald-600 font-mono">#{selected.queueNumber}</span> : ''}
+                        </h2>
                         <p className="mt-2 text-slate-500 font-medium text-lg">{selected.date} at {formatTimeForDisplay(selected.time)}</p>
                         <p className="mt-1 text-slate-500 text-sm">{selected.location}</p>
                       </div>

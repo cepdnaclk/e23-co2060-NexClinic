@@ -58,6 +58,7 @@ ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", ["*"])
 # Fixes 403 Forbidden errors when submitting forms behind a proxy like Railway
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CSRF_TRUSTED_ORIGINS = _env_list("DJANGO_CSRF_TRUSTED_ORIGINS", [])
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")
 
 # Application definition
 

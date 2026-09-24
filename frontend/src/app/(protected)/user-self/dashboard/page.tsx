@@ -23,6 +23,7 @@ type DashboardAppointment = {
   status: string;
   category: "upcoming" | "previous";
   requestedAt: string;
+  queueNumber?: number;
 };
 
 type AppointmentsPayload = {
@@ -467,9 +468,14 @@ export default function UserDashboard() {
                     className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 transition hover:border-green-200 hover:bg-green-50/50"
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="break-words font-semibold text-slate-900">
-                        {appointment.doctor}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="break-words font-semibold text-slate-900">
+                          {appointment.doctor}
+                        </p>
+                        <span className="font-mono text-sm font-semibold text-emerald-600">
+                          {appointment.queueNumber ? `(Queue #${appointment.queueNumber})` : ''}
+                        </span>
+                      </div>
                       <span
                         className={`w-max rounded-full border px-3 py-1 text-xs font-semibold ${appointment.statusClass}`}
                       >

@@ -27,6 +27,7 @@ interface AppointmentItem {
   status: string;
   cancellationReason?: string;
   cancelledBy?: string;
+  queueNumber?: number;
 }
 
 const statusStyles: Record<string, string> = {
@@ -416,7 +417,7 @@ export default function HospitalAppointmentsPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="font-semibold text-slate-900">
-                        {appointment.patientName}
+                        {appointment.patientName} {appointment.queueNumber ? <span className="text-emerald-600 font-mono">#{appointment.queueNumber}</span> : ''}
                       </div>
                     </td>
                     <td className="px-4 py-4 font-medium text-slate-600">
@@ -545,9 +546,14 @@ export default function HospitalAppointmentsPage() {
               >
                 {selectedAppointment.status === "EXPIRED" ? "Expired" : selectedAppointment.statusLabel}
               </span>
-              <span className="text-xs font-medium text-slate-500">
-                ID: #{selectedAppointment.id}
-              </span>
+              <div className="text-right flex flex-col items-end">
+                <span className="text-sm font-bold text-emerald-600 font-mono">
+                  {selectedAppointment.queueNumber ? `Queue: #${selectedAppointment.queueNumber}` : 'Queue: N/A'}
+                </span>
+                <span className="text-xs font-medium text-slate-500">
+                  ID: #{selectedAppointment.id}
+                </span>
+              </div>
             </div>
 
             {/* Patient Info Card */}

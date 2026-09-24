@@ -12,9 +12,12 @@ def restore_missing_file_columns(apps, schema_editor):
         }
 
     for field_name in ("medical_documents", "medical_reports"):
-        field = profile._meta.get_field(field_name)
-        if field.column not in existing_columns:
-            schema_editor.add_field(profile, field)
+        try:
+            field = profile._meta.get_field(field_name)
+            if hasattr(field, 'column') and field.column not in existing_columns:
+                schema_editor.add_field(profile, field)
+        except Exception:
+            pass
 
 
 class Migration(migrations.Migration):

@@ -14,6 +14,7 @@ type AppointmentPreview = {
     date: string;
     time: string;
     status: "Confirmed" | "Pending";
+    queueNumber?: number;
 };
 
 type ChatPreview = {
@@ -217,7 +218,9 @@ function DoctorDashboard() {
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
-                                                <p className="font-semibold text-slate-900">{appointment.patientName}</p>
+                                                <p className="font-semibold text-slate-900">
+                                                    {appointment.patientName} {appointment.queueNumber ? <span className="text-emerald-600 font-mono">#{appointment.queueNumber}</span> : ''}
+                                                </p>
                                                 <p className="mt-1 text-sm text-slate-600">{appointment.type}</p>
                                             </div>
                                             <span

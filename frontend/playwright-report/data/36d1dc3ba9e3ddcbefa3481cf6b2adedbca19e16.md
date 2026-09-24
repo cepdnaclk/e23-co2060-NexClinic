@@ -6,7 +6,7 @@
 
 # Test info
 
-- Name: e2e\profile-pic.spec.ts >> Profile Picture Update Flow >> should display dummy icon initially, upload profile pic, and display it correctly
+- Name: profile-pic.spec.ts >> Profile Picture Update Flow >> should display dummy icon initially, upload profile pic, and display it correctly
 - Location: e2e\profile-pic.spec.ts:7:7
 
 # Error details
@@ -47,34 +47,33 @@ Call log:
       - generic [ref=f2e22]:
         - img "NexClinic Logo" [ref=f2e24]
         - heading "NexClinic" [level=1] [ref=f2e25]
-        - paragraph [ref=f2e26]: Patient Portal Access
-      - generic [ref=f2e27]:
-        - generic [ref=f2e28]:
-          - heading "Welcome Back" [level=2] [ref=f2e29]
-          - paragraph [ref=f2e30]: Please sign in to your patient account
-        - generic [ref=f2e31]:
-          - generic [ref=f2e32]:
-            - generic [ref=f2e33]: Email Address
-            - textbox "Email Address" [ref=f2e35]:
+      - generic [ref=f2e26]:
+        - generic [ref=f2e27]:
+          - heading "Welcome Back" [level=2] [ref=f2e28]
+          - paragraph [ref=f2e29]: Please sign in to your account
+        - generic [ref=f2e30]:
+          - generic [ref=f2e31]:
+            - generic [ref=f2e32]: Email Address
+            - textbox "Email Address" [ref=f2e34]:
               - /placeholder: Enter your email
-          - generic [ref=f2e36]:
-            - generic [ref=f2e37]: Password
-            - generic [ref=f2e38]:
-              - textbox "Password" [ref=f2e39]:
+          - generic [ref=f2e35]:
+            - generic [ref=f2e36]: Password
+            - generic [ref=f2e37]:
+              - textbox "Password" [ref=f2e38]:
                 - /placeholder: Enter your password
-              - button [ref=f2e40] [cursor=pointer]
-          - button "Sign In" [ref=f2e43] [cursor=pointer]
-        - generic [ref=f2e44]:
-          - paragraph [ref=f2e45]:
+              - button [ref=f2e39] [cursor=pointer]
+          - button "Sign In" [ref=f2e42] [cursor=pointer]
+        - generic [ref=f2e43]:
+          - paragraph [ref=f2e44]:
             - text: Forgot password?
-            - link "Reset here" [ref=f2e46] [cursor=pointer]:
+            - link "Reset here" [ref=f2e45] [cursor=pointer]:
               - /url: /reset-password
-          - paragraph [ref=f2e47]:
+          - paragraph [ref=f2e46]:
             - text: Don't have an account?
-            - link "Sign up here" [ref=f2e48] [cursor=pointer]:
+            - link "Sign up here" [ref=f2e47] [cursor=pointer]:
               - /url: /register
-  - button "Open Next.js Dev Tools" [ref=f2e54] [cursor=pointer]
-  - alert [ref=f2e58]
+  - button "Open Next.js Dev Tools" [ref=f2e53] [cursor=pointer]
+  - alert [ref=f2e57]
 ```
 
 # Test source

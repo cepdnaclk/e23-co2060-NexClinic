@@ -534,6 +534,7 @@ const PatientAppointmentPage = () => {
                 <th className="whitespace-nowrap px-4 py-3 font-semibold">Doctor</th>
                 <th className="whitespace-nowrap px-4 py-3 font-semibold">Hospital</th>
                 <th className="whitespace-nowrap px-4 py-3 font-semibold">Date & Time</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold text-center">Queue #</th>
                 <th className="whitespace-nowrap px-4 py-3 font-semibold">Status</th>
                 <th className="whitespace-nowrap px-4 py-3 font-semibold text-right">Actions</th>
               </tr>
@@ -550,6 +551,9 @@ const PatientAppointmentPage = () => {
                     <td className="px-4 py-3">{appt.hospital}</td>
                     <td className="px-4 py-3">
                       <span className="font-medium text-emerald-700">{appt.date}</span> at {formatTimeForDisplay(appt.time)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="font-mono text-emerald-600 font-semibold">{appt.queueNumber ? `#${appt.queueNumber}` : '-'}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${statusPillClass(appt.status)}`}>
