@@ -576,7 +576,9 @@ class DoctorPatientProfileSerializer(serializers.Serializer):
     def get_lastVisit(self, obj):
         doctor_profile = self.context.get("doctor_profile")
 
-        queryset = obj.appointments.select_related("slot").order_by(
+        queryset = obj.appointments.exclude(
+            status="PENDING"
+        ).select_related("slot").order_by(
             "-slot__date", "-slot__start_time"
         )
         if doctor_profile is not None:

@@ -845,7 +845,7 @@ class DoctorDashboardView(APIView):
 
         today_appointments = appointment_queryset.filter(
             slot__date=today,
-            status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
+            status=Appointment.Status.ACCEPTED,
         ).count()
 
         appointment_earnings_data = appointment_queryset.filter(
@@ -866,7 +866,7 @@ class DoctorDashboardView(APIView):
 
         upcoming_queryset = appointment_queryset.filter(
             slot__date__gte=today,
-            status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
+            status=Appointment.Status.ACCEPTED,
         ).order_by("slot__date", "slot__start_time")[:5]
 
         upcoming_appointments = []
@@ -1176,7 +1176,9 @@ class DoctorAppointmentsView(VerifiedDoctorAPIView):
         if error_response:
             return error_response
 
-        queryset = Appointment.objects.filter(doctor=doctor_profile).select_related(
+        queryset = Appointment.objects.filter(doctor=doctor_profile).exclude(
+            status=Appointment.Status.PENDING
+        ).select_related(
             'slot', 'patient', 'patient__user', 'doctor'
         ).order_by('-requested_at')
 
@@ -1205,7 +1207,7 @@ class DoctorPatientProfileView(VerifiedDoctorAPIView):
         appointment = Appointment.objects.filter(
             doctor=doctor_profile,
             patient_id=patient_id,
-        ).select_related('patient', 'patient__user').first()
+        ).exclude(status=Appointment.Status.PENDING).select_related('patient', 'patient__user').first()
 
         if not appointment or not appointment.patient:
             return Response({'detail': 'Patient not found for this doctor.'}, status=status.HTTP_404_NOT_FOUND)
@@ -1229,7 +1231,7 @@ class DoctorAppointmentMedicalRecordView(VerifiedDoctorAPIView):
         appointment = Appointment.objects.filter(
             id=appointment_id,
             doctor=doctor_profile,
-        ).select_related('medical_record').first()
+        ).exclude(status=Appointment.Status.PENDING).select_related('medical_record').first()
 
         if not appointment:
             return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -1247,7 +1249,7 @@ class DoctorAppointmentMedicalRecordView(VerifiedDoctorAPIView):
         appointment = Appointment.objects.filter(
             id=appointment_id,
             doctor=doctor_profile,
-        ).select_related('patient', 'hospital', 'slot', 'slot__hospital').first()
+        ).exclude(status=Appointment.Status.PENDING).select_related('patient', 'hospital', 'slot', 'slot__hospital').first()
 
         if not appointment:
             return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -1353,7 +1355,7 @@ class DoctorAppointmentActionView(VerifiedDoctorAPIView):
         appointment = Appointment.objects.filter(
             id=appointment_id,
             doctor=doctor_profile,
-        ).select_related('slot', 'patient', 'patient__user', 'doctor').first()
+        ).exclude(status=Appointment.Status.PENDING).select_related('slot', 'patient', 'patient__user', 'doctor').first()
 
         if not appointment:
             return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -1413,7 +1415,7 @@ class DoctorAppointmentRescheduleView(VerifiedDoctorAPIView):
         appointment = Appointment.objects.filter(
             id=appointment_id,
             doctor=doctor_profile,
-        ).select_related('slot', 'patient', 'patient__user', 'doctor').first()
+        ).exclude(status=Appointment.Status.PENDING).select_related('slot', 'patient', 'patient__user', 'doctor').first()
 
         if not appointment:
             return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
