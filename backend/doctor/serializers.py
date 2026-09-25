@@ -672,6 +672,7 @@ class DoctorDirectoryPublicSerializer(serializers.ModelSerializer):
     availableForChat = serializers.SerializerMethodField()
     nextAvailable = serializers.SerializerMethodField()
     languages = serializers.SerializerMethodField()
+    slmcId = serializers.SerializerMethodField()
 
     class Meta:
         model = DoctorProfile
@@ -688,6 +689,7 @@ class DoctorDirectoryPublicSerializer(serializers.ModelSerializer):
             "availableForChat",
             "nextAvailable",
             "languages",
+            "slmcId",
         ]
 
     def get_id(self, obj):
@@ -773,6 +775,9 @@ class DoctorDirectoryPublicSerializer(serializers.ModelSerializer):
             for language in obj.languages_spoken.split(",")
             if language.strip()
         ]
+
+    def get_slmcId(self, obj):
+        return obj.license_number or ""
 
 
 class DoctorDirectoryDetailSerializer(DoctorDirectoryPublicSerializer):

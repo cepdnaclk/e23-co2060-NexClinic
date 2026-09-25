@@ -2,7 +2,9 @@ import RoleBasedNavbar from "@/components/common/RoleBasedNavbar";
 import DoctorSlots from '@/components/doctor/DoctorSlots';
 import { cookies, headers } from "next/headers";
 import Link from "next/link";
+import GreenButton from "@/components/buttons/GreenButton";
 import BlackButton from "@/components/buttons/BlackButton";
+import DoctorProfileImage from "@/components/doctor/DoctorProfileImage";
 
 type Doctor = {
 	id: string;
@@ -61,6 +63,9 @@ export default async function DoctorProfile({
 	const { id } = await params;
 	const doctor = await fetchDoctor(id);
 	const hasContactInfo = Boolean(doctor?.email || doctor?.contactNumber);
+	
+	const rawPhoto = doctor?.photo;
+	const doctorPhoto = (!rawPhoto || rawPhoto === "null" || rawPhoto.trim() === "") ? undefined : rawPhoto;
 
 	if (!doctor) {
 		return <p className="p-6">Doctor not found</p>;
@@ -72,144 +77,150 @@ export default async function DoctorProfile({
 				<RoleBasedNavbar />
 			</div>
 			{/* Outer background */}
-			<div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-8 px-4 pt-24">
+			<div className="min-h-screen bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white py-8 px-4 pt-28">
 
 				{/* Profile Header Card */}
-				<div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md mb-4">
-					<div className="flex flex-col sm:flex-row gap-6 items-center">
-						<img
-							src={doctor.photo || "/images/user.png"}
-							alt={doctor.fullName}
-							className="w-[140px] h-[140px] rounded-full object-cover"
-						/>
-
-						<div className="flex-1 text-center sm:text-left">
-							<h1 className="text-3xl font-bold text-gray-800 dark:text-white">{doctor.fullName}</h1>
-							<div className="flex items-center justify-center sm:justify-start rounded-full bg-green-100 dark:bg-green-900 px-3 py-1 text-green-600 dark:text-green-300 font-semibold text-md w-max mt-2 mx-auto sm:mx-0">
-								{doctor.specialization}
-							</div>
-							<p className="text-gray-600 dark:text-gray-400 text-sm mt-2">{`SLMC ID: ${doctor.slmcId}`}</p>
-							<p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{doctor.experience} of Experience</p>
+				<div className="max-w-6xl mx-auto rounded-[2rem] border border-green-100 bg-white p-8 shadow-[0_18px_50px_rgba(16,185,129,0.08)] mb-6">
+					<div className="flex flex-col sm:flex-row gap-8 items-center sm:items-start">
+						<div className="shrink-0 relative">
+							<DoctorProfileImage
+								src={doctorPhoto}
+								alt={doctor.fullName}
+								className="w-[140px] h-[140px] rounded-full object-cover ring-4 ring-emerald-50 shadow-md"
+							/>
 							{doctor.availableForChat && (
-								<span className="inline-block mt-2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-									Available for Chat
-								</span>
+								<div className="absolute bottom-2 right-2 h-4 w-4 rounded-full bg-emerald-500 ring-4 ring-white" title="Available for Chat"></div>
 							)}
 						</div>
 
+						<div className="flex-1 text-center sm:text-left mt-2">
+							<h1 className="text-3xl font-bold text-slate-900">{doctor.fullName}</h1>
+							<div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3">
+								<span className="inline-flex items-center justify-center rounded-full bg-emerald-100 px-3.5 py-1 text-sm font-semibold text-emerald-700">
+									{doctor.specialization}
+								</span>
+								<span className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3.5 py-1 text-sm font-semibold text-slate-700">
+									{doctor.experience} of Experience
+								</span>
+								{doctor.slmcId && (
+									<span className="inline-flex items-center justify-center rounded-full border border-slate-200 px-3.5 py-1 text-sm font-medium text-slate-600">
+										SLMC ID: {doctor.slmcId}
+									</span>
+								)}
+							</div>
+						</div>
+
 						{/* Action Buttons */}
-						<div className="flex flex-col gap-3 w-full sm:w-auto min-w-[200px]">
+						<div className="flex flex-col gap-3 w-full sm:w-auto min-w-[200px] mt-4 sm:mt-2">
 							{doctor.availableForChat ? (
 								<Link
 									href={`/user-self/chats?doctor=${doctor.id}`}
-									className="inline-flex w-full items-center justify-center py-3 px-6 rounded-lg font-semibold transition-colors bg-green-500 hover:bg-green-600 text-white"
+									className="w-full"
 								>
-									Start Chat Now
+									<GreenButton className="w-full rounded-full">
+										Start Chat Now
+									</GreenButton>
 								</Link>
 							) : (
 								<button
 									disabled
-									className="w-full py-3 px-6 rounded-lg font-semibold transition-colors bg-gray-300 text-gray-500 cursor-not-allowed"
+									className="w-full py-3 px-6 rounded-full font-semibold transition-colors bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
 								>
 									Currently Offline
 								</button>
 							)}
 							<Link href={`/user-self/book-appointment?doctor=${doctor.id}`} className="w-full">
-								<BlackButton className="w-full">Book Appointment</BlackButton>
+								<BlackButton className="w-full rounded-full">Book Appointment</BlackButton>
 							</Link>
 						</div>
 					</div>
 				</div>
 
-				{/* Consultation Fees Card */}
-				<div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md mb-4">
-					<h2 className="text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Consultation Fees</h2>
-					<div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
-					<div className="grid md:grid-cols-2 gap-6">
-						<div className="flex flex-col">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Online Chat Session:</p>
-							<p className="text-2xl font-bold text-green-600 dark:text-green-400">{doctor.chatFee}</p>
-							<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Quick online advice for minor concerns</p>
-						</div>
-						<div className="flex flex-col">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">In-Person Appointment:</p>
-							<p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{doctor.appointmentFee}</p>
-							<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Full consultation and examination</p>
-						</div>
-					</div>
-					<div className="mt-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-						<p className="text-gray-600 dark:text-gray-300 text-sm">
-							<span className="font-semibold">Next Available Slot:</span> {doctor.nextAvailable}
-						</p>
-					</div>
-				</div>
-
 				{/* Two Column Layout for Details */}
-				<div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-4">
+				<div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
 
-				{/* Doctor slots (2-week view) */}
-				<div className="w-full max-w-6xl mx-auto px-6">
-					<DoctorSlots doctorId={doctor.id} />
-				</div>
-
-
-					{/* Professional Details */}
-					<div className="w-full lg:w-1/2 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
-						<h2 className="text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Professional Details</h2>
-						<div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
-
-						<div className="flex flex-col my-4 text-gray-600 dark:text-gray-400">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Qualifications:</p>
-							<ul className="flex flex-col list-disc pl-6 gap-2">
-								{doctor.qualifications.map((qual, index) => (
-									<li key={index}>{qual}</li>
-								))}
-							</ul>
-						</div>
-
-						<div className="flex flex-col my-4 text-gray-600 dark:text-gray-400">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Currently Practicing Hospitals:</p>
-							<ul className="flex flex-col list-disc pl-6 gap-2">
-								{doctor.hospitals.map((hospital, index) => (
-									<li key={index}>{hospital}</li>
-								))}
-							</ul>
-						</div>
-
-						<div className="flex flex-col my-4 text-gray-600 dark:text-gray-400">
-							<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Languages Spoken:</p>
-							<p>{doctor.languages.join(", ")}</p>
+					{/* Left Column: Slots */}
+					<div className="w-full lg:w-3/5">
+						<div className="rounded-[2rem] border border-green-100 bg-white p-6 shadow-sm mb-6">
+							<h2 className="text-xl font-bold mb-6 text-slate-900">Available Appointment Slots</h2>
+							<DoctorSlots doctorId={doctor.id} />
 						</div>
 					</div>
 
-					{/* Personal Information */}
-					<div className="w-full lg:w-1/2 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
-						<h2 className="text-2xl font-bold mb-4 text-green-500 dark:text-green-400">Contact Information</h2>
-						<div className="flex w-full border-t border-gray-300 dark:border-gray-600 my-4"></div>
+					{/* Right Column: Details */}
+					<div className="w-full lg:w-2/5 flex flex-col gap-6">
+						{/* Professional Details */}
+						<div className="rounded-[2rem] border border-green-100 bg-white p-6 shadow-sm">
+							<h2 className="text-xl font-bold mb-4 text-slate-900">Professional Details</h2>
+							<div className="flex w-full border-t border-slate-100 mb-4"></div>
 
-						{hasContactInfo ? (
-							<>
-								<div className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
-									<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Email Address:</p>
-									<div className="flex items-center">
-										<img src="/images/at.png" className="w-4 h-4 inline mr-2" alt="Email Icon" />
-										<p>{doctor.email}</p>
-									</div>
+							<div className="flex flex-col mb-5">
+								<p className="text-sm font-semibold uppercase tracking-[0.1em] text-emerald-700 mb-2">Qualifications</p>
+								<div className="flex flex-col gap-2">
+									{doctor.qualifications.map((qual, index) => (
+										<div key={index} className="flex items-start gap-2">
+											<svg className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+											</svg>
+											<span className="text-slate-700">{qual}</span>
+										</div>
+									))}
 								</div>
+							</div>
 
-								{/* <div className="flex flex-col mb-4 text-gray-600 dark:text-gray-400">
-									<p className="font-bold text-gray-800 dark:text-gray-200 mb-2">Mobile Number:</p>
-									<div className="flex items-center">
-										<img src="/images/phone.png" className="w-4 h-4 inline mr-2" alt="Phone Icon" />
-										<p>{doctor.contactNumber}</p>
-									</div>
-								</div> */}
-							</>
-						) : (
-							<p className="text-sm text-gray-500 dark:text-gray-400">
-								Contact details are available for authorized users only.
-							</p>
-						)}
+							<div className="flex flex-col mb-5">
+								<p className="text-sm font-semibold uppercase tracking-[0.1em] text-emerald-700 mb-2">Hospitals</p>
+								<div className="flex flex-wrap gap-2">
+									{doctor.hospitals.map((hospital, index) => (
+										<span key={index} className="inline-flex rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-800 ring-1 ring-inset ring-emerald-200">
+											{hospital}
+										</span>
+									))}
+								</div>
+							</div>
+
+							<div className="flex flex-col">
+								<p className="text-sm font-semibold uppercase tracking-[0.1em] text-emerald-700 mb-2">Languages</p>
+								<p className="text-slate-700 font-medium">{doctor.languages.join(", ")}</p>
+							</div>
+						</div>
+
+						{/* Contact Information */}
+						<div className="rounded-[2rem] border border-green-100 bg-white p-6 shadow-sm">
+							<h2 className="text-xl font-bold mb-4 text-slate-900">Contact Information</h2>
+							<div className="flex w-full border-t border-slate-100 mb-4"></div>
+
+							{hasContactInfo ? (
+								<div className="flex flex-col gap-4">
+									{doctor.email && (
+										<div>
+											<p className="text-sm font-semibold uppercase tracking-[0.1em] text-emerald-700 mb-1">Email Address</p>
+											<a href={`mailto:${doctor.email}`} className="flex items-center gap-2 text-slate-700 hover:text-emerald-600 transition-colors">
+												<svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+												</svg>
+												{doctor.email}
+											</a>
+										</div>
+									)}
+									{doctor.contactNumber && (
+										<div>
+											<p className="text-sm font-semibold uppercase tracking-[0.1em] text-emerald-700 mb-1">Contact Number</p>
+											<a href={`tel:${doctor.contactNumber}`} className="flex items-center gap-2 text-slate-700 hover:text-emerald-600 transition-colors">
+												<svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+												</svg>
+												{doctor.contactNumber}
+											</a>
+										</div>
+									)}
+								</div>
+							) : (
+								<p className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl text-center border border-slate-100">
+									Contact details are available for authorized users only.
+								</p>
+							)}
+						</div>
 					</div>
 
 				</div>
