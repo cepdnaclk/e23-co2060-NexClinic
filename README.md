@@ -94,7 +94,7 @@ NexClinic was built with strict adherence to modern security paradigms:
 
 **Team Name**: NexAura  
 
-**Course**: CO2060 — Semester
+**Course**: CO2060 — 2nd year - Semester 3, 4
 
 
 - **E/23/076** — M.T. Dineth            - e23076@eng.pdn.ac.lk
