@@ -317,6 +317,8 @@ class PatientMedicalRecordSerializer(serializers.ModelSerializer):
     createdAt = serializers.SerializerMethodField()
     updatedAt = serializers.SerializerMethodField()
     followUpDate = serializers.SerializerMethodField()
+    queueNumber = serializers.SerializerMethodField()
+    slotTime = serializers.SerializerMethodField()
     prescriptionItems = PrescriptionSerializer(source="prescription_items", many=True, read_only=True)
 
     class Meta:
@@ -337,6 +339,8 @@ class PatientMedicalRecordSerializer(serializers.ModelSerializer):
             "follow_up_notes",
             "createdAt",
             "updatedAt",
+            "queueNumber",
+            "slotTime",
         ]
 
     def get_appointmentId(self, obj):
@@ -356,6 +360,17 @@ class PatientMedicalRecordSerializer(serializers.ModelSerializer):
 
     def get_followUpDate(self, obj):
         return obj.follow_up_date.isoformat() if obj.follow_up_date else ""
+
+    def get_queueNumber(self, obj):
+        if obj.appointment:
+            return obj.appointment.queue_number
+        return None
+
+    def get_slotTime(self, obj):
+        if obj.appointment and obj.appointment.slot:
+            start = obj.appointment.slot.start_time.strftime("%H:%M")
+            return start
+        return ""
 
 
 class PatientMedicalRecordUpsertSerializer(serializers.Serializer):

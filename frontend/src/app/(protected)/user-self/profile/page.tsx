@@ -342,7 +342,7 @@ export default function UserProfile() {
               </div>
             </div>
 
-            <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
+            {/* <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-5 ring-1 ring-emerald-100">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
                 Current Medications
               </p>
@@ -359,7 +359,7 @@ export default function UserProfile() {
                   </span>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
         </section>
 

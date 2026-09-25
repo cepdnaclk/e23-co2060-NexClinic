@@ -27,11 +27,3 @@ All test users will have the standard password: `TestPass@123` (except for admin
 ### C. Medical Records (Files)
 - Mock PDF files associated with Patient A's completed appointment to test secure file fetching and AWS S3/storage handling.
 
-## 3. Configuration Updates
-
-Based on your feedback:
-- I will modify the backend's email configuration in the local `.env` (or override it during tests) to use standard Google SMTP instead of Brevo. 
-- I will use the API keys currently present in your `.env` files for the actual integrations during testing.
-
-> [!IMPORTANT]
-> Please review this test data plan. If you approve, I will write a Django management script to securely inject this test data into your local database and then proceed with configuring the test infrastructure.

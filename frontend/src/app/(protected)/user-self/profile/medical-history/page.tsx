@@ -7,6 +7,7 @@ import { Dialog } from "@headlessui/react";
 import GreenButton from "@/components/buttons/GreenButton";
 import BlackButton from "@/components/buttons/BlackButton";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
+import { generateMedicalRecordsPDF } from "@/lib/pdfGenerator";
 
 type PatientMedicalDocument = {
   id: number;
@@ -18,8 +19,10 @@ type PatientMedicalDocument = {
 
 type PatientProfileResponse = {
   patient: {
+    id: string;
     fullName: string;
     email: string;
+    phone: string;
   };
   health: {
     bloodType: string;
@@ -43,6 +46,8 @@ type PatientProfileResponse = {
       follow_up_notes: string;
       createdAt: string;
       updatedAt: string;
+      queueNumber?: number | null;
+      slotTime?: string | null;
     }>;
   };
 };
@@ -174,6 +179,15 @@ export default function PatientMedicalHistoryPage() {
   const medicalDocuments = profileData?.health.medicalDocuments || [];
   const medicalRecords = profileData?.health.medicalRecords || [];
 
+  const handleDownloadPDF = () => {
+    if (medicalRecords.length === 0) {
+      alert("No medical records to download.");
+      return;
+    }
+    const patientInfo = profileData?.patient || { fullName: "Patient", id: "", email: "", phone: "" };
+    generateMedicalRecordsPDF(patientInfo, medicalRecords);
+  };
+
   const groupedRecords = useMemo(() => {
     let records = [...medicalRecords];
     
@@ -301,6 +315,12 @@ export default function PatientMedicalHistoryPage() {
                         Appointment Records
                       </h2>
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <button
+                          onClick={handleDownloadPDF}
+                          className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-200 shadow-sm"
+                        >
+                          Download PDF
+                        </button>
                         <input
                           type="text"
                           placeholder="Search records..."

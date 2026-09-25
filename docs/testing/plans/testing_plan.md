@@ -2,9 +2,6 @@
 
 This plan outlines the steps to configure and implement End-to-End (E2E) testing for the frontend using Playwright. 
 
-## User Review Required
-> [!IMPORTANT]  
-> We need a robust `playwright.config.ts` to execute tests properly. This plan introduces a standard configuration. Let me know if you have specific browsers you want to omit or include (the default uses Chromium).
 
 ## Proposed Changes
 
@@ -19,7 +16,7 @@ This plan outlines the steps to configure and implement End-to-End (E2E) testing
 
 ### 2. E2E Test Implementation
 
-I will add missing test files to cover the patient and doctor workflows that are critical to the system.
+Add missing test files to cover the patient and doctor workflows that are critical to the system.
 
 #### [NEW] [patient-workflow.spec.ts](file:///d:/UoP/Semester_3/CO2060/cepdnaclk/e23-co2060-NexClinic/frontend/e2e/patient-workflow.spec.ts)
 - Test the ability to view the patient dashboard.
@@ -37,4 +34,4 @@ I will add missing test files to cover the patient and doctor workflows that are
 - Run `npx playwright test` to execute all E2E scripts.
 
 ### Documentation
-- As requested, I will create a `docs/testing/E2E_REPORT.md` (or output a detailed artifact) summarizing the results and what each test accomplished throughout the run.
+- Create a `docs/testing/E2E_REPORT.md` (or output a detailed artifact) summarizing the results and what each test accomplished throughout the run.
