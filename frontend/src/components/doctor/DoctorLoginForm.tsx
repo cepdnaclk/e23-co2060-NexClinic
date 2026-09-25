@@ -176,12 +176,12 @@ function DoctorLoginForm() {
                         Reset here
                     </a>
                 </p>
-                {/* <p>
+                <p>
                     Don&apos;t have an account?{" "}
                     <a href="/doctor/register" className="font-semibold text-emerald-600 hover:underline">
                         Register here
                     </a>
-                </p> */}
+                </p>
             </div>
         </div>
     );
