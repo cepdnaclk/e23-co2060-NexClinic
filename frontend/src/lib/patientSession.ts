@@ -26,6 +26,7 @@ export function handlePatientSessionExpired(router?: RouterLike) {
   isHandlingPatientSessionExpiry = true;
   clearPatientClientSession();
 
+  console.log('[TEST DEBUG EXPIRED] handlePatientSessionExpired called!', new Error().stack);
   window.alert("Your session has expired. Please login again.");
 
   window.setTimeout(() => {

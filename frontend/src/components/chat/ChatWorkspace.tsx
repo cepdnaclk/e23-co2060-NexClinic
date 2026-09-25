@@ -95,7 +95,7 @@ export default function ChatWorkspace({
   const [error, setError] = useState("");
   const [initialThreadsLoaded, setInitialThreadsLoaded] = useState(false);
   const [wsStatus, setWsStatus] = useState<"Connecting..." | "Connected" | "Disconnected">("Disconnected");
-  
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingDoctorId, setPendingDoctorId] = useState("");
   const [pendingPrice, setPendingPrice] = useState("0");
@@ -254,16 +254,16 @@ export default function ChatWorkspace({
       if (!profileResponse.ok) throw new Error("Failed to fetch doctor profile");
       const profilePayload = await profileResponse.json().catch(() => ({}));
       const profile = profilePayload?.doctor || profilePayload;
-      
+
       if (!profile.availableForChat) {
-         throw new Error("This doctor is currently offline for chats.");
+        throw new Error("This doctor is currently offline for chats.");
       }
-      
+
       setPendingDoctorId(doctorId);
-      
+
       const rawPrice = profile.chatFee || "Rs. 0.00";
       setPendingPrice(rawPrice);
-      
+
       setShowPaymentModal(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to initiate chat");
@@ -455,7 +455,7 @@ export default function ChatWorkspace({
     if (!selectedThreadId) return;
 
     setWsStatus("Connecting...");
-    
+
     // Retrieve authToken from localStorage to authenticate the WebSocket request
     const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
     const backendUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
@@ -520,7 +520,7 @@ export default function ChatWorkspace({
 
   return (
     <section className="space-y-4">
-      <div className="rounded-[2rem] border border-white/80 bg-white/90 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-6">
+      {/* <div className="rounded-[2rem] border border-white/80 bg-white/90 p-4 shadow-[0_18px_50px_rgba(16,185,129,0.08)] sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-emerald-700">
@@ -562,7 +562,7 @@ export default function ChatWorkspace({
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[0.88fr_1.12fr]">
         <aside className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/95 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
@@ -605,11 +605,10 @@ export default function ChatWorkspace({
                     key={thread.id}
                     type="button"
                     onClick={() => selectThread(thread.id)}
-                    className={`w-full rounded-[1.35rem] border p-4 text-left transition duration-200 hover:-translate-y-0.5 ${
-                      isActive
+                    className={`w-full rounded-[1.35rem] border p-4 text-left transition duration-200 hover:-translate-y-0.5 ${isActive
                         ? "border-emerald-300 bg-emerald-50 shadow-md shadow-emerald-100/40"
                         : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -625,11 +624,10 @@ export default function ChatWorkspace({
                           </span>
                         ) : null}
                         <span
-                          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                            thread.status === "OPEN"
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${thread.status === "OPEN"
                               ? "bg-emerald-100 text-emerald-700"
                               : "bg-slate-100 text-slate-600"
-                          }`}
+                            }`}
                         >
                           {thread.status}
                         </span>
@@ -661,11 +659,10 @@ export default function ChatWorkspace({
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        selectedThread.status === "OPEN"
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedThread.status === "OPEN"
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-slate-100 text-slate-600"
-                      }`}
+                        }`}
                     >
                       {selectedThread.status}
                     </span>
@@ -706,19 +703,18 @@ export default function ChatWorkspace({
                         className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[82%] rounded-[1.5rem] px-4 py-3 shadow-sm ${
-                            isOwnMessage
+                          className={`max-w-[82%] rounded-[1.5rem] px-4 py-3 shadow-sm ${isOwnMessage
                               ? "bg-gradient-to-br from-emerald-600 to-green-600 text-white"
                               : "border border-slate-200 bg-white text-slate-800"
-                          }`}
+                            }`}
                         >
                           <p className="whitespace-pre-wrap text-sm leading-6">{message.message_text}</p>
                           {message.attachment && (
                             <div className="mt-2">
-                              {message.attachment.match(/\.(jpeg|jpg|gif|png)$/) ? (
-                                <img src={message.attachment} alt="attachment" className="max-w-full rounded-xl max-h-60 object-cover" />
+                              {message.attachment.toLowerCase().match(/\.(jpeg|jpg|gif|png)(\?.*)?$/) ? (
+                                <img src={`/api/chat/threads/${selectedThread.id}/messages/${message.id}/download/`} alt="attachment" className="max-w-full rounded-xl max-h-60 object-cover" />
                               ) : (
-                                <a href={message.attachment} target="_blank" rel="noreferrer" className="underline font-semibold text-xs">
+                                <a href={`/api/chat/threads/${selectedThread.id}/messages/${message.id}/download/`} target="_blank" rel="noreferrer" className="underline font-semibold text-xs">
                                   View Attachment
                                 </a>
                               )}
@@ -754,25 +750,25 @@ export default function ChatWorkspace({
                   <p className="text-xs text-slate-500">
                     {selectedThread.status === "CLOSED"
                       ? "Closed threads cannot receive new messages until reopened."
-                      : isExpired 
-                      ? "This consultation ticket has expired."
-                      : "Press send when you are ready."}
+                      : isExpired
+                        ? "This consultation ticket has expired."
+                        : "Press send when you are ready."}
                   </p>
-                  
+
                   <div className="flex items-center gap-3">
                     {(isExpired || selectedThread.status === "CLOSED") && role === "PATIENT" && (
-                       <GreenButton onClick={() => { if (selectedThread.doctor_id) void openOrCreatePatientThread(selectedThread.doctor_id); }} disabled={actionBusy} className="rounded-full px-4 py-2 text-sm mr-2 whitespace-nowrap">
-                         Renew Consultation
-                       </GreenButton>
+                      <GreenButton onClick={() => { if (selectedThread.doctor_id) void openOrCreatePatientThread(selectedThread.doctor_id); }} disabled={actionBusy} className="rounded-full px-4 py-2 text-sm mr-2 whitespace-nowrap">
+                        Renew Consultation
+                      </GreenButton>
                     )}
                     {timeLeft && selectedThread.status === "OPEN" && !isExpired && (
                       <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">{timeLeft}</span>
                     )}
                     <label className={`flex items-center justify-center w-10 h-10 rounded-full transition cursor-pointer ${attachmentFile ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'} ${isExpired || selectedThread.status === "CLOSED" ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
 
-                      <input 
-                        type="file" 
-                        className="hidden" 
+                      <input
+                        type="file"
+                        className="hidden"
                         disabled={isExpired || selectedThread.status === "CLOSED"}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
@@ -791,7 +787,7 @@ export default function ChatWorkspace({
                       />
                       📎
                     </label>
-                    
+
                     <GreenButton
                       onClick={() => void sendMessage()}
                       disabled={sending || selectedThread.status === "CLOSED" || isExpired || (!composer.trim() && !attachmentFile)}
@@ -803,7 +799,7 @@ export default function ChatWorkspace({
                 </div>
                 {attachmentFile && (
                   <div className="mt-2 text-xs text-emerald-600 font-semibold">
-                    Attached: {attachmentFile.name} 
+                    Attached: {attachmentFile.name}
                     <button onClick={() => setAttachmentFile(null)} className="ml-2 text-rose-500 hover:underline">Remove</button>
                   </div>
                 )}

@@ -69,7 +69,10 @@ export function proxy(request: NextRequest) {
   const refreshToken = request.cookies.get("refreshToken")?.value;
   const userRole = request.cookies.get("userRole")?.value;
 
+  console.log(`[PROXY DEBUG] url: ${request.url}, authToken: ${authToken}, userRole: ${userRole}`);
+
   if (!authToken) {
+    console.log(`[PROXY DEBUG] Redirecting because no authToken`);
     return redirectToLogin(request, loginPath);
   }
 

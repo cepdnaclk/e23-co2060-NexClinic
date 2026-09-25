@@ -433,6 +433,8 @@ class DoctorAppointmentSerializer(serializers.ModelSerializer):
         return obj.slot.start_time.strftime("%H:%M")
 
     def get_location(self, obj):
+        if obj.hospital:
+            return obj.hospital.name
         if obj.slot and obj.slot.hospital:
             return (
                 obj.slot.hospital.name

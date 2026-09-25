@@ -283,3 +283,26 @@ class AdviceChatMessageUploadView(BaseChatAPIView):
 
 		output = AdviceChatMessageSerializer(message)
 		return Response({"message": output.data}, status=status.HTTP_201_CREATED)
+
+from django.http import FileResponse
+
+class AdviceChatMessageDownloadView(BaseChatAPIView):
+	def get(self, request, thread_id, message_id):
+		thread, error_response = self._get_thread_for_user_or_response(request, thread_id)
+		if error_response:
+			return error_response
+			
+		try:
+			message = AdviceChatMessage.objects.get(id=message_id, thread=thread)
+		except AdviceChatMessage.DoesNotExist:
+			return Response({"detail": "Message not found."}, status=status.HTTP_404_NOT_FOUND)
+			
+		if not message.attachment:
+			return Response({"detail": "No attachment found for this message."}, status=status.HTTP_404_NOT_FOUND)
+			
+		try:
+			file_handle = message.attachment.open('rb')
+			response = FileResponse(file_handle, as_attachment=False)
+			return response
+		except Exception as e:
+			return Response({"detail": f"Error accessing file: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

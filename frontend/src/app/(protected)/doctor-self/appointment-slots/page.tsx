@@ -49,6 +49,7 @@ function DoctorAppointmentSlotsPage() {
   const [filterWeekStart, setFilterWeekStart] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
   const [timeBucket, setTimeBucket] = useState<"all" | "morning" | "afternoon" | "evening">("all");
+  const [filterHospital, setFilterHospital] = useState("all");
 
   const loadSlots = async () => {
     setIsLoading(true);
@@ -102,11 +103,11 @@ function DoctorAppointmentSlotsPage() {
       });
   }, [slots]);
 
-  const uniqueHospitalsCount = useMemo(() => {
+  const uniqueHospitals = useMemo(() => {
     const values = upcomingSlots
       .map((slot) => slot.hospital?.trim())
-      .filter((value): value is string => Boolean(value));
-    return new Set(values).size;
+      .filter((value): value is string => Boolean(value) && value !== "Unknown");
+    return Array.from(new Set(values)).sort();
   }, [upcomingSlots]);
 
   const nextSlotSummary = useMemo(() => {
@@ -153,9 +154,13 @@ function DoctorAppointmentSlotsPage() {
         }
       }
 
+      if (filterHospital !== "all" && slot.hospital !== filterHospital) {
+        return false;
+      }
+
       return true;
     });
-  }, [upcomingSlots, filterType, filterDate, filterWeekStart, filterMonth, timeBucket]);
+  }, [upcomingSlots, filterType, filterDate, filterWeekStart, filterMonth, timeBucket, filterHospital]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(14,165,233,0.14),_transparent_28%),linear-gradient(180deg,#eefbf6_0%,#f8fcfb_42%,#ffffff_100%)] pb-8">
@@ -173,11 +178,11 @@ function DoctorAppointmentSlotsPage() {
               <div className="relative">
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold tracking-[0.24em] text-emerald-700">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  SLOT PLANNER
+                  SCHEDULE PLANNER
                 </div>
-                <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">In-Person Appointment Slots</h1>
+                <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">In-Person Appointment Schedules</h1>
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                  Publish future in-person slot windows. Patients can book only from slots are created here.
+                  Published schedules. Patients can book into these slots.
                 </p>
 
                 {error && <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</p>}
@@ -205,12 +210,12 @@ function DoctorAppointmentSlotsPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-3xl border border-white/20 bg-white/12 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Future Slots</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Future Schedules</p>
                     <p className="mt-2 text-2xl font-bold">{isLoading ? "..." : upcomingSlots.length}</p>
                   </div>
                   <div className="rounded-3xl border border-white/20 bg-white/12 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Hospitals</p>
-                    <p className="mt-2 text-2xl font-bold">{isLoading ? "..." : uniqueHospitalsCount}</p>
+                    <p className="mt-2 text-2xl font-bold">{isLoading ? "..." : uniqueHospitals.length}</p>
                   </div>
                 </div>
               </div>
@@ -222,11 +227,11 @@ function DoctorAppointmentSlotsPage() {
 
         <section className="rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-[0_18px_50px_rgba(16,185,129,0.08)]">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-emerald-700">Published Future Slots</h2>
+            <h2 className="text-xl font-bold text-emerald-700">Published Future Schedules</h2>
             <span className="text-sm text-slate-500">Sorted by date and start time</span>
           </div>
 
-          <div className="grid gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 sm:grid-cols-2 lg:grid-cols-6">
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Filter</label>
               <select
@@ -287,14 +292,30 @@ function DoctorAppointmentSlotsPage() {
                 <option value="evening">Evening/Night (17:00-05:59)</option>
               </select>
             </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Hospital</label>
+              <select
+                value={filterHospital}
+                onChange={(event) => setFilterHospital(event.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+              >
+                <option value="all">All Hospitals</option>
+                {uniqueHospitals.map((hospital) => (
+                  <option key={hospital} value={hospital}>
+                    {hospital}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="my-4 flex w-full border-t border-emerald-100"></div>
 
           {isLoading ? (
-            <p className="text-sm text-slate-600">Loading slots...</p>
+            <p className="text-sm text-slate-600">Loading schedules...</p>
           ) : filteredSlots.length === 0 ? (
-            <p className="text-sm text-slate-600">No future slots published yet.</p>
+            <p className="text-sm text-slate-600">No future schedules published yet.</p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {filteredSlots.map((slot) => (

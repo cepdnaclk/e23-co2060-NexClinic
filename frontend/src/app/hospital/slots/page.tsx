@@ -517,7 +517,7 @@ const HospitalSlotsPage = () => {
       <div className="rounded-3xl border border-white/80 bg-white/95 p-6 shadow-sm backdrop-blur">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Appointment Slots</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Appointment Schedules</h1>
             <p className="text-sm text-slate-500 mt-1">Configure standard shifts and generate calendars for verified medical staff.</p>
           </div>
 
@@ -549,11 +549,10 @@ const HospitalSlotsPage = () => {
 
       {/* Notifications */}
       {(actionError || actionMessage) && (
-        <div className={`rounded-2xl border p-4 text-sm animate-in fade-in duration-200 ${
-          actionError 
-            ? "border-red-100 bg-red-50 text-red-700" 
-            : "border-emerald-100 bg-emerald-50 text-emerald-700"
-        }`}>
+        <div className={`rounded-2xl border p-4 text-sm animate-in fade-in duration-200 ${actionError
+          ? "border-red-100 bg-red-50 text-red-700"
+          : "border-emerald-100 bg-emerald-50 text-emerald-700"
+          }`}>
           {actionError || actionMessage}
         </div>
       )}
@@ -565,32 +564,28 @@ const HospitalSlotsPage = () => {
             <button
               type="button"
               onClick={() => setActiveTab("templates")}
-              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeTab === "templates"
-                  ? "bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-200"
-                  : "text-slate-600 hover:text-slate-800"
-              }`}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === "templates"
+                ? "bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-200"
+                : "text-slate-600 hover:text-slate-800"
+                }`}
             >
               Slot Templates
-              <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                activeTab === "templates" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
-              }`}>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${activeTab === "templates" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
+                }`}>
                 {templates.length}
               </span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("assignments")}
-              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeTab === "assignments"
-                  ? "bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-200"
-                  : "text-slate-600 hover:text-slate-800"
-              }`}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === "assignments"
+                ? "bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-200"
+                : "text-slate-600 hover:text-slate-800"
+                }`}
             >
               Doctor Assignments
-              <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                activeTab === "assignments" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
-              }`}>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${activeTab === "assignments" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
+                }`}>
                 {assignments.length}
               </span>
             </button>
@@ -736,8 +731,8 @@ const HospitalSlotsPage = () => {
 
                 <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
                   <div className="border-b border-slate-200 pb-3 mb-4">
-                    <h3 className="text-sm font-bold text-slate-900">Generate Slots</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">Create appointment slots from active templates.</p>
+                    <h3 className="text-sm font-bold text-slate-900">Generate Schedules</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Create appointment schedules from active templates.</p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -779,7 +774,7 @@ const HospitalSlotsPage = () => {
                         onChange={(event) => setSkipDuplicates(event.target.checked)}
                       />
                       <label htmlFor="skip_duplicates" className="text-sm font-semibold text-slate-700 select-none">
-                        Skip duplicate slots
+                        Skip duplicate schedules
                       </label>
                     </div>
 
@@ -875,11 +870,10 @@ const HospitalSlotsPage = () => {
                                 <p className="text-xs text-slate-500 mt-0.5">{doctorSubLabel}</p>
                               </div>
                               <span
-                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                  t.is_active
-                                    ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-700/10"
-                                    : "bg-slate-50 text-slate-500 ring-1 ring-slate-500/10"
-                                }`}
+                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${t.is_active
+                                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-700/10"
+                                  : "bg-slate-50 text-slate-500 ring-1 ring-slate-500/10"
+                                  }`}
                               >
                                 {t.is_active ? "Active" : "Inactive"}
                               </span>
@@ -1125,11 +1119,10 @@ const HospitalSlotsPage = () => {
                               </p>
                             </div>
                             <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                assignment.is_active
-                                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-700/10"
-                                  : "bg-slate-50 text-slate-500 ring-1 ring-slate-500/10"
-                              }`}
+                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${assignment.is_active
+                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-700/10"
+                                : "bg-slate-50 text-slate-500 ring-1 ring-slate-500/10"
+                                }`}
                             >
                               {assignment.is_active ? "Active" : "Inactive"}
                             </span>
