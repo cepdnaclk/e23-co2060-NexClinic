@@ -11,6 +11,12 @@ from .views import (
     CreateHospitalDoctorView,
     HospitalAdminProfileView,
     ManageDoctorFeesView,
+    HospitalAppointmentCancelRequestAcceptView,
+    HospitalAppointmentCancelView,
+    HospitalAdminPatientProfileView,
+    HospitalAdminPatientLogsView,
+    HospitalAdminPatientAppointmentsView,
+    HospitalAdminPatientListView,
 )
 
 urlpatterns = [
@@ -39,5 +45,35 @@ urlpatterns = [
         "doctor-fees/<int:doctor_id>/",
         ManageDoctorFeesView.as_view(),
         name="manage-doctor-fees",
+    ),
+    path(
+        "appointments/<int:appointment_id>/accept-cancellation/",
+        HospitalAppointmentCancelRequestAcceptView.as_view(),
+        name="hospital-appointment-accept-cancellation",
+    ),
+    path(
+        "appointments/<int:appointment_id>/cancel/",
+        HospitalAppointmentCancelView.as_view(),
+        name="hospital-appointment-cancel",
+    ),
+    path(
+        "patients/",
+        HospitalAdminPatientListView.as_view(),
+        name="hospital-patients-list",
+    ),
+    path(
+        "patients/<int:patient_id>/",
+        HospitalAdminPatientProfileView.as_view(),
+        name="hospital-patient-profile",
+    ),
+    path(
+        "patients/<int:patient_id>/logs/",
+        HospitalAdminPatientLogsView.as_view(),
+        name="hospital-patient-logs",
+    ),
+    path(
+        "patients/<int:patient_id>/appointments/",
+        HospitalAdminPatientAppointmentsView.as_view(),
+        name="hospital-patient-appointments",
     ),
 ]

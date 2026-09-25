@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import GreenButton from "@/components/buttons/GreenButton";
+import { validatePublicUpload } from '@/lib/fileValidation';
 
 interface Doctor {
     id: string; // The user ID or doctor profile ID. The API expects CustomUser IDs.
@@ -84,9 +85,18 @@ export default function NewAnnouncementPage() {
         );
     });
 
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setAttachment(e.target.files[0]);
+            const file = e.target.files[0];
+            const error = validatePublicUpload(file);
+            if (error) {
+                alert(error);
+                e.target.value = ''; // clear input
+                setAttachment(null);
+                return;
+            }
+            setAttachment(file);
         } else {
             setAttachment(null);
         }

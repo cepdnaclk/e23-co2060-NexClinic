@@ -28,10 +28,9 @@ export async function PATCH(request: NextRequest) {
     let forwardedContentType: string | null = "application/json";
 
     if (contentType?.includes("multipart/form-data")) {
-      // Read raw body and forward the original Content-Type (including boundary)
-      const buf = await request.arrayBuffer();
-      body = buf;
-      forwardedContentType = contentType;
+      // Use standard FormData to let fetch automatically generate the new boundary
+      body = await request.formData();
+      forwardedContentType = null;
     } else {
       body = JSON.stringify(await request.json().catch(() => ({})));
     }

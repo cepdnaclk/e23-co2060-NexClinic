@@ -58,6 +58,7 @@ ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", ["*"])
 # Fixes 403 Forbidden errors when submitting forms behind a proxy like Railway
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CSRF_TRUSTED_ORIGINS = _env_list("DJANGO_CSRF_TRUSTED_ORIGINS", [])
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")
 
 # Application definition
 
@@ -78,6 +79,8 @@ INSTALLED_APPS = [
     "chat",
     "channels",
     "notifications",
+    "storages",
+    "anymail",
 ]
 
 AUTH_USER_MODEL = "users.CustomUser"
@@ -195,6 +198,23 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Supabase Storage Configuration
+USE_S3 = _env_bool("USE_S3", False)
+
+if USE_S3:
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "ap-south-1")
+    AWS_PUBLIC_STORAGE_BUCKET_NAME = os.getenv("AWS_PUBLIC_STORAGE_BUCKET_NAME", "nexclinic-public")
+    AWS_PRIVATE_STORAGE_BUCKET_NAME = os.getenv("AWS_PRIVATE_STORAGE_BUCKET_NAME", "nexclinic-private")
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+    
+    # We no longer set DEFAULT_FILE_STORAGE here because we will explicitly
+    # assign `storage=public_storage` or `storage=private_storage` on our models
+    # depending on whether the file needs to be publicly accessible or privately signed.
+
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
@@ -261,12 +281,19 @@ OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv("OTP_RESEND_COOLDOWN_SECONDS", "60")
 
 # Email Configuration
 # Use SendGrid's Django backend when an API key is present; otherwise fall back to SMTP.
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+# SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 
-if SENDGRID_API_KEY is not None and len(SENDGRID_API_KEY) > 1:
-    EMAIL_BACKEND = "sgbackend.SendGridBackend"
+# if SENDGRID_API_KEY is not None and len(SENDGRID_API_KEY) > 1:
+#     EMAIL_BACKEND = "sgbackend.SendGridBackend"
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
+if BREVO_API_KEY:
+    EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+    ANYMAIL = {
+        "BREVO_API_KEY": BREVO_API_KEY,
+    }
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     
@@ -330,16 +357,27 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 
 # Channels configuration
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+# Use Redis in production, otherwise fallback to InMemory for local development
+if os.getenv("RENDER") or os.getenv("USE_REDIS_CHANNELS"):
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0').replace('/0', '/1')],
+            },
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
         # Uncomment the following to use Redis once you have Redis running:
         # "BACKEND": "channels_redis.core.RedisChannelLayer",
         # "CONFIG": {
         #     "hosts": [os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0').replace('/0', '/1')],
         # },
+        }
     }
-}
 
 # Schedule: weekly regeneration of slots (run every Monday at 02:00)
 from celery.schedules import crontab
@@ -350,9 +388,24 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=2, minute=0, day_of_week="mon"),
         "args": (),
     },
+    "expire_past_appointments_every_hour": {
+        "task": "doctor.tasks.expire_past_appointments",
+        "schedule": crontab(minute=0), # Run every hour at minute 0
+        "args": (),
+    },
+    "generate_medication_reminders": {
+        "task": "patient.tasks.generate_medication_logs_and_notify",
+        "schedule": crontab(minute="*/5"), # Run every 5 minutes
+        "args": (),
+    },
 }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Text.lk SMS Settings
+TEXT_LK_API_TOKEN = os.getenv("TEXT_LK_API_TOKEN", "")
+TEXT_LK_SENDER_ID = os.getenv("TEXT_LK_SENDER_ID", "TextLKDemo")
+

@@ -177,7 +177,7 @@ function DoctorNavBar() {
                                     : "text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900"
                                     }`}
                             >
-                                Slots
+                                Schedules
                             </Link>
                             <Link
                                 href="/doctor-self/chats"
@@ -220,6 +220,15 @@ function DoctorNavBar() {
 
                     {/* Desktop Right Panel (Logout) */}
                     <div className="hidden md:flex items-center gap-4">
+                        <Link
+                            href="/help"
+                            className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${isActive("/help")
+                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                : "text-slate-650 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                                }`}
+                        >
+                            Help
+                        </Link>
                         <NotificationBell />
                         <button
                             onClick={handleLogout}
@@ -279,7 +288,7 @@ function DoctorNavBar() {
                                 : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                                 }`}
                         >
-                            Slots
+                            Schedules
                         </Link>
                         <Link
                             href="/doctor-self/chats"
@@ -316,6 +325,15 @@ function DoctorNavBar() {
                                 }`}
                         >
                             News & Articles
+                        </Link>
+                        <Link
+                            href="/help"
+                            className={`block px-4 py-2.5 rounded-xl text-base font-medium transition-colors ${isActive("/help")
+                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold"
+                                : "text-slate-650 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                                }`}
+                        >
+                            Help
                         </Link>
                         <button
                             onClick={handleLogout}

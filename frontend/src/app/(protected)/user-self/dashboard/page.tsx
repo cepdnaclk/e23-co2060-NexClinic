@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { User } from "lucide-react";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
 
 type PatientProfilePayload = {
@@ -22,6 +23,7 @@ type DashboardAppointment = {
   status: string;
   category: "upcoming" | "previous";
   requestedAt: string;
+  queueNumber?: number;
 };
 
 type AppointmentsPayload = {
@@ -65,6 +67,7 @@ export default function UserDashboard() {
   const [appointments, setAppointments] = useState<DashboardAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const loadDashboardData = async (showLoading: boolean) => {
@@ -111,7 +114,8 @@ export default function UserDashboard() {
         const patient = profileMissing ? {} : profilePayload.patient || {};
         setFullName(patient.fullName || "");
         setEmail(patient.email || "");
-        setProfileImage(patient.profileImage || undefined);
+        const profileImg = patient.profileImage;
+        setProfileImage(profileImg && profileImg !== "null" ? profileImg : undefined);
 
         const liveAppointments = Array.isArray(appointmentsPayload.appointments)
           ? appointmentsPayload.appointments
@@ -179,7 +183,7 @@ export default function UserDashboard() {
   const sortedAppointments = useMemo(() => {
     return [...appointments]
       .sort((a, b) =>
-        `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
+        `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`),
       )
       .map((item) => ({
         id: item.id,
@@ -191,7 +195,22 @@ export default function UserDashboard() {
       }));
   }, [appointments]);
 
-  const nextAppointment = sortedAppointments[0];
+  const nextAppointment = useMemo(() => {
+    const upcoming = appointments.filter((a) => a.category === "upcoming");
+    if (upcoming.length === 0) return null;
+    
+    upcoming.sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+    
+    const item = upcoming[0];
+    return {
+      id: item.id,
+      doctor: item.doctorName,
+      status: item.status,
+      statusClass: statusTheme(item.status),
+      type: item.type || "Consultation",
+      time: `${item.date} - ${item.time}`,
+    };
+  }, [appointments]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white">
@@ -202,11 +221,18 @@ export default function UserDashboard() {
             <div className="flex flex-col gap-5 xl:flex-row xl:items-stretch xl:justify-between">
               <div className="flex-1 rounded-[1.75rem] border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur sm:p-5 lg:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <img
-                    src={profileImage || "/images/user.png"}
-                    alt={displayName}
-                    className="mx-auto h-[92px] w-[92px] shrink-0 rounded-full border-4 border-green-500 object-cover sm:mx-0"
-                  />
+                  {profileImage && !imageError ? (
+                    <img
+                      src={profileImage}
+                      alt={displayName}
+                      className="mx-auto h-[92px] w-[92px] shrink-0 rounded-full border-4 border-green-500 object-cover sm:mx-0"
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <div className="mx-auto flex h-[92px] w-[92px] shrink-0 items-center justify-center rounded-full border-4 border-green-500 bg-emerald-50 text-emerald-500 sm:mx-0">
+                      <User className="h-10 w-10" />
+                    </div>
+                  )}
 
                   <div className="min-w-0 flex-1 text-center sm:text-left">
                     <h1 className="mt-3 break-words text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
@@ -442,9 +468,14 @@ export default function UserDashboard() {
                     className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 transition hover:border-green-200 hover:bg-green-50/50"
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="break-words font-semibold text-slate-900">
-                        {appointment.doctor}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="break-words font-semibold text-slate-900">
+                          {appointment.doctor}
+                        </p>
+                        <span className="font-mono text-sm font-semibold text-emerald-600">
+                          {appointment.queueNumber ? `(Queue #${appointment.queueNumber})` : ''}
+                        </span>
+                      </div>
                       <span
                         className={`w-max rounded-full border px-3 py-1 text-xs font-semibold ${appointment.statusClass}`}
                       >

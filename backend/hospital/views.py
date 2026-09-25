@@ -9,11 +9,15 @@ from .serializers import (
     HospitalSerializer,
     HospitalAdminProfileSerializer,
     HospitalAppointmentSerializer,
+    HospitalAdminPatientProfileSerializer,
 )
 from doctor.models import Appointment, AppointmentAvailableSlot
+from patient.models import PatientProfile
 from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
+from django.db import transaction
 from datetime import timedelta
+from chat.models import AdviceChatThread
 import logging
 
 logger = logging.getLogger(__name__)
@@ -337,6 +341,7 @@ class HospitalAppointmentListView(APIView):
             Appointment.Status.COMPLETED: "Completed",
             Appointment.Status.CANCELLED: "Cancelled",
             Appointment.Status.REJECTED: "Rejected",
+            Appointment.Status.CANCELLATION_REQUESTED: "Cancellation Requested",
         }
 
         appointments = (
@@ -346,6 +351,7 @@ class HospitalAppointmentListView(APIView):
                     Appointment.Status.PENDING,
                     Appointment.Status.ACCEPTED,
                     Appointment.Status.COMPLETED,
+                    Appointment.Status.CANCELLATION_REQUESTED,
                 ],
             )
             .values(
@@ -362,6 +368,8 @@ class HospitalAppointmentListView(APIView):
                 "doctor__user__email",
                 "slot__date",
                 "slot__start_time",
+                "cancellation_reason",
+                "cancelled_by",
             )
             .order_by("-slot__date", "-slot__start_time", "-requested_at")[:500]
         )
@@ -385,11 +393,14 @@ class HospitalAppointmentListView(APIView):
                 or appointment.get("doctor__user__email")
                 or "Doctor"
             )
+            p_name = appointment.get("patient__full_name") or "Unknown"
+            p_id = appointment.get("patient_id")
+            
             response_data.append(
                 {
                     "id": appointment["id"],
-                    "patientId": str(appointment.get("patient_id") or ""),
-                    "patientName": appointment.get("patient__full_name") or "Unknown",
+                    "patientId": str(p_id or ""),
+                    "patientName": f"{p_name} (ID: P-{p_id})" if p_id else p_name,
                     "patientAge": patient_age,
                     "patientGender": appointment.get("patient__gender") or "",
                     "patientPhone": appointment.get("patient__phone") or "",
@@ -410,6 +421,8 @@ class HospitalAppointmentListView(APIView):
                         str(appointment.get("status") or "").title(),
                     ),
                     "status": appointment.get("status") or "",
+                    "cancellationReason": appointment.get("cancellation_reason") or "",
+                    "cancelledBy": appointment.get("cancelled_by") or "",
                 }
             )
 
@@ -731,3 +744,183 @@ class ManageDoctorFeesView(APIView):
                 "appointment_fee": float(doctor.appointment_fee),
             }
         )
+
+class HospitalAppointmentCancelRequestAcceptView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, appointment_id):
+        admin_role = (
+            HospitalAdmin.objects.filter(user=request.user, is_active=True)
+            .select_related("hospital")
+            .first()
+        )
+        if not admin_role:
+            return Response(
+                {"detail": "You are not a hospital admin."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        appointment = get_object_or_404(
+            Appointment, id=appointment_id, hospital=admin_role.hospital
+        )
+
+        if appointment.status != Appointment.Status.CANCELLATION_REQUESTED:
+            return Response(
+                {"detail": "Appointment is not in a cancellation requested state."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            appointment.status = Appointment.Status.CANCELLED
+            appointment.save(update_fields=["status", "updated_at"])
+
+            chat_thread = AdviceChatThread.objects.filter(doctor=appointment.doctor, patient=appointment.patient).first()
+            if chat_thread and chat_thread.status != AdviceChatThread.Status.CLOSED:
+                chat_thread.status = AdviceChatThread.Status.CLOSED
+                chat_thread.save(update_fields=['status'])
+
+        return Response(
+            {"detail": "Cancellation request accepted."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class HospitalAppointmentCancelView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, appointment_id):
+        admin_role = (
+            HospitalAdmin.objects.filter(user=request.user, is_active=True)
+            .select_related("hospital")
+            .first()
+        )
+        if not admin_role:
+            return Response(
+                {"detail": "You are not a hospital admin."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        appointment = get_object_or_404(
+            Appointment, id=appointment_id, hospital=admin_role.hospital
+        )
+
+        if appointment.status in [Appointment.Status.COMPLETED, Appointment.Status.CANCELLED, Appointment.Status.REJECTED]:
+            return Response(
+                {"detail": "Appointment is already completed or cancelled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        reason = request.data.get("reason", "")
+
+        with transaction.atomic():
+            appointment.status = Appointment.Status.CANCELLED
+            appointment.cancelled_by = "ADMIN"
+            appointment.cancellation_reason = reason
+            appointment.cancelled_at = timezone.now()
+            appointment.save(
+                update_fields=[
+                    "status",
+                    "cancelled_by",
+                    "cancellation_reason",
+                    "cancelled_at",
+                    "updated_at",
+                ]
+            )
+
+            chat_thread = AdviceChatThread.objects.filter(doctor=appointment.doctor, patient=appointment.patient).first()
+            if chat_thread and chat_thread.status != AdviceChatThread.Status.CLOSED:
+                chat_thread.status = AdviceChatThread.Status.CLOSED
+                chat_thread.save(update_fields=['status'])
+
+        return Response(
+            {"detail": "Appointment cancelled successfully."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class HospitalAdminPatientListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+            
+        # Get unique patients who have booked appointments at this hospital
+        patients = PatientProfile.objects.filter(appointments__hospital=admin_role.hospital).distinct()
+        
+        serializer = HospitalAdminPatientProfileSerializer(patients, many=True)
+        return Response(serializer.data)
+
+
+class HospitalAdminPatientProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+            
+        patient = get_object_or_404(PatientProfile, id=patient_id)
+        
+        has_appointment = Appointment.objects.filter(
+            patient=patient, hospital=admin_role.hospital
+        ).exists()
+        
+        if not has_appointment:
+            return Response({"detail": "You do not have permission to view this patient."}, status=status.HTTP_403_FORBIDDEN)
+            
+        serializer = HospitalAdminPatientProfileSerializer(patient)
+        return Response(serializer.data)
+
+
+class HospitalAdminPatientLogsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+            
+        patient = get_object_or_404(PatientProfile, id=patient_id)
+        
+        has_appointment = Appointment.objects.filter(
+            patient=patient, hospital=admin_role.hospital
+        ).exists()
+        
+        if not has_appointment:
+            return Response({"detail": "You do not have permission to view this patient."}, status=status.HTTP_403_FORBIDDEN)
+            
+        logs = ActivityLog.objects.filter(
+            hospital_id=admin_role.hospital.id,
+            user=patient.user
+        ).order_by("-created_at")[:500]
+        
+        serializer = ActivityLogSerializer(logs, many=True)
+        return Response(serializer.data)
+
+
+class HospitalAdminPatientAppointmentsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        admin_role = HospitalAdmin.objects.filter(user=request.user, is_active=True).select_related("hospital").first()
+        if not admin_role:
+            return Response({"detail": "You are not a hospital admin."}, status=status.HTTP_403_FORBIDDEN)
+            
+        patient = get_object_or_404(PatientProfile, id=patient_id)
+        
+        has_appointment = Appointment.objects.filter(
+            patient=patient, hospital=admin_role.hospital
+        ).exists()
+        
+        if not has_appointment:
+            return Response({"detail": "You do not have permission to view this patient."}, status=status.HTTP_403_FORBIDDEN)
+            
+        appointments = Appointment.objects.filter(
+            hospital=admin_role.hospital,
+            patient=patient
+        ).order_by("-slot__date", "-slot__start_time")
+        
+        serializer = HospitalAppointmentSerializer(appointments, many=True)
+        return Response(serializer.data)

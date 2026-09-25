@@ -31,6 +31,7 @@ export default function HospitalActivityLogsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [patientSearch, setPatientSearch] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -103,6 +104,33 @@ export default function HospitalActivityLogsPage() {
           </div>
 
           <div className="w-full lg:w-auto flex flex-col sm:flex-row gap-3">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (patientSearch.trim()) {
+                  let pid = patientSearch.trim().toUpperCase();
+                  if (pid.startsWith("P-")) {
+                    pid = pid.slice(2);
+                  }
+                  window.location.href = `/hospital/patients/${encodeURIComponent(pid)}`;
+                }
+              }}
+              className="flex w-full sm:w-auto"
+            >
+              <input
+                type="text"
+                placeholder="Lookup Patient ID (e.g. P-123)"
+                value={patientSearch}
+                onChange={(event) => setPatientSearch(event.target.value)}
+                className="block w-full sm:min-w-[180px] rounded-l-xl border border-r-0 border-slate-200 bg-emerald-50/30 px-4 py-2 text-sm text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
+              />
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center rounded-r-xl border border-slate-200 hover:bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-600 transition-all"
+              >
+                Go
+              </button>
+            </form>
             <input
               type="text"
               placeholder="Search by admin, action, or record..."

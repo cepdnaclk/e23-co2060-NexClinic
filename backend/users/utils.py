@@ -1,9 +1,10 @@
 import secrets
 import string
 import logging
-from django.core.mail import send_mail
+from notifications.mail_utils import send_templated_email
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -43,15 +44,47 @@ def verify_otp(otp, otp_hash):
     return check_password(otp, otp_hash)
 
 def send_otp_email(email, otp):
-    subject = 'Verify your email'
-    message = f'Your OTP code is {otp}. It expires in 10 minutes.'
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [email],
+    context = {
+        "otp": otp,
+        "expires_in": 10
+    }
+    send_templated_email(
+        template_name="otp_verification",
+        context=context,
+        recipients=[email],
         fail_silently=False,
     )
+
+def send_otp_sms(phone, otp):
+    if not phone or phone == 'Unknown':
+        return False
+        
+    api_token = getattr(settings, 'TEXT_LK_API_TOKEN', None)
+    sender_id = getattr(settings, 'TEXT_LK_SENDER_ID', '')
+    
+    if not api_token:
+        return False
+        
+    try:
+        url = "https://app.text.lk/api/http/sms/send"
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "api_token": api_token,
+            "recipient": phone,
+            "sender_id": sender_id,
+            "type": "plain",
+            "message": f"Your NexClinic OTP is: {otp}. It is valid for 10 minutes."
+        }
+        response = requests.post(url, headers=headers, json=payload, timeout=5)
+        response.raise_for_status()
+        logger.info('send_otp_sms.success phone=%s', phone)
+        return True
+    except Exception as e:
+        logger.error('send_otp_sms.error phone=%s error=%s', phone, str(e))
+        return False
 
 
 def send_doctor_account_credentials_email(email, password, doctor_name):
@@ -61,23 +94,19 @@ def send_doctor_account_credentials_email(email, password, doctor_name):
     reset_url = f'{frontend_base_url}/reset-password?role=doctor'
     display_name = (doctor_name or '').strip() or 'Doctor'
 
-    subject = 'Your NexClinic doctor account'
-    message = (
-        f'Hello {display_name},\n\n'
-        'A hospital administrator has created a NexClinic doctor account for you.\n\n'
-        f'Login email: {email}\n'
-        f'Temporary password: {password}\n'
-        f'Login: {login_url}\n\n'
-        'Use these credentials for your first login. Keep this password private. '
-        f'If you want to change it, use the Forgot password option or visit {reset_url}.\n\n'
-        'If you were not expecting this account, please contact your hospital administrator.'
-    )
+    context = {
+        "display_name": display_name,
+        "email": email,
+        "password": password,
+        "login_url": login_url,
+        "reset_url": reset_url
+    }
+
     try:
-        sent_count = send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
+        sent_count = send_templated_email(
+            template_name="doctor_credentials",
+            context=context,
+            recipients=[email],
             fail_silently=False,
         )
     except Exception as exc:
@@ -99,20 +128,14 @@ def send_admin_notification_email(doctor_email, doctor_name):
         logger.warning('ADMIN_NOTIFICATION_EMAILS is empty; skipping doctor admin notification email.')
         return
 
-    subject = 'Action Required: New Doctor Registration'
-    message = f"""
-    New Doctor Registered!
+    context = {
+        "doctor_name": doctor_name,
+        "doctor_email": doctor_email
+    }
     
-    Name: {doctor_name}
-    Email: {doctor_email}
-    
-    Please log in to the admin dashboard to verify their details and approve their account.
-    """
-    
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        recipients,
+    send_templated_email(
+        template_name="admin_new_doctor",
+        context=context,
+        recipients=recipients,
         fail_silently=False,
     )

@@ -85,11 +85,11 @@ export default function AppointmentModal({ appointment, isOpen, onClose }: Appoi
                         </div>
                     )}
 
-                    {/* Appointment ID & Slot ID */}
+                    {/* Queue Number */}
                     <div className="grid grid-cols-2 gap-3 text-sm">
                         <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded">
-                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Appointment ID</p>
-                            <p className="font-mono text-xs text-gray-700 dark:text-gray-300 break-all">{appointment.id}</p>
+                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Queue Number</p>
+                            <p className="font-mono text-base font-semibold text-emerald-600 dark:text-emerald-400 break-all">#{appointment.queueNumber || '-'}</p>
                         </div>
                         {/* <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded">
                             <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Slot ID</p>

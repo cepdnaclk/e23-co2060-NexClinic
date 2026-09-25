@@ -62,6 +62,7 @@ const BookAppointmentPage = () => {
   const [reason, setReason] = useState("");
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [pendingAppointmentId, setPendingAppointmentId] = useState<string | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
@@ -72,8 +73,6 @@ const BookAppointmentPage = () => {
     setError("");
 
     try {
-      // Fetch all slots, no need to filter by doctor ID initially 
-      // since we want to allow users to select hospital first.
       const payload = await fetchAvailableSlots(undefined, router);
 
       const rawSlots: unknown[] = Array.isArray(payload?.slots)
@@ -141,7 +140,6 @@ const BookAppointmentPage = () => {
     void loadAvailableSlots();
   }, [loadAvailableSlots]);
 
-  // Derived options for SearchableSelect
   const hospitalOptions = useMemo(() => {
     const filteredByDoctor = doctorId 
       ? availableSlots.filter(s => s.doctorId === doctorId)
@@ -194,7 +192,7 @@ const BookAppointmentPage = () => {
   const selectedSlot =
     availableSlots.find((slot) => String(slot.id) === slotId) || null;
 
-  const handleProceedToPayment = (e: React.FormEvent) => {
+  const handleBookAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!doctorId || !slotId || !selectedHospital) {
       setError("Please fill in all fields (Hospital, Doctor, Slot).");
@@ -207,12 +205,7 @@ const BookAppointmentPage = () => {
     }
 
     setError("");
-    setShowPaymentModal(true);
-  };
-
-  const handlePaymentSuccess = async () => {
     setSubmitting(true);
-    setError("");
 
     try {
       const response = await fetch("/api/patient/appointments", {
@@ -237,6 +230,37 @@ const BookAppointmentPage = () => {
         throw new Error(payload?.error || "Failed to book appointment");
       }
 
+      const appointment = payload.appointment;
+      setPendingAppointmentId(appointment.id);
+      setShowPaymentModal(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to book appointment");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    if (!pendingAppointmentId) return;
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/patient/appointments/${pendingAppointmentId}/pay`, {
+        method: "PATCH",
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        handlePatientSessionExpired(router);
+        return;
+      }
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to confirm payment");
+      }
+
       await loadAvailableSlots();
       setShowPaymentModal(false);
       setSuccess(true);
@@ -244,9 +268,13 @@ const BookAppointmentPage = () => {
       setSlotId("");
       setDoctorId("");
       setSelectedHospital("");
+      
+      setTimeout(() => {
+        router.push("/user-self/appointments");
+      }, 2000);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to book appointment"
+        err instanceof Error ? err.message : "Failed to confirm payment"
       );
       setShowPaymentModal(false);
     } finally {
@@ -254,11 +282,15 @@ const BookAppointmentPage = () => {
     }
   };
 
+  const handlePaymentCancel = () => {
+    setShowPaymentModal(false);
+    router.push("/user-self/appointments");
+  };
+
   return (
     <div className="min-h-screen w-full bg-slate-50 py-6 px-3 sm:px-4 sm:py-8 lg:px-6">
       <div className="mx-auto w-full max-w-2xl">
         {success ? (
-          /* Success Message */
           <div className="relative overflow-hidden rounded-[2rem] border border-green-100 bg-white shadow-xl shadow-green-900/5">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.05),transparent_42%),radial-gradient(circle_at_bottom_left,_rgba(16,185,129,0.05),transparent_40%)]" />
             <div className="relative space-y-6 p-6 sm:p-8 lg:p-10">
@@ -312,10 +344,8 @@ const BookAppointmentPage = () => {
             </div>
           </div>
         ) : (
-          /* Booking Form */
           <div className="relative overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-xl shadow-slate-200/40">
             <div className="relative space-y-8 p-6 sm:p-8 lg:p-10">
-              {/* Header */}
               <div className="mb-2 text-center">
                 <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                   Book an Appointment
@@ -325,8 +355,7 @@ const BookAppointmentPage = () => {
                 </p>
               </div>
 
-              <form className="flex flex-col gap-6" onSubmit={handleProceedToPayment}>
-                {/* Hospital Selection */}
+              <div className="flex flex-col gap-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-slate-900">
                     Hospital
@@ -336,15 +365,14 @@ const BookAppointmentPage = () => {
                     value={selectedHospital}
                     onChange={(val) => {
                       setSelectedHospital(val);
-                      setDoctorId(""); // Reset doctor selection
-                      setSlotId(""); // Reset slot selection
+                      setDoctorId(""); 
+                      setSlotId(""); 
                     }}
                     placeholder="Search hospitals..."
                     disabled={loadingSlots || hospitalOptions.length === 0}
                   />
                 </div>
 
-                {/* Doctor Selection */}
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-slate-900">
                     Doctor
@@ -354,13 +382,12 @@ const BookAppointmentPage = () => {
                     value={doctorId}
                     onChange={(val) => {
                       setDoctorId(val);
-                      setSlotId(""); // Reset slot selection
+                      setSlotId(""); 
                     }}
                     placeholder="Search doctors..."
                     disabled={loadingSlots || doctorOptions.length === 0 || !selectedHospital}
                   />
                   
-                  {/* Doctor Profile Card */}
                   {doctorId && (
                     <div className="mt-3 flex items-center gap-4 rounded-2xl border border-emerald-100 bg-gradient-to-r from-white to-emerald-50/30 p-4 shadow-sm transition-all animate-in fade-in slide-in-from-bottom-2">
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-sm font-bold text-emerald-700 shadow-inner">
@@ -380,7 +407,6 @@ const BookAppointmentPage = () => {
                   )}
                 </div>
 
-                {/* Slot Selection (Grid Layout) */}
                 <div className="space-y-3">
                   <label className="block text-sm font-semibold text-slate-900">
                     Available Time Slots
@@ -430,7 +456,6 @@ const BookAppointmentPage = () => {
                   )}
                 </div>
 
-                {/* Reason For Visit */}
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-slate-900">
                     Reason for Visit (Optional)
@@ -444,7 +469,6 @@ const BookAppointmentPage = () => {
                   />
                 </div>
 
-                {/* Selected Appointment Summary */}
                 {selectedSlot && (
                   <div className="rounded-2xl border border-green-100 bg-green-50/50 p-5">
                     <div className="space-y-4">
@@ -488,7 +512,6 @@ const BookAppointmentPage = () => {
                   </div>
                 )}
 
-                {/* Error Message */}
                 {error && (
                   <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                     <div className="flex items-start gap-3">
@@ -508,7 +531,6 @@ const BookAppointmentPage = () => {
                   </div>
                 )}
 
-                {/* Loading State */}
                 {loadingSlots && (
                   <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-500 text-sm text-center flex items-center justify-center gap-3">
                     <div className="h-4 w-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
@@ -516,7 +538,6 @@ const BookAppointmentPage = () => {
                   </div>
                 )}
 
-                {/* No Slots Message */}
                 {!loadingSlots && availableSlots.length === 0 && (
                   <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-3">
@@ -541,9 +562,9 @@ const BookAppointmentPage = () => {
                   </div>
                 )}
 
-                {/* Submit Button */}
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleBookAppointment}
                   disabled={submitting || loadingSlots || !doctorId || !slotId || !selectedHospital}
                   className="mt-4 w-full rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2"
                 >
@@ -561,7 +582,7 @@ const BookAppointmentPage = () => {
                     </>
                   )}
                 </button>
-              </form>
+              </div>
             </div>
           </div>
         )}
@@ -571,7 +592,7 @@ const BookAppointmentPage = () => {
         <MockPaymentGateway
           amount={selectedSlot?.appointmentFee ? `Rs. ${selectedSlot.appointmentFee.toFixed(2)}` : "Rs. 3,500.00"}
           onSuccess={handlePaymentSuccess}
-          onCancel={() => setShowPaymentModal(false)}
+          onCancel={handlePaymentCancel}
           isProcessing={submitting}
         />
       )}

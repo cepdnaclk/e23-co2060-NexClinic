@@ -6,6 +6,7 @@ import GreenButton from "@/components/buttons/GreenButton";
 import BlackButton from "@/components/buttons/BlackButton";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
 import { Patient } from "@/data/patients";
+import { User } from "lucide-react";
 
 type PatientProfileResponse = {
   patient: {
@@ -24,8 +25,6 @@ type PatientProfileResponse = {
     bloodType: string;
     allergies: string;
     medications: string;
-    medicalReports: string;
-    medicalDocuments: string;
     medicalHistory: string;
   };
   emergencyContact: {
@@ -52,14 +51,14 @@ const defaultFormData: Patient = {
   bloodType: "",
   allergies: "",
   medications: "",
-  medicalReports: "",
-  medicalDocuments: "",
   medicalHistory: "",
   emergencyContactName: "",
   emergencyContactPhone: "",
   emergencyContactRelation: "",
   emergencyContactEmail: "",
   profileImage: "/images/user.png",
+  medicalReports: "",
+  medicalDocuments: "",
   lastUpdated: new Date().toISOString().split("T")[0],
 };
 
@@ -82,14 +81,12 @@ function mapProfileToForm(profile: PatientProfileResponse | null): Patient {
     bloodType: profile.health.bloodType || "",
     allergies: profile.health.allergies || "",
     medications: profile.health.medications || "",
-    medicalReports: profile.health.medicalReports || "",
-    medicalDocuments: profile.health.medicalDocuments || "",
     medicalHistory: profile.health.medicalHistory || "",
     emergencyContactName: profile.emergencyContact.name || "",
     emergencyContactPhone: profile.emergencyContact.phone || "",
     emergencyContactRelation: profile.emergencyContact.relation || "",
     emergencyContactEmail: profile.emergencyContact.email || "",
-    profileImage: profile.patient.profileImage || defaultFormData.profileImage,
+    profileImage: (!profile.patient.profileImage || profile.patient.profileImage === "null") ? defaultFormData.profileImage : profile.patient.profileImage,
   };
 }
 
@@ -132,16 +129,13 @@ export default function UserEditProfilePage() {
   const [profileImageVersion, setProfileImageVersion] = useState("");
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [removePhoto, setRemovePhoto] = useState(false);
-  const [selectedMedicalReportFile, setSelectedMedicalReportFile] = useState<File | null>(null);
-  const [selectedMedicalDocumentFile, setSelectedMedicalDocumentFile] = useState<File | null>(null);
   const [bloodTypeUnknown, setBloodTypeUnknown] = useState(false);
-  const [medicalReportLabel, setMedicalReportLabel] = useState("No file selected");
-  const [medicalDocumentLabel, setMedicalDocumentLabel] = useState("No file selected");
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -205,8 +199,8 @@ export default function UserEditProfilePage() {
 
   const profileImage = useMemo(() => {
     const imageSrc = formData.profileImage?.trim();
-    if (!imageSrc) {
-      return "/images/user.png";
+    if (!imageSrc || imageSrc === "null") {
+      return undefined;
     }
 
     if (imageSrc.startsWith("/images/") || imageSrc.startsWith("data:")) {
@@ -214,21 +208,13 @@ export default function UserEditProfilePage() {
     }
 
     return profileImageVersion
-      ? `${imageSrc}?v=${profileImageVersion}`
+      ? `${imageSrc}${imageSrc.includes("?") ? "&" : "?"}v=${profileImageVersion}`
       : imageSrc;
   }, [formData.profileImage, profileImageVersion]);
 
-  const getAttachmentLabel = (url: string) => {
-    if (!url.trim()) {
-      return "No file uploaded";
-    }
-
-    try {
-      return decodeURIComponent(url.split("/").pop() || "Uploaded file");
-    } catch {
-      return "Uploaded file";
-    }
-  };
+  useEffect(() => {
+    setImageError(false);
+  }, [profileImage]);
 
   const initials = useMemo(() => {
     const parts = formData.name.trim().split(/\s+/).filter(Boolean);
@@ -321,6 +307,7 @@ export default function UserEditProfilePage() {
     reader.onloadend = () => {
       setSelectedImageFile(file);
       setRemovePhoto(false);
+      setImageError(false);
       setFormData((previous) => ({
         ...previous,
         profileImage: reader.result as string,
@@ -332,30 +319,11 @@ export default function UserEditProfilePage() {
   const handleRemovePhoto = () => {
     setSelectedImageFile(null);
     setRemovePhoto(true);
+    setImageError(false);
     setFormData((previous) => ({
       ...previous,
-      profileImage: "/images/user.png",
+      profileImage: "",
     }));
-  };
-
-  const handleMedicalReportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    setSelectedMedicalReportFile(file);
-    setMedicalReportLabel(file.name);
-  };
-
-  const handleMedicalDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    setSelectedMedicalDocumentFile(file);
-    setMedicalDocumentLabel(file.name);
   };
 
   const handleBloodTypeToggle = (checked: boolean) => {
@@ -363,9 +331,9 @@ export default function UserEditProfilePage() {
     setFormData((previous) =>
       previous
         ? {
-            ...previous,
-            bloodType: checked ? "" : previous.bloodType || "O+",
-          }
+          ...previous,
+          bloodType: checked ? "" : previous.bloodType || "O+",
+        }
         : previous,
     );
   };
@@ -387,7 +355,7 @@ export default function UserEditProfilePage() {
       if (formData.phone) requestBody.set("phone", formData.phone);
       if (formData.dateOfBirth) requestBody.set("dateOfBirth", formData.dateOfBirth);
       if (formData.gender) requestBody.set("gender", formData.gender);
-      
+
       if (formData.address !== undefined) requestBody.set("address", formData.address);
       if (formData.city !== undefined) requestBody.set("city", formData.city);
       if (formData.postalCode !== undefined) requestBody.set("postalCode", formData.postalCode);
@@ -405,14 +373,6 @@ export default function UserEditProfilePage() {
         requestBody.set("profileImage", selectedImageFile);
       } else if (removePhoto) {
         requestBody.set("clearProfilePicture", "true");
-      }
-
-      if (selectedMedicalReportFile) {
-        requestBody.set("medicalReports", selectedMedicalReportFile);
-      }
-
-      if (selectedMedicalDocumentFile) {
-        requestBody.set("medicalDocuments", selectedMedicalDocumentFile);
       }
 
       const response = await fetch("/api/patient/profile", {
@@ -440,10 +400,6 @@ export default function UserEditProfilePage() {
       setProfile(updatedProfile);
       setFormData(nextFormData);
       setSelectedImageFile(null);
-      setSelectedMedicalReportFile(null);
-      setSelectedMedicalDocumentFile(null);
-      setMedicalReportLabel(getAttachmentLabel(updatedProfile.health.medicalReports));
-      setMedicalDocumentLabel(getAttachmentLabel(updatedProfile.health.medicalDocuments));
       const imageVersion = Date.now().toString();
       window.localStorage.setItem("patient-profile-image-updated-at", imageVersion);
       setProfileImageVersion(imageVersion);
@@ -490,10 +446,6 @@ export default function UserEditProfilePage() {
       setBloodTypeUnknown(!mappedProfile.bloodType);
       setSelectedImageFile(null);
       setRemovePhoto(false);
-      setSelectedMedicalReportFile(null);
-      setSelectedMedicalDocumentFile(null);
-      setMedicalReportLabel(getAttachmentLabel(profile.health.medicalReports));
-      setMedicalDocumentLabel(getAttachmentLabel(profile.health.medicalDocuments));
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       window.localStorage.removeItem("patient-profile-draft-saved-at");
       setDraftSavedAt(null);
@@ -634,11 +586,18 @@ export default function UserEditProfilePage() {
                 <div className="flex items-center gap-4">
                   <div className="rounded-[1.75rem] bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-1 shadow-xl shadow-emerald-200/40">
                     <div className="relative overflow-hidden rounded-[1.5rem] bg-white p-1">
-                      <img
-                        src={profileImage}
-                        alt="Patient profile preview"
-                        className="h-[120px] w-[120px] rounded-[1.25rem] object-cover"
-                      />
+                      {profileImage && !imageError ? (
+                        <img
+                          src={profileImage}
+                          alt="Patient profile preview"
+                          className="h-[120px] w-[120px] rounded-[1.25rem] object-cover"
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <div className="flex h-[120px] w-[120px] items-center justify-center rounded-[1.25rem] bg-emerald-50 text-emerald-500">
+                          <User className="h-16 w-16" />
+                        </div>
+                      )}
                       <div className="absolute inset-0 flex items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-emerald-600/0 via-emerald-600/0 to-emerald-950/20 text-3xl font-bold text-white opacity-0 transition-opacity duration-200 hover:opacity-100">
                         {initials}
                       </div>
@@ -844,7 +803,7 @@ export default function UserEditProfilePage() {
                   <section>
                     <SectionHeader
                       title="Health snapshot"
-                      description="Capture allergies, current medication, and attach reports or documents for easy review."
+                      description="Capture allergies, current medication, and other clinically important history."
                     />
 
                     <div className="mt-5 space-y-4">
@@ -869,38 +828,6 @@ export default function UserEditProfilePage() {
                           placeholder="List current medications"
                         />
                       </FieldCard>
-
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <FieldCard label="Upload reports">
-                          <div className="space-y-3">
-                            <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                              Choose report file
-                              <input
-                                type="file"
-                                className="hidden"
-                                accept=".pdf,.doc,.docx,image/*"
-                                onChange={handleMedicalReportUpload}
-                              />
-                            </label>
-                            <p className="text-sm text-slate-600">{medicalReportLabel}</p>
-                          </div>
-                        </FieldCard>
-
-                        <FieldCard label="Upload documents">
-                          <div className="space-y-3">
-                            <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700">
-                              Choose document file
-                              <input
-                                type="file"
-                                className="hidden"
-                                accept=".pdf,.doc,.docx,image/*"
-                                onChange={handleMedicalDocumentUpload}
-                              />
-                            </label>
-                            <p className="text-sm text-slate-600">{medicalDocumentLabel}</p>
-                          </div>
-                        </FieldCard>
-                      </div>
 
                       <FieldCard label="Medical history">
                         <textarea

@@ -558,23 +558,27 @@ class AdminAppointmentCancelView(HospitalAdminAPIView):
         if appointment.status == Appointment.Status.CANCELLED:
             return Response({'detail': 'Appointment is already cancelled.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if timezone.now() > appointment.slot.date_start:
+            return Response(
+                {"detail": "Cannot cancel an appointment that has already started or passed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = AdminAppointmentCancelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         reason = serializer.validated_data['reason']
 
         with transaction.atomic():
-            locked_slot = AppointmentAvailableSlot.objects.select_for_update().filter(id=appointment.slot_id).first()
-
             appointment.status = Appointment.Status.CANCELLED
             appointment.cancelled_by = 'ADMIN'
             appointment.cancellation_reason = reason
             appointment.cancelled_at = timezone.now()
             appointment.save(update_fields=['status', 'cancelled_by', 'cancellation_reason', 'cancelled_at', 'updated_at'])
 
-            if locked_slot and locked_slot.booked_count > 0:
-                locked_slot.booked_count -= 1
-                locked_slot.remaining_count = max(locked_slot.patient_limit - locked_slot.booked_count, 0)
-                locked_slot.save(update_fields=['booked_count', 'remaining_count'])
+            chat_thread = AdviceChatThread.objects.filter(doctor=appointment.doctor, patient=appointment.patient).first()
+            if chat_thread and chat_thread.status != AdviceChatThread.Status.CLOSED:
+                chat_thread.status = AdviceChatThread.Status.CLOSED
+                chat_thread.save(update_fields=['status'])
 
         payload = DoctorAppointmentSerializer(appointment).data
         return Response({'message': 'Appointment cancelled successfully.', 'appointment': payload}, status=status.HTTP_200_OK)
@@ -841,7 +845,7 @@ class DoctorDashboardView(APIView):
 
         today_appointments = appointment_queryset.filter(
             slot__date=today,
-            status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
+            status=Appointment.Status.ACCEPTED,
         ).count()
 
         appointment_earnings_data = appointment_queryset.filter(
@@ -862,7 +866,7 @@ class DoctorDashboardView(APIView):
 
         upcoming_queryset = appointment_queryset.filter(
             slot__date__gte=today,
-            status__in=[Appointment.Status.PENDING, Appointment.Status.ACCEPTED],
+            status=Appointment.Status.ACCEPTED,
         ).order_by("slot__date", "slot__start_time")[:5]
 
         upcoming_appointments = []
@@ -881,7 +885,7 @@ class DoctorDashboardView(APIView):
             upcoming_appointments.append(
                 {
                     "id": str(appointment.id),
-                    "patientName": appointment.patient.full_name,
+                    "patientName": f"{appointment.patient.full_name} (ID: P-{appointment.patient.id})",
                     "type": "In-Person Appointment",
                     "date": date_label,
                     "time": start_time,
@@ -906,7 +910,7 @@ class DoctorDashboardView(APIView):
             recent_chats.append(
                 {
                     "id": str(thread.id),
-                    "patientName": thread.patient.full_name,
+                    "patientName": f"{thread.patient.full_name} (ID: P-{thread.patient.id})",
                     "lastMessage": last_message.message_text if last_message else "",
                     "unreadCount": unread_count,
                     "time": thread.last_message_at.strftime("%b %d, %I:%M %p") if thread.last_message_at else thread.started_at.strftime("%b %d, %I:%M %p"),
@@ -1127,6 +1131,26 @@ class DoctorProfileView(APIView):
             doctor_profile.experience_years = experience_years
             update_fields.append("experience_years")
 
+        if "chatFee" in payload:
+            try:
+                chat_fee = float(payload.get("chatFee"))
+                if chat_fee < 0:
+                    return Response({"detail": "chatFee cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
+                doctor_profile.chat_fee = chat_fee
+                update_fields.append("chat_fee")
+            except (TypeError, ValueError):
+                return Response({"detail": "chatFee must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if "appointmentFee" in payload:
+            try:
+                appointment_fee = float(payload.get("appointmentFee"))
+                if appointment_fee < 0:
+                    return Response({"detail": "appointmentFee cannot be negative."}, status=status.HTTP_400_BAD_REQUEST)
+                doctor_profile.appointment_fee = appointment_fee
+                update_fields.append("appointment_fee")
+            except (TypeError, ValueError):
+                return Response({"detail": "appointmentFee must be a valid number."}, status=status.HTTP_400_BAD_REQUEST)
+
         if "availabilityForOnlineAdvice" in payload:
             doctor_profile.availability = bool(payload.get("availabilityForOnlineAdvice"))
             update_fields.append("availability")
@@ -1152,7 +1176,9 @@ class DoctorAppointmentsView(VerifiedDoctorAPIView):
         if error_response:
             return error_response
 
-        queryset = Appointment.objects.filter(doctor=doctor_profile).select_related(
+        queryset = Appointment.objects.filter(doctor=doctor_profile).exclude(
+            status=Appointment.Status.PENDING
+        ).select_related(
             'slot', 'patient', 'patient__user', 'doctor'
         ).order_by('-requested_at')
 
@@ -1181,14 +1207,14 @@ class DoctorPatientProfileView(VerifiedDoctorAPIView):
         appointment = Appointment.objects.filter(
             doctor=doctor_profile,
             patient_id=patient_id,
-        ).select_related('patient', 'patient__user').first()
+        ).exclude(status=Appointment.Status.PENDING).select_related('patient', 'patient__user').first()
 
         if not appointment or not appointment.patient:
             return Response({'detail': 'Patient not found for this doctor.'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = DoctorPatientProfileSerializer(
             appointment.patient,
-            context={'doctor_profile': doctor_profile},
+            context={'doctor_profile': doctor_profile, 'request': request},
         )
         return Response({'patient': serializer.data}, status=status.HTTP_200_OK)
 
@@ -1205,7 +1231,7 @@ class DoctorAppointmentMedicalRecordView(VerifiedDoctorAPIView):
         appointment = Appointment.objects.filter(
             id=appointment_id,
             doctor=doctor_profile,
-        ).select_related('medical_record').first()
+        ).exclude(status=Appointment.Status.PENDING).select_related('medical_record').first()
 
         if not appointment:
             return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -1223,7 +1249,7 @@ class DoctorAppointmentMedicalRecordView(VerifiedDoctorAPIView):
         appointment = Appointment.objects.filter(
             id=appointment_id,
             doctor=doctor_profile,
-        ).select_related('patient', 'hospital', 'slot', 'slot__hospital').first()
+        ).exclude(status=Appointment.Status.PENDING).select_related('patient', 'hospital', 'slot', 'slot__hospital').first()
 
         if not appointment:
             return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -1329,7 +1355,7 @@ class DoctorAppointmentActionView(VerifiedDoctorAPIView):
         appointment = Appointment.objects.filter(
             id=appointment_id,
             doctor=doctor_profile,
-        ).select_related('slot', 'patient', 'patient__user', 'doctor').first()
+        ).exclude(status=Appointment.Status.PENDING).select_related('slot', 'patient', 'patient__user', 'doctor').first()
 
         if not appointment:
             return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -1389,7 +1415,7 @@ class DoctorAppointmentRescheduleView(VerifiedDoctorAPIView):
         appointment = Appointment.objects.filter(
             id=appointment_id,
             doctor=doctor_profile,
-        ).select_related('slot', 'patient', 'patient__user', 'doctor').first()
+        ).exclude(status=Appointment.Status.PENDING).select_related('slot', 'patient', 'patient__user', 'doctor').first()
 
         if not appointment:
             return Response({'detail': 'Appointment not found.'}, status=status.HTTP_404_NOT_FOUND)

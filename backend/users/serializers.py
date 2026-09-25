@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 from .models import PendingUser
-from .utils import generate_otp, hash_otp, send_otp_email
+from .utils import generate_otp, hash_otp, send_otp_email, send_otp_sms
 from django.contrib.auth.hashers import make_password
 
 DOCTOR_SPECIALIZATION_LOOKUP = {
@@ -145,6 +145,7 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
 
         try:
             send_otp_email(email, otp_code)
+            send_otp_sms(profile_data.get('phone'), otp_code)
         except Exception as e:
             logger.error(f'Failed to send OTP email to {email}: {type(e).__name__}: {e}')
             PendingUser.objects.filter(email=email).delete()
@@ -259,6 +260,7 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
 
         try:
             send_otp_email(email, otp_code)
+            send_otp_sms(profile_data.get('phone'), otp_code)
         except Exception:
             PendingUser.objects.filter(email=email).delete()
             raise serializers.ValidationError({

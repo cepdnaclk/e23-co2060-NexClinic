@@ -11,6 +11,7 @@ from users.serializers import (
 )
 import re
 from .models import ActivityLog, Hospital, HospitalAdmin, HospitalAdminProfile
+from patient.models import PatientProfile
 
 User = get_user_model()
 
@@ -63,6 +64,30 @@ class HospitalSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class HospitalAdminPatientProfileSerializer(serializers.ModelSerializer):
+    email = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PatientProfile
+        fields = (
+            "id",
+            "full_name",
+            "email",
+            "phone",
+            "address",
+            "city",
+            "postal_code",
+            "country",
+            "emergency_contact_name",
+            "emergency_contact_phone",
+            "emergency_contact_relation",
+            "emergency_contact_email",
+        )
+
+    def get_email(self, obj):
+        return obj.user.email if obj.user else None
+
+
 class ActivityLogSerializer(serializers.ModelSerializer):
     user_email = serializers.SerializerMethodField()
 
@@ -94,11 +119,13 @@ class HospitalAppointmentSerializer(serializers.ModelSerializer):
     doctorName = serializers.SerializerMethodField()
     department = serializers.SerializerMethodField()
     statusLabel = serializers.SerializerMethodField()
+    queueNumber = serializers.IntegerField(source="queue_number", read_only=True)
 
     class Meta:
         model = Appointment
         fields = (
             "id",
+            "queueNumber",
             "patientId",
             "patientName",
             "patientAge",
@@ -116,7 +143,8 @@ class HospitalAppointmentSerializer(serializers.ModelSerializer):
         return str(obj.patient_id)
 
     def get_patientName(self, obj):
-        return obj.patient.full_name if obj.patient else "Unknown"
+        name = obj.patient.full_name if obj.patient else "Unknown"
+        return f"{name} (ID: P-{obj.patient_id})" if obj.patient_id else name
 
     def get_patientAge(self, obj):
         dob = getattr(obj.patient, "date_of_birth", None)

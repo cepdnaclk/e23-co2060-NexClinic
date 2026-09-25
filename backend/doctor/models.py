@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from main.validators import validate_public_file
+from main.storage_backends import public_storage
 from django.core.exceptions import ValidationError
 
 class DoctorProfile(models.Model):
@@ -16,7 +18,11 @@ class DoctorProfile(models.Model):
     address = models.TextField(blank=True, default="")
     is_verified = models.BooleanField(default=False)
     experience_years = models.IntegerField(default=1)
-    profile_picture = models.ImageField(upload_to='doctor_profiles/', null=True, blank=True)
+    profile_picture = models.ImageField(
+        upload_to='doctor_profiles/', null=True, blank=True,
+        validators=[validate_public_file],
+        storage=public_storage
+    )
     location = models.CharField(max_length=255, default="Colombo, Sri Lanka")
     qualifications = models.TextField(default="MBBS, MD")
     verified_hospitals = models.ManyToManyField('hospital.Hospital', related_name='verified_doctors', blank=True)
@@ -85,7 +91,7 @@ class AppointmentAvailableSlot(models.Model):
 
     def save(self, *args, **kwargs):
         # Keep day_of_week consistent even if the client does not send it.
-        if not self.day_of_week and hasattr(self, 'date_start'):
+        if not self.day_of_week and getattr(self, 'date_start', None):
             self.day_of_week = self.date_start.strftime('%A')
         super().save(*args, **kwargs)
     
@@ -129,6 +135,8 @@ class Appointment(models.Model):
         REJECTED = "REJECTED", "Rejected"
         COMPLETED = "COMPLETED", "Completed"
         CANCELLED = "CANCELLED", "Cancelled"
+        CANCELLATION_REQUESTED = "CANCELLATION_REQUESTED", "Cancellation Requested"
+        EXPIRED = "EXPIRED", "Expired"
 
     slot = models.ForeignKey(AppointmentAvailableSlot, on_delete=models.PROTECT, related_name="appointments")
         
@@ -140,7 +148,7 @@ class Appointment(models.Model):
     # The hospital where the appointment will take place. Nullable for backwards compatibility.
     hospital = models.ForeignKey('hospital.Hospital', null=True, blank=True, on_delete=models.PROTECT, related_name='appointments')
     appointment_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING )
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING )
 
     # Cancellation metadata
     cancelled_by = models.CharField(max_length=20, choices=[('PATIENT', 'Patient'), ('ADMIN', 'Admin')], null=True, blank=True)
@@ -164,6 +172,15 @@ class Appointment(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()  # This will call the clean() method to validate the model
         super().save(*args, **kwargs)
+
+    @property
+    def queue_number(self):
+        if not self.id:
+            return None
+        return Appointment.objects.filter(
+            slot=self.slot,
+            id__lte=self.id
+        ).count()
 
     def __str__(self):
         return f"Appointment for {self.patient.full_name} with {self.doctor.preferred_name} on {self.slot.date} from {self.slot.start_time} to {self.slot.end_time} - Status: {self.status}"    

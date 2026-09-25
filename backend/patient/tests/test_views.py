@@ -1,12 +1,11 @@
 from datetime import timedelta
-
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from patient.models import PatientProfile
+from patient.models import PatientProfile, PatientMedication
 from users.models import CustomUser
 
 SMALL_GIF = (
@@ -14,7 +13,6 @@ SMALL_GIF = (
     b"\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00"
     b"\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
 )
-
 
 class PatientProfileViewTests(TestCase):
     def setUp(self):
@@ -128,3 +126,70 @@ class PatientProfileViewTests(TestCase):
         self.assertTrue(bool(self.profile.medical_documents))
         self.assertIn("/media/patient_reports/", response.json()["health"]["medicalReports"])
         self.assertIn("/media/patient_documents/", response.json()["health"]["medicalDocuments"])
+
+    def test_unauthenticated_profile_access(self):
+        response = self.client.get("/api/patient/profile/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+class PatientMedicationViewTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = CustomUser.objects.create_user(
+            email="patient@example.com",
+            password="pass",
+            role=CustomUser.Role.PATIENT,
+        )
+        self.profile = PatientProfile.objects.create(
+            user=self.user,
+            full_name="Patient Example",
+            date_of_birth=timezone.localdate() - timedelta(days=365 * 25),
+        )
+        
+    def test_add_medication(self):
+        self.client.force_authenticate(user=self.user)
+        
+        response = self.client.post(
+            "/api/patient/medications/",
+            {
+                "name": "Vitamin C",
+                "dosage": "500mg",
+                "frequency": "Daily",
+                "duration": "1 month"
+            },
+            format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(PatientMedication.objects.count(), 1)
+        med = PatientMedication.objects.first()
+        self.assertEqual(med.name, "Vitamin C")
+        
+    def test_get_medications(self):
+        PatientMedication.objects.create(
+            patient=self.profile,
+            name="Vitamin D",
+            dosage="1000 IU",
+            frequency="Daily"
+        )
+        
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get("/api/patient/medications/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        meds = response.json().get("medications", [])
+        self.assertEqual(len(meds), 1)
+        self.assertEqual(meds[0]["name"], "Vitamin D")
+        
+    def test_delete_medication(self):
+        med = PatientMedication.objects.create(
+            patient=self.profile,
+            name="Vitamin D",
+            dosage="1000 IU",
+            frequency="Daily"
+        )
+        
+        self.client.force_authenticate(user=self.user)
+        response = self.client.delete(f"/api/patient/medications/{med.id}/")
+        
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(PatientMedication.objects.count(), 0)
+

@@ -4,11 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { User } from "lucide-react";
 import GreenButton from "@/components/buttons/GreenButton";
 import { handlePatientSessionExpired } from "@/lib/patientSession";
 
 type PatientProfileResponse = {
   patient: {
+    id: string;
     fullName: string;
     email: string;
     phone: string;
@@ -71,6 +73,7 @@ export default function UserProfile() {
   const [profileImageVersion, setProfileImageVersion] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -120,6 +123,7 @@ export default function UserProfile() {
     );
   }, []);
 
+  const patientId = profileData?.patient.id || "Unknown";
   const patientName = profileData?.patient.fullName || "Patient";
   const patientEmail = profileData?.patient.email || "Not available";
   const patientPhone = profileData?.patient.phone || "Not available";
@@ -138,11 +142,11 @@ export default function UserProfile() {
     profileData?.emergencyContact.relation || "Not specified";
   const emergencyEmail = profileData?.emergencyContact.email || "Not specified";
   const profileImageSrc = profileData?.patient.profileImage?.trim();
-  const profileImage = !profileImageSrc
-    ? "/images/user.png"
+  const profileImage = !profileImageSrc || profileImageSrc === "null"
+    ? null
     : profileImageSrc.startsWith("/images/") || profileImageSrc.startsWith("data:")
       ? profileImageSrc
-      : `${profileImageSrc}${profileImageVersion ? `?v=${profileImageVersion}` : ""}`;
+      : `${profileImageSrc}${profileImageVersion ? (profileImageSrc.includes("?") ? "&" : "?") + `v=${profileImageVersion}` : ""}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#eef8f4] via-[#f8fcfb] to-white pb-6">
@@ -160,12 +164,20 @@ export default function UserProfile() {
               details in one place.
             </p>
           </div>
-          <GreenButton
-            className="w-full rounded-full px-6 py-3 sm:w-auto"
-            onClick={() => router.push("/user-self/edit-profile")}
-          >
-            Edit Profile
-          </GreenButton>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <Link
+              href="/help"
+              className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white px-6 py-3 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
+            >
+              Help
+            </Link>
+            <GreenButton
+              className="w-full rounded-full px-6 py-3 sm:w-auto"
+              onClick={() => router.push("/user-self/edit-profile")}
+            >
+              Edit Profile
+            </GreenButton>
+          </div>
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
@@ -175,17 +187,27 @@ export default function UserProfile() {
               <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-8">
                 <div className="mx-auto shrink-0 rounded-[2rem] bg-gradient-to-br from-emerald-600 via-emerald-600 to-emerald-700 p-1 shadow-xl shadow-emerald-200/50 lg:mx-0">
                   <div className="rounded-[1.75rem] bg-white p-2">
-                    <img
-                      src={profileImage}
-                      alt="Patient profile photo"
-                      className="h-[136px] w-[136px] rounded-[1.5rem] object-cover"
-                    />
+                    {profileImage && !imageError ? (
+                      <img
+                        src={profileImage}
+                        alt="Patient profile photo"
+                        className="h-[136px] w-[136px] rounded-[1.5rem] object-cover"
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <div className="flex h-[136px] w-[136px] items-center justify-center rounded-[1.5rem] bg-emerald-50 text-emerald-500">
+                        <User className="h-16 w-16" />
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="min-w-0 flex-1 text-center lg:text-left">
                   <h2 className="mt-4 break-words text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                     {patientName}
+                    <span className="ml-3 inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20 align-middle">
+                      ID: {patientId}
+                    </span>
                   </h2>
                   <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
                     {patientEmail}

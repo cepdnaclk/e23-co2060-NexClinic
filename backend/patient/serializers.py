@@ -11,6 +11,7 @@ from patient.models import (
     PatientMedication,
     MedicationReminder,
     MedicationLog,
+    PatientMedicalDocument,
 )
 from users.models import CustomUser
 
@@ -25,11 +26,16 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     requestedAt = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
+    appointmentFee = serializers.FloatField(source="appointment_fee", read_only=True)
+    cancellationReason = serializers.CharField(source="cancellation_reason", read_only=True)
+    cancelledBy = serializers.CharField(source="cancelled_by", read_only=True)
+    queueNumber = serializers.IntegerField(source="queue_number", read_only=True)
 
     class Meta:
         model = Appointment
         fields = [
             "id",
+            "queueNumber",
             "slotId",
             "doctorId",
             "doctorName",
@@ -40,6 +46,9 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
             "status",
             "requestedAt",
             "category",
+            "appointmentFee",
+            "cancellationReason",
+            "cancelledBy",
         ]
 
     def get_slotId(self, obj):
@@ -77,11 +86,12 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         mapping = {
-            Appointment.Status.PENDING: "Confirmed",
+            Appointment.Status.PENDING: "Pending",
             Appointment.Status.ACCEPTED: "Confirmed",
             Appointment.Status.REJECTED: "Rejected",
             Appointment.Status.COMPLETED: "Completed",
             Appointment.Status.CANCELLED: "Cancelled",
+            Appointment.Status.CANCELLATION_REQUESTED: "Cancellation Requested",
         }
         return mapping.get(obj.status, obj.status)
 
@@ -221,8 +231,6 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
     )
     emergencyContactEmail = serializers.EmailField(required=False, allow_blank=True)
     profileImage = serializers.ImageField(required=False)
-    medicalReports = serializers.FileField(required=False)
-    medicalDocuments = serializers.FileField(required=False)
     clearProfilePicture = serializers.BooleanField(required=False)
 
     def validate(self, attrs):
@@ -271,8 +279,6 @@ class PatientProfileUpdateSerializer(serializers.Serializer):
             "emergencyContactRelation": "emergency_contact_relation",
             "emergencyContactEmail": "emergency_contact_email",
             "profileImage": "profile_picture",
-            "medicalReports": "medical_reports",
-            "medicalDocuments": "medical_documents",
         }
 
         update_fields = []
@@ -440,9 +446,38 @@ class MedicationLogSerializer(serializers.ModelSerializer):
             "id",
             "reminder",
             "patient",
+            "medicine_name",
+            "dosage",
             "scheduled_for",
             "status",
             "taken_at",
             "created_at",
         ]
         read_only_fields = ["id", "patient", "created_at"]
+
+
+class PatientMedicalDocumentSerializer(serializers.ModelSerializer):
+    fileUrl = serializers.SerializerMethodField()
+    uploadedAt = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PatientMedicalDocument
+        fields = [
+            "id",
+            "file",
+            "name",
+            "description",
+            "fileUrl",
+            "uploadedAt",
+        ]
+        extra_kwargs = {
+            "file": {"write_only": True}
+        }
+
+    def get_fileUrl(self, obj):
+        if obj.file:
+            return f"/api/patient/medical-documents/{obj.id}/download/"
+        return ""
+
+    def get_uploadedAt(self, obj):
+        return timezone.localtime(obj.uploaded_at).strftime("%Y-%m-%d %H:%M")

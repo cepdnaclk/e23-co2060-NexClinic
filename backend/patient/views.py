@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Count, F, Q
+from django.http import FileResponse
 
 from doctor.models import (
     Appointment,
@@ -26,6 +27,7 @@ from .serializers import (
     PatientMedicationSerializer,
     MedicationReminderSerializer,
     MedicationLogSerializer,
+    PatientMedicalDocumentSerializer,
     is_slot_in_past,
 )
 from .models import (
@@ -33,6 +35,7 @@ from .models import (
     Prescription,
     MedicationReminder,
     MedicationLog,
+    PatientMedicalDocument,
 )
 
 class BasePatientAPIView(APIView):
@@ -103,8 +106,7 @@ class PatientProfileView(BasePatientAPIView):
         emergency_contact_phone = ""
         emergency_contact_relation = ""
         emergency_contact_email = ""
-        medical_reports = ""
-        medical_documents = ""
+        medical_documents = []
 
         if patient_profile:
             full_name = patient_profile.full_name or user.email
@@ -140,12 +142,9 @@ class PatientProfileView(BasePatientAPIView):
                 patient_profile.emergency_contact_relation or ""
             )
             emergency_contact_email = patient_profile.emergency_contact_email or ""
-            medical_reports = PatientProfileView._build_file_url(
-                request, patient_profile.medical_reports
-            )
-            medical_documents = PatientProfileView._build_file_url(
-                request, patient_profile.medical_documents
-            )
+            medical_documents = PatientMedicalDocumentSerializer(
+                patient_profile.medical_documents.all(), many=True, context={"request": request}
+            ).data
 
         chat_threads = (
             AdviceChatThread.objects.filter(patient=patient_profile).select_related(
@@ -185,6 +184,7 @@ class PatientProfileView(BasePatientAPIView):
 
         return {
             "patient": {
+                "id": f"P-{patient_profile.id}" if patient_profile else "",
                 "fullName": full_name,
                 "email": user.email,
                 "phone": phone,
@@ -206,7 +206,6 @@ class PatientProfileView(BasePatientAPIView):
                 "comments": doctor_comments,
                 "prescriptions": prescriptions,
                 "medicalRecords": medical_records,
-                "medicalReports": medical_reports,
                 "medicalDocuments": medical_documents,
             },
             "emergencyContact": {
@@ -485,7 +484,7 @@ class PatientAppointmentsView(BasePatientAPIView):
                 doctor=slot.doctor,
                 patient=patient_profile,
                 reason=reason,
-                status=Appointment.Status.ACCEPTED,  # auto-accepted
+                status=Appointment.Status.PENDING,  # PENDING until payment
                 hospital=slot.hospital,
                 appointment_fee=slot.doctor.appointment_fee,
             )
@@ -566,14 +565,14 @@ class PatientAppointmentCancelView(BasePatientAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        with transaction.atomic():
-            locked_slot = (
-                AppointmentAvailableSlot.objects.select_for_update()
-                .filter(id=appointment.slot_id)
-                .first()
+        if timezone.now() > appointment.slot.date_start:
+            return Response(
+                {"detail": "Cannot cancel an appointment that has already started or passed."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-            appointment.status = Appointment.Status.CANCELLED
+        with transaction.atomic():
+            appointment.status = Appointment.Status.CANCELLATION_REQUESTED
             appointment.cancelled_by = "PATIENT"
             appointment.cancellation_reason = cancel_reason
             appointment.cancelled_at = timezone.now()
@@ -587,16 +586,58 @@ class PatientAppointmentCancelView(BasePatientAPIView):
                 ]
             )
 
-            if locked_slot and locked_slot.booked_count > 0:
-                locked_slot.booked_count -= 1
-                locked_slot.remaining_count = max(
-                    locked_slot.patient_limit - locked_slot.booked_count, 0
-                )
-                locked_slot.save(update_fields=["booked_count", "remaining_count"])
+            chat_thread = AdviceChatThread.objects.filter(doctor=appointment.doctor, patient=appointment.patient).first()
+            if chat_thread and chat_thread.status != AdviceChatThread.Status.CLOSED:
+                chat_thread.status = AdviceChatThread.Status.CLOSED
+                chat_thread.save(update_fields=['status'])
 
         payload = PatientAppointmentSerializer(appointment).data
         return Response(
-            {"message": "Appointment cancelled successfully.", "appointment": payload},
+            {"message": "Cancellation requested successfully.", "appointment": payload},
+            status=status.HTTP_200_OK,
+        )
+
+
+class PatientAppointmentConfirmPaymentView(BasePatientAPIView):
+    def patch(self, request, appointment_id, *args, **kwargs):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        appointment = (
+            Appointment.objects.filter(
+                id=appointment_id,
+                patient=patient_profile,
+            )
+            .select_related("slot", "doctor", "doctor__user")
+            .first()
+        )
+
+        if not appointment:
+            return Response(
+                {"detail": "Appointment not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if appointment.status != Appointment.Status.PENDING:
+            return Response(
+                {
+                    "detail": f"Cannot confirm payment for an appointment in {appointment.status} state."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            appointment.status = Appointment.Status.ACCEPTED
+            appointment.save(
+                update_fields=[
+                    "status",
+                    "updated_at",
+                ]
+            )
+
+        payload = PatientAppointmentSerializer(appointment).data
+        return Response(
+            {"message": "Payment confirmed and appointment accepted.", "appointment": payload},
             status=status.HTTP_200_OK,
         )
 
@@ -666,7 +707,7 @@ class PatientMedicationDetailView(BasePatientAPIView):
             medication = PatientMedication.objects.get(id=medication_id, patient=patient_profile)
             medication.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        except PatientMedication.DoesNotExist:
+        except (PatientMedication.DoesNotExist, ValueError):
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -728,6 +769,24 @@ class MedicationLogView(BasePatientAPIView):
         if error_response:
             return error_response
 
+        status_param = request.query_params.get('status')
+        if status_param == "TAKEN":
+            logs = MedicationLog.objects.filter(
+                patient=patient_profile,
+                status=MedicationLog.Status.TAKEN
+            ).select_related('reminder').order_by('-taken_at', '-scheduled_for')
+            
+            data = []
+            for log in logs:
+                log_data = MedicationLogSerializer(log).data
+                if log.reminder:
+                    log_data['reminder'] = MedicationReminderSerializer(log.reminder).data
+                else:
+                    log_data['reminder'] = None
+                data.append(log_data)
+                
+            return Response({"logs": data})
+
         date_str = request.query_params.get('date', timezone.localdate().isoformat())
         try:
             target_date = datetime.fromisoformat(date_str).date()
@@ -786,7 +845,10 @@ class MedicationLogView(BasePatientAPIView):
         data = []
         for log in logs:
             log_data = MedicationLogSerializer(log).data
-            log_data['reminder'] = MedicationReminderSerializer(log.reminder).data
+            if log.reminder:
+                log_data['reminder'] = MedicationReminderSerializer(log.reminder).data
+            else:
+                log_data['reminder'] = None
             data.append(log_data)
             
         return Response({"logs": data})
@@ -815,3 +877,78 @@ class MedicationLogDetailView(BasePatientAPIView):
             
             return Response(log_data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PatientMedicalDocumentView(BasePatientAPIView):
+    def post(self, request):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        serializer = PatientMedicalDocumentSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save(patient=patient_profile)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PatientMedicalDocumentDetailView(BasePatientAPIView):
+    def delete(self, request, document_id):
+        patient_profile, error_response = self._get_patient_profile_or_response(request)
+        if error_response:
+            return error_response
+
+        try:
+            document = patient_profile.medical_documents.get(id=document_id)
+            if document.file:
+                document.file.delete(save=False)
+            document.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception:
+            return Response(
+                {"detail": "Document not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+class PatientMedicalDocumentDownloadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, document_id):
+        try:
+            document = PatientMedicalDocument.objects.get(id=document_id)
+        except PatientMedicalDocument.DoesNotExist:
+            return Response({"detail": "Document not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        
+        # Check permissions
+        if getattr(user, 'role', None) == 'PATIENT':
+            if document.patient.user != user:
+                return Response({"detail": "Forbidden. You do not own this document."}, status=status.HTTP_403_FORBIDDEN)
+        
+        elif getattr(user, 'role', None) == 'DOCTOR':
+            doctor_profile = getattr(user, 'doctor_profile', None)
+            if not doctor_profile:
+                return Response({"detail": "Forbidden. Doctor profile not found."}, status=status.HTTP_403_FORBIDDEN)
+            
+            # Check if doctor has an appointment with this patient
+            has_access = Appointment.objects.filter(
+                doctor=doctor_profile,
+                patient=document.patient
+            ).exists()
+            
+            if not has_access:
+                return Response({"detail": "Forbidden. You do not have access to this patient's documents."}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            return Response({"detail": "Forbidden. Invalid role."}, status=status.HTTP_403_FORBIDDEN)
+
+        if not document.file:
+            return Response({"detail": "File not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        try:
+            file_handle = document.file.open('rb')
+            response = FileResponse(file_handle, as_attachment=False)
+            return response
+        except Exception as e:
+            return Response({"detail": f"Error accessing file: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
