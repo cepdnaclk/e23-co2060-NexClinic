@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Appointment } from "@/types/appointment";
 
 interface AppointmentModalProps {
@@ -31,6 +31,45 @@ const statusPillClass = (status: string) => {
 };
 
 export default function AppointmentModal({ appointment, isOpen, onClose }: AppointmentModalProps) {
+    const [showRecord, setShowRecord] = useState(false);
+    const [loadingRecord, setLoadingRecord] = useState(false);
+    const [record, setRecord] = useState<any>(null);
+
+    React.useEffect(() => {
+        if (!isOpen) {
+            setShowRecord(false);
+            setRecord(null);
+        }
+    }, [isOpen]);
+
+    const handleViewRecord = async () => {
+        if (showRecord) {
+            setShowRecord(false);
+            return;
+        }
+        setShowRecord(true);
+        if (!record) {
+            setLoadingRecord(true);
+            try {
+                const response = await fetch("/api/patient/profile", {
+                    method: "GET",
+                    cache: "no-store",
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const foundRecord = data.health?.medicalRecords?.find(
+                        (r: any) => r.appointmentId === appointment?.id.toString()
+                    );
+                    setRecord(foundRecord || null);
+                }
+            } catch (err) {
+                console.error("Failed to fetch medical record", err);
+            } finally {
+                setLoadingRecord(false);
+            }
+        }
+    };
+
     if (!isOpen || !appointment) return null;
 
     return (
@@ -101,6 +140,78 @@ export default function AppointmentModal({ appointment, isOpen, onClose }: Appoi
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                         Requested: {new Date(appointment.requestedAt).toLocaleString()}
                     </div>
+
+                    {/* Medical Record Section */}
+                    {appointment.status === "Completed" && (
+                        <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <button
+                                onClick={handleViewRecord}
+                                className="w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-700 dark:bg-emerald-900/30 dark:hover:bg-emerald-800/50 dark:text-emerald-300 font-semibold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
+                            >
+                                {showRecord ? "Hide Medical Record & Prescription" : "View Medical Record & Prescription"}
+                            </button>
+                            
+                            {showRecord && (
+                                <div className="mt-4 space-y-4 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                                    {loadingRecord ? (
+                                        <div className="text-center text-gray-500 dark:text-gray-400 py-4">
+                                            Loading record details...
+                                        </div>
+                                    ) : record ? (
+                                        <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-4 rounded-lg border border-emerald-100 dark:border-emerald-800/30 space-y-3">
+                                            {record.diagnosis && (
+                                                <div>
+                                                    <p className="font-semibold text-emerald-800 dark:text-emerald-300 mb-1">Diagnosis</p>
+                                                    <p className="text-gray-700 dark:text-gray-300">{record.diagnosis}</p>
+                                                </div>
+                                            )}
+                                            {record.observations && (
+                                                <div>
+                                                    <p className="font-semibold text-emerald-800 dark:text-emerald-300 mb-1">Observations</p>
+                                                    <p className="text-gray-700 dark:text-gray-300">{record.observations}</p>
+                                                </div>
+                                            )}
+                                            {record.recommended_tests && (
+                                                <div>
+                                                    <p className="font-semibold text-emerald-800 dark:text-emerald-300 mb-1">Recommended Tests</p>
+                                                    <p className="text-gray-700 dark:text-gray-300">{record.recommended_tests}</p>
+                                                </div>
+                                            )}
+                                            
+                                            {record.prescriptionItems && record.prescriptionItems.length > 0 && (
+                                                <div className="mt-4">
+                                                    <p className="font-semibold text-emerald-800 dark:text-emerald-300 mb-2 border-b border-emerald-200 dark:border-emerald-800/50 pb-1">Prescription Items</p>
+                                                    <ul className="space-y-2">
+                                                        {record.prescriptionItems.map((item: any, idx: number) => (
+                                                            <li key={idx} className="bg-white dark:bg-gray-800 p-2 rounded border border-gray-100 dark:border-gray-700 shadow-sm">
+                                                                <div className="flex justify-between items-start">
+                                                                    <span className="font-medium text-gray-900 dark:text-gray-100">{item.name}</span>
+                                                                    {item.amount && <span className="text-xs font-semibold bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-700 dark:text-gray-300">{item.amount} {item.unit}</span>}
+                                                                </div>
+                                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                                    {item.frequency && <span>{item.frequency}</span>}
+                                                                    {item.duration && <span> • {item.duration}</span>}
+                                                                    {item.notes && <div className="mt-0.5 text-gray-600 dark:text-gray-300 italic">Note: {item.notes}</div>}
+                                                                </div>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            {!record.diagnosis && !record.observations && !record.recommended_tests && (!record.prescriptionItems || record.prescriptionItems.length === 0) && (
+                                                <p className="text-gray-500 dark:text-gray-400 italic">This medical record is currently empty.</p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-red-500 py-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                            No medical record found for this appointment.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
