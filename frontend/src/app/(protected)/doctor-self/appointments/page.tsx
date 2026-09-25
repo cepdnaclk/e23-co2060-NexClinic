@@ -403,6 +403,7 @@ function DoctorAppointmentsPage() {
   const [activeTab, setActiveTab] = useState<AppointmentCategory>("ALL");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [customDate, setCustomDate] = useState("");
+  const [hospitalFilter, setHospitalFilter] = useState("all");
   const [reminderSentIds, setReminderSentIds] = useState<string[]>([]);
   const [rescheduleTarget, setRescheduleTarget] =
     useState<AppointmentItem | null>(null);
@@ -459,6 +460,13 @@ function DoctorAppointmentsPage() {
     void loadAppointments();
   }, [router]);
 
+  const uniqueHospitals = useMemo(() => {
+    const hospitals = appointments
+      .map((a) => a.location)
+      .filter((loc) => Boolean(loc) && loc !== "Unknown");
+    return Array.from(new Set(hospitals)).sort();
+  }, [appointments]);
+
   const filteredAppointments = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     const today = new Date();
@@ -487,9 +495,11 @@ function DoctorAppointmentsPage() {
         matchesDate = customDate ? item.date === customDate : true;
       }
 
-      return matchesSearch && matchesDate;
+      const matchesHospital = hospitalFilter === "all" || item.location === hospitalFilter;
+
+      return matchesSearch && matchesDate && matchesHospital;
     });
-  }, [appointments, searchTerm, dateFilter, customDate]);
+  }, [appointments, searchTerm, dateFilter, customDate, hospitalFilter]);
 
   // Bucketing logic based on strictly defined rules
   const categorized = useMemo(() => {
@@ -1440,6 +1450,28 @@ function DoctorAppointmentsPage() {
 
             <div className="flex flex-col gap-2">
               <label
+                htmlFor="hospital-filter"
+                className="text-sm font-semibold text-slate-700"
+              >
+                Filter by Hospital
+              </label>
+              <select
+                id="hospital-filter"
+                value={hospitalFilter}
+                onChange={(event) => setHospitalFilter(event.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+              >
+                <option value="all">All Hospitals</option>
+                {uniqueHospitals.map((hospital) => (
+                  <option key={hospital} value={hospital}>
+                    {hospital}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label
                 htmlFor="date-filter"
                 className="text-sm font-semibold text-slate-700"
               >
@@ -1557,6 +1589,7 @@ function DoctorAppointmentsPage() {
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${appt.status === "Completed" ? 'bg-slate-200 text-slate-600' : appt.status === "Accepted" ? 'bg-emerald-100 text-emerald-700' : appt.status === "Expired" || appt.status === "EXPIRED" ? 'bg-gray-100 text-gray-600' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
                         </div>
                         <p className="text-sm text-slate-500">{appt.date} • {formatTimeForDisplay(appt.time)}</p>
+                        <p className="text-xs font-semibold text-emerald-700 mt-1">{appt.location}</p>
                       </button>
                     )
                   })

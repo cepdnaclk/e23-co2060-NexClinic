@@ -19,9 +19,9 @@ This documentation page follows the department template. Replace supervisor emai
 
 ## Team
 - E/23/076, M.T. Dineth, [email](e23076@eng.pdn.ac.lk)
+- E/23/226, J.G.G. Methmaka, [email](e23226@eng.pdn.ac.lk)
 - E/23/266, H.P.U.A. Perera, [email](e23266@eng.pdn.ac.lk)
 - E/23/336, S.M.D.S.B. Samarakoon, [email](e23336@eng.pdn.ac.lk)
-- E/23/226, J.G.G. Methmaka, [email](e23226@eng.pdn.ac.lk)
 
 <!-- Add a project cover image in /docs/data if available -->
 
@@ -36,70 +36,69 @@ This documentation page follows the department template. Replace supervisor emai
 
 ## Project Overview
 
-NexClinic is a unified healthcare appointment and clinic practice management platform that provides end-to-end outpatient workflows for Patients, Doctors, and Administrators. The platform supports secure registration and verification, doctor discovery, availability and slot management, patient booking, and controlled appointment lifecycles with auditability and notifications.
+NexClinic is a unified healthcare appointment and clinic practice management platform that digitizes and streamlines end-to-end outpatient workflows for Patients, Doctors, and Hospital Administrators. The platform addresses operational inefficiencies by offering secure registration, real-time doctor discovery, dynamic slot management, patient booking, and controlled appointment lifecycles.
 
-The product is intentionally API-first and modular so clinics can adopt individual capabilities (booking, reminders, teleconsultation, payments, analytics) as needed.
+Built with a modular, API-first approach, NexClinic bridges the gap between medical practitioners and patients while granting administrative oversight to ensure smooth clinical operations.
 
 ## Key Capabilities
 
-- Role-based identity: PATIENT / DOCTOR / ADMIN with OTP-gated verification and JWT access/refresh tokens.
-- Doctor directory: specializations, fees, profiles, availability windows and verification metadata.
-- Appointment engine: create slots, search availability, book slots (one appointment per slot), and enforce lifecycle transitions (PENDING → ACCEPTED/REJECTED → COMPLETED/CANCELLED).
-- Patient experience: search & filter doctors, book/reschedule/cancel, view history and prescriptions.
-- Consultations & Payments: real-time patient-doctor chat consultations and mock payment gateway integration for managing fees.
-- News & Content: dynamic health news fetching via GNews API for real-time announcements.
-- Notifications: OTP, booking confirmations, reminders, status updates via email and in-app notifications.
-- Secure attachments: upload prescriptions and reports with access-control and optional external storage.
+**For Patients:**
+- **Doctor Discovery:** Search and filter doctors by name, specialization, and real-time availability.
+- **Dynamic Booking:** Instantly book, reschedule, or cancel appointments through an optimistic UI.
+- **Medical Records:** Securely upload, store, and manage profile pictures and medical documents.
+- **Teleconsultations & Payments:** Real-time patient-doctor chat consultations with mock payment gateway integration.
+- **Health News:** Dynamic health news fetching via GNews API to keep patients informed.
+
+**For Doctors:**
+- **Schedule Management:** Generate and publish availability slots seamlessly.
+- **Appointment Lifecycle:** Enforce state transitions (PENDING → ACCEPTED/REJECTED → COMPLETED/CANCELLED).
+- **Patient Insights:** View patient medical history, consultations, and securely attached records.
+
+**For Hospital Administrators:**
+- **User Management:** Manage patient and doctor accounts, and handle scheduling conflicts.
+- **System Configuration:** Oversee clinic policies, system settings, and overarching configuration.
+- **System Analytics:** Monitor overall system performance, analytics, and operational activity.
 
 ## Solution Architecture
 
-Architecture components:
+Our architecture guarantees scalability, fast rendering, and strict security:
 
-- Backend: Django + Django REST Framework (DRF). Business rules, transactional operations, email delivery, and background jobs live here.
-- Frontend: Next.js App Router (TypeScript + Tailwind). Server-side proxy routes centralize auth and simplify client logic.
-- Storage: relational DB (SQLite for local dev, PostgreSQL for production) and object storage for files.
-- Deployment: backend on a typical PaaS (Render/Heroku), frontend on Vercel; environment variables drive configuration.
+- **Backend:** Python + Django REST Framework (DRF). Manages business rules, transactional database operations, multipart file uploads, and background tasks.
+- **Frontend:** Next.js App Router (TypeScript + Tailwind CSS). Provides a highly reactive UI with optimistic state synchronization (Zustand/Context). Server-side proxy routing centralizes authentication and enforces role boundaries.
+- **Data & Storage:** PostgreSQL for production-grade relational integrity, with native media storage capabilities for medical files and profile imagery.
+- **Deployment:** The backend is configured for PaaS deployment (Render/Heroku), while the Next.js frontend is optimized for edge networks (Vercel).
 
-High-level request flow:
-
-1. User interaction on frontend → server-side proxy.
-2. Proxy validates cookies or refreshes tokens and forwards to backend API.
-3. Backend enforces business rules, updates DB/storage, and returns results.
-
-This pattern keeps tokens out of client-accessible JavaScript and provides a single origin for browser requests.
-
+**High-level Request Flow:**
+1. A user interacts with the Next.js frontend.
+2. The Next.js Edge Middleware (`proxy.ts`) intercepts the request, verifying HttpOnly auth cookies and validating the user's Role-Based Access Control (RBAC).
+3. Authorized requests are proxied to the Django backend.
+4. Django enforces final business rules and permissions (`IsPatient`, `IsDoctor`, `IsAdmin`), updates the PostgreSQL database, and responds.
 
 ## Data, Storage & Security
 
-- Database: use PostgreSQL in production for reliability and concurrency; SQLite is supported for local development.
-- Files: prescription and report attachments should be stored in secure object storage (S3 or equivalent) with signed URLs for access.
-- Security practices implemented:
-	- OTP-based account activation to verify email ownership.
-	- HTTP-only cookies and sameSite settings to reduce XSS/CSRF exposure.
-	- JWT refresh rotation and blacklist to mitigate token replay.
-	- Role-based permission checks at the API layer.
+Security and data integrity are central to NexClinic's design:
 
+- **Two-Tier RBAC:** Strict Role-Based Access Control enforced at both the Next.js frontend middleware and the Django backend API.
+- **HttpOnly JWTs:** Authentication tokens (access/refresh) are handled strictly via HttpOnly, Secure cookies to completely mitigate Cross-Site Scripting (XSS) session hijacking.
+- **OTP Verification:** Email-gated OTP verification ensures account ownership before system access is granted.
+- **Secure File Uploads:** Multipart Form-Data parsing guarantees that medical records and profile pictures are safely transferred and stored on the server without CORS or boundary corruption.
 
 ## Testing & Quality Assurance
 
-Testing strategy:
+To ensure stability across devices and roles, we implemented a rigorous, multi-layered testing strategy:
 
-- Unit tests: business logic validation for appointment lifecycle, slot overlap, and registration flows.
-- Integration tests: endpoint-level tests including permission checks and transactional integrity.
-- Manual E2E: routine checks for registration → booking → doctor action flows.
-- Security checks: targeted tests for auth flows and file access controls.
-
+- **Automated End-to-End (E2E) Testing:** Playwright is utilized to run automated cross-browser tests (Desktop Chromium, Microsoft Edge, and Mobile Chrome profiles), validating complex UI workflows like profile uploads and authentication state management.
+- **Backend API Testing:** Django's native test suite is used to validate serializer integrity, prevent malformed data entry, and confirm appropriate error handling (400, 401, 403, 404).
+- **Manual QA & Edge Cases:** Routine checks for UI reactivity, optimistic state updates (preventing double-bookings), and network latency simulations.
 
 ## Roadmap & Planned Enhancements
 
-The product vision is a single, cohesive platform that grows beyond booking into a full clinic operations suite. Planned enhancements include:
+NexClinic is built as a cohesive foundation designed to grow. Future iterations aim to implement:
 
-- Doctor verification workflows and credential management.
-- Prescription lifecycle: create, attach, and notify; support reminders and refill workflows.
-- Secure file storage and patient record management with role-limited access.
-- Provider reviews, dashboards, analytics, and admin tooling for operational insights.
-
-These features are organized as incremental capabilities that plugin to the core APIs and data models, keeping the overall product cohesive rather than split into disjoint releases.
+- **Advanced AI Integration:** AI-powered scheduling recommendations based on clinic traffic and patient symptoms.
+- **Real-Time Video Consultations:** Upgrading the chat consultation feature to include WebRTC video capabilities.
+- **Production Payment Processors:** Transitioning from the mock payment gateway to live integrations with Stripe or PayPal.
+- **Deep Analytics Dashboards:** Implementing robust data visualization for Hospital Administrators to predict clinic bottlenecks.
 
 ## Links
 

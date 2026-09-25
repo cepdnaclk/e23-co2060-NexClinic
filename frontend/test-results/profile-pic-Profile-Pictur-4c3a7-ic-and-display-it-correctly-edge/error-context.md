@@ -16,195 +16,206 @@ Test timeout of 120000ms exceeded.
 ```
 
 ```
-Error: page.waitForSelector: Test timeout of 120000ms exceeded.
-Call log:
-  - waiting for locator('input[type="file"]')
-
+Error: page.waitForURL: Test timeout of 120000ms exceeded.
+=========================== logs ===========================
+waiting for navigation to "**/user-self/profile" until "load"
+  navigated to "http://localhost:3000/login"
+============================================================
 ```
 
 # Page snapshot
 
 ```yaml
-- generic [active] [ref=f2e1]:
-  - navigation [ref=f2e3]:
-    - generic [ref=f2e5]:
-      - generic [ref=f2e6]:
-        - link [ref=f2e7] [cursor=pointer]:
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]
+  - alert [ref=e11]: NexClinic
+  - navigation [ref=e13]:
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - link [ref=e17] [cursor=pointer]:
           - /url: /
-          - img "NexClinic Logo" [ref=f2e8]
+          - img "NexClinic Logo" [ref=e18]
           - text: NexClinic
-        - generic [ref=f2e9]:
-          - link "News & Articles" [ref=f2e10] [cursor=pointer]:
+        - generic [ref=e19]:
+          - link "News & Articles" [ref=e20] [cursor=pointer]:
             - /url: /news-articles
-          - link "Help" [ref=f2e11] [cursor=pointer]:
+          - link "Help" [ref=e21] [cursor=pointer]:
             - /url: /help
-      - button [ref=f2e13] [cursor=pointer]:
-        - link "Are you a Doctor? Click here" [ref=f2e14]:
+      - button [ref=e23] [cursor=pointer]:
+        - link "Are you a Doctor? Click here" [ref=e24]:
           - /url: /doctor/login
-  - generic [ref=f2e15]:
-    - img "background" [ref=f2e17]
-    - generic [ref=f2e21]:
-      - generic [ref=f2e22]:
-        - img "NexClinic Logo" [ref=f2e24]
-        - heading "NexClinic" [level=1] [ref=f2e25]
-      - generic [ref=f2e26]:
-        - generic [ref=f2e27]:
-          - heading "Welcome Back" [level=2] [ref=f2e28]
-          - paragraph [ref=f2e29]: Please sign in to your account
-        - generic [ref=f2e30]:
-          - generic [ref=f2e31]:
-            - generic [ref=f2e32]: Email Address
-            - textbox "Email Address" [ref=f2e34]:
+  - generic [ref=e25]:
+    - img "background" [ref=e27]
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - img "NexClinic Logo" [ref=e34]
+        - heading "NexClinic" [level=1] [ref=e35]
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - heading "Welcome Back" [level=2] [ref=e38]
+          - paragraph [ref=e39]: Please sign in to your account
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - generic [ref=e42]: Email Address
+            - textbox "Email Address" [ref=e44]:
               - /placeholder: Enter your email
-          - generic [ref=f2e35]:
-            - generic [ref=f2e36]: Password
-            - generic [ref=f2e37]:
-              - textbox "Password" [ref=f2e38]:
+          - generic [ref=e45]:
+            - generic [ref=e46]: Password
+            - generic [ref=e47]:
+              - textbox "Password" [ref=e48]:
                 - /placeholder: Enter your password
-              - button [ref=f2e39] [cursor=pointer]
-          - button "Sign In" [ref=f2e42] [cursor=pointer]
-        - generic [ref=f2e43]:
-          - paragraph [ref=f2e44]:
+              - button [ref=e49] [cursor=pointer]
+          - button "Sign In" [ref=e52] [cursor=pointer]
+        - generic [ref=e53]:
+          - paragraph [ref=e54]:
             - text: Forgot password?
-            - link "Reset here" [ref=f2e45] [cursor=pointer]:
+            - link "Reset here" [ref=e55] [cursor=pointer]:
               - /url: /reset-password
-          - paragraph [ref=f2e46]:
+          - paragraph [ref=e56]:
             - text: Don't have an account?
-            - link "Sign up here" [ref=f2e47] [cursor=pointer]:
+            - link "Sign up here" [ref=e57] [cursor=pointer]:
               - /url: /register
-  - button "Open Next.js Dev Tools" [ref=f2e53] [cursor=pointer]
-  - alert [ref=f2e57]
 ```
 
 # Test source
 
 ```ts
-  8   |     // 1. Setup mock auth
-  9   |     await context.addCookies([
-  10  |       { name: 'authToken', value: 'mock-patient-token', domain: 'localhost', path: '/' }
-  11  |     ]);
-  12  |     
-  13  |     await page.goto('http://localhost:3000/');
-  14  |     await page.evaluate(() => {
-  15  |       localStorage.setItem('authToken', 'mock-patient-token');
-  16  |       localStorage.setItem('userRole', 'PATIENT');
-  17  |       localStorage.setItem('userInfo', JSON.stringify({ fullName: 'Test Patient', email: 'test@example.com', profile_picture: null }));
-  18  |     });
-  19  | 
-  20  |     // Mock GET /api/patient/profile
-  21  |     await page.route('**/api/patient/profile', async route => {
-  22  |       if (route.request().method() === 'GET') {
-  23  |         await route.fulfill({
-  24  |           status: 200,
-  25  |           contentType: 'application/json',
-  26  |           body: JSON.stringify({
-  27  |             patient: {
-  28  |               fullName: 'Test Patient',
-  29  |               email: 'test@example.com',
-  30  |               phone: '',
-  31  |               dateOfBirth: '',
-  32  |               gender: 'other',
-  33  |               address: '',
-  34  |               city: '',
-  35  |               profileImage: ''
-  36  |             },
-  37  |             health: {
-  38  |               bloodType: '',
-  39  |               allergies: '',
-  40  |               medications: '',
-  41  |               medicalReports: '',
-  42  |               medicalDocuments: '',
-  43  |               medicalHistory: ''
-  44  |             },
-  45  |             emergencyContact: {
-  46  |               name: '',
-  47  |               phone: '',
-  48  |               relation: '',
-  49  |               email: ''
-  50  |             }
-  51  |           })
-  52  |         });
-  53  |       } else if (route.request().method() === 'PATCH') {
-  54  |         // Mock PATCH response with a fake image URL
-  55  |         await route.fulfill({
-  56  |           status: 200,
-  57  |           contentType: 'application/json',
-  58  |           body: JSON.stringify({
-  59  |             patient: {
-  60  |               fullName: 'Test Patient',
-  61  |               email: 'test@example.com',
-  62  |               phone: '',
-  63  |               dateOfBirth: '',
-  64  |               gender: 'other',
-  65  |               address: '',
-  66  |               city: '',
-  67  |               profileImage: 'https://via.placeholder.com/150'
-  68  |             },
-  69  |             health: {
-  70  |               bloodType: '',
-  71  |               allergies: '',
-  72  |               medications: '',
-  73  |               medicalReports: '',
-  74  |               medicalDocuments: '',
-  75  |               medicalHistory: ''
-  76  |             },
-  77  |             emergencyContact: {
-  78  |               name: '',
-  79  |               phone: '',
-  80  |               relation: '',
-  81  |               email: ''
-  82  |             }
-  83  |           })
-  84  |         });
+  31  |               address: '',
+  32  |               city: '',
+  33  |               profileImage: ''
+  34  |             },
+  35  |             health: {
+  36  |               bloodType: '',
+  37  |               allergies: '',
+  38  |               medications: '',
+  39  |               medicalReports: '',
+  40  |               medicalDocuments: '',
+  41  |               medicalHistory: ''
+  42  |             },
+  43  |             emergencyContact: {
+  44  |               name: '',
+  45  |               phone: '',
+  46  |               relation: '',
+  47  |               email: ''
+  48  |             }
+  49  |           })
+  50  |         });
+  51  |       } else if (route.request().method() === 'PATCH') {
+  52  |         // Mock PATCH response with a fake image URL
+  53  |         await route.fulfill({
+  54  |           status: 200,
+  55  |           contentType: 'application/json',
+  56  |           body: JSON.stringify({
+  57  |             patient: {
+  58  |               fullName: 'Test Patient',
+  59  |               email: 'test@example.com',
+  60  |               phone: '',
+  61  |               dateOfBirth: '',
+  62  |               gender: 'other',
+  63  |               address: '',
+  64  |               city: '',
+  65  |               profileImage: 'https://via.placeholder.com/150'
+  66  |             },
+  67  |             health: {
+  68  |               bloodType: '',
+  69  |               allergies: '',
+  70  |               medications: '',
+  71  |               medicalReports: '',
+  72  |               medicalDocuments: '',
+  73  |               medicalHistory: ''
+  74  |             },
+  75  |             emergencyContact: {
+  76  |               name: '',
+  77  |               phone: '',
+  78  |               relation: '',
+  79  |               email: ''
+  80  |             }
+  81  |           })
+  82  |         });
+  83  |       } else {
+  84  |         await route.continue();
   85  |       }
   86  |     });
   87  | 
   88  |     // Mock GET /api/patient/appointments
   89  |     await page.route('**/api/patient/appointments', async route => {
-  90  |       await route.fulfill({
-  91  |         status: 200,
-  92  |         contentType: 'application/json',
-  93  |         body: JSON.stringify({
-  94  |           appointments: []
-  95  |         })
-  96  |       });
-  97  |     });
-  98  | 
-  99  |     // 2. Go to dashboard
-  100 |     await page.goto('http://localhost:3000/user-self/dashboard');
-  101 |     await page.waitForTimeout(2000);
+  90  |       if (route.request().method() === 'GET') {
+  91  |         await route.fulfill({
+  92  |           status: 200,
+  93  |           contentType: 'application/json',
+  94  |           body: JSON.stringify({
+  95  |             appointments: []
+  96  |           })
+  97  |         });
+  98  |       } else {
+  99  |         await route.continue();
+  100 |       }
+  101 |     });
   102 | 
-  103 |     // 3. Go to edit profile page
-  104 |     await page.goto('http://localhost:3000/user-self/edit-profile');
-  105 |     await page.waitForTimeout(1000);
-  106 |     
-  107 |     // Check if the file input exists
-> 108 |     await page.waitForSelector('input[type="file"]', { state: 'attached' });
-      |                ^ Error: page.waitForSelector: Test timeout of 120000ms exceeded.
-  109 |     
-  110 |     // 4. Upload a new profile picture
-  111 |     const testImagePath = path.join(__dirname, '..', '..', 'TestProfilePic', 'TestProfilePic.png');
-  112 |     
-  113 |     // Set the file to upload directly using the input
-  114 |     await page.setInputFiles('input[type="file"]', testImagePath);
+  103 |     // Mock GET /api/notifications*
+  104 |     await page.route('**/api/notifications*', async route => {
+  105 |       if (route.request().method() === 'GET') {
+  106 |         await route.fulfill({
+  107 |           status: 200,
+  108 |           contentType: 'application/json',
+  109 |           body: JSON.stringify([])
+  110 |         });
+  111 |       } else {
+  112 |         await route.continue();
+  113 |       }
+  114 |     });
   115 | 
-  116 |     // Click "Save Profile"
-  117 |     await page.click('button:has-text("Save Profile")');
-  118 | 
-  119 |     // Wait for a few seconds to let upload finish
-  120 |     await page.waitForTimeout(3000);
-  121 | 
-  122 |     // 5. Verify in Edit Profile page
-  123 |     // The profile image should now be an <img> tag with src pointing to the uploaded image
-  124 |     const profileImgEdit = page.locator('img[alt="Profile Picture"]').first();
-  125 |     await expect(profileImgEdit).toBeVisible();
-  126 | 
-  127 |     // 6. Verify in Dashboard
-  128 |     await page.goto('http://localhost:3000/user-self/dashboard');
-  129 |     await page.waitForTimeout(2000);
-  130 |     const profileImgDashboard = page.locator('img[alt="Profile Picture"]').first();
-  131 |     await expect(profileImgDashboard).toBeVisible();
-  132 |   });
-  133 | });
-  134 | 
+  116 |     await page.goto('/');
+  117 |     await page.evaluate(() => {
+  118 |       window.localStorage.setItem('authToken', 'mock-patient-token');
+  119 |       window.localStorage.setItem('userRole', 'PATIENT');
+  120 |       window.localStorage.setItem('userInfo', JSON.stringify({ fullName: 'Test Patient', email: 'test@example.com' }));
+  121 |       window.localStorage.setItem('isAuthenticated', 'true');
+  122 |     });
+  123 | 
+  124 |     // 2. Go to dashboard
+  125 |     await page.locator('a[href="/user-self/dashboard"]').first().click();
+  126 |     await page.waitForURL('**/user-self/dashboard');
+  127 |     await page.waitForTimeout(2000);
+  128 | 
+  129 |     // 3. Go to profile page
+  130 |     await page.locator('a[href="/user-self/profile"]').first().click();
+> 131 |     await page.waitForURL('**/user-self/profile');
+      |                ^ Error: page.waitForURL: Test timeout of 120000ms exceeded.
+  132 |     await page.waitForTimeout(1000);
+  133 | 
+  134 |     // Click on Edit Profile
+  135 |     await page.locator('a[href="/user-self/edit-profile"]').first().click();
+  136 |     await page.waitForURL('**/user-self/edit-profile');
+  137 |     await page.waitForTimeout(1000);
+  138 | 
+  139 |     // Check if the file input exists
+  140 |     await page.waitForSelector('input[type="file"]', { state: 'attached' });
+  141 |     
+  142 |     // 4. Upload a new profile picture
+  143 |     const testImagePath = path.join(__dirname, '..', '..', 'TestProfilePic', 'TestProfilePic.png');
+  144 |     
+  145 |     // Set the file to upload directly using the input
+  146 |     await page.setInputFiles('input[type="file"]', testImagePath);
+  147 | 
+  148 |     // Click "Save Profile"
+  149 |     await page.click('button:has-text("Save Profile")');
+  150 | 
+  151 |     // Wait for a few seconds to let upload finish
+  152 |     await page.waitForTimeout(3000);
+  153 | 
+  154 |     // 5. Verify in Edit Profile page
+  155 |     // The profile image should now be an <img> tag with src pointing to the uploaded image
+  156 |     const profileImgEdit = page.locator('img[alt="Profile Picture"]').first();
+  157 |     await expect(profileImgEdit).toBeVisible();
+  158 | 
+  159 |     // 6. Verify in Dashboard
+  160 |     await page.locator('a[href="/user-self/dashboard"]').first().click();
+  161 |     await page.waitForURL('**/user-self/dashboard');
+  162 |     await page.waitForTimeout(2000);
+  163 |     const profileImgDashboard = page.locator('img[alt="Profile Picture"]').first();
+  164 |     await expect(profileImgDashboard).toBeVisible();
+  165 |   });
+  166 | });
+  167 | 
 ```

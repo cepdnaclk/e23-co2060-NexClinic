@@ -24,9 +24,12 @@ export default function UserProtectedLayout({
             (legacyAuthStatus === "true" && userData)
         );
 
+        console.log(`[TEST DEBUG AUTH] authToken: ${authToken}, userRole: ${userRole}, userData: ${userData}, legacyAuthStatus: ${legacyAuthStatus}, isPatientAuthenticated: ${isPatientAuthenticated}`);
+
         if (isPatientAuthenticated) {
             setIsAuthenticated(true);
         } else {
+            console.log(`[TEST DEBUG REDIRECT] Redirecting to login because isPatientAuthenticated is false`);
             router.replace("/login");
         }
         setLoading(false);

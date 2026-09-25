@@ -213,12 +213,13 @@ cd backend
 python manage.py createsuperuser
 ```
 
-## 8. API Development Notes
+## 8. API & Testing Development Notes
 
-- Backend URL roots: /api/users/, /api/doctor/, /api/patient/.
-- Frontend route handlers under src/app/api proxy to backend.
-- Auth cookies are httpOnly and refreshed via /api/users/token/refresh/ through shared proxy utility.
-- Role route protection is implemented in src/proxy.ts.
+- **Backend API Roots**: `/api/users/`, `/api/doctor/`, `/api/patient/`.
+- **Frontend Route Handlers**: Found under `src/app/api`, proxying requests to the backend.
+- **Authentication**: Auth cookies are strictly `HttpOnly` and refreshed via `/api/users/token/refresh/` through the shared proxy utility.
+- **Route Protection**: Next.js middleware `src/proxy.ts` enforces role boundaries before rendering.
+- **E2E Testing (Playwright)**: End-to-end UI tests are located in `frontend/e2e/`. Run them locally using `npx playwright test` to verify cross-browser stability (Chromium, Edge, Mobile Chrome) before pushing changes.
 
 ## 9. Database and Supabase
 

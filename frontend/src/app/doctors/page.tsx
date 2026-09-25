@@ -221,7 +221,7 @@ export default function DoctorsDirectory() {
                     </div>
                   </div>
 
-                  <div className="mt-4 bg-white/60 rounded-xl p-4 w-full border border-white/80">
+                  {/* <div className="mt-4 bg-white/60 rounded-xl p-4 w-full border border-white/80">
                     <div className="flex justify-between items-center">
                       <div className="text-sm text-gray-600">Online Session</div>
                       <div className="text-sm font-black text-gray-900">{doctor.chatFee}</div>
@@ -230,7 +230,7 @@ export default function DoctorsDirectory() {
                       <div className="text-sm text-gray-600">In-person</div>
                       <div className="text-sm font-black text-gray-900">{doctor.appointmentFee}</div>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="mt-5 flex flex-col gap-3">
                     {role === 'PATIENT' ? (

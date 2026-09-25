@@ -192,6 +192,7 @@ export default function UserDashboard() {
         statusClass: statusTheme(item.status),
         type: item.type || "Consultation",
         time: `${item.date} - ${item.time}`,
+        queueNumber: item.queueNumber,
       }));
   }, [appointments]);
 
@@ -209,6 +210,7 @@ export default function UserDashboard() {
       statusClass: statusTheme(item.status),
       type: item.type || "Consultation",
       time: `${item.date} - ${item.time}`,
+      queueNumber: item.queueNumber,
     };
   }, [appointments]);
 
@@ -370,6 +372,25 @@ export default function UserDashboard() {
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   Update your personal details, photo, and contact information.
+                </p>
+              </Link>
+              <Link
+                href="/user-self/profile/medical-history"
+                className="group rounded-2xl border border-green-100 bg-white/90 p-4 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-green-700">
+                    Quick Action
+                  </p>
+                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
+                    View
+                  </span>
+                </div>
+                <p className="mt-3 text-lg font-bold text-slate-900">
+                  Medical Records
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Access your medical history, test results, and prescriptions.
                 </p>
               </Link>
             </div>
