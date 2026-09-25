@@ -6,13 +6,42 @@ test.describe('Patient Workflow', () => {
     await context.addCookies([
       { name: 'authToken', value: 'mock-patient-token', domain: 'localhost', path: '/' }
     ]);
-    
+    // Mock GET /api/patient/profile
+    await page.route('**/api/patient/profile', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          patient: {
+            fullName: 'Test Patient',
+            email: 'test@example.com',
+            phone: '',
+            dateOfBirth: '',
+            gender: 'other',
+            address: '',
+            city: '',
+            profileImage: ''
+          }
+        })
+      });
+    });
+
+    // Mock notifications
+    await page.route('**/api/notifications*', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([])
+      });
+    });
+
     await page.goto('/');
     await page.evaluate(() => {
       localStorage.setItem('authToken', 'mock-patient-token');
       localStorage.setItem('userRole', 'PATIENT');
       localStorage.setItem('userInfo', JSON.stringify({ fullName: 'Test Patient', email: 'test@example.com' }));
     });
+
   });
 
   test('Patient can view dashboard and navigate to appointments', async ({ page }) => {

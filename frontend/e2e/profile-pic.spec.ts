@@ -9,13 +9,7 @@ test.describe('Profile Picture Update Flow', () => {
     await context.addCookies([
       { name: 'authToken', value: 'mock-patient-token', domain: 'localhost', path: '/' }
     ]);
-    
-    await page.goto('http://localhost:3000/');
-    await page.evaluate(() => {
-      localStorage.setItem('authToken', 'mock-patient-token');
-      localStorage.setItem('userRole', 'PATIENT');
-      localStorage.setItem('userInfo', JSON.stringify({ fullName: 'Test Patient', email: 'test@example.com', profile_picture: null }));
-    });
+
 
     // Mock GET /api/patient/profile
     await page.route('**/api/patient/profile', async route => {
@@ -94,6 +88,22 @@ test.describe('Profile Picture Update Flow', () => {
           appointments: []
         })
       });
+    });
+
+    // Mock GET /api/notifications*
+    await page.route('**/api/notifications*', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([])
+      });
+    });
+
+    await page.goto('http://localhost:3000/');
+    await page.evaluate(() => {
+      localStorage.setItem('authToken', 'mock-patient-token');
+      localStorage.setItem('userRole', 'PATIENT');
+      localStorage.setItem('userInfo', JSON.stringify({ fullName: 'Test Patient', email: 'test@example.com', profile_picture: null }));
     });
 
     // 2. Go to dashboard

@@ -6,13 +6,52 @@ test.describe('Doctor Workflow', () => {
     await context.addCookies([
       { name: 'authToken', value: 'mock-doctor-token', domain: 'localhost', path: '/' }
     ]);
-    
+    // Mock GET /api/doctor/profile
+    await page.route('**/api/doctor/profile', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          doctor: {
+            fullName: 'Dr. Jane Smith',
+            email: 'doctor@example.com',
+            profileImage: ''
+          }
+        })
+      });
+    });
+
+    // Mock GET /api/doctor/dashboard
+    await page.route('**/api/doctor/dashboard', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          stats: {
+            totalAppointments: 0,
+            upcomingAppointments: 0
+          }
+        })
+      });
+    });
+
+    // Mock notifications
+    await page.route('**/api/notifications*', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([])
+      });
+    });
+
     await page.goto('/');
     await page.evaluate(() => {
       localStorage.setItem('authToken', 'mock-doctor-token');
       localStorage.setItem('userRole', 'DOCTOR');
       localStorage.setItem('userInfo', JSON.stringify({ fullName: 'Dr. Jane Smith', email: 'doctor@example.com' }));
     });
+
+
   });
 
   test('Doctor can view dashboard and appointments', async ({ page }) => {

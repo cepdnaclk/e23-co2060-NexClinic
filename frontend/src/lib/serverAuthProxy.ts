@@ -208,7 +208,16 @@ export async function proxyBackendWithRefresh({
     });
   };
 
-  let backendResponse = await callBackend(authToken);
+  let backendResponse: Response;
+  try {
+    backendResponse = await callBackend(authToken);
+  } catch (error) {
+    console.error("Backend connection error:", error);
+    return NextResponse.json(
+      { error: "Backend service unavailable" },
+      { status: 503 }
+    );
+  }
 
   // Access token was rejected — try to refresh.
   if (backendResponse.status === 401 && refreshToken) {
@@ -216,7 +225,15 @@ export async function proxyBackendWithRefresh({
 
 
     if (refreshedTokens?.accessToken) {
-      backendResponse = await callBackend(refreshedTokens.accessToken);
+      try {
+        backendResponse = await callBackend(refreshedTokens.accessToken);
+      } catch (error) {
+        console.error("Backend connection error on refresh:", error);
+        return NextResponse.json(
+          { error: "Backend service unavailable" },
+          { status: 503 }
+        );
+      }
     }
 
     // If still 401 after refresh, session is truly expired.
