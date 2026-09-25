@@ -69,9 +69,11 @@ NexClinic was built with strict adherence to modern security paradigms:
 ### For Patients
 - ✓ **Unified Dashboard:** Secure, token-based session management.
 - ✓ **Doctor Discovery:** Search and filter by name, specialization, and real-time availability.
-- ✓ **Dynamic Booking:** Instantly book, reschedule, or cancel appointments without page reloads.
+
+- ✓ **Dynamic Booking:** Instantly book, reschedule, or cancel appointments.
 - ✓ **Medical Records:** Securely upload, store, and manage profile pictures and medical documents.
-- ✓ **Health News:** Stay informed with dynamic health news integrations (via GNews API).
+- ✓ **Health News:** Stay informed with dynamic health news.
+
 
 ### For Doctors
 - ✓ **Schedule Management:** Generate and publish availability slots seamlessly.
@@ -79,14 +81,21 @@ NexClinic was built with strict adherence to modern security paradigms:
 - ✓ **Patient Insights:** View patient medical history and consultation records in real-time.
 - ✓ **Secure Profiles:** Maintain professional profiles verified by administrative oversight.
 
-### For Administrators
+
+### For Hospital Administrators
 - ✓ **Clinic Oversight:** Monitor overall system activity and manage overarching clinic policies.
+- ✓ **User Management:** Manage patient and doctor accounts and handle schedules.
+- ✓ **System Configuration:** Manage system settings and configurations.
+- ✓ **Appointments Handling:** Handle overall medical appointments and cancellations.
+- ✓ **System Analytics:** Monitor overall system performance and analytics.
 
 
 # Project Team
 
 **Team Name**: NexAura  
-**Course**: CO2060 — Semester 3
+
+**Course**: CO2060 — Semester
+
 
 - **E/23/076** — M.T. Dineth            - e23076@eng.pdn.ac.lk
 - **E/23/226** — J.G.G. Methmaka        - e23226@eng.pdn.ac.lk
