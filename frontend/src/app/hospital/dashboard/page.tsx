@@ -384,7 +384,7 @@ export default function HospitalAdminDashboard() {
                   <tbody className="divide-y divide-slate-100">
                     {analytics.doctors.map((doctor) => (
                       <tr key={doctor.id} className="transition-colors hover:bg-emerald-50/50">
-                        <td className="px-6 py-4 font-semibold text-slate-800">{doctor.name}</td>
+                        <td className="px-6 py-4 font-semibold text-slate-800">Dr. {doctor.name}</td>
                         <td className="px-4 py-4 text-right font-bold tabular-nums text-sky-700">{doctor.patient_count}</td>
                         <td className="px-4 py-4 text-right tabular-nums text-slate-600">{lkrFormatter.format(doctor.appointment_fee)}</td>
                         <td className="px-4 py-4 text-right font-semibold tabular-nums text-emerald-700">{lkrFormatter.format(doctor.income.daily)}</td>

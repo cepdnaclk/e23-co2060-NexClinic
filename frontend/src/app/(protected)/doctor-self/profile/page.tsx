@@ -186,7 +186,7 @@ function DoctorProfilePage() {
                                     </div>
 
                                     <div className="min-w-0 flex-1 text-center sm:text-left">
-                                        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">{doctorName}</h1>
+                                        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">Dr. {doctorName}</h1>
                                         <p className="mt-1 text-sm font-semibold text-emerald-700">Medical Professional</p>
 
                                         <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">

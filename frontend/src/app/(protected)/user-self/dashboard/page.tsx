@@ -491,7 +491,7 @@ export default function UserDashboard() {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <p className="break-words font-semibold text-slate-900">
-                          {appointment.doctor}
+                          Dr. {appointment.doctor}
                         </p>
                         <span className="font-mono text-sm font-semibold text-emerald-600">
                           {appointment.queueNumber ? `(Queue #${appointment.queueNumber})` : ''}

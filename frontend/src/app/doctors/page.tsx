@@ -207,10 +207,10 @@ export default function DoctorsDirectory() {
                     <div className="h-2 w-full rounded-t-lg bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 absolute top-0 left-0" />
                     <div className="flex flex-col items-center pt-6">
                       <div className="relative">
-                        <img src={doctor.photo} alt={doctor.fullName} className="w-28 h-28 rounded-full object-cover ring-4 ring-white shadow-[0_10px_30px_rgba(16,185,129,0.12)] transition-transform duration-300 group-hover:scale-105" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/user.png' }} />
+                        <img src={doctor.photo} alt={`Dr. ${doctor.fullName}`} className="w-28 h-28 rounded-full object-cover ring-4 ring-white shadow-[0_10px_30px_rgba(16,185,129,0.12)] transition-transform duration-300 group-hover:scale-105" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/user.png' }} />
                         {doctor.availableForChat && <span className="absolute bottom-0 right-0 -mb-1 -mr-1 bg-emerald-600 text-white text-xs font-semibold px-2 py-1 rounded-full">Online</span>}
                       </div>
-                      <h3 className="mt-4 text-lg font-bold text-gray-900 text-center">{doctor.fullName}</h3>
+                      <h3 className="mt-4 text-lg font-bold text-gray-900 text-center">Dr. {doctor.fullName}</h3>
                       <p className="mt-1 text-sm font-semibold text-emerald-700">{doctor.specialization}</p>
                       <p className="mt-1 text-sm text-gray-600">{doctor.experience} experience</p>
                       <div className="mt-3 flex flex-wrap gap-2 justify-center">

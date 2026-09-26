@@ -428,7 +428,7 @@ const PatientAppointmentPage = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h4 className="truncate text-lg font-semibold text-slate-900">
-                        {appt.doctorName}
+                        Dr. {appt.doctorName}
                       </h4>
                       <p className="truncate text-sm text-slate-600">{appt.hospital}</p>
                     </div>
@@ -547,7 +547,7 @@ const PatientAppointmentPage = () => {
 
                 return (
                   <tr key={appt.id} className="transition-colors hover:bg-emerald-50/50">
-                    <td className="px-4 py-3 font-medium text-slate-900">{appt.doctorName}</td>
+                    <td className="px-4 py-3 font-medium text-slate-900">Dr. {appt.doctorName}</td>
                     <td className="px-4 py-3">{appt.hospital}</td>
                     <td className="px-4 py-3">
                       <span className="font-medium text-emerald-700">{appt.date}</span> at {formatTimeForDisplay(appt.time)}
@@ -664,7 +664,7 @@ const PatientAppointmentPage = () => {
                       {nextAppointment.doctorName.charAt(0)}
                     </div>
                     <div>
-                      <h4 className="text-2xl font-bold">{nextAppointment.doctorName}</h4>
+                      <h4 className="text-2xl font-bold">Dr. {nextAppointment.doctorName}</h4>
                       <p className="text-emerald-100">{nextAppointment.hospital}</p>
                     </div>
                   </div>

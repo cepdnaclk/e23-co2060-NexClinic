@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { fetchAdminHospitals } from "@/lib/api/hospitalSlots";
+import { User } from "lucide-react";
 
 interface Doctor {
   id: number;
@@ -547,7 +548,7 @@ export default function ManageDoctorsPage() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
-              Create Doctor Account
+              Register New Doctor
             </button>
 
             <button
@@ -567,8 +568,8 @@ export default function ManageDoctorsPage() {
           <button
             onClick={() => setActiveTab("affiliated")}
             className={`px-4 py-2 text-sm font-bold rounded-xl transition-colors ${activeTab === "affiliated"
-                ? "bg-emerald-50 text-emerald-600"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+              ? "bg-emerald-50 text-emerald-600"
+              : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
               }`}
           >
             Affiliated Doctors ({doctors.filter((d) => d.is_added).length})
@@ -577,8 +578,8 @@ export default function ManageDoctorsPage() {
           <button
             onClick={() => setActiveTab("pending")}
             className={`px-4 py-2 text-sm font-bold rounded-xl transition-colors relative ${activeTab === "pending"
-                ? "bg-emerald-50 text-emerald-600"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+              ? "bg-emerald-50 text-emerald-600"
+              : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
               }`}
           >
             Pending Requests ({pendingRequests.length})
@@ -615,18 +616,18 @@ export default function ManageDoctorsPage() {
               <div
                 key={`${doctor.id}-${doctor.email}`}
                 className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 rounded-3xl border bg-white shadow-sm transition-all duration-200 ${doctor.is_added
-                    ? 'border-emerald-100/80 bg-gradient-to-br from-white to-emerald-50/30'
-                    : 'border-slate-100 hover:border-emerald-100/50 hover:shadow-md'
+                  ? 'border-emerald-100/80 bg-gradient-to-br from-white to-emerald-50/30'
+                  : 'border-slate-100 hover:border-emerald-100/50 hover:shadow-md'
                   }`}
               >
                 <div className="flex items-center gap-4 mb-4 sm:mb-0">
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold shadow-inner ${doctor.is_added ? 'bg-emerald-100/80 text-emerald-700' : 'bg-slate-100 text-slate-600'
                     }`}>
-                    {getInitials(doctor.full_name)}
+                    <User className="h-6 w-6" />
                   </div>
                   <div className="min-w-0">
                     <div className="font-bold text-slate-900 flex flex-wrap items-center gap-2">
-                      <span className="truncate">{doctor.full_name}</span>
+                      <span className="truncate">Dr. {doctor.full_name}</span>
                       {doctor.is_added && (
                         <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-700/10">
                           Affiliated
@@ -655,8 +656,8 @@ export default function ManageDoctorsPage() {
                     disabled={submittingId === doctor.id}
                     onClick={() => handleAddRemove(doctor.id, doctor.is_added, doctor.full_name || "Doctor")}
                     className={`w-full sm:w-auto px-4 py-2.5 text-xs font-semibold rounded-xl transition-all ${doctor.is_added
-                        ? 'bg-slate-50 border border-slate-200 text-red-600 hover:bg-red-55 hover:border-red-200'
-                        : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/10 hover:shadow-lg'
+                      ? 'bg-slate-50 border border-slate-200 text-red-600 hover:bg-red-55 hover:border-red-200'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/10 hover:shadow-lg'
                       } ${submittingId === doctor.id ? 'opacity-50 cursor-not-allowed' : ''} active:scale-[0.98]`}
                   >
                     {submittingId === doctor.id ? "Working..." : doctor.is_added ? "Delink Account" : "Add to Hospital"}
@@ -692,10 +693,10 @@ export default function ManageDoctorsPage() {
               >
                 <div className="flex items-center gap-4 mb-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold bg-amber-50 text-amber-700 shadow-inner">
-                    {getInitials(req.doctorName)}
+                    <User className="h-6 w-6" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-slate-900 truncate">{req.doctorName}</h3>
+                    <h3 className="font-bold text-slate-900 truncate">Dr. {req.doctorName}</h3>
                     <p className="text-xs text-slate-500 mt-0.5">{req.doctorDetails?.specialization || "General Practitioner"}</p>
                     <p className="text-[10px] text-slate-400 mt-1">Requested {new Date(req.created_at).toLocaleDateString()}</p>
                   </div>
@@ -922,10 +923,10 @@ export default function ManageDoctorsPage() {
               {/* Doctor Quick Summary */}
               <div className="flex items-center gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold bg-emerald-100 text-emerald-700">
-                  {getInitials(inspectingRequest.doctorName)}
+                  <User className="h-7 w-7" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900">{inspectingRequest.doctorDetails?.full_name || inspectingRequest.doctorName}</h3>
+                  <h3 className="font-bold text-slate-900">Dr. {inspectingRequest.doctorDetails?.full_name || inspectingRequest.doctorName}</h3>
                   <p className="text-sm font-semibold text-emerald-600 mt-0.5">{inspectingRequest.doctorDetails?.specialization || "General Practitioner"}</p>
                 </div>
               </div>
@@ -1013,8 +1014,8 @@ export default function ManageDoctorsPage() {
                 type="button"
                 onClick={confirmModal.onConfirm}
                 className={`flex-1 px-4 py-2 text-xs font-semibold rounded-xl text-white shadow-sm hover:shadow transition-all ${confirmModal.isDanger
-                    ? "bg-rose-600 hover:bg-rose-700 shadow-rose-500/10"
-                    : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10"
+                  ? "bg-rose-600 hover:bg-rose-700 shadow-rose-500/10"
+                  : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10"
                   }`}
               >
                 {confirmModal.confirmText || "Confirm"}
@@ -1076,7 +1077,7 @@ export default function ManageDoctorsPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
               <div>
                 <h2 className="text-xl font-extrabold text-slate-900">Manage the payments of the doctor</h2>
-                <p className="text-xs text-slate-500 mt-1">Set the fee breakdown for {feeModal.doctorName}.</p>
+                <p className="text-xs text-slate-500 mt-1">Set the fee breakdown for Dr. {feeModal.doctorName}.</p>
               </div>
               <button
                 onClick={() => setFeeModal((prev) => ({ ...prev, isOpen: false }))}

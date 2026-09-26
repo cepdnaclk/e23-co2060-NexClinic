@@ -626,7 +626,7 @@ const HospitalSlotsPage = () => {
                         <option value="">Generic template (apply later)</option>
                         {verifiedDoctors.map((doctor) => (
                           <option key={doctor.id} value={String(doctor.doctor)}>
-                            {doctor.doctorName || `Doctor ${doctor.doctor}`}
+                            {doctor.doctorName ? `Dr. ${doctor.doctorName}` : `Doctor ${doctor.doctor}`}
                             {doctor.doctorIdentifier ? ` (${doctor.doctorIdentifier})` : ""}
                           </option>
                         ))}
@@ -758,7 +758,7 @@ const HospitalSlotsPage = () => {
                         <option value="">All affiliated doctors</option>
                         {verifiedDoctors.map((doctor) => (
                           <option key={doctor.id} value={String(doctor.doctor)}>
-                            {doctor.doctorName || `Doctor ${doctor.doctor}`}
+                            {doctor.doctorName ? `Dr. ${doctor.doctorName}` : `Doctor ${doctor.doctor}`}
                             {doctor.doctorIdentifier ? ` (${doctor.doctorIdentifier})` : ""}
                           </option>
                         ))}
@@ -858,7 +858,7 @@ const HospitalSlotsPage = () => {
                             ? dayNames[t.day_of_week] || String(t.day_of_week)
                             : t.day_of_week || "-";
                         const doctorLabel =
-                          t.doctorName || t.doctor_name || t.doctor_display || "Generic Template";
+                          t.doctorName || t.doctor_name || t.doctor_display ? `Dr. ${t.doctorName || t.doctor_name || t.doctor_display}` : "Generic Template";
                         const doctorSubLabel =
                           t.doctorIdentifier || (t.doctor ? `DOC-${t.doctor}` : "All doctors");
 
@@ -969,7 +969,7 @@ const HospitalSlotsPage = () => {
                             ? dayNames[template.day_of_week] || template.day_of_week
                             : template.day_of_week || "-";
                         const doctorLabel =
-                          template.doctorName || template.doctor_name || template.doctor_display || "Generic";
+                          template.doctorName || template.doctor_name || template.doctor_display ? `Dr. ${template.doctorName || template.doctor_name || template.doctor_display}` : "Generic";
                         return (
                           <option key={template.id} value={String(template.id)}>
                             #{String(template.id)} | {doctorLabel} | {dayLabel} {template.start_time?.substring(0, 5)}
@@ -992,7 +992,7 @@ const HospitalSlotsPage = () => {
                     >
                       {verifiedDoctors.map((doctor) => (
                         <option key={doctor.id} value={String(doctor.doctor)}>
-                          {doctor.doctorName || `Doctor ${doctor.doctor}`}
+                          {doctor.doctorName ? `Dr. ${doctor.doctorName}` : `Doctor ${doctor.doctor}`}
                           {doctor.doctorIdentifier ? ` (${doctor.doctorIdentifier})` : ""}
                         </option>
                       ))}
@@ -1112,7 +1112,7 @@ const HospitalSlotsPage = () => {
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <h4 className="text-sm font-bold text-slate-900">
-                                {assignment.doctorName || assignment.doctor_preferred_name || `Doctor ${assignment.doctor}`}
+                                {assignment.doctorName || assignment.doctor_preferred_name ? `Dr. ${assignment.doctorName || assignment.doctor_preferred_name}` : `Doctor ${assignment.doctor}`}
                               </h4>
                               <p className="text-xs text-slate-500 mt-0.5">
                                 {assignment.doctorIdentifier || `DOC-${assignment.doctor}`}
