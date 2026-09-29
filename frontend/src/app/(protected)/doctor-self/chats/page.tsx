@@ -100,7 +100,7 @@ export default function DoctorChatsPage() {
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
                   {loading
                     ? "Loading your chat summary..."
-                    : `Welcome back, ${doctorName}. Review unread advice chats, continue replies, and close or reopen threads from the same workspace.`}
+                    : `Welcome back, Dr. ${doctorName}. Review unread advice chats, continue replies, and close or reopen threads from the same workspace.`}
                 </p>
 
                 {error ? <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</p> : null}

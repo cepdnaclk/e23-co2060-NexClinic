@@ -95,7 +95,7 @@ export default function AppointmentModal({ appointment, isOpen, onClose }: Appoi
                             {appointment.doctorName.split(" ")[0][0] ?? "D"}
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-black dark:text-gray-100">{appointment.doctorName}</h3>
+                            <h3 className="text-lg font-semibold text-black dark:text-gray-100">Dr. {appointment.doctorName}</h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">{appointment.hospital}</p>
                         </div>
                     </div>

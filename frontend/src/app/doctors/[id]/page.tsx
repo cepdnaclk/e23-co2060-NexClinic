@@ -85,7 +85,7 @@ export default async function DoctorProfile({
 						<div className="shrink-0 relative">
 							<DoctorProfileImage
 								src={doctorPhoto}
-								alt={doctor.fullName}
+								alt={`Dr. ${doctor.fullName}`}
 								className="w-[140px] h-[140px] rounded-full object-cover ring-4 ring-emerald-50 shadow-md"
 							/>
 							{doctor.availableForChat && (
@@ -94,7 +94,7 @@ export default async function DoctorProfile({
 						</div>
 
 						<div className="flex-1 text-center sm:text-left mt-2">
-							<h1 className="text-3xl font-bold text-slate-900">{doctor.fullName}</h1>
+							<h1 className="text-3xl font-bold text-slate-900">Dr. {doctor.fullName}</h1>
 							<div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3">
 								<span className="inline-flex items-center justify-center rounded-full bg-emerald-100 px-3.5 py-1 text-sm font-semibold text-emerald-700">
 									{doctor.specialization}

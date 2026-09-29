@@ -66,7 +66,7 @@ function getPeerName(thread: ChatThread, role: Role) {
     return thread.patientName || "Patient";
   }
 
-  return thread.doctorName || "Doctor";
+  return thread.doctorName ? `Dr. ${thread.doctorName}` : "Doctor";
 }
 
 export default function ChatWorkspace({

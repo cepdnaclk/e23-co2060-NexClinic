@@ -440,7 +440,7 @@ export default function HospitalAppointmentsPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="font-medium text-slate-800">
-                        {appointment.doctorName}
+                        Dr. {appointment.doctorName}
                       </div>
                       <div className="text-xs text-slate-500">
                         {appointment.department || "General"}
@@ -596,7 +596,7 @@ export default function HospitalAppointmentsPage() {
               <div className="space-y-4 text-sm">
                 <div className="flex justify-between border-b border-slate-50 pb-3">
                   <span className="text-slate-500">Doctor</span>
-                  <span className="font-semibold text-slate-900">{selectedAppointment.doctorName}</span>
+                  <span className="font-semibold text-slate-900">Dr. {selectedAppointment.doctorName}</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-50 pb-3">
                   <span className="text-slate-500">Department</span>

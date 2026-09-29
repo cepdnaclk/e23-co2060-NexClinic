@@ -26,8 +26,8 @@ export default function DoctorProfileImage({ src, alt, className = "" }: DoctorP
 	}
 
 	return (
-		<div className={`flex items-center justify-center bg-emerald-50 text-emerald-500 ${className}`}>
-			<User className="h-16 w-16" />
+		<div className={`flex h-28 w-28 sm:h-[140px] sm:w-[140px] items-center justify-center rounded-[1.5rem] bg-emerald-50 text-emerald-500 shadow-md ${className.replace(/w-\[140px\] h-\[140px\] rounded-full object-cover ring-4 ring-emerald-50 shadow-md/, '')}`}>
+			<User className="h-12 w-12 sm:h-16 sm:w-16" />
 		</div>
 	);
 }

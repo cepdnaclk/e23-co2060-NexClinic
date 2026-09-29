@@ -271,7 +271,7 @@ export default function PatientDetailPage() {
                           <div className="font-medium text-slate-900">{appt.appointmentDate}</div>
                           <div className="text-slate-500 text-xs mt-0.5">{appt.appointmentTime}</div>
                         </td>
-                        <td className="px-6 py-4 font-medium text-slate-900">{appt.doctorName}</td>
+                        <td className="px-6 py-4 font-medium text-slate-900">Dr. {appt.doctorName}</td>
                         <td className="px-6 py-4">{appt.department}</td>
                         <td className="px-6 py-4 text-right">
                           <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${

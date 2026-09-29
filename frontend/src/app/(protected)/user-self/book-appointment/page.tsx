@@ -491,7 +491,7 @@ const BookAppointmentPage = () => {
                         <div className="flex justify-between items-center">
                           <span className="text-slate-500">Doctor</span>
                           <span className="font-medium text-slate-900">
-                            {selectedSlot.doctorName}
+                            Dr. {selectedSlot.doctorName}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
