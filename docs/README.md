@@ -9,17 +9,17 @@ title: NexClinic — Technical Documentation
 [comment]: # "NexClinic project documentation page for the e23-co2060-NexClinic repository"
 
 > [!TIP]
-> Looking for the interactive product showcase? Visit the **[NexClinic Modern Landing Page](index.html)**.
+> Looking for the interactive product showcase? Visit the **[NexClinic Modern Landing Page](index.html)** or try the live deployed app at **[nexclinic.vercel.app](https://nexclinic.vercel.app)**.
 
 # NexClinic by NexAura — Technical Documentation
 
 ---
 
 ## Team
-- E/23/076, M.T. Dineth, [email](e23076@eng.pdn.ac.lk)
-- E/23/226, J.G.G. Methmaka, [email](e23226@eng.pdn.ac.lk)
-- E/23/266, H.P.U.A. Perera, [email](e23266@eng.pdn.ac.lk)
 - E/23/336, S.M.D.S.B. Samarakoon, [email](e23336@eng.pdn.ac.lk)
+- E/23/226, J.G.G. Methmaka, [email](e23226@eng.pdn.ac.lk)
+- E/23/266, H.M.U.A. Perera, [email](e23266@eng.pdn.ac.lk)
+- E/23/076, M.T. Dineth, [email](e23076@eng.pdn.ac.lk)
 
 <!-- Add a project cover image in /docs/data if available -->
 
@@ -100,6 +100,7 @@ NexClinic is built as a cohesive foundation designed to grow. Future iterations 
 
 ## Links
 
+- [Live Web Application (Vercel)](https://nexclinic.vercel.app)
 - [Project Repository](https://github.com/cepdnaclk/e23-co2060-NexClinic)
 - [Project Page](https://cepdnaclk.github.io/e23-co2060-NexClinic/)
 - [Department of Computer Engineering](http://www.ce.pdn.ac.lk/)
