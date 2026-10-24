@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>NexClinic — Technical Documentation & Architecture Reference</title>
+  <meta name="description" content="Technical documentation and architecture specification for NexClinic healthcare platform.">
+  <link rel="icon" type="image/png" href="./assets/images/logo.png">
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <style>
+    .docs-page-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 6rem;
+    }
+    .docs-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+    .docs-article {
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-xl);
+      padding: 3.5rem 3rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .docs-article h1 {
+      font-family: var(--font-display);
+      font-size: 2.25rem;
+      margin-bottom: 1rem;
+      color: var(--text-main);
+      border-bottom: 2px solid var(--border-light);
+      padding-bottom: 1rem;
+    }
+    .docs-article h2 {
+      font-family: var(--font-display);
+      font-size: 1.625rem;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-main);
+    }
+    .docs-article h3 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      margin-top: 1.75rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-main);
+    }
+    .docs-article p {
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin-bottom: 1.25rem;
+    }
+    .docs-article ul, .docs-article ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+      color: var(--text-secondary);
+    }
+    .docs-article li {
+      margin-bottom: 0.5rem;
+      line-height: 1.65;
+    }
+    .docs-meta-box {
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    @media (max-width: 768px) {
+      .docs-article {
+        padding: 2rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container nav-container">
+      <a href="./index.html" class="brand-wrapper">
+        <img src="./assets/images/logo.png" alt="NexClinic Logo" class="brand-logo-img">
+        <div class="brand-text-group">
+          <div class="brand-title">NexClinic<span class="plus">+</span></div>
+          <div class="brand-subline">Technical Documentation</div>
+        </div>
+      </a>
+      <div class="nav-actions">
+        <a href="./index.html" class="btn btn-secondary btn-sm">
+          &larr; Back to Showcase
+        </a>
+        <a href="https://github.com/cepdnaclk/e23-co2060-NexClinic" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+          GitHub Repo
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="docs-page-container">
+    <a href="./index.html" class="docs-back-btn">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Return to Product Showcase
+    </a>
+
+    <article class="docs-article">
+      <h1>NexClinic by NexAura — Technical Documentation</h1>
+
+      <div class="docs-meta-box">
+        <strong>Academic Project:</strong> CO2060 Software Systems Development &middot; 2nd Year, Semester 3 & 4<br>
+        <strong>Institution:</strong> Department of Computer Engineering, Faculty of Engineering, University of Peradeniya<br>
+        <strong>Team:</strong> NexAura (M.T. Dineth [E/23/076], J.G.G. Methmaka [E/23/226], H.P.U.A. Perera [E/23/266], S.M.D.S.B. Samarakoon [E/23/336])
+      </div>
+
+      <h2>Table of Contents</h2>
+      <ol>
+        <li><a href="#project-overview">Project Overview</a></li>
+        <li><a href="#key-capabilities">Key Capabilities</a></li>
+        <li><a href="#solution-architecture">Solution Architecture</a></li>
+        <li><a href="#data-storage-security">Data, Storage &amp; Security</a></li>
+        <li><a href="#testing-qa">Testing &amp; Quality Assurance</a></li>
+        <li><a href="#roadmap">Roadmap &amp; Planned Enhancements</a></li>
+        <li><a href="#links">Links &amp; Manuals</a></li>
+      </ol>
+
+      <h2 id="project-overview">1. Project Overview</h2>
+      <p>
+        NexClinic is a unified healthcare appointment and clinic practice management platform that digitizes and streamlines end-to-end outpatient workflows for Patients, Doctors, and Hospital Administrators. The platform addresses operational inefficiencies by offering secure registration, real-time doctor discovery, dynamic slot management, patient booking, and controlled appointment lifecycles.
+      </p>
+      <p>
+        Built with a modular, API-first approach, NexClinic bridges the gap between medical practitioners and patients while granting administrative oversight to ensure smooth clinical operations.
+      </p>
+
+      <h2 id="key-capabilities">2. Key Capabilities</h2>
+      <h3>For Patients:</h3>
+      <ul>
+        <li><strong>Doctor Discovery:</strong> Search and filter doctors by name, specialization, and real-time availability.</li>
+        <li><strong>Dynamic Booking:</strong> Instantly book, reschedule, or cancel appointments through an optimistic UI.</li>
+        <li><strong>Medical Records:</strong> Securely upload, store, and manage profile pictures and medical documents.</li>
+        <li><strong>Teleconsultations & Payments:</strong> Real-time patient-doctor chat consultations with mock payment gateway integration.</li>
+        <li><strong>Health News:</strong> Dynamic health news fetching via GNews API to keep patients informed.</li>
+      </ul>
+
+      <h3>For Doctors:</h3>
+      <ul>
+        <li><strong>Schedule Management:</strong> Generate and publish availability slots seamlessly.</li>
+        <li><strong>Appointment Lifecycle:</strong> Enforce state transitions (PENDING &rarr; ACCEPTED/REJECTED &rarr; COMPLETED/CANCELLED).</li>
+        <li><strong>Patient Insights:</strong> View patient medical history, consultations, and securely attached records.</li>
+      </ul>
+
+      <h3>For Hospital Administrators:</h3>
+      <ul>
+        <li><strong>User Management:</strong> Manage patient and doctor accounts, and handle scheduling conflicts.</li>
+        <li><strong>System Configuration:</strong> Oversee clinic policies, system settings, and overarching configuration.</li>
+        <li><strong>System Analytics:</strong> Monitor overall system performance, analytics, and operational activity.</li>
+      </ul>
+
+      <h2 id="solution-architecture">3. Solution Architecture</h2>
+      <p>Our architecture guarantees scalability, fast rendering, and strict security:</p>
+      <ul>
+        <li><strong>Backend:</strong> Python + Django REST Framework (DRF). Manages business rules, transactional database operations, multipart file uploads, and background tasks.</li>
+        <li><strong>Frontend:</strong> Next.js App Router (TypeScript + Tailwind CSS). Provides a highly reactive UI with optimistic state synchronization (Zustand/Context). Server-side proxy routing centralizes authentication and enforces role boundaries.</li>
+        <li><strong>Data & Storage:</strong> PostgreSQL for production-grade relational integrity, with native media storage capabilities for medical files and profile imagery.</li>
+        <li><strong>Deployment:</strong> The backend is configured for PaaS deployment (Render/Heroku), while the Next.js frontend is optimized for edge networks (Vercel).</li>
+      </ul>
+
+      <h3>High-level Request Flow:</h3>
+      <ol>
+        <li>A user interacts with the Next.js frontend.</li>
+        <li>The Next.js Edge Middleware (<code>src/proxy.ts</code>) intercepts the request, verifying HttpOnly auth cookies and validating the user's Role-Based Access Control (RBAC).</li>
+        <li>Authorized requests are proxied to the Django backend.</li>
+        <li>Django enforces final business rules and permissions (<code>IsPatient</code>, <code>IsDoctor</code>, <code>IsAdmin</code>), updates the PostgreSQL database, and responds.</li>
+      </ol>
+
+      <h2 id="data-storage-security">4. Data, Storage &amp; Security</h2>
+      <p>Security and data integrity are central to NexClinic's design:</p>
+      <ul>
+        <li><strong>Two-Tier RBAC:</strong> Strict Role-Based Access Control enforced at both the Next.js frontend middleware and the Django backend API.</li>
+        <li><strong>HttpOnly JWTs:</strong> Authentication tokens (access/refresh) are handled strictly via HttpOnly, Secure cookies to completely mitigate Cross-Site Scripting (XSS) session hijacking.</li>
+        <li><strong>OTP Verification:</strong> Email-gated OTP verification ensures account ownership before system access is granted.</li>
+        <li><strong>Secure File Uploads:</strong> Multipart Form-Data parsing guarantees that medical records and profile pictures are safely transferred and stored on the server without CORS or boundary corruption.</li>
+        <li><strong>Pessimistic Concurrency Locking:</strong> Slot reservation utilizes <code>select_for_update()</code> to completely eliminate duplicate concurrent bookings.</li>
+      </ul>
+
+      <h2 id="testing-qa">5. Testing &amp; Quality Assurance</h2>
+      <p>To ensure stability across devices and roles, we implemented a rigorous, multi-layered testing strategy:</p>
+      <ul>
+        <li><strong>Automated End-to-End (E2E) Testing:</strong> Playwright is utilized to run automated cross-browser tests (Desktop Chromium, Microsoft Edge, and Mobile Chrome profiles), validating complex UI workflows like profile uploads and authentication state management.</li>
+        <li><strong>Backend API Testing:</strong> Django's native test suite is used to validate serializer integrity, prevent malformed data entry, and confirm appropriate error handling (400, 401, 403, 404).</li>
+        <li><strong>Manual QA & Edge Cases:</strong> Routine checks for UI reactivity, optimistic state updates (preventing double-bookings), and network latency simulations.</li>
+      </ul>
+
+      <h2 id="roadmap">6. Roadmap &amp; Planned Enhancements</h2>
+      <ul>
+        <li><strong>Advanced AI Integration:</strong> AI-powered scheduling recommendations based on clinic traffic and patient symptoms.</li>
+        <li><strong>Real-Time Video Consultations:</strong> Upgrading the chat consultation feature to include WebRTC video capabilities.</li>
+        <li><strong>Production Payment Processors:</strong> Transitioning from the mock payment gateway to live integrations with Stripe or PayPal.</li>
+        <li><strong>Deep Analytics Dashboards:</strong> Implementing robust data visualization for Hospital Administrators to predict clinic bottlenecks.</li>
+      </ul>
+
+      <h2 id="links">7. Links &amp; PDF Manuals</h2>
+      <ul>
+        <li><a href="./manuals/User_Manual.pdf" target="_blank">Download User Manual (PDF)</a></li>
+        <li><a href="./manuals/Developer_Guide.pdf" target="_blank">Download Developer Guide (PDF)</a></li>
+        <li><a href="./testing/reports/e2e_test_report.md" target="_blank">Playwright E2E Test Report</a></li>
+        <li><a href="./testing/reports/BUG_REPORT.md" target="_blank">QA Testing &amp; Bug Report</a></li>
+        <li><a href="https://github.com/cepdnaclk/e23-co2060-NexClinic" target="_blank" rel="noopener noreferrer">GitHub Project Repository</a></li>
+        <li><a href="http://www.ce.pdn.ac.lk/" target="_blank" rel="noopener noreferrer">Department of Computer Engineering</a></li>
+        <li><a href="https://eng.pdn.ac.lk/" target="_blank" rel="noopener noreferrer">University of Peradeniya</a></li>
+      </ul>
+    </article>
+  </main>
+
+  <footer class="site-footer" style="padding-top: 3rem; padding-bottom: 2rem;">
+    <div class="container" style="text-align: center; font-size: 0.875rem; color: #64748b;">
+      &copy; 2026 Team NexAura &middot; Department of Computer Engineering &middot; University of Peradeniya
+    </div>
+  </footer>
+</body>
+</html>

@@ -2,16 +2,6 @@
     "title": "NexClinic - Smart Healthcare System",
     "team": [
         {
-            "name": "M.T. Dineth",
-            "email": "e23076@eng.pdn.ac.lk",
-            "eNumber": "E/23/076"
-        },
-        {
-            "name": "H.M.U.A. Perera",
-            "email": "e23266@eng.pdn.ac.lk",
-            "eNumber": "E/23/266"
-        },
-        {
             "name": "S.M.D.S.B. Samarakoon",
             "email": "e23336@eng.pdn.ac.lk",
             "eNumber": "E/23/336"
@@ -20,13 +10,27 @@
             "name": "J.G.G. Methmaka",
             "email": "e23226@eng.pdn.ac.lk",
             "eNumber": "E/23/226"
+        },
+        {
+            "name": "H.M.U.A. Perera",
+            "email": "e23266@eng.pdn.ac.lk",
+            "eNumber": "E/23/266"
+        },
+        {
+            "name": "M.T. Dineth",
+            "email": "e23076@eng.pdn.ac.lk",
+            "eNumber": "E/23/076"
         }
     ],
     "tags": [
-        "Web Application",
-        "Software Systems Development",
         "Healthcare",
-        "Medical"
+        "Patient care",
+        "Medical",
+        "Appointment System",
+        "Teleconsultation",
+        "Hospital Management",
+        "Web Application",
+        "Software Systems Development"
     ],
     "image": "cover_page.jpg",
     "thumbnail": "thumbnail.jpg"

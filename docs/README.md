@@ -1,19 +1,17 @@
 ---
 layout: home
-permalink: index.html
+permalink: /documentation.html
 
 repository-name: e23-co2060-NexClinic
-title: NexClinic
+title: NexClinic — Technical Documentation
 ---
 
 [comment]: # "NexClinic project documentation page for the e23-co2060-NexClinic repository"
 
-<!--
-This documentation page follows the department template. Replace supervisor emails and add `/docs/data/index.json` and images
-(`cover_page.jpg`, `thumbnail.jpg`) when ready — cover: 940×352, thumbnail: 640×360.
--->
+> [!TIP]
+> Looking for the interactive product showcase? Visit the **[NexClinic Modern Landing Page](index.html)**.
 
-# NexClinic by NexAura
+# NexClinic by NexAura — Technical Documentation
 
 ---
 

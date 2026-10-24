@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  
+  <title>NexClinic — Smart Outpatient Healthcare & Practice Management Platform</title>
+  <meta name="description" content="NexClinic is a unified healthcare appointment and clinical practice management platform built by Team NexAura for CO2060 at the University of Peradeniya. Features real-time doctor discovery, dynamic slot scheduling, 2-tier RBAC, and pessimistic concurrency control.">
+  <meta name="author" content="Team NexAura — Department of Computer Engineering, University of Peradeniya">
+  <meta name="keywords" content="NexClinic, Healthcare SaaS, Outpatient Management, Clinic Appointments, Django REST Framework, Next.js, University of Peradeniya, CO2060">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cepdnaclk.github.io/e23-co2060-NexClinic/">
+  <meta property="og:title" content="NexClinic — Smart Outpatient Healthcare & Practice Management Platform">
+  <meta property="og:description" content="Digitizing outpatient workflows for Patients, Doctors, and Hospital Administrators with modern Next.js and Django REST architecture.">
+  <meta property="og:image" content="./assets/images/cover_page.jpg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:title" content="NexClinic — Smart Outpatient Healthcare Platform">
+  <meta property="twitter:description" content="CO2060 project by Team NexAura at University of Peradeniya. Multi-role healthcare practice management.">
+  <meta property="twitter:image" content="./assets/images/cover_page.jpg">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="./assets/images/logo.png">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+
+  <!-- ========================================================================
+       1. NAVIGATION HEADER
+       ======================================================================== -->
+  <header class="site-header" id="top">
+    <div class="container nav-container">
+      <a href="#top" class="brand-wrapper" aria-label="NexClinic Home">
+        <img src="./assets/images/logo.png" alt="NexClinic Logo" class="brand-logo-img">
+        <div class="brand-text-group">
+          <div class="brand-title">NexClinic<span class="plus">+</span></div>
+          <div class="brand-subline">NexAura &middot; UoP CO2060</div>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="#overview" class="nav-link">Overview</a></li>
+          <li><a href="#capabilities" class="nav-link">Capabilities</a></li>
+          <li><a href="#experience" class="nav-link">Product</a></li>
+          <li><a href="#architecture" class="nav-link">Architecture</a></li>
+          <li><a href="#security" class="nav-link">Security</a></li>
+          <li><a href="#roadmap" class="nav-link">Roadmap</a></li>
+          <li><a href="#team" class="nav-link">Team</a></li>
+        </ul>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="nav-actions">
+        <a href="./documentation.html" class="btn btn-secondary btn-sm" title="View Full Technical Documentation">
+          <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Docs
+        </a>
+        <a href="https://github.com/cepdnaclk/e23-co2060-NexClinic" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" title="View on GitHub">
+          <svg class="btn-icon" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          Repo
+        </a>
+        <button type="button" class="mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       2. HERO SECTION
+       ======================================================================== -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-content">
+          <div class="hero-badge-container">
+            <div class="academic-pill">
+              <span class="pulse-dot"></span>
+              <span>CO2060 Project &middot; Semester 3 & 4</span>
+            </div>
+            <div class="academic-pill">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+              </svg>
+              <span>University of Peradeniya</span>
+            </div>
+          </div>
+
+          <h1 class="hero-headline">
+            Modernizing Outpatient Care with <span class="text-gradient">Real-Time Clinical Agility</span>
+          </h1>
+
+          <p class="hero-description">
+            NexClinic is an enterprise-grade outpatient healthcare and practice management platform. Engineered with 
+            Django REST Framework, Next.js, and PostgreSQL, it seamlessly unifies Patients, Doctors, and Clinic Administrators into a secure, responsive digital ecosystem.
+          </p>
+
+          <div class="hero-cta-group">
+            <a href="#capabilities" class="btn btn-primary">
+              Explore Capabilities
+              <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+            </a>
+            <a href="#architecture" class="btn btn-secondary">
+              <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6"/>
+              </svg>
+              System Architecture
+            </a>
+          </div>
+
+          <div class="hero-trust-metrics">
+            <div class="metric-item">
+              <span class="metric-number">2-Tier</span>
+              <span class="metric-label">RBAC Security (Edge & API)</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-number">Pessimistic</span>
+              <span class="metric-label">Row-Level Lock Booking</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-number">3 Roles</span>
+              <span class="metric-label">Patient, Doctor, Admin</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Visual Frame with Authentic Mockup -->
+        <div class="hero-visual-card">
+          <div class="hero-window-frame">
+            <div class="window-header">
+              <span class="window-dot dot-red"></span>
+              <span class="window-dot dot-amber"></span>
+              <span class="window-dot dot-green"></span>
+              <span class="window-title">nexclinic.local / user-self / portal</span>
+            </div>
+            <div class="window-body">
+              <img src="./assets/images/screenshot-login.png" alt="NexClinic Patient Portal Interface" class="hero-screenshot" loading="eager">
+            </div>
+          </div>
+
+          <!-- Floating Telemetry Badges -->
+          <div class="floating-stat-badge badge-top-right">
+            <div class="stat-icon-box">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <div class="stat-content-box">
+              <div class="stat-title">Authentication</div>
+              <div class="stat-value">HttpOnly JWT + OTP</div>
+            </div>
+          </div>
+
+          <div class="floating-stat-badge badge-bottom-left">
+            <div class="stat-icon-box icon-blue">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div class="stat-content-box">
+              <div class="stat-title">Concurrency</div>
+              <div class="stat-value">Zero Double-Booking</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       3. PROJECT INTRODUCTION (PROBLEM VS SOLUTION)
+       ======================================================================== -->
+  <section class="section section-alt" id="overview">
+    <div class="container">
+      <div class="section-header">
+        <div class="badge-tag">Clinical Operational Context</div>
+        <h2 class="section-title">The Challenge of Modern Outpatient Operations</h2>
+        <p class="section-subtitle">
+          Healthcare facilities often battle fragmented schedules, telephone bottlenecks, and data silos that degrade patient satisfaction and exhaust medical staff.
+        </p>
+      </div>
+
+      <div class="comparison-grid">
+        <!-- Problem Card -->
+        <div class="problem-card">
+          <div class="card-header-icon">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <h3 class="card-h3">Traditional Clinic Bottlenecks</h3>
+          <p style="color: var(--text-secondary);">Manual appointment coordination and disparate physical registries cause severe clinical overhead:</p>
+          <ul class="item-list">
+            <li>
+              <svg class="list-icon icon-cross" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              <span><strong>Opaque Availability:</strong> Patients cannot view real-time physician schedules across hospital branches.</span>
+            </li>
+            <li>
+              <svg class="list-icon icon-cross" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              <span><strong>High No-Show & Collision Rates:</strong> Simultaneous booking requests lead to accidental duplicate bookings and empty time slots.</span>
+            </li>
+            <li>
+              <svg class="list-icon icon-cross" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              <span><strong>Fragmented Medical Records:</strong> Consultations occur without immediate, consolidated access to patient diagnostic attachments.</span>
+            </li>
+            <li>
+              <svg class="list-icon icon-cross" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              <span><strong>Administrative Fatigue:</strong> Hospital staff spend critical hours reconciling doctor calendars and managing paper queues.</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Solution Card -->
+        <div class="solution-card">
+          <div class="card-header-icon">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h3 class="card-h3">The NexClinic Digital Standard</h3>
+          <p style="color: var(--text-secondary);">An integrated, multi-tenant outpatient operating system engineered for clinical precision:</p>
+          <ul class="item-list">
+            <li>
+              <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span><strong>Real-Time Doctor Discovery:</strong> Comprehensive directory with filtering by medical specialization, hospital branch, and live slot status.</span>
+            </li>
+            <li>
+              <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span><strong>Concurrency-Safe Booking:</strong> DB-level transactional locking guarantees that slots cannot be double-booked during concurrent requests.</span>
+            </li>
+            <li>
+              <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span><strong>Secure Document Lifecycle:</strong> Patients securely upload diagnostic files and prescriptions via validated multipart form pipelines.</span>
+            </li>
+            <li>
+              <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span><strong>Automated Shift Generation:</strong> Celery workers automate 14-day rolling appointment availability based on hospital slot templates.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       4. KEY CAPABILITIES (ROLE-BASED BENTO GRID)
+       ======================================================================== -->
+  <section class="section" id="capabilities">
+    <div class="container">
+      <div class="section-header">
+        <div class="badge-tag">Role-Based Capabilities</div>
+        <h2 class="section-title">Engineered for Every Clinical Stakeholder</h2>
+        <p class="section-subtitle">
+          Tailored user experiences designed to empower patients, streamline physician workflows, and give hospital administrators comprehensive oversight.
+        </p>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="tab-controls" role="tablist" aria-label="Capabilities by User Role">
+        <button type="button" class="tab-btn active" data-tab="patient" role="tab" aria-selected="true" aria-controls="pane-patient">
+          Patient Portal
+        </button>
+        <button type="button" class="tab-btn" data-tab="doctor" role="tab" aria-selected="false" aria-controls="pane-doctor">
+          Doctor Workspace
+        </button>
+        <button type="button" class="tab-btn" data-tab="admin" role="tab" aria-selected="false" aria-controls="pane-admin">
+          Hospital Admin
+        </button>
+      </div>
+
+      <!-- Tab Pane 1: Patients -->
+      <div class="tab-pane active" data-pane="patient" id="pane-patient" role="tabpanel">
+        <div class="feature-bento-grid">
+          <div class="bento-card span-2">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Physician Discovery & Availability Filtering</h3>
+            <p class="bento-desc">
+              Patients search verified practitioners across hospitals by medical discipline, consultation fee, and active slot availability. 
+              The Next.js client renders dynamic cards with optimistic state updates to ensure responsive browsing.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">Search & Filter</span>
+              <span class="bento-tag">Real-Time Slots</span>
+              <span class="bento-tag">Hospital Affiliation</span>
+            </div>
+          </div>
+
+          <div class="bento-card">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Dynamic Appointment Booking</h3>
+            <p class="bento-desc">
+              Book, reschedule, or cancel consultation slots. State transitions update immediately in the UI with toast feedback.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">Instant Booking</span>
+              <span class="bento-tag">Self-Service Rescheduling</span>
+            </div>
+          </div>
+
+          <div class="bento-card">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Digital Health Records & Attachments</h3>
+            <p class="bento-desc">
+              Securely store and manage historical visit summaries, lab reports, and prescriptions. Strict multipart form handling protects binary files.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">Diagnostic Storage</span>
+              <span class="bento-tag">Prescription History</span>
+            </div>
+          </div>
+
+          <div class="bento-card span-2">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Real-Time Text Consultations & Health News Feed</h3>
+            <p class="bento-desc">
+              Engage in one-on-one consultation threads powered by Django Channels WebSockets. Stay up to date with automated healthcare news 
+              fetched dynamically via the integrated GNews API.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">ASGI WebSockets</span>
+              <span class="bento-tag">AdviceChatThread</span>
+              <span class="bento-tag">GNews Feed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Pane 2: Doctors -->
+      <div class="tab-pane" data-pane="doctor" id="pane-doctor" role="tabpanel">
+        <div class="feature-bento-grid">
+          <div class="bento-card">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Slot & Shift Management</h3>
+            <p class="bento-desc">
+              Define recurring weekly availability blocks across affiliated hospitals. Configure patient limits and buffer times per consultation block.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">Recurring Templates</span>
+              <span class="bento-tag">Patient Limits</span>
+            </div>
+          </div>
+
+          <div class="bento-card span-2">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Controlled Appointment Lifecycle State Machine</h3>
+            <p class="bento-desc">
+              Enforce strict clinical state transitions: PENDING &rarr; ACCEPTED or REJECTED &rarr; COMPLETED or CANCELLED. 
+              Prevents invalid states and automatically notifies patients via email alerts.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">State Machine</span>
+              <span class="bento-tag">IsDoctor Permissions</span>
+              <span class="bento-tag">Email Alerts</span>
+            </div>
+          </div>
+
+          <div class="bento-card span-2">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Patient Diagnostic History & Consultation Review</h3>
+            <p class="bento-desc">
+              Inspect patient medical history, previous clinic visits, and uploaded medical documentation prior to confirming consultations, ensuring informed clinical assessments.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">Clinical History</span>
+              <span class="bento-tag">Medical Record Viewer</span>
+            </div>
+          </div>
+
+          <div class="bento-card">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Multi-Hospital Association</h3>
+            <p class="bento-desc">
+              Request associations with multiple clinical institutions, tracking verification statuses (PENDING, VERIFIED, REJECTED).
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">Hospital Verification</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Pane 3: Hospital Admin -->
+      <div class="tab-pane" data-pane="admin" id="pane-admin" role="tabpanel">
+        <div class="feature-bento-grid">
+          <div class="bento-card span-2">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Doctor Verification & Credentialing Queue</h3>
+            <p class="bento-desc">
+              Hospital administrative staff review incoming medical practitioner registrations, verify professional credentials, and activate clinical booking privileges.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">Credential Approval</span>
+              <span class="bento-tag">DoctorHospitalVerification</span>
+            </div>
+          </div>
+
+          <div class="bento-card">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Slot Blueprint Oversight</h3>
+            <p class="bento-desc">
+              Manage hospital `SlotTemplates` defining operating shifts, physical clinic rooms, and room capacities.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">Capacity Rules</span>
+              <span class="bento-tag">Shift Templates</span>
+            </div>
+          </div>
+
+          <div class="bento-card">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Operational Analytics</h3>
+            <p class="bento-desc">
+              Monitor clinic occupancy, appointment throughput, cancellation frequency, and active text consultation loads.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">Throughput Metrics</span>
+            </div>
+          </div>
+
+          <div class="bento-card span-2">
+            <div class="bento-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 004.07 8.528"/>
+              </svg>
+            </div>
+            <h3 class="bento-title">Comprehensive Audit Trail (`UserActivityLog`)</h3>
+            <p class="bento-desc">
+              All clinical modifications, user authentications, and slot bookings generate structured records with actor IDs, IP metadata, 
+              and JSON state diffs for regulatory audit compliance.
+            </p>
+            <div class="bento-tag-list">
+              <span class="bento-tag">Audit Trail</span>
+              <span class="bento-tag">HIPAA/GDPR Foundation</span>
+              <span class="bento-tag">Actor Attribution</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       5. PRODUCT EXPERIENCE (AUTHENTIC SCREENSHOT SHOWCASE)
+       ======================================================================== -->
+  <section class="section section-alt" id="experience">
+    <div class="container">
+      <div class="section-header">
+        <div class="badge-tag">Interface Design & UX</div>
+        <h2 class="section-title">Authentic Product Experience</h2>
+        <p class="section-subtitle">
+          Real interfaces built with Next.js App Router and Tailwind CSS, prioritizing clarity, trust, and zero cognitive load.
+        </p>
+      </div>
+
+      <!-- Experience Flow 1: Unified Auth & OTP -->
+      <div class="experience-layout">
+        <div class="experience-info">
+          <div class="step-counter">01 / SECURE ACCESS</div>
+          <h3>Unified Authentication & Two-Factor OTP</h3>
+          <p>
+            A single, secure login gateway serving Patients, Doctors, and Administrators. After credential validation, 
+            the system enforces email-gated 6-digit OTP verification. Tokens are delivered strictly via HttpOnly, Secure cookies to prevent XSS session hijacking.
+          </p>
+          <ul class="item-list">
+            <li>
+              <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Temporary `PendingUser` holding state prevents unverified database bloat.</span>
+            </li>
+            <li>
+              <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Rate-limited OTP dispatch via SendGrid / SMTP with live cooldown timers.</span>
+            </li>
+          </ul>
+        </div>
+        <div class="experience-preview-frame">
+          <div class="window-header">
+            <span class="window-dot dot-red"></span>
+            <span class="window-dot dot-amber"></span>
+            <span class="window-dot dot-green"></span>
+            <span class="window-title">nexclinic.local / login / otp-challenge</span>
+          </div>
+          <img src="./assets/images/screenshot-otp.png" alt="NexClinic OTP Verification Screen" loading="lazy">
+        </div>
+      </div>
+
+      <!-- Experience Flow 2: Patient Portal -->
+      <div class="experience-layout reverse">
+        <div class="experience-info">
+          <div class="step-counter">02 / PATIENT PORTAL</div>
+          <h3>Optimistic Booking & Practice Management</h3>
+          <p>
+            Patients experience instant, zero-lag interface responses. When a slot is selected, the client-side state reflects 
+            the reservation immediately while a background database transaction verifies capacity using row-level locking.
+          </p>
+          <ul class="item-list">
+            <li>
+              <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Instant feedback with standardized toast notifications for edge cases.</span>
+            </li>
+            <li>
+              <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Seamless role-specific redirects managed by Next.js Edge Middleware.</span>
+            </li>
+          </ul>
+        </div>
+        <div class="experience-preview-frame">
+          <div class="window-header">
+            <span class="window-dot dot-red"></span>
+            <span class="window-dot dot-amber"></span>
+            <span class="window-dot dot-green"></span>
+            <span class="window-title">nexclinic.local / user-self / book-appointment</span>
+          </div>
+          <img src="./assets/images/screenshot-login.png" alt="NexClinic Patient Booking Experience" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       6. SYSTEM ARCHITECTURE
+       ======================================================================== -->
+  <section class="section section-dark" id="architecture">
+    <div class="container">
+      <div class="section-header">
+        <div class="badge-tag badge-dark">Engineering Deep Dive</div>
+        <h2 class="section-title">Production-Grade Asynchronous Architecture</h2>
+        <p class="section-subtitle">
+          Designed for strict security, high concurrency, and rapid edge response times.
+        </p>
+      </div>
+
+      <!-- Architecture Visual Diagram Container -->
+      <div class="arch-diagram-wrapper">
+        <div class="arch-header">
+          <div class="arch-header-title">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            End-to-End System Topology
+          </div>
+          <div class="arch-legend">
+            <div class="legend-item"><span class="legend-dot dot-edge"></span> Edge / Middleware</div>
+            <div class="legend-item"><span class="legend-dot dot-frontend"></span> Next.js UI</div>
+            <div class="legend-item"><span class="legend-dot dot-backend"></span> Django REST / Channels</div>
+            <div class="legend-item"><span class="legend-dot dot-data"></span> PostgreSQL / Redis</div>
+          </div>
+        </div>
+
+        <div class="arch-flow-grid">
+          <!-- Node 1: Edge Proxy -->
+          <div class="arch-node">
+            <span class="arch-node-badge badge-edge">01 / Edge Layer</span>
+            <h4 class="arch-node-title">Next.js Edge Proxy</h4>
+            <p class="arch-node-desc">
+              Intercepts incoming browser requests, decodes HttpOnly session cookies, and enforces route boundaries before server-rendering.
+            </p>
+            <div class="arch-node-tech">File: src/proxy.ts</div>
+          </div>
+
+          <!-- Node 2: Frontend Client -->
+          <div class="arch-node">
+            <span class="arch-node-badge badge-fe">02 / UI Layer</span>
+            <h4 class="arch-node-title">React Client & RSC</h4>
+            <p class="arch-node-desc">
+              Next.js 15 App Router with Tailwind CSS. Utilizes React Context and Zustand for optimistic UI mutation handling.
+            </p>
+            <div class="arch-node-tech">React 19 &middot; TypeScript</div>
+          </div>
+
+          <!-- Node 3: Backend API Core -->
+          <div class="arch-node">
+            <span class="arch-node-badge badge-be">03 / Business API</span>
+            <h4 class="arch-node-title">Django REST + ASGI</h4>
+            <p class="arch-node-desc">
+              WSGI handles transactional REST endpoints; Daphne (ASGI) powers persistent WebSockets for live consultations.
+            </p>
+            <div class="arch-node-tech">DRF &middot; Channels &middot; Celery</div>
+          </div>
+
+          <!-- Node 4: Data & Queue -->
+          <div class="arch-node">
+            <span class="arch-node-badge badge-db">04 / Storage & Cache</span>
+            <h4 class="arch-node-title">PostgreSQL & Redis</h4>
+            <p class="arch-node-desc">
+              Relational data integrity with pessimistic row-locking. Redis manages WebSocket channel layers and Celery task queues.
+            </p>
+            <div class="arch-node-tech">PostgreSQL &middot; Redis 7</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Architectural Feature Cards -->
+      <div class="arch-details-grid">
+        <div class="arch-detail-card">
+          <h4>Dual-Engine Routing</h4>
+          <p>
+            HTTP REST traffic (`/api/*`) is directed through standard WSGI workers for relational business operations, 
+            while WebSocket streams (`/ws/*`) route directly to ASGI Daphne servers, isolating long-lived chat connections from request pools.
+          </p>
+        </div>
+
+        <div class="arch-detail-card">
+          <h4>Asynchronous Slot Generation</h4>
+          <p>
+            Instead of calculating slot intervals on the fly, Celery Beat runs scheduled routines reading hospital `SlotTemplates` 
+            to physically stamp out rolling 14-day booking records in PostgreSQL, keeping query response times below 30ms.
+          </p>
+        </div>
+
+        <div class="arch-detail-card">
+          <h4>Stateless Edge Token Validation</h4>
+          <p>
+            The Next.js Edge proxy decrypts JWTs in memory to reject unauthorized cross-role attempts with a 307 redirect before reaching the origin Django server, dramatically decreasing server workload.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       7. TECHNOLOGY STACK
+       ======================================================================== -->
+  <section class="section" id="tech-stack">
+    <div class="container">
+      <div class="section-header">
+        <div class="badge-tag">Technical Foundation</div>
+        <h2 class="section-title">Verified Technologies & Frameworks</h2>
+        <p class="section-subtitle">
+          Built strictly with modern, production-proven tools ensuring performance, type-safety, and maintainability.
+        </p>
+      </div>
+
+      <div class="tech-grid">
+        <div class="tech-card">
+          <div class="tech-icon-box">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="tech-name">Next.js 15 (App Router)</div>
+            <div class="tech-role">Frontend & Edge Proxy</div>
+          </div>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-icon-box">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+            </svg>
+          </div>
+          <div>
+            <div class="tech-name">TypeScript 5</div>
+            <div class="tech-role">End-to-End Type Safety</div>
+          </div>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-icon-box">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+            </svg>
+          </div>
+          <div>
+            <div class="tech-name">Tailwind CSS</div>
+            <div class="tech-role">Design System & Utility UI</div>
+          </div>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-icon-box">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+          <div>
+            <div class="tech-name">Django REST Framework</div>
+            <div class="tech-role">Python 3.12 Backend Core</div>
+          </div>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-icon-box">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="tech-name">PostgreSQL</div>
+            <div class="tech-role">Relational Data & ACID Locks</div>
+          </div>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-icon-box">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+          </div>
+          <div>
+            <div class="tech-name">Redis & Channels</div>
+            <div class="tech-role">WebSocket Layer & Task Broker</div>
+          </div>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-icon-box">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="tech-name">Celery & Celery Beat</div>
+            <div class="tech-role">Scheduled Slot Generation</div>
+          </div>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-icon-box">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="tech-name">Playwright E2E</div>
+            <div class="tech-role">Cross-Browser Automation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       8. SECURITY & RELIABILITY
+       ======================================================================== -->
+  <section class="section section-alt" id="security">
+    <div class="container">
+      <div class="section-header">
+        <div class="badge-tag">Security & Data Integrity</div>
+        <h2 class="section-title">Built-in Defense & Concurrency Protection</h2>
+        <p class="section-subtitle">
+          Healthcare platforms demand strict confidentiality and faultless operational integrity. NexClinic guarantees data security across layers.
+        </p>
+      </div>
+
+      <div class="security-highlight-grid">
+        <!-- Security Pillar 1 -->
+        <div class="security-box">
+          <div class="security-box-header">
+            <div class="security-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="security-title">HttpOnly JWT Cookie Pipeline</h3>
+            </div>
+          </div>
+          <p class="security-desc">
+            Authentication tokens (access and refresh) are written to client browsers strictly via `Set-Cookie` with 
+            <code>HttpOnly</code>, <code>Secure</code>, and <code>SameSite=Lax</code> attributes. Client-side JavaScript cannot access the tokens, completely mitigating Cross-Site Scripting (XSS) session theft.
+          </p>
+          <div class="code-snippet">
+Set-Cookie: access_token=***; HttpOnly; Secure; SameSite=Lax; Path=/
+          </div>
+        </div>
+
+        <!-- Security Pillar 2 -->
+        <div class="security-box">
+          <div class="security-box-header">
+            <div class="security-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="security-title">Pessimistic Concurrency Locking</h3>
+            </div>
+          </div>
+          <p class="security-desc">
+            To prevent race conditions during peak booking periods, appointment creation uses PostgreSQL row-level locks 
+            (<code>select_for_update</code>). Concurrent booking requests are queued deterministically at the database engine level.
+          </p>
+          <div class="code-snippet">
+slot = AppointmentAvailableSlot.objects.select_for_update().get(id=slot_id)
+          </div>
+        </div>
+
+        <!-- Security Pillar 3 -->
+        <div class="security-box">
+          <div class="security-box-header">
+            <div class="security-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="security-title">Two-Tier RBAC Verification</h3>
+            </div>
+          </div>
+          <p class="security-desc">
+            Role boundaries are verified twice: first at the Next.js edge router (`src/proxy.ts`), and definitively inside Django via 
+            granular permission classes (<code>IsPatient</code>, <code>IsDoctor</code>, <code>IsHospitalAdmin</code>).
+          </p>
+          <div class="code-snippet">
+permission_classes = [IsAuthenticated, IsDoctor]
+          </div>
+        </div>
+
+        <!-- Security Pillar 4 -->
+        <div class="security-box">
+          <div class="security-box-header">
+            <div class="security-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="security-title">Cross-Browser E2E Quality Assurance</h3>
+            </div>
+          </div>
+          <p class="security-desc">
+            Crucial clinical user journeys are continuously validated using an automated Playwright test suite 
+            spanning Desktop Chromium, Microsoft Edge, and Mobile Chrome profiles to guard against UX regressions.
+          </p>
+          <div class="code-snippet">
+npx playwright test --project=chromium,edge,mobile-chrome
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       9. DEVELOPMENT ROADMAP
+       ======================================================================== -->
+  <section class="section" id="roadmap">
+    <div class="container">
+      <div class="section-header">
+        <div class="badge-tag">Evolution & Milestones</div>
+        <h2 class="section-title">Development Roadmap & Status</h2>
+        <p class="section-subtitle">
+          Transparent separation of implemented foundational capabilities, active QA improvements, and future milestone enhancements.
+        </p>
+      </div>
+
+      <div class="roadmap-timeline">
+        <!-- Milestone 1 -->
+        <div class="roadmap-item">
+          <span class="roadmap-marker"></span>
+          <div class="roadmap-content">
+            <span class="roadmap-status-badge badge-completed">v1.0 &middot; Implemented & Verified</span>
+            <h3 class="roadmap-title">Core Practice Management & Booking Platform</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">
+              The complete functional foundation connecting all three user roles with real-time operations:
+            </p>
+            <ul class="roadmap-feature-list">
+              <li>
+                <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Unified Multi-Role Auth + 2FA OTP</span>
+              </li>
+              <li>
+                <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Doctor Directory & Specialization Filter</span>
+              </li>
+              <li>
+                <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Dynamic Slot Booking & Concurrency Locks</span>
+              </li>
+              <li>
+                <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Medical Record Attachment Uploads</span>
+              </li>
+              <li>
+                <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Doctor Shift & Availability Management</span>
+              </li>
+              <li>
+                <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Hospital Admin Doctor Verification</span>
+              </li>
+              <li>
+                <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>WebSocket Text Consultation Threads</span>
+              </li>
+              <li>
+                <svg class="list-icon icon-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>Dynamic GNews Health Articles Integration</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Milestone 2 -->
+        <div class="roadmap-item">
+          <span class="roadmap-marker future"></span>
+          <div class="roadmap-content">
+            <span class="roadmap-status-badge badge-future">v2.0 &middot; Planned Enhancements</span>
+            <h3 class="roadmap-title">Telehealth Expansion & Clinical Intelligence</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">
+              Targeted enhancements planned for subsequent academic and production releases:
+            </p>
+            <ul class="roadmap-feature-list">
+              <li>
+                <svg class="list-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--color-accent);">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                <span>WebRTC Encrypted Video Consultations</span>
+              </li>
+              <li>
+                <svg class="list-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--color-accent);">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                </svg>
+                <span>Production Stripe & PayPal Gateway Integration</span>
+              </li>
+              <li>
+                <svg class="list-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--color-accent);">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                <span>AI-Assisted Triage & Slot Recommendations</span>
+              </li>
+              <li>
+                <svg class="list-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--color-accent);">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>Hospital Predictive Wait-Time Analytics</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       10. TEAM & ACADEMIC ATTRIBUTION
+       ======================================================================== -->
+  <section class="section section-alt" id="team">
+    <div class="container">
+      <div class="section-header">
+        <div class="badge-tag">Academic Engineering Team</div>
+        <h2 class="section-title">Team NexAura</h2>
+        <p class="section-subtitle">
+          Undergraduate student software engineers at the Department of Computer Engineering, Faculty of Engineering, University of Peradeniya.
+        </p>
+      </div>
+
+      <div class="team-grid">
+        <!-- Member 1 -->
+        <div class="team-card">
+          <div class="team-avatar-box">TD</div>
+          <h3 class="team-name">M.T. Dineth</h3>
+          <span class="team-id-badge">E/23/076</span>
+          <a href="mailto:e23076@eng.pdn.ac.lk" class="team-email-link">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            e23076@eng.pdn.ac.lk
+          </a>
+        </div>
+
+        <!-- Member 2 -->
+        <div class="team-card">
+          <div class="team-avatar-box">GM</div>
+          <h3 class="team-name">J.G.G. Methmaka</h3>
+          <span class="team-id-badge">E/23/226</span>
+          <a href="mailto:e23226@eng.pdn.ac.lk" class="team-email-link">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            e23226@eng.pdn.ac.lk
+          </a>
+        </div>
+
+        <!-- Member 3 -->
+        <div class="team-card">
+          <div class="team-avatar-box">UP</div>
+          <h3 class="team-name">H.P.U.A. Perera</h3>
+          <span class="team-id-badge">E/23/266</span>
+          <a href="mailto:e23266@eng.pdn.ac.lk" class="team-email-link">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            e23266@eng.pdn.ac.lk
+          </a>
+        </div>
+
+        <!-- Member 4 -->
+        <div class="team-card">
+          <div class="team-avatar-box">DS</div>
+          <h3 class="team-name">S.M.D.S.B. Samarakoon</h3>
+          <span class="team-id-badge">E/23/336</span>
+          <a href="mailto:e23336@eng.pdn.ac.lk" class="team-email-link">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            e23336@eng.pdn.ac.lk
+          </a>
+        </div>
+      </div>
+
+      <!-- Academic Metadata Banner -->
+      <div class="academic-meta-card">
+        <div class="academic-meta-content">
+          <h4>CO2060 — Software Systems Development Project</h4>
+          <p>Department of Computer Engineering &middot; Faculty of Engineering &middot; University of Peradeniya, Sri Lanka</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <a href="./manuals/User_Manual.pdf" target="_blank" class="btn btn-secondary btn-sm">
+            <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            User Manual (PDF)
+          </a>
+          <a href="./manuals/Developer_Guide.pdf" target="_blank" class="btn btn-secondary btn-sm">
+            <svg class="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+            </svg>
+            Dev Guide (PDF)
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       11. FOOTER
+       ======================================================================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Col 1: Brand Info -->
+        <div class="footer-brand">
+          <div class="brand-wrapper" style="margin-bottom: 1rem;">
+            <img src="./assets/images/logo.png" alt="NexClinic Logo" class="brand-logo-img">
+            <div class="brand-text-group">
+              <div class="brand-title" style="color: #ffffff;">NexClinic<span class="plus">+</span></div>
+              <div class="brand-subline" style="color: #94a3b8;">NexAura &middot; HealthTech</div>
+            </div>
+          </div>
+          <p>
+            An outpatient healthcare scheduling and practice management ecosystem engineered for clinical speed, data security, and operational reliability.
+          </p>
+        </div>
+
+        <!-- Col 2: Documentation -->
+        <div>
+          <h4 class="footer-col-title">Documentation</h4>
+          <ul class="footer-links">
+            <li><a href="./documentation.html">Technical Documentation</a></li>
+            <li><a href="./manuals/User_Manual.pdf" target="_blank">User Manual (PDF)</a></li>
+            <li><a href="./manuals/Developer_Guide.pdf" target="_blank">Developer Guide (PDF)</a></li>
+            <li><a href="./testing/reports/e2e_test_report.md" target="_blank">Playwright E2E Report</a></li>
+            <li><a href="./testing/reports/BUG_REPORT.md" target="_blank">QA Bug Report</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Academic Links -->
+        <div>
+          <h4 class="footer-col-title">Academic Attribution</h4>
+          <ul class="footer-links">
+            <li><a href="http://www.ce.pdn.ac.lk/" target="_blank" rel="noopener noreferrer">Dept. of Computer Engineering</a></li>
+            <li><a href="https://eng.pdn.ac.lk/" target="_blank" rel="noopener noreferrer">Faculty of Engineering</a></li>
+            <li><a href="https://www.pdn.ac.lk/" target="_blank" rel="noopener noreferrer">University of Peradeniya</a></li>
+            <li><a href="https://github.com/cepdnaclk" target="_blank" rel="noopener noreferrer">cepdnaclk GitHub Org</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Project Repository -->
+        <div>
+          <h4 class="footer-col-title">Open Source Repository</h4>
+          <ul class="footer-links">
+            <li><a href="https://github.com/cepdnaclk/e23-co2060-NexClinic" target="_blank" rel="noopener noreferrer">GitHub Repository</a></li>
+            <li><a href="https://cepdnaclk.github.io/e23-co2060-NexClinic/">Live GitHub Pages Showcase</a></li>
+            <li><a href="https://github.com/cepdnaclk/e23-co2060-NexClinic/issues" target="_blank" rel="noopener noreferrer">Issue Tracker</a></li>
+            <li><a href="https://github.com/cepdnaclk/e23-co2060-NexClinic/blob/main-alt/README.md" target="_blank" rel="noopener noreferrer">Repository README</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          &copy; 2026 Team NexAura. All rights reserved. Developed for CO2060 Software Systems Development.
+        </div>
+        <div>
+          Department of Computer Engineering &middot; University of Peradeniya, Sri Lanka
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating Back to Top Button -->
+  <button type="button" class="back-to-top" aria-label="Back to top">
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+    </svg>
+  </button>
+
+  <!-- Main JavaScript Bundle -->
+  <script src="./assets/js/main.js"></script>
+</body>
+</html>
